@@ -1,7 +1,7 @@
 // Veri katmanı — app'in Firestore şemasıyla birebir sorgular.
 import {
   db, collection, doc, getDoc, getDocs, updateDoc, addDoc, setDoc,
-  query, where, orderBy, serverTimestamp,
+  query, where, orderBy, onSnapshot, serverTimestamp, arrayRemove, increment,
 } from "./firebase.js";
 
 const byMs = (a, b) => (msOf(b) - msOf(a));
@@ -104,3 +104,112 @@ export async function acceptOrgRequest(req, venue) {
   await updateDoc(doc(db, "venueRequests", req.id), { status: "accepted", eventId: ref.id, updatedAt: serverTimestamp() });
   return ref.id;
 }
+
+// ── Mekan: etkinlik oluştur (CreateEventScreen addDoc ile uyumlu) ──
+export async function createEvent(venue, f) {
+  const eventAt = f.date ? new Date(`${f.date}T${f.time || "00:00"}:00`) : null;
+  const loc = venue?.location?.lat != null ? { lat: venue.location.lat, lng: venue.location.lng } : (venue?.city ? { city: venue.city } : null);
+  return (await addDoc(collection(db, "events"), {
+    title: f.title,
+    venueId: venue.id,
+    venueName: venue.displayName ?? "",
+    artistId: null, artistName: "",
+    date: f.date ?? "",
+    eventAt: eventAt && !isNaN(eventAt) ? eventAt : null,
+    startTime: f.time ?? "",
+    genre: f.genre ? [f.genre] : [],
+    ticketPrice: f.price ? Number(f.price) : null,
+    description: f.description ?? "",
+    bannerUrl: null,
+    status: "upcoming",
+    isNew: true,
+    attendeeCount: 0,
+    capacity: f.capacity ? Number(f.capacity) : (venue?.capacity ?? null),
+    city: venue?.city ?? venue?.location?.city ?? null,
+    district: venue?.district ?? null,
+    location: loc,
+    vipStatus: f.vip ? "pending" : null,
+    createdAt: serverTimestamp(),
+  })).id;
+}
+
+// ── Mekan: sanatçı bul + davet ──
+export async function listArtists() {
+  const snap = await getDocs(query(collection(db, "users"), where("userType", "==", "artist")));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+export async function createInvitation(venue, artist, f) {
+  await addDoc(collection(db, "invitations"), {
+    venueId: venue.id, venueName: venue.displayName ?? "",
+    artistId: artist.id, artistName: artist.displayName ?? artist.name ?? "",
+    genre: (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "",
+    eventDate: f.date, eventTime: f.time, fee: Number(f.fee),
+    message: f.message ?? "", photoUrl: null, eventId: null,
+    status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+  });
+}
+
+// ── Organizatör: mekana istek gönder (venueRequests) ──
+export async function createVenueRequest(profile, venue, f) {
+  await addDoc(collection(db, "venueRequests"), {
+    title: f.title,
+    eventDate: f.date, eventTime: f.time, description: f.description ?? "",
+    bannerUrl: null,
+    organizerId: profile.orgId ?? profile.id,
+    organizerName: profile.orgName ?? profile.displayName ?? "",
+    createdByUid: profile.id,
+    venueId: venue.id, venueName: venue.displayName ?? "",
+    status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+  });
+}
+
+// ── Mesajlaşma (MessagesScreen şemasıyla birebir) ──
+export function convIdFor(a, b) { return [a, b].sort().join("__"); }
+const emojiFor = (t) => (t === "artist" ? "🎤" : t === "venue" ? "🏢" : t === "organizer" ? "📣" : "👤");
+
+export function listenConversations(uid, cb) {
+  return onSnapshot(query(collection(db, "conversations"), where("participants", "array-contains", uid)), (snap) => {
+    const list = snap.docs
+      .filter((d) => !((d.data().hiddenFor ?? []).includes(uid)))
+      .map((d) => {
+        const data = d.data();
+        const other = (data.participants || []).find((p) => p !== uid) || "";
+        return {
+          id: d.id, otherId: other,
+          otherName: data.isGroup ? (data.name ?? "Grup") : (data.participantNames?.[other] ?? "Kullanıcı"),
+          lastMessage: data.lastMessage ?? "", lastMessageTime: data.lastMessageTime,
+          unread: data.unreadCount?.[uid] ?? 0, isGroup: data.isGroup === true,
+        };
+      })
+      .sort((a, b) => msOf(b) - msOf(a));
+    cb(list);
+  }, () => cb([]));
+}
+
+export function listenMessages(convId, cb) {
+  return onSnapshot(query(collection(db, "conversations", convId, "messages"), orderBy("createdAt", "asc")),
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), () => cb([]));
+}
+
+export async function sendMessage({ fromId, fromName, fromType, toId, toName, text, convId, isGroup }) {
+  const cid = convId || convIdFor(fromId, toId);
+  const convRef = doc(db, "conversations", cid);
+  const snap = await getDoc(convRef);
+  if (!snap.exists() && !isGroup) {
+    await setDoc(convRef, {
+      participants: [fromId, toId],
+      participantNames: { [fromId]: fromName, [toId]: toName },
+      participantEmojis: { [fromId]: emojiFor(fromType), [toId]: "👤" },
+      lastMessage: text, lastMessageTime: serverTimestamp(),
+      unreadCount: { [toId]: 1, [fromId]: 0 }, hiddenFor: [],
+    });
+  } else {
+    const summary = { lastMessage: text, lastMessageTime: serverTimestamp(), hiddenFor: arrayRemove(fromId) };
+    if (!isGroup && toId) summary["unreadCount." + toId] = increment(1);
+    await updateDoc(convRef, summary);
+  }
+  await addDoc(collection(db, "conversations", cid, "messages"), { senderId: fromId, senderName: fromName, text, createdAt: serverTimestamp() });
+  return cid;
+}
+
+export async function markRead(convId, uid) { try { await updateDoc(doc(db, "conversations", convId), { ["unreadCount." + uid]: 0 }); } catch (_) {} }

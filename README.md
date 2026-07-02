@@ -37,12 +37,13 @@ js/pages/*.js         auth · admin · venue · organizer
 
 ## Kapsam
 
-**Faz 1 (bu sürüm):** tüm giriş/kayıt/onay akışları · tam yönetici onay paneli
-(mekan + organizatör + VIP + sorun bildirimi) · mekan paneli (etkinlikler + organizatör
-istekleri onay/ret + profil) · organizatör paneli (etkinlikler + istek durumları + profil).
+**Mevcut:** tüm giriş/kayıt/onay akışları · tam yönetici onay paneli (mekan + organizatör +
+VIP + sorun bildirimi) · **mekan paneli** (etkinlikler · organizatör istekleri onay/ret ·
+**etkinlik oluşturma** (VIP dahil) · **sanatçı bul + davet** · **mesajlaşma** · profil) ·
+**organizatör paneli** (etkinlikler · **mekan seç + istek gönder** · **mesajlaşma** · profil).
+Mesajlaşma app'in `conversations`/`messages` şemasıyla birebir; kartlardaki 💬 ile sohbet başlar.
 
-**Faz 2 (yol haritası):** web'den etkinlik oluşturma · sanatçı bul + davet · mesajlaşma ·
-analitik · rezidans yönetimi. Bunlar şimdilik uygulamadan yapılır ("Yakında" sekmeleri).
+**Yol haritası:** analitik · rezidans (uzun dönem) yönetimi · etkinliğe kapak fotoğrafı yükleme.
 
 ## GitHub Pages'e yayınlama
 

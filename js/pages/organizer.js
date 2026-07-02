@@ -1,7 +1,8 @@
 // Organizatör paneli — Etkinlikler + gönderilen mekan istekleri, Profil. (Faz 2: mekan seç/istek gönder, mesaj)
 import { session, logout, refreshProfile } from "../store.js";
-import { organizerEvents, organizerRequests, saveProfile } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, badge, fmtDate, ROLE } from "../ui.js";
+import { organizerEvents, organizerRequests, saveProfile, listVenues, createVenueRequest } from "../data.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, badge, modal, fmtDate, ROLE } from "../ui.js";
+import { messagesView, requestChat } from "./messages.js";
 
 const NAV = [
   { key: "home", label: "Etkinlikler", icon: "calendar-outline", href: "#/organizer" },
@@ -19,7 +20,7 @@ const STATUS = {
 export function organizerPage() {
   const tab = tabFromHash();
   const content = h("div", { class: "content" }, h("div", { class: "loading" }, spinner()));
-  const page = h("div", { class: "page has-nav" },
+  const page = h("div", { class: "page has-nav", style: { "--role": ROLE.organizer } },
     topbar(TITLES[tab] || "Organizatör", { subtitle: session.profile?.orgName || session.profile?.displayName || "", color: ROLE.organizer,
       right: h("button", { class: "icon-btn", onclick: logout }, icon("log-out-outline", { size: 20 })) }),
     content,
@@ -33,8 +34,47 @@ function tabFromHash() { const p = (location.hash || "").split("/"); return p[2]
 async function renderTab(tab, root) {
   if (tab === "profil") return renderProfile(root);
   if (tab === "home") return renderHome(root);
+  if (tab === "mekan") return renderVenues(root);
+  if (tab === "mesaj") { clear(root); return messagesView(root, ROLE.organizer); }
   clear(root);
-  root.append(empty("construct-outline", "Yakında", "Bu bölüm bir sonraki güncellemede web'e geliyor. Şimdilik uygulamadan kullanabilirsin."));
+  root.append(empty("construct-outline", "Yakında", "Bu bölüm bir sonraki güncellemede web'e geliyor."));
+}
+
+// ── Mekan seç + istek gönder ──
+async function renderVenues(root) {
+  clear(root);
+  const box = h("div", { class: "list-card" }, h("div", { class: "loading" }, spinner()));
+  root.append(sect("Mekan Seç", "business-outline", 0, box));
+  try {
+    const venues = await listVenues();
+    clear(box);
+    if (!venues.length) { box.append(empty("business-outline", "Mekan yok", "Onaylı mekan bulunmuyor.")); return; }
+    venues.forEach((vn) => box.append(venueRow(vn)));
+  } catch (e) { clear(box); box.append(empty("cloud-offline-outline", "Yüklenemedi", "")); }
+}
+function venueRow(vn) {
+  const name = vn.displayName || "Mekan";
+  return h("div", { class: "lrow" },
+    avatar(name, ROLE.venue),
+    h("div", { class: "lrow-info" }, h("div", { class: "lrow-name" }, name), (vn.city || vn.location?.city) ? h("div", { class: "lrow-meta" }, vn.city || vn.location?.city) : null),
+    h("div", { class: "lrow-actions" },
+      h("button", { class: "act", title: "Mesaj", onclick: () => { requestChat({ otherId: vn.id, otherName: name }); location.hash = "#/organizer/mesaj"; } }, icon("chatbubble-ellipses-outline", { size: 15 })),
+      h("button", { class: "act ok", onclick: () => requestModal(vn) }, icon("paper-plane-outline", { size: 15 }), h("span", {}, "İstek"))));
+}
+function requestModal(vn) {
+  const body = h("div", {},
+    field({ label: "Etkinlik Adı", id: "rqtitle", placeholder: "Örn. Yaz Festivali" }),
+    h("div", { class: "frow" }, field({ label: "Tarih", id: "rqdate", type: "date" }), field({ label: "Saat", id: "rqtime", type: "time" })),
+    field({ label: "Açıklama (opsiyonel)", id: "rqdesc", placeholder: "…", multiline: true }));
+  modal({ title: `${vn.displayName || "Mekan"} — Etkinlik İsteği`, body, actions: [
+    { label: "Vazgeç", variant: "ghost", onClick: () => {} },
+    { label: "İstek Gönder", ic: "send", keepOpen: true, onClick: async (close) => {
+      const f = { title: v("#rqtitle"), date: v("#rqdate"), time: v("#rqtime"), description: v("#rqdesc") };
+      if (!f.title) return toast("Etkinlik adı gir", "err");
+      if (!f.date || !f.time) return toast("Tarih ve saat gir", "err");
+      try { await createVenueRequest(session.profile, vn, f); toast("İstek gönderildi"); close(); } catch (e) { toast("Gönderilemedi", "err"); }
+    } },
+  ] });
 }
 
 async function renderHome(root) {
