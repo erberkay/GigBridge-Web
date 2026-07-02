@@ -151,7 +151,7 @@ export function register() {
     googleBtn(msg),
     msg,
   );
-  return shell(hero("Yeni Hesap", "Mekan ya da organizatör hesabı oluştur. Başvurun yönetici onayından sonra aktifleşir."),
+  return shell(hero("Yeni Hesap", "Mekan ya da organizatör hesabı oluştur."),
     card(form, h("p", { class: "foot-note" }, "Zaten üye misin? ", h("a", { href: "#/login" }, "Giriş yap"))));
 }
 
@@ -187,7 +187,7 @@ export function setup() {
   };
   const form = h("form", { onsubmit: submit }, seg, nameField, dl, cityWrap,
     (() => { const x = btn("Hesabı Tamamla", { full: true }); x.id = "sbtn"; return x; })(), msg);
-  return shell(hero("Hesabını Tamamla", "Google ile giriş yaptın. Rolünü seç ve bilgilerini gir; başvurun yönetici onayından sonra aktifleşir."),
+  return shell(hero("Hesabını Tamamla", "Google ile giriş yaptın. Rolünü seç ve bilgilerini gir."),
     card(form, h("p", { class: "foot-note" }, h("a", { href: "#/", onclick: (e) => { e.preventDefault(); logout(); } }, "Çıkış / farklı hesapla gir"))));
 }
 
