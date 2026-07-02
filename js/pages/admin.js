@@ -3,7 +3,7 @@ import { session, logout } from "../store.js";
 import {
   listPendingByRole, approveUser, rejectUser,
   listPendingVip, approveVip, rejectVip,
-  listReports, resolveReport,
+  listReports, resolveReport, approveNameChange, rejectNameChange,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, empty, spinner, toast, avatar, fmtDate, ROLE } from "../ui.js";
 
@@ -22,6 +22,8 @@ async function load(root) {
     const [venues, orgs, vip, reports] = await Promise.all([
       listPendingByRole("venue"), listPendingByRole("organizer"), listPendingVip(), listReports(),
     ]);
+    const nameReqs = reports.filter((r) => r.type === "name_change");
+    const otherReports = reports.filter((r) => r.type !== "name_change");
     clear(root);
     root.append(
       groupSection("Onay Bekleyen Mekanlar", "business-outline", venues.length,
@@ -30,8 +32,10 @@ async function load(root) {
         orgs.length ? orgs.map((o) => approvalRow(o, ROLE.organizer, o.email)) : [emptyRow("Bekleyen organizatör yok")]),
       groupSection("VIP İstekleri", "sparkles-outline", vip.length,
         vip.length ? vip.map(vipRow) : [emptyRow("Bekleyen VIP isteği yok")]),
-      groupSection("Sorun Bildirimleri", "flag-outline", reports.length,
-        reports.length ? reports.map(reportRow) : [emptyRow("Bekleyen bildirim yok")]),
+      groupSection("Mekan Adı İstekleri", "create-outline", nameReqs.length,
+        nameReqs.length ? nameReqs.map(nameReqRow) : [emptyRow("Bekleyen isim isteği yok")]),
+      groupSection("Sorun Bildirimleri", "flag-outline", otherReports.length,
+        otherReports.length ? otherReports.map(reportRow) : [emptyRow("Bekleyen bildirim yok")]),
     );
   } catch (e) {
     clear(root);
@@ -80,6 +84,18 @@ function reportRow(r) {
       r.message ? h("div", { class: "lrow-msg" }, r.message) : null),
     h("div", { class: "lrow-actions" },
       actBtn("checkmark-done", "Çözüldü", "ok", async () => { await resolveReport(r.id); row.remove(); toast("Çözüldü olarak işaretlendi"); })));
+  return row;
+}
+
+function nameReqRow(r) {
+  const row = h("div", { class: "lrow" },
+    avatar(r.currentName || r.reporterName || "?", ROLE.venue),
+    h("div", { class: "lrow-info" },
+      h("div", { class: "lrow-name" }, (r.currentName || "Mekan") + "  →  " + (r.requestedName || "?")),
+      h("div", { class: "lrow-meta" }, "Neden: " + (r.reason || r.message || "—"))),
+    h("div", { class: "lrow-actions" },
+      actBtn("checkmark", "Onayla", "ok", async () => { await approveNameChange(r); row.remove(); toast("Ad değiştirildi"); }),
+      actBtn("close", "Reddet", "danger", async () => { await rejectNameChange(r); row.remove(); toast("Reddedildi"); })));
   return row;
 }
 

@@ -1,11 +1,19 @@
 // Mekan paneli — Ana Sayfa (etkinlikler + organizatör istekleri), Profil. (Faz 2: oluşturma, sanatçı bul, mesaj)
 import { session, logout, refreshProfile } from "../store.js";
 import { venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, saveProfile,
-  createEvent, listArtists, createInvitation, createResidency, venueStats, uploadImage } from "../data.js";
+  createEvent, listArtists, createInvitation, createResidency, venueStats, uploadImage,
+  getVenueReviews, submitReport, requestNameChange, cancelNameChange, clearNameChangeFlag } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, fmtTL, ROLE, loadLeaflet } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 
 const GENRES = ["Electronic", "House", "Techno", "Jazz", "Pop", "Rock", "Akustik", "Hip-Hop", "R&B", "Klasik", "Diğer"];
+
+// Mekan özellikleri (app AMENITY_OPTIONS ile birebir). İlk 6 varsayılan.
+const AMENITY_OPTIONS = ["Profesyonel Ses Sistemi", "Işık Sistemi", "DJ Booth", "Soyunma Odası", "Parking", "VIP Alan", "Sahne", "Bar", "Klima", "Wi-Fi", "Engelli Erişimi", "Sigara Alanı"];
+const DEFAULT_AMENITIES = AMENITY_OPTIONS.slice(0, 6);
+
+// 81 il — şehir alanında aranabilir öneri listesi (app'teki aranabilir konum seçici karşılığı).
+const PROVINCES = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya", "Ardahan", "Artvin", "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkari", "Hatay", "Iğdır", "Isparta", "İstanbul", "İzmir", "Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kilis", "Kırıkkale", "Kırklareli", "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Mardin", "Mersin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu", "Osmaniye", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas", "Şanlıurfa", "Şırnak", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"];
 
 const NAV = [
   { key: "home", label: "Ana Sayfa", icon: "home-outline", href: "#/venue" },
@@ -87,17 +95,58 @@ function eventCard(ev) {
 async function renderProfile(root) {
   clear(root);
   const p = session.profile || {};
+  const uid = session.user.uid;
+
+  // İsim değişikliği bayrağı: talep onaylanıp uygulandıysa (displayName == istenen) kendini temizle
+  let ncPending = p.nameChangeStatus === "pending";
+  if (ncPending && p.nameChangeRequested && (p.displayName || "") === p.nameChangeRequested) { ncPending = false; clearNameChangeFlag(uid); }
+
   const pic = photoPicker("Mekan / profil fotoğrafı (opsiyonel)");
+
+  // Profil özeti (app profileStats: etkinlik / puan / katılım / sanatçı)
+  const statsBox = h("div", { class: "stat-grid" }, h("div", { class: "loading" }, spinner()));
+  (async () => {
+    try {
+      const [s, reviews] = await Promise.all([venueStats(uid), getVenueReviews(uid).catch(() => [])]);
+      const rated = (reviews || []).filter((r) => Number(r.overallRating ?? r.rating) > 0);
+      const rating = rated.length ? rated.reduce((a, r) => a + Number(r.overallRating ?? r.rating), 0) / rated.length : 0;
+      clear(statsBox);
+      statsBox.append(
+        statCard("calendar-outline", s.eventCount, "Etkinlik"),
+        statCard("star-outline", rating ? rating.toFixed(1) : "—", "Puan"),
+        statCard("people-outline", s.totalAttendance, "Katılım"),
+        statCard("mic-outline", s.withArtist, "Sanatçılı"));
+    } catch (_) {
+      clear(statsBox);
+      statsBox.append(statCard("calendar-outline", 0, "Etkinlik"), statCard("star-outline", "—", "Puan"), statCard("people-outline", 0, "Katılım"), statCard("mic-outline", 0, "Sanatçılı"));
+    }
+  })();
+
+  // Aranabilir şehir önerileri (81 il)
+  const cityList = h("datalist", { id: "citylist" }, ...PROVINCES.map((c) => h("option", { value: c })));
+
+  // Özellikler — çoklu seçim (app AMENITY_OPTIONS)
+  const amenities = new Set(Array.isArray(p.amenities) ? p.amenities : DEFAULT_AMENITIES);
+  const amenityRow = h("div", { class: "chip-row wrap" }, ...AMENITY_OPTIONS.map((a) => {
+    const c = h("button", { type: "button", class: "chip" + (amenities.has(a) ? " on" : ""), onclick: () => { if (amenities.has(a)) { amenities.delete(a); c.classList.remove("on"); } else { amenities.add(a); c.classList.add("on"); } } }, a);
+    return c;
+  }));
+
   const form = h("form", { class: "form-card", onsubmit: (e) => e.preventDefault() },
     h("div", { class: "profile-head" }, avatar(p.displayName, ROLE.venue),
-      h("div", {}, h("div", { class: "ph-name" }, p.displayName || "Mekan"), h("div", { class: "ph-mail" }, p.email || ""))),
-    pic.node,
-    field({ label: "Şehir", id: "pcity", value: p.city || "", placeholder: "Örn. İstanbul" }),
+      h("div", { class: "grow" }, h("div", { class: "ph-name" }, p.displayName || "Mekan"), h("div", { class: "ph-mail" }, p.email || "")),
+      btn("Adını Değiştir", { variant: "ghost", ic: "create-outline", onClick: () => nameChangeModal(root, p) })),
+    ncPending ? h("div", { class: "nc-banner" }, icon("hourglass-outline", { size: 14, color: ROLE.venue }),
+      h("span", { class: "grow" }, `“${p.nameChangeRequested}” adına geçiş talebin yönetici onayında.`),
+      h("button", { type: "button", class: "nc-cancel", onclick: async () => { await cancelNameChange(uid); await refreshProfile(); toast("Talep geri çekildi"); renderProfile(root); } }, "Geri çek")) : null,
+    cityList,
+    field({ label: "Şehir", id: "pcity", value: p.city || "", placeholder: "Ara: İstanbul, Aydın…", list: "citylist" }),
     field({ label: "İlçe", id: "pdistrict", value: p.district || "", placeholder: "Örn. Kadıköy" }),
     field({ label: "Adres", id: "paddress", value: p.address || "", placeholder: "Açık adres", multiline: true }),
     field({ label: "Telefon", id: "pphone", type: "tel", value: p.phone || "", placeholder: "05xx xxx xx xx" }),
     field({ label: "Kapasite", id: "pcap", type: "number", value: p.capacity || "", placeholder: "Örn. 300" }),
     field({ label: "Web Sitesi", id: "pweb", value: p.website || "", placeholder: "https://…" }),
+    pic.node,
   );
 
   // ── Konum pinleme (haritada görünmek için lat/lng gerekir) ──
@@ -131,18 +180,63 @@ async function renderProfile(root) {
       city: v("#pcity"), district: v("#pdistrict") || null, address: v("#paddress"),
       phone: v("#pphone"), website: v("#pweb"),
       capacity: v("#pcap") ? Number(v("#pcap")) : null,
+      amenities: [...amenities],
       location: pin ? { lat: pin.lat, lng: pin.lng, city: v("#pcity") || null } : null,
     };
     try { if (pic.getFile()) patch.photoURL = await uploadImage(pic.getFile(), session.user.uid); await saveProfile(session.user.uid, patch); await refreshProfile(); toast("Profil kaydedildi"); }
     catch (e) { saveMsg.textContent = "Kaydedilemedi."; saveMsg.className = "msg err"; }
   } });
   root.append(
+    sect("Profil Özeti", "stats-chart-outline", 0, statsBox),
     sect("Mekan Bilgileri", "business-outline", 0, form),
+    sect("Özellikler", "options-outline", 0,
+      h("p", { class: "muted small mb6" }, "Mekanının sunduğu olanakları seç."), amenityRow),
     sect("Mekan Konumu", "location-outline", 0,
       h("p", { class: "muted small mb6" }, "Etkinliklerinin müşteri haritasında görünmesi için mekanının yerini pinle."),
       pinInfo, mapEl, h("div", { class: "pin-actions" }, useLoc, clearPin)),
     save, saveMsg,
-    h("p", { class: "muted small center" }, "Mekan adını değiştirmek 90 günde bir uygulamadan yapılır."));
+    sect("Destek", "help-buoy-outline", 0,
+      h("p", { class: "muted small mb6" }, "Bir sorunun ya da talebin mi var? Yöneticiye ilet."),
+      btn("Sorun Bildir", { variant: "ghost", ic: "flag-outline", full: true, onClick: reportModal })));
+}
+
+// Mekan adı değişikliği → yöneticiye istek (neden zorunlu). App ve web aynı akışı paylaşır.
+function nameChangeModal(root, p) {
+  const cur = p.displayName || "Mekan";
+  const body = h("div", {},
+    h("p", { class: "muted small mb6" }, "Mekan adı değişikliği yönetici onayına gönderilir. Nedeni belirtmek zorunludur."),
+    h("div", { class: "nc-current" }, "Mevcut ad: ", h("b", {}, cur)),
+    field({ label: "Yeni Ad", id: "nc_new", placeholder: "Yeni mekan adı" }),
+    field({ label: "Değişiklik Nedeni (zorunlu)", id: "nc_reason", placeholder: "Örn. Marka değişikliği, yazım düzeltmesi…", multiline: true }));
+  modal({ title: "Mekan Adını Değiştir", body, actions: [
+    { label: "Vazgeç", variant: "ghost", onClick: () => {} },
+    { label: "Talebi Gönder", ic: "send", keepOpen: true, onClick: async (close) => {
+      const nn = v("#nc_new"), rs = v("#nc_reason");
+      if (!nn) return toast("Yeni ad gir", "err");
+      if (nn === cur) return toast("Ad zaten aynı", "err");
+      if (rs.length < 5) return toast("Nedeni belirt (en az 5 karakter)", "err");
+      try {
+        await requestNameChange(session.user.uid, { currentName: cur, requestedName: nn, reason: rs, reporterName: cur });
+        await refreshProfile(); toast("Talebin yöneticiye gönderildi"); close(); renderProfile(root);
+      } catch (e) { toast("Gönderilemedi", "err"); }
+    } },
+  ] });
+}
+
+// Sorun / talep bildir → reports (yönetici görür)
+function reportModal() {
+  const body = h("div", {},
+    field({ label: "Konu", id: "rp_sub", placeholder: "Kısa başlık" }),
+    field({ label: "Mesaj", id: "rp_msg", placeholder: "Sorununu ya da talebini yaz…", multiline: true }));
+  modal({ title: "Sorun Bildir", body, actions: [
+    { label: "Vazgeç", variant: "ghost", onClick: () => {} },
+    { label: "Gönder", ic: "send", keepOpen: true, onClick: async (close) => {
+      const msg = v("#rp_msg");
+      if (!msg) return toast("Mesaj yaz", "err");
+      try { await submitReport(session.user.uid, { subject: v("#rp_sub"), message: msg, reporterName: session.profile?.displayName || "", reporterType: "venue" }); toast("Bildirimin alındı, teşekkürler"); close(); }
+      catch (e) { toast("Gönderilemedi", "err"); }
+    } },
+  ] });
 }
 
 // ── Etkinlik oluştur (sanatçı seçme + teklif dahil) ──
@@ -220,26 +314,44 @@ async function renderArtists(root) {
   let artists = [];
   try { artists = await listArtists(); } catch (_) {}
   clear(root);
-  let genre = "Tümü", term = "";
+  const lc = (s) => (s || "").toLocaleLowerCase("tr-TR");
+  const myCity = (session.profile?.city || "").trim();
+  let genre = "Tümü", term = "", cityFilter = null;
+
+  // Sanatçısı olan şehirler (mekanın şehri önce)
+  const cities = [...new Set(artists.map((a) => (a.city || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "tr"));
+  if (myCity) cities.sort((a, b) => (lc(a) === lc(myCity) ? -1 : lc(b) === lc(myCity) ? 1 : 0));
+
   const box = h("div", { class: "list-card" });
   const draw = () => {
     clear(box);
     const g = genre === "Tümü" ? null : genre;
     const t = term.trim().toLocaleLowerCase("tr-TR");
+    const cf = cityFilter ? lc(cityFilter) : null;
     const filtered = artists.filter((a) => {
       const ag = Array.isArray(a.genres) ? a.genres[0] : a.genre;
-      const name = (a.displayName || a.name || "").toLocaleLowerCase("tr-TR");
-      return (!g || ag === g) && (!t || name.includes(t));
+      const matchG = !g || ag === g;
+      const matchT = !t || lc(a.displayName || a.name).includes(t) || lc(a.city).includes(t);
+      const matchC = !cf || lc((a.city || "").trim()) === cf;
+      return matchG && matchT && matchC;
     });
-    if (!filtered.length) { box.append(empty("people-outline", "Sanatçı yok", "Filtreyi değiştirmeyi dene.")); return; }
+    if (!filtered.length) { box.append(empty("people-outline", "Sanatçı yok", cityFilter ? `${cityFilter} şehrinde sanatçı yok.` : "Filtreyi değiştirmeyi dene.")); return; }
     filtered.forEach((a) => box.append(artistRow(a)));
   };
-  const search = h("input", { placeholder: "Sanatçı ara…", oninput: (e) => { term = e.target.value; draw(); } });
-  const chips = h("div", { class: "chip-row" }, ...GENRE_FILTERS.map((g) => {
-    const c = h("button", { class: "chip" + (g === genre ? " on" : ""), onclick: () => { genre = g; [...chips.children].forEach((x) => x.classList.remove("on")); c.classList.add("on"); draw(); } }, g);
+
+  const search = h("input", { placeholder: "Sanatçı ya da şehir ara…", oninput: (e) => { term = e.target.value; draw(); } });
+  const gChips = h("div", { class: "chip-row" }, ...GENRE_FILTERS.map((g) => {
+    const c = h("button", { class: "chip" + (g === genre ? " on" : ""), onclick: () => { genre = g; [...gChips.children].forEach((x) => x.classList.remove("on")); c.classList.add("on"); draw(); } }, g);
     return c;
   }));
-  root.append(sect("Sanatçı Bul", "search-outline", 0, h("div", { class: "filter-wrap" }, search, chips), box));
+  const cChips = h("div", { class: "chip-row" });
+  const mkCity = (label, val) => { const c = h("button", { class: "chip" + ((cityFilter || "") === (val || "") ? " on" : ""), onclick: () => { cityFilter = val; [...cChips.children].forEach((x) => x.classList.remove("on")); c.classList.add("on"); draw(); } }, label); return c; };
+  cChips.append(mkCity("Tüm Şehirler", null), ...cities.map((c) => mkCity(c, c)));
+
+  const filters = [h("div", { class: "filter-wrap" }, search),
+    h("div", { class: "filter-label" }, "Tür"), gChips];
+  if (cities.length) filters.push(h("div", { class: "filter-label" }, "Şehir"), cChips);
+  root.append(sect("Sanatçı Bul", "search-outline", 0, ...filters, box));
   draw();
 }
 function artistRow(a) {

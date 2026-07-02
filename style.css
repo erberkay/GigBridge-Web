@@ -192,6 +192,12 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
 .chip { padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; }
 .chip.on { background: var(--role); border-color: var(--role); color: #fff; }
+.filter-label { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 12px; }
+.grow { flex: 1 1 auto; min-width: 0; }
+/* İsim değişikliği talebi bandı */
+.nc-banner { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--role); background: color-mix(in srgb, var(--role) 12%, transparent); font-size: 13px; }
+.nc-cancel { flex: 0 0 auto; background: none; border: none; color: var(--role); font-weight: 700; font-size: 12.5px; cursor: pointer; text-decoration: underline; }
+.nc-current { font-size: 13.5px; color: var(--text-secondary); margin-bottom: 10px; }
 
 /* Konuşma satırı */
 .lrow.clickable { cursor: pointer; }

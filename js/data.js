@@ -77,6 +77,44 @@ export async function listReports() {
 }
 export async function resolveReport(id) { await updateDoc(doc(db, "reports", id), { status: "resolved", resolvedAt: serverTimestamp() }); }
 
+// Sorun / talep bildir (reports). Mekan yalnız kendi reporterId'siyle yazabilir.
+export async function submitReport(uid, { subject, message, reporterName, reporterType, extra = {} }) {
+  await addDoc(collection(db, "reports"), {
+    reporterId: uid, subject: subject || "", message: message || "",
+    reporterName: reporterName || "", reporterType: reporterType || "",
+    type: "report", status: "pending", createdAt: serverTimestamp(), ...extra,
+  });
+}
+
+// ── Mekan adı değişikliği: yönetici onaylı istek (reports + kendi dokümanında durum) ──
+export async function requestNameChange(uid, { currentName, requestedName, reason, reporterName }) {
+  await addDoc(collection(db, "reports"), {
+    reporterId: uid, targetUserId: uid, type: "name_change",
+    subject: "Mekan adı değişikliği talebi",
+    reporterName: reporterName || currentName || "", reporterType: "venue",
+    currentName: currentName || "", requestedName,
+    reason: reason || "", message: reason || "",
+    status: "pending", createdAt: serverTimestamp(),
+  });
+  // Mekanın kendi panelinde "inceleniyor" göstermek için (kendi dokümanını okuyabilir/yazabilir)
+  try { await updateDoc(doc(db, "users", uid), { nameChangeStatus: "pending", nameChangeRequested: requestedName, nameChangeReason: reason || "" }); } catch (_) {}
+}
+export async function cancelNameChange(uid) {
+  try { await updateDoc(doc(db, "users", uid), { nameChangeStatus: null, nameChangeRequested: null, nameChangeReason: null }); } catch (_) {}
+}
+// Onaylanan istek uygulandıysa mekanın kendi bayrağını temizle (displayName artık yeni ad)
+export async function clearNameChangeFlag(uid) {
+  try { await updateDoc(doc(db, "users", uid), { nameChangeStatus: null, nameChangeRequested: null, nameChangeReason: null }); } catch (_) {}
+}
+// Admin: adı onayla → users.displayName güncelle (KURAL: admin displayName+displayNameChangedAt yazabilmeli) + isteği çöz.
+export async function approveNameChange(req) {
+  await updateDoc(doc(db, "users", req.targetUserId), { displayName: req.requestedName, displayNameChangedAt: serverTimestamp() });
+  await updateDoc(doc(db, "reports", req.id), { status: "resolved", decision: "approved", resolvedAt: serverTimestamp() });
+}
+export async function rejectNameChange(req) {
+  await updateDoc(doc(db, "reports", req.id), { status: "resolved", decision: "rejected", resolvedAt: serverTimestamp() });
+}
+
 // venueRequests durum güncelle
 export async function setRequestStatus(id, status, extra = {}) {
   await updateDoc(doc(db, "venueRequests", id), { status, updatedAt: serverTimestamp(), ...extra });
