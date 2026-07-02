@@ -166,3 +166,21 @@ export function fmtDate(v) {
     if (isNaN(d)) return typeof v === "string" ? v : ""; return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" }); } catch { return ""; }
 }
 export function fmtTL(n) { const x = Number(n); return isFinite(x) && x > 0 ? "₺" + x.toLocaleString("tr-TR") : "—"; }
+
+// Leaflet haritasını tek sefer dinamik yükle → window.L (harita + konum pin)
+let _leaflet = null;
+export function loadLeaflet() {
+  if (_leaflet) return _leaflet;
+  _leaflet = new Promise((resolve, reject) => {
+    if (window.L) return resolve(window.L);
+    if (!document.querySelector("link[data-leaflet]")) {
+      const css = document.createElement("link");
+      css.rel = "stylesheet"; css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      css.setAttribute("data-leaflet", "1"); document.head.append(css);
+    }
+    const s = document.createElement("script");
+    s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    s.onload = () => resolve(window.L); s.onerror = reject; document.head.append(s);
+  });
+  return _leaflet;
+}

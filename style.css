@@ -292,3 +292,11 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .notif-text { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
 .notif-time { color: var(--text-muted); font-size: 11px; margin-top: 4px; }
 .notif-x { background: none; border: none; color: var(--text-muted); cursor: pointer; }
+
+/* Mekan konum pinleme */
+.pin-map { height: 260px; min-height: 260px; }
+.pin-info { color: var(--text-secondary); font-size: 13px; margin-bottom: 8px; }
+.pin-actions { display: flex; gap: 8px; margin-top: 10px; }
+.pin-actions .btn { flex: 1; margin-top: 0; }
+.pin-clear { flex: 1; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-secondary); border-radius: 12px; padding: 13px; cursor: pointer; font-weight: 700; font-size: 14px; }
+.pin-clear:hover { color: var(--text); }

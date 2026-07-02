@@ -2,7 +2,7 @@
 import { session, logout, refreshProfile } from "../store.js";
 import { venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, saveProfile,
   createEvent, listArtists, createInvitation, createResidency, venueStats, uploadImage } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, fmtTL, ROLE } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, fmtTL, ROLE, loadLeaflet } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 
 const GENRES = ["Electronic", "House", "Techno", "Jazz", "Pop", "Rock", "Akustik", "Hip-Hop", "R&B", "Klasik", "Diğer"];
@@ -99,17 +99,49 @@ async function renderProfile(root) {
     field({ label: "Kapasite", id: "pcap", type: "number", value: p.capacity || "", placeholder: "Örn. 300" }),
     field({ label: "Web Sitesi", id: "pweb", value: p.website || "", placeholder: "https://…" }),
   );
+
+  // ── Konum pinleme (haritada görünmek için lat/lng gerekir) ──
+  let pin = (p.location && p.location.lat != null) ? { lat: p.location.lat, lng: p.location.lng } : null;
+  const pinInfo = h("div", { class: "pin-info" }, pin ? ("📍 " + pin.lat.toFixed(5) + ", " + pin.lng.toFixed(5)) : "Haritaya tıklayarak mekanının tam yerini işaretle.");
+  const mapEl = h("div", { class: "map-el pin-map" });
+  let setPin = () => {};
+  const useLoc = btn("Konumumu Kullan", { ic: "locate-outline", variant: "ghost", onClick: () => {
+    if (!navigator.geolocation) { toast("Tarayıcı konumu desteklemiyor", "err"); return; }
+    navigator.geolocation.getCurrentPosition((pos) => setPin(pos.coords.latitude, pos.coords.longitude, true), () => toast("Konum alınamadı (izin?)", "err"));
+  } });
+  const clearPin = h("button", { type: "button", class: "pin-clear", onclick: () => { pin = null; pinInfo.textContent = "Haritaya tıklayarak mekanının tam yerini işaretle."; setPin("__clear__"); } }, "Pini kaldır");
+  loadLeaflet().then((L) => {
+    const map = L.map(mapEl).setView(pin ? [pin.lat, pin.lng] : [39, 35], pin ? 15 : 6);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap", maxZoom: 19 }).addTo(map);
+    let marker = pin ? L.marker([pin.lat, pin.lng]).addTo(map) : null;
+    setPin = (lat, lng, recenter) => {
+      if (lat === "__clear__") { if (marker) { map.removeLayer(marker); marker = null; } return; }
+      pin = { lat, lng };
+      if (marker) marker.setLatLng([lat, lng]); else marker = L.marker([lat, lng]).addTo(map);
+      pinInfo.textContent = "📍 " + lat.toFixed(5) + ", " + lng.toFixed(5);
+      if (recenter) map.setView([lat, lng], 16);
+    };
+    map.on("click", (e) => setPin(e.latlng.lat, e.latlng.lng));
+    setTimeout(() => map.invalidateSize(), 300);
+  }).catch(() => mapEl.append(h("p", { class: "muted small" }, "Harita yüklenemedi.")));
+
   const saveMsg = h("p", { class: "msg" });
   const save = btn("Kaydet", { ic: "save-outline", full: true, onClick: async () => {
     const patch = {
       city: v("#pcity"), district: v("#pdistrict") || null, address: v("#paddress"),
       phone: v("#pphone"), website: v("#pweb"),
       capacity: v("#pcap") ? Number(v("#pcap")) : null,
+      location: pin ? { lat: pin.lat, lng: pin.lng, city: v("#pcity") || null } : null,
     };
     try { if (pic.getFile()) patch.photoURL = await uploadImage(pic.getFile(), session.user.uid); await saveProfile(session.user.uid, patch); await refreshProfile(); toast("Profil kaydedildi"); }
     catch (e) { saveMsg.textContent = "Kaydedilemedi."; saveMsg.className = "msg err"; }
   } });
-  root.append(sect("Mekan Bilgileri", "business-outline", 0, form), save, saveMsg,
+  root.append(
+    sect("Mekan Bilgileri", "business-outline", 0, form),
+    sect("Mekan Konumu", "location-outline", 0,
+      h("p", { class: "muted small mb6" }, "Etkinliklerinin müşteri haritasında görünmesi için mekanının yerini pinle."),
+      pinInfo, mapEl, h("div", { class: "pin-actions" }, useLoc, clearPin)),
+    save, saveMsg,
     h("p", { class: "muted small center" }, "Mekan adını değiştirmek 90 günde bir uygulamadan yapılır."));
 }
 
