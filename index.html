@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GigBridge · Mekan Üyeliği</title>
+  <meta name="description" content="GigBridge'e mekan olarak katıl — sanatçılarla buluş, etkinliklerini yayınla." />
+  <link rel="preconnect" href="https://www.gstatic.com" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-name">GigBridge</span>
+      </div>
+      <h1 class="hero-title">Mekan Üyeliği</h1>
+      <p class="hero-sub">
+        Mekanını GigBridge'e ekle; sanatçılarla buluş, etkinliklerini yayınla,
+        dinleyicilere ulaş. Başvurun ekibimizce onaylandıktan sonra uygulamadan
+        <strong>aynı e-posta ve şifreyle</strong> giriş yaparsın.
+      </p>
+    </header>
+
+    <section class="card" id="formCard">
+      <h2 class="card-title">Mekan Hesabı Oluştur</h2>
+
+      <form id="signupForm" novalidate>
+        <label class="field">
+          <span class="label">Mekan Adı *</span>
+          <input id="venueName" type="text" autocomplete="organization" placeholder="Örn. Babylon Club" required />
+        </label>
+
+        <label class="field">
+          <span class="label">E-posta *</span>
+          <input id="email" type="email" autocomplete="email" placeholder="mekan@ornek.com" required />
+        </label>
+
+        <label class="field">
+          <span class="label">Şifre *</span>
+          <input id="password" type="password" autocomplete="new-password" placeholder="En az 6 karakter" minlength="6" required />
+          <span class="hint">Uygulamadan giriş yaparken de bu şifreyi kullanacaksın.</span>
+        </label>
+
+        <div class="row">
+          <label class="field">
+            <span class="label">Şehir</span>
+            <input id="city" type="text" list="cityList" placeholder="Örn. İstanbul" autocomplete="address-level1" />
+            <datalist id="cityList"></datalist>
+          </label>
+          <label class="field">
+            <span class="label">Telefon</span>
+            <input id="phone" type="tel" inputmode="tel" placeholder="05xx xxx xx xx" autocomplete="tel" />
+          </label>
+        </div>
+
+        <button id="submitBtn" type="submit" class="btn">Başvuruyu Gönder</button>
+
+        <p id="msg" class="msg" role="status" aria-live="polite"></p>
+      </form>
+
+      <div id="successBox" class="success hidden">
+        <div class="success-icon">✓</div>
+        <h3>Başvurun alındı!</h3>
+        <p>
+          Hesabın oluşturuldu. GigBridge ekibi mekanını <strong>onayladıktan sonra</strong>
+          uygulamayı açıp <strong>aynı e-posta ve şifreyle</strong> giriş yapabilirsin.
+          Onaya kadar uygulamada "onay bekleniyor" ekranını görürsün.
+        </p>
+      </div>
+
+      <p class="foot-note">
+        Zaten üye misin? Uygulamayı açıp müşteri giriş ekranından e-posta ve şifrenle giriş yap.
+      </p>
+    </section>
+
+    <footer class="footer">
+      <p>© GigBridge · Mekan üyeliği başvuru sayfası</p>
+    </footer>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
