@@ -1,6 +1,6 @@
 // Önyükleme + hash router + rol/onay guard'ları.
 import { initAuth, session, onSession, homeRouteFor } from "./store.js";
-import { landing, login, register, pending, adminLogin, unsupported, setup } from "./pages/auth.js";
+import { landing, login, register, pending, adminLogin, unsupported, setup, verify } from "./pages/auth.js";
 import { adminPage } from "./pages/admin.js";
 import { venuePage } from "./pages/venue.js";
 import { organizerPage } from "./pages/organizer.js";
@@ -20,6 +20,10 @@ function resolve() {
 
   const authed = !!s.user;
   if (!authed) return PUBLIC.includes(b) ? b : "#/";
+
+  // E-posta doğrulanmadıysa doğrulama ekranına kapıla (Google hesapları verified gelir,
+  // buraya düşmez). Doğrulanınca aşağıdaki rol/onay mantığı devreye girer.
+  if (!s.user.emailVerified) return "#/verify";
 
   // Girişli (yönetici değil) → rol + onaya göre ev
   const home = homeRouteFor(s.profile); // #/venue | #/organizer | #/pending | #/unsupported
@@ -43,6 +47,7 @@ function render() {
   else if (b === "#/login") node = login();
   else if (b === "#/register") node = register();
   else if (b === "#/pending") node = pending();
+  else if (b === "#/verify") node = verify();
   else if (b === "#/yonetici") node = adminLogin();
   else if (b === "#/setup") node = setup();
   else if (b === "#/unsupported") node = unsupported();

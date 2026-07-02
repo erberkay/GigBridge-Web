@@ -2,9 +2,9 @@
 import {
   auth, db, doc, setDoc, serverTimestamp,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
-  GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail,
+  GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification,
 } from "../firebase.js";
-import { session, logout, computeIsAdmin, refreshProfile } from "../store.js";
+import { session, logout, computeIsAdmin, refreshProfile, recheckEmailVerified } from "../store.js";
 import { h, icon, btn, field, card, toast, ROLE } from "../ui.js";
 
 const PROVINCES = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkâri","Hatay","Iğdır","Isparta","İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars","Kastamonu","Kayseri","Kilis","Kırıkkale","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu","Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli","Uşak","Van","Yalova","Yozgat","Zonguldak"];
@@ -138,7 +138,8 @@ export function register() {
         ...(role === "organizer" ? { orgName: name } : {}),
         ...(role === "venue" && city ? { city } : {}),
       });
-      location.hash = "#/pending"; // router bekleme ekranına götürür
+      try { await sendEmailVerification(user); } catch (_) {} // doğrulama bağlantısı
+      location.hash = "#/verify"; // önce e-posta doğrulama, sonra onay bekleme
     } catch (err) { fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = "Başvuruyu Gönder"; }
   };
 
@@ -201,6 +202,45 @@ export function pending() {
       h("p", { class: "center muted" }, (name ? name + " " : "") + "hesabın oluşturuldu. GigBridge ekibi onayladıktan sonra panel açılır ve uygulamadan aynı hesapla giriş yapabilirsin."),
       btn("Durumu Yenile", { variant: "ghost", ic: "refresh-outline", full: true, onClick: () => location.reload() }),
       btn("Çıkış Yap", { variant: "ghost", ic: "log-out-outline", full: true, onClick: logout }),
+    ));
+}
+
+// ── E-posta doğrulama (parola hesapları; Google zaten doğrulanmış gelir) ──
+export function verify() {
+  const u = session.user;
+  const msg = h("p", { class: "msg" });
+
+  const contBtn = (() => { const x = btn("Doğruladım, Devam Et", { ic: "checkmark-circle-outline", full: true }); x.id = "vcont"; return x; })();
+  contBtn.onclick = async () => {
+    msg.textContent = ""; msg.className = "msg";
+    contBtn.disabled = true; contBtn.querySelector("span").textContent = "Kontrol ediliyor…";
+    try { await auth.currentUser?.reload(); } catch (_) {}   // sunucudan taze durum
+    if (auth.currentUser && auth.currentUser.emailVerified) {
+      await recheckEmailVerified();   // emit → router bir sonraki ekrana (pending) taşır
+    } else {
+      fail(msg, "E-posta henüz doğrulanmamış görünüyor. Gelen kutundaki bağlantıya tıkladıktan sonra tekrar dene.");
+      contBtn.disabled = false; contBtn.querySelector("span").textContent = "Doğruladım, Devam Et";
+    }
+  };
+
+  const resendBtn = (() => { const x = btn("Doğrulama e-postasını tekrar gönder", { variant: "ghost", ic: "mail-outline", full: true }); x.id = "vresend"; return x; })();
+  resendBtn.onclick = async () => {
+    msg.textContent = ""; msg.className = "msg";
+    if (!auth.currentUser) return fail(msg, "Oturum bulunamadı, tekrar giriş yap.");
+    resendBtn.disabled = true;
+    try { await sendEmailVerification(auth.currentUser); msg.textContent = "Doğrulama e-postası tekrar gönderildi."; msg.className = "msg ok"; }
+    catch (err) { fail(msg, (err && err.code) === "auth/too-many-requests" ? "Çok sık denedin, biraz bekleyip tekrar dene." : "Gönderilemedi, tekrar dene."); }
+    finally { resendBtn.disabled = false; }
+  };
+
+  return shell(hero("E-postanı Doğrula", null),
+    card(
+      h("div", { class: "pending-icon" }, icon("mail-unread-outline", { size: 34, color: "#fff" })),
+      h("h3", { class: "center" }, "Doğrulama bağlantısı gönderildi"),
+      h("p", { class: "center muted" }, (u && u.email ? u.email : "E-posta adresine") + " adresine bir doğrulama bağlantısı gönderdik. Bağlantıya tıklayıp bu sayfaya dönerek \"Doğruladım\"a bas."),
+      contBtn, resendBtn,
+      btn("Çıkış Yap", { variant: "ghost", ic: "log-out-outline", full: true, onClick: logout }),
+      msg,
     ));
 }
 

@@ -45,6 +45,16 @@ export async function refreshProfile() {
   emit();
 }
 
+// E-posta doğrulama durumunu SUNUCUDAN tazele (kullanıcı bağlantıya tıkladıktan sonra).
+// user.reload() emailVerified'ı günceller; sonra router'ı tetiklemek için emit.
+export async function recheckEmailVerified() {
+  if (auth.currentUser) {
+    try { await auth.currentUser.reload(); } catch (_) {}
+    session.user = auth.currentUser;
+  }
+  emit();
+}
+
 export async function logout() {
   await signOut(auth);
   location.hash = "#/";
