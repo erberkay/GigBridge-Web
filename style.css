@@ -70,6 +70,9 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); }
 input:focus, textarea:focus, select:focus { outline: none; border-color: var(--role); box-shadow: 0 0 0 3px rgba(168,85,247,0.14); }
 .msg { margin-top: 12px; font-size: 14px; text-align: center; min-height: 16px; }
 .msg.err { color: var(--error); } .msg.ok { color: var(--success); }
+.forgot-row { display: flex; justify-content: flex-end; margin: -4px 0 10px; }
+.forgot-link { color: var(--primary); font-size: 13px; text-decoration: none; cursor: pointer; }
+.forgot-link:hover { text-decoration: underline; }
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 16px; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; transition: transform 0.08s, opacity 0.15s, background 0.15s; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }

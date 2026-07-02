@@ -2,7 +2,7 @@
 import {
   auth, db, doc, setDoc, serverTimestamp,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
-  GoogleAuthProvider, signInWithPopup,
+  GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail,
 } from "../firebase.js";
 import { session, logout, computeIsAdmin, refreshProfile } from "../store.js";
 import { h, icon, btn, field, card, toast, ROLE } from "../ui.js";
@@ -57,7 +57,7 @@ const orSep = () => h("div", { class: "sep" }, "veya");
 // ── Landing ──
 export function landing() {
   return shell(
-    hero("Mekan & Organizatör Paneli", "GigBridge'e mekan ya da organizatör olarak katıl; giriş yap, etkinliklerini yönet. Yeni hesaplar yönetici onayından sonra aktifleşir."),
+    hero("Mekan & Organizatör Paneli", "GigBridge'e mekan ya da organizatör olarak katıl; giriş yap, etkinliklerini yönet."),
     card(
       btn("Giriş Yap", { ic: "log-in-outline", full: true, onClick: () => (location.hash = "#/login") }),
       h("div", { class: "sep" }, "veya"),
@@ -79,9 +79,24 @@ export function login() {
     try { await signInWithEmailAndPassword(auth, email, pass); /* router yönlendirir */ }
     catch (err) { fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = "Giriş Yap"; }
   };
+  // Şifremi unuttum — e-posta alanındaki adrese sıfırlama bağlantısı gönderir
+  const forgot = h("a", { href: "#", class: "forgot-link", onclick: async (e) => {
+    e.preventDefault();
+    msg.textContent = ""; msg.className = "msg";
+    const email = q("#lemail").value.trim();
+    if (!email) { fail(msg, "Önce e-posta adresini gir."); q("#lemail").focus(); return; }
+    const link = e.currentTarget; const old = link.textContent;
+    link.style.pointerEvents = "none"; link.textContent = "Gönderiliyor…";
+    try {
+      await sendPasswordResetEmail(auth, email);
+      msg.textContent = "Şifre sıfırlama bağlantısı e-postana gönderildi."; msg.className = "msg ok";
+    } catch (err) { fail(msg, trError(err && err.code)); }
+    finally { link.style.pointerEvents = ""; link.textContent = old; }
+  } }, "Şifremi unuttum");
   const form = h("form", { onsubmit: submit },
     field({ label: "E-posta", id: "lemail", type: "email", placeholder: "mekan@ornek.com" }),
     field({ label: "Şifre", id: "lpass", type: "password", placeholder: "Şifren" }),
+    h("div", { class: "forgot-row" }, forgot),
     (() => { const x = btn("Giriş Yap", { full: true }); x.id = "lbtn"; return x; })(),
     orSep(),
     googleBtn(msg),
