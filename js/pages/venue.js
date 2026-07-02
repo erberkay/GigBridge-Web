@@ -1,8 +1,8 @@
 // Mekan paneli — Ana Sayfa (etkinlikler + organizatör istekleri), Profil. (Faz 2: oluşturma, sanatçı bul, mesaj)
 import { session, logout, refreshProfile } from "../store.js";
 import { venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, saveProfile,
-  createEvent, listArtists, createInvitation } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, modal, fmtDate, fmtTL, ROLE } from "../ui.js";
+  createEvent, listArtists, createInvitation, uploadImage } from "../data.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, fmtTL, ROLE } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 
 const GENRES = ["Electronic", "House", "Techno", "Jazz", "Pop", "Rock", "Akustik", "Hip-Hop", "R&B", "Klasik", "Diğer"];
@@ -84,9 +84,11 @@ function eventCard(ev) {
 async function renderProfile(root) {
   clear(root);
   const p = session.profile || {};
+  const pic = photoPicker("Mekan / profil fotoğrafı (opsiyonel)");
   const form = h("form", { class: "form-card", onsubmit: (e) => e.preventDefault() },
     h("div", { class: "profile-head" }, avatar(p.displayName, ROLE.venue),
       h("div", {}, h("div", { class: "ph-name" }, p.displayName || "Mekan"), h("div", { class: "ph-mail" }, p.email || ""))),
+    pic.node,
     field({ label: "Şehir", id: "pcity", value: p.city || "", placeholder: "Örn. İstanbul" }),
     field({ label: "İlçe", id: "pdistrict", value: p.district || "", placeholder: "Örn. Kadıköy" }),
     field({ label: "Adres", id: "paddress", value: p.address || "", placeholder: "Açık adres", multiline: true }),
@@ -101,7 +103,7 @@ async function renderProfile(root) {
       phone: v("#pphone"), website: v("#pweb"),
       capacity: v("#pcap") ? Number(v("#pcap")) : null,
     };
-    try { await saveProfile(session.user.uid, patch); await refreshProfile(); toast("Profil kaydedildi"); }
+    try { if (pic.getFile()) patch.photoURL = await uploadImage(pic.getFile(), session.user.uid); await saveProfile(session.user.uid, patch); await refreshProfile(); toast("Profil kaydedildi"); }
     catch (e) { saveMsg.textContent = "Kaydedilemedi."; saveMsg.className = "msg err"; }
   } });
   root.append(sect("Mekan Bilgileri", "business-outline", 0, form), save, saveMsg,
@@ -112,7 +114,9 @@ async function renderProfile(root) {
 async function renderCreate(root) {
   clear(root);
   let vip = false;
+  const pic = photoPicker("Etkinlik kapağı ekle (opsiyonel)");
   const form = h("form", { class: "form-card", onsubmit: (e) => e.preventDefault() },
+    pic.node,
     field({ label: "Etkinlik Adı", id: "ctitle", placeholder: "Örn. Cumartesi Gecesi" }),
     h("div", { class: "frow" }, field({ label: "Tarih", id: "cdate", type: "date" }), field({ label: "Saat", id: "ctime", type: "time" })),
     field({ label: "Tür", id: "cgenre", options: [{ value: "", label: "Tür seç" }, ...GENRES.map((g) => ({ value: g, label: g }))] }),
@@ -127,8 +131,11 @@ async function renderCreate(root) {
     const f = { title: v("#ctitle"), date: v("#cdate"), time: v("#ctime"), genre: v("#cgenre"), price: v("#cprice"), capacity: v("#ccap"), description: v("#cdesc"), vip };
     if (!f.title) return fail(msg, "Etkinlik adı gir.");
     if (!f.date) return fail(msg, "Tarih seç.");
-    try { await createEvent(session.profile, f); toast(vip ? "Yayınlandı — VIP onayına düştü" : "Etkinlik yayınlandı"); location.hash = "#/venue"; }
-    catch (e) { fail(msg, "Oluşturulamadı."); }
+    try {
+      if (pic.getFile()) { msg.textContent = "Fotoğraf yükleniyor…"; msg.className = "msg"; f.bannerUrl = await uploadImage(pic.getFile(), session.user.uid); }
+      await createEvent(session.profile, f);
+      toast(vip ? "Yayınlandı — VIP onayına düştü" : "Etkinlik yayınlandı"); location.hash = "#/venue";
+    } catch (e) { fail(msg, "Oluşturulamadı."); }
   } });
   root.append(sect("Yeni Etkinlik", "add-circle-outline", 0, form), submit, msg);
 }
@@ -156,7 +163,8 @@ function artistRow(a) {
 }
 function inviteModal(a) {
   const name = a.displayName || a.name || "Sanatçı";
-  const body = h("div", {},
+  const pic = photoPicker("Etkinlik fotoğrafı (opsiyonel)");
+  const body = h("div", {}, pic.node,
     h("div", { class: "frow" }, field({ label: "Tarih", id: "idate", type: "date" }), field({ label: "Saat", id: "itime", type: "time" })),
     field({ label: "Ücret (₺)", id: "ifee", type: "number", placeholder: "En az 3500" }),
     field({ label: "Mesaj (opsiyonel)", id: "imsg", placeholder: "…", multiline: true }));
@@ -166,7 +174,7 @@ function inviteModal(a) {
       const f = { date: v("#idate"), time: v("#itime"), fee: v("#ifee"), message: v("#imsg") };
       if (!f.date || !f.time) return toast("Tarih ve saat gir", "err");
       if (!(Number(f.fee) >= 3500)) return toast("Ücret en az ₺3.500", "err");
-      try { await createInvitation(session.profile, a, f); toast("Davet gönderildi"); close(); } catch (e) { toast("Gönderilemedi", "err"); }
+      try { if (pic.getFile()) f.photoUrl = await uploadImage(pic.getFile(), session.user.uid); await createInvitation(session.profile, a, f); toast("Davet gönderildi"); close(); } catch (e) { toast("Gönderilemedi", "err"); }
     } },
   ] });
 }

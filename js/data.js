@@ -2,7 +2,16 @@
 import {
   db, collection, doc, getDoc, getDocs, updateDoc, addDoc, setDoc,
   query, where, orderBy, onSnapshot, serverTimestamp, arrayRemove, increment,
+  storage, ref, uploadBytes, getDownloadURL,
 } from "./firebase.js";
+
+// Görsel yükle (Storage) → indirilebilir URL. event_banners/{uid}/... sahibe yazılabilir.
+export async function uploadImage(file, uid) {
+  if (!file) return null;
+  const r = ref(storage, `event_banners/${uid}/${Date.now()}_${(file.name || "img").replace(/[^\w.-]/g, "")}`);
+  await uploadBytes(r, file);
+  return await getDownloadURL(r);
+}
 
 const byMs = (a, b) => (msOf(b) - msOf(a));
 function msOf(x) {
@@ -120,7 +129,7 @@ export async function createEvent(venue, f) {
     genre: f.genre ? [f.genre] : [],
     ticketPrice: f.price ? Number(f.price) : null,
     description: f.description ?? "",
-    bannerUrl: null,
+    bannerUrl: f.bannerUrl ?? null,
     status: "upcoming",
     isNew: true,
     attendeeCount: 0,
@@ -144,7 +153,7 @@ export async function createInvitation(venue, artist, f) {
     artistId: artist.id, artistName: artist.displayName ?? artist.name ?? "",
     genre: (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "",
     eventDate: f.date, eventTime: f.time, fee: Number(f.fee),
-    message: f.message ?? "", photoUrl: null, eventId: null,
+    message: f.message ?? "", photoUrl: f.photoUrl ?? null, eventId: null,
     status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
   });
 }
@@ -154,7 +163,7 @@ export async function createVenueRequest(profile, venue, f) {
   await addDoc(collection(db, "venueRequests"), {
     title: f.title,
     eventDate: f.date, eventTime: f.time, description: f.description ?? "",
-    bannerUrl: null,
+    bannerUrl: f.bannerUrl ?? null,
     organizerId: profile.orgId ?? profile.id,
     organizerName: profile.orgName ?? profile.displayName ?? "",
     createdByUid: profile.id,

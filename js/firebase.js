@@ -1,8 +1,12 @@
-// Firebase — AYNI proje (djing-ba986). Web istemci anahtarları PUBLIC'tir.
-// Güvenlik Firestore/Storage kurallarıyla sağlanır.
+// Firebase — AYNI proje (djing-ba986). NOT: apiKey bir SIR DEĞİLDİR; Firebase web
+// istemci anahtarları tasarım gereği PUBLIC'tir (her web istemcisinde görünür).
+// Veriye erişimi ANAHTAR değil, Firestore/Storage KURALLARI belirler. GitHub'ın
+// "secret leak" uyarısı Firebase config için bilinen yanlış-pozitiftir. Sertleştirme:
+// Google Cloud Console'da anahtarı HTTP-referrer ile kendi alan adına kısıtla.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB6nrk5SnXMl51Qdpv_ctdFcWPrisiYbCc",
@@ -17,6 +21,11 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
+
+export {
+  ref, uploadBytes, getDownloadURL,
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
 
 // Sayfaların tek yerden alması için Firebase fonksiyonlarını yeniden dışa aktar
 export {

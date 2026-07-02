@@ -1,7 +1,7 @@
 // Organizatör paneli — Etkinlikler + gönderilen mekan istekleri, Profil. (Faz 2: mekan seç/istek gönder, mesaj)
 import { session, logout, refreshProfile } from "../store.js";
-import { organizerEvents, organizerRequests, saveProfile, listVenues, createVenueRequest } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, badge, modal, fmtDate, ROLE } from "../ui.js";
+import { organizerEvents, organizerRequests, saveProfile, listVenues, createVenueRequest, uploadImage } from "../data.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, badge, modal, fmtDate, ROLE } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 
 const NAV = [
@@ -62,7 +62,8 @@ function venueRow(vn) {
       h("button", { class: "act ok", onclick: () => requestModal(vn) }, icon("paper-plane-outline", { size: 15 }), h("span", {}, "İstek"))));
 }
 function requestModal(vn) {
-  const body = h("div", {},
+  const pic = photoPicker("Etkinlik fotoğrafı (opsiyonel)");
+  const body = h("div", {}, pic.node,
     field({ label: "Etkinlik Adı", id: "rqtitle", placeholder: "Örn. Yaz Festivali" }),
     h("div", { class: "frow" }, field({ label: "Tarih", id: "rqdate", type: "date" }), field({ label: "Saat", id: "rqtime", type: "time" })),
     field({ label: "Açıklama (opsiyonel)", id: "rqdesc", placeholder: "…", multiline: true }));
@@ -72,7 +73,7 @@ function requestModal(vn) {
       const f = { title: v("#rqtitle"), date: v("#rqdate"), time: v("#rqtime"), description: v("#rqdesc") };
       if (!f.title) return toast("Etkinlik adı gir", "err");
       if (!f.date || !f.time) return toast("Tarih ve saat gir", "err");
-      try { await createVenueRequest(session.profile, vn, f); toast("İstek gönderildi"); close(); } catch (e) { toast("Gönderilemedi", "err"); }
+      try { if (pic.getFile()) f.bannerUrl = await uploadImage(pic.getFile(), session.user.uid); await createVenueRequest(session.profile, vn, f); toast("İstek gönderildi"); close(); } catch (e) { toast("Gönderilemedi", "err"); }
     } },
   ] });
 }
@@ -115,9 +116,11 @@ function eventCard(ev) {
 async function renderProfile(root) {
   clear(root);
   const p = session.profile || {};
+  const pic = photoPicker("Organizasyon / profil fotoğrafı (opsiyonel)");
   const form = h("form", { class: "form-card", onsubmit: (e) => e.preventDefault() },
     h("div", { class: "profile-head" }, avatar(p.orgName || p.displayName, ROLE.organizer),
       h("div", {}, h("div", { class: "ph-name" }, p.orgName || p.displayName || "Organizatör"), h("div", { class: "ph-mail" }, p.email || ""))),
+    pic.node,
     field({ label: "Organizasyon Adı", id: "porg", value: p.orgName || p.displayName || "", placeholder: "Organizasyon adı" }),
     field({ label: "Şehir", id: "pcity", value: p.city || "", placeholder: "Örn. İstanbul" }),
     field({ label: "Telefon", id: "pphone", type: "tel", value: p.phone || "", placeholder: "05xx xxx xx xx" }),
@@ -126,7 +129,7 @@ async function renderProfile(root) {
   const saveMsg = h("p", { class: "msg" });
   const save = btn("Kaydet", { ic: "save-outline", full: true, onClick: async () => {
     const patch = { orgName: v("#porg"), displayName: v("#porg"), city: v("#pcity"), phone: v("#pphone"), bio: v("#pbio") };
-    try { await saveProfile(session.user.uid, patch); await refreshProfile(); toast("Profil kaydedildi"); }
+    try { if (pic.getFile()) patch.photoURL = await uploadImage(pic.getFile(), session.user.uid); await saveProfile(session.user.uid, patch); await refreshProfile(); toast("Profil kaydedildi"); }
     catch (e) { saveMsg.textContent = "Kaydedilemedi."; saveMsg.className = "msg err"; }
   } });
   root.append(sect("Organizasyon Bilgileri", "megaphone-outline", 0, form), save, saveMsg);

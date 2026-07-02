@@ -170,6 +170,15 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 2px 2px; color: var(--text-secondary); font-size: 14px; font-weight: 600; }
 .switch-row input[type=checkbox] { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--role); }
 
+/* Fotoğraf seçici */
+.photo-wrap { display: block; cursor: pointer; margin-bottom: 13px; }
+.photo-input { display: none; }
+.photo-box { height: 140px; border-radius: 12px; border: 1px dashed var(--border); background-color: var(--surface-2); background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; position: relative; overflow: hidden; }
+.photo-box.has-img { border-style: solid; }
+.photo-hint { color: var(--text-muted); font-size: 13px; }
+.photo-edit { position: absolute; right: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.6); color: #fff; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 999px; }
+.photo-wrap.avatar-pick .photo-box { height: 96px; width: 96px; border-radius: 50%; margin: 0 auto; }
+
 /* Konuşma satırı */
 .lrow.clickable { cursor: pointer; }
 .lrow.clickable:hover { background: var(--surface-2); }

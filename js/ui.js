@@ -75,6 +75,21 @@ export function field({ label, id, type = "text", placeholder, value = "", hint,
   );
 }
 
+// Fotoğraf seçici — { node, getFile }. Seçilen dosya submit'te uploadImage ile yüklenir.
+export function photoPicker(label = "Fotoğraf ekle (opsiyonel)") {
+  let file = null;
+  const box = h("div", { class: "photo-box" }, icon("image-outline", { size: 26, color: "#6b6b82" }), h("span", { class: "photo-hint" }, label));
+  const input = h("input", { type: "file", accept: "image/*", class: "photo-input", onchange: (e) => {
+    file = (e.target.files || [])[0] || null;
+    if (file) {
+      box.style.backgroundImage = `url(${URL.createObjectURL(file)})`;
+      box.classList.add("has-img"); clear(box);
+      box.append(h("span", { class: "photo-edit" }, icon("camera", { size: 13, color: "#fff" }), " Değiştir"));
+    }
+  } });
+  return { node: h("label", { class: "photo-wrap" }, box, input), getFile: () => file };
+}
+
 export function card(...kids) { return h("div", { class: "card" }, ...kids); }
 
 export function section(title, subtitle, ...kids) {
