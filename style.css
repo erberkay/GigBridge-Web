@@ -78,6 +78,9 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .btn-full { width: 100%; margin-top: 6px; }
 .btn-ghost { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
 .btn-danger { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; }
+.btn-google { background: #fff; color: #202124; }
+.btn-google:hover { background: #ececf0; opacity: 1; }
+.btn-google ion-icon { color: #4285F4; }
 
 /* ───────── PANEL SHELL ───────── */
 .page { max-width: 760px; margin: 0 auto; min-height: 100vh; }

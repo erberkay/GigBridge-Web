@@ -53,6 +53,11 @@ Depo `erberkay/GigBridge-Web`. **Settings → Pages → Source: `main` / `/root`
 ## Firebase gereksinimleri
 
 - **Authentication → E-posta/Şifre** sağlayıcısı açık olmalı (uygulama kullandığı için açıktır).
+- **Google ile giriş için:** Authentication → Sign-in method → **Google** sağlayıcısını aç;
+  ayrıca Authentication → Settings → **Authorized domains**'e GitHub Pages alan adını
+  (**`erberkay.github.io`**) ekle. (E-posta/şifreden farklı olarak Google OAuth bunu ister;
+  yerelde `localhost` zaten yetkilidir.) Google ile ilk kez girenler rol seçme ekranına
+  düşer, hesabı tamamlar ve yine yönetici onayını bekler.
 - `users` create kuralı kendi uid'sine yazana izin verir; admin onayı
   `isAdmin() && onlyChanged(['approved','approvedAt','rejected'])` ile korunur (mevcut).
 - Firebase web istemci anahtarları **public**'tir; güvenlik Firestore kurallarıyla sağlanır.

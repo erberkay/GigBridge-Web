@@ -52,7 +52,7 @@ export async function logout() {
 
 // Rol + onay durumundan hedef rota
 export function homeRouteFor(profile) {
-  if (!profile) return "#/unsupported";
+  if (!profile) return "#/setup"; // Google ile yeni giriş → rol seç + hesabı tamamla
   const t = profile.userType;
   if ((t === "venue" || t === "organizer") && profile.approved === false) return "#/pending";
   if (t === "venue") return "#/venue";

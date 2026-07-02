@@ -22,6 +22,7 @@ export const db = getFirestore(app);
 export {
   signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut, onAuthStateChanged, updateProfile,
+  GoogleAuthProvider, signInWithPopup,
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 export {

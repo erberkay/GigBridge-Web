@@ -2,8 +2,9 @@
 import {
   auth, db, doc, setDoc, serverTimestamp,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
+  GoogleAuthProvider, signInWithPopup,
 } from "../firebase.js";
-import { session, logout, computeIsAdmin } from "../store.js";
+import { session, logout, computeIsAdmin, refreshProfile } from "../store.js";
 import { h, icon, btn, field, card, toast, ROLE } from "../ui.js";
 
 const PROVINCES = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkâri","Hatay","Iğdır","Isparta","İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars","Kastamonu","Kayseri","Kilis","Kırıkkale","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu","Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli","Uşak","Van","Yalova","Yozgat","Zonguldak"];
@@ -34,6 +35,25 @@ function trError(code) {
   return m[code] || "İşlem başarısız. Tekrar dene.";
 }
 
+// Google ile devam — yeni kullanıcı ise router #/setup'a (rol seç) götürür.
+function googleBtn(msg) {
+  const b = h("button", { type: "button", class: "btn btn-google btn-full", onclick: async () => {
+    b.disabled = true;
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+    catch (err) {
+      b.disabled = false;
+      const code = err && err.code;
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return;
+      fail(msg, code === "auth/unauthorized-domain"
+        ? "Bu alan Google girişine yetkili değil. Firebase → Authentication → Settings → Authorized domains'e alan adını ekleyin."
+        : code === "auth/popup-blocked" ? "Tarayıcı açılır pencereyi engelledi. İzin verip tekrar deneyin."
+        : "Google ile giriş başarısız. Tekrar deneyin.");
+    }
+  } }, icon("logo-google", { size: 18 }), h("span", {}, "Google ile devam et"));
+  return b;
+}
+const orSep = () => h("div", { class: "sep" }, "veya");
+
 // ── Landing ──
 export function landing() {
   return shell(
@@ -63,6 +83,8 @@ export function login() {
     field({ label: "E-posta", id: "lemail", type: "email", placeholder: "mekan@ornek.com" }),
     field({ label: "Şifre", id: "lpass", type: "password", placeholder: "Şifren" }),
     (() => { const x = btn("Giriş Yap", { full: true }); x.id = "lbtn"; return x; })(),
+    orSep(),
+    googleBtn(msg),
     msg,
   );
   return shell(hero("Giriş Yap", "Mekan ve organizatör hesapları buradan girer."), card(form,
@@ -110,10 +132,48 @@ export function register() {
     field({ label: "Şifre", id: "rpass", type: "password", placeholder: "En az 6 karakter", hint: "Uygulamadan giriş yaparken de bu şifreyi kullanacaksın." }),
     cityWrap,
     (() => { const x = btn("Başvuruyu Gönder", { full: true }); x.id = "rbtn"; return x; })(),
+    orSep(),
+    googleBtn(msg),
     msg,
   );
   return shell(hero("Yeni Hesap", "Mekan ya da organizatör hesabı oluştur. Başvurun yönetici onayından sonra aktifleşir."),
     card(form, h("p", { class: "foot-note" }, "Zaten üye misin? ", h("a", { href: "#/login" }, "Giriş yap"))));
+}
+
+// ── Hesabı tamamla (Google ile yeni giriş → profil yok) ──
+export function setup() {
+  const u = session.user;
+  let role = "venue";
+  const msg = h("p", { class: "msg" });
+  const cityWrap = field({ label: "Şehir", id: "scity", placeholder: "Örn. İstanbul", list: "cityList" });
+  const dl = h("datalist", { id: "cityList" }, ...PROVINCES.map((p) => h("option", { value: p })));
+  const nameField = field({ label: "Mekan Adı", id: "sname", value: u?.displayName || "", placeholder: "Örn. Babylon Club" });
+  const roleBtn = (key, label, ic) => h("button", { type: "button", class: "seg" + (role === key ? " on" : ""), dataset: { role: key },
+    onclick: () => { role = key; [...seg.children].forEach((c) => c.classList.toggle("on", c.dataset.role === key));
+      nameField.querySelector(".flabel").textContent = key === "venue" ? "Mekan Adı" : "Organizasyon Adı";
+      cityWrap.style.display = key === "venue" ? "" : "none"; } }, icon(ic, { size: 15 }), h("span", {}, label));
+  const seg = h("div", { class: "segrow" }, roleBtn("venue", "Mekan", "business-outline"), roleBtn("organizer", "Organizatör", "megaphone-outline"));
+  const submit = async (e) => {
+    e && e.preventDefault();
+    msg.textContent = ""; msg.className = "msg";
+    if (!u) return fail(msg, "Oturum bulunamadı, tekrar giriş yap.");
+    const name = q("#sname").value.trim(); const city = q("#scity").value.trim();
+    if (!name) return fail(msg, (role === "venue" ? "Mekan" : "Organizasyon") + " adını gir.");
+    const b = q("#sbtn"); b.disabled = true; b.querySelector("span").textContent = "Kaydediliyor…";
+    try {
+      await setDoc(doc(db, "users", u.uid), {
+        displayName: name, email: u.email, userType: role, photoURL: u.photoURL ?? null,
+        createdAt: serverTimestamp(), approved: false,
+        ...(role === "organizer" ? { orgName: name } : {}),
+        ...(role === "venue" && city ? { city } : {}),
+      });
+      await refreshProfile(); // → router #/pending'e götürür
+    } catch (err) { fail(msg, "Kaydedilemedi. Tekrar dene."); b.disabled = false; b.querySelector("span").textContent = "Hesabı Tamamla"; }
+  };
+  const form = h("form", { onsubmit: submit }, seg, nameField, dl, cityWrap,
+    (() => { const x = btn("Hesabı Tamamla", { full: true }); x.id = "sbtn"; return x; })(), msg);
+  return shell(hero("Hesabını Tamamla", "Google ile giriş yaptın. Rolünü seç ve bilgilerini gir; başvurun yönetici onayından sonra aktifleşir."),
+    card(form, h("p", { class: "foot-note" }, h("a", { href: "#/", onclick: (e) => { e.preventDefault(); logout(); } }, "Çıkış / farklı hesapla gir"))));
 }
 
 // ── Onay bekleme ──

@@ -1,6 +1,6 @@
 // Önyükleme + hash router + rol/onay guard'ları.
 import { initAuth, session, onSession, homeRouteFor } from "./store.js";
-import { landing, login, register, pending, adminLogin, unsupported } from "./pages/auth.js";
+import { landing, login, register, pending, adminLogin, unsupported, setup } from "./pages/auth.js";
 import { adminPage } from "./pages/admin.js";
 import { venuePage } from "./pages/venue.js";
 import { organizerPage } from "./pages/organizer.js";
@@ -44,6 +44,7 @@ function render() {
   else if (b === "#/register") node = register();
   else if (b === "#/pending") node = pending();
   else if (b === "#/yonetici") node = adminLogin();
+  else if (b === "#/setup") node = setup();
   else if (b === "#/unsupported") node = unsupported();
   else if (matches(b, "#/admin")) node = adminPage();
   else if (matches(b, "#/venue")) node = venuePage();
