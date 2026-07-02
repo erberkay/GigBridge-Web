@@ -64,6 +64,7 @@ export async function logout() {
 export function homeRouteFor(profile) {
   if (!profile) return "#/setup"; // Google ile yeni giriş → rol seç + hesabı tamamla
   const t = profile.userType;
+  if (t === "customer") return "#/kesfet"; // müşteri onay gerektirmez
   if ((t === "venue" || t === "organizer") && profile.approved === false) return "#/pending";
   if (t === "venue") return "#/venue";
   if (t === "organizer") return "#/organizer";

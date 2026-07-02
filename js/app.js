@@ -4,6 +4,7 @@ import { landing, login, register, pending, adminLogin, unsupported, setup, veri
 import { adminPage } from "./pages/admin.js";
 import { venuePage } from "./pages/venue.js";
 import { organizerPage } from "./pages/organizer.js";
+import { customerPage } from "./pages/customer.js";
 import { mount, h } from "./ui.js";
 
 const PUBLIC = ["#/", "#/login", "#/register", "#/yonetici"];
@@ -26,7 +27,15 @@ function resolve() {
   if (!s.user.emailVerified) return "#/verify";
 
   // Girişli (yönetici değil) → rol + onaya göre ev
-  const home = homeRouteFor(s.profile); // #/venue | #/organizer | #/pending | #/unsupported
+  const home = homeRouteFor(s.profile); // #/kesfet | #/venue | #/organizer | #/pending | #/unsupported
+
+  // Müşteri: sekmeler (kesfet/harita/akis/mesajlar/profil) + detaylar (etkinlik/sanatci/mekan)
+  if (home === "#/kesfet") {
+    const CUST = ["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil"];
+    if (CUST.includes(b) || matches(b, "#/etkinlik") || matches(b, "#/sanatci") || matches(b, "#/mekan")) return b;
+    return "#/kesfet";
+  }
+
   if (b === "#/pending") return home;                         // onay bittiyse ev, değilse pending
   if (b === "#/unsupported") return home === "#/unsupported" ? b : home;
   if (matches(b, "#/venue")) return home === "#/venue" ? b : home;
@@ -54,6 +63,8 @@ function render() {
   else if (matches(b, "#/admin")) node = adminPage();
   else if (matches(b, "#/venue")) node = venuePage();
   else if (matches(b, "#/organizer")) node = organizerPage();
+  else if (["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil"].includes(b)
+    || matches(b, "#/etkinlik") || matches(b, "#/sanatci") || matches(b, "#/mekan")) node = customerPage();
   else node = landing();
   mount(node instanceof Node ? node : h("div", {}, "…"));
 }

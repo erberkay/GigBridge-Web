@@ -108,24 +108,32 @@ export function login() {
 
 // ── Kayıt (mekan / organizatör) ──
 export function register() {
-  let role = "venue";
+  let role = "customer";
   const msg = h("p", { class: "msg" });
   const cityWrap = field({ label: "Şehir", id: "rcity", placeholder: "Örn. İstanbul", list: "cityList" });
+  cityWrap.style.display = "none"; // yalnız mekan rolünde görünür
   const dl = h("datalist", { id: "cityList" }, ...PROVINCES.map((p) => h("option", { value: p })));
-  const nameField = field({ label: "Mekan Adı", id: "rname", placeholder: "Örn. Babylon Club" });
+  const nameField = field({ label: "Ad Soyad", id: "rname", placeholder: "Adın soyadın" });
 
+  const labelFor = (k) => k === "venue" ? "Mekan Adı" : k === "organizer" ? "Organizasyon Adı" : "Ad Soyad";
+  const submitLabel = (k) => k === "customer" ? "Kayıt Ol" : "Başvuruyu Gönder";
   const roleBtn = (key, label, ic) => h("button", { type: "button", class: "seg" + (role === key ? " on" : ""), dataset: { role: key },
-    onclick: (e) => { role = key; [...seg.children].forEach((c) => c.classList.toggle("on", c.dataset.role === key));
-      nameField.querySelector(".flabel").textContent = key === "venue" ? "Mekan Adı" : "Organizasyon Adı";
-      cityWrap.style.display = key === "venue" ? "" : "none"; } }, icon(ic, { size: 15 }), h("span", {}, label));
-  const seg = h("div", { class: "segrow" }, roleBtn("venue", "Mekan", "business-outline"), roleBtn("organizer", "Organizatör", "megaphone-outline"));
+    onclick: () => { role = key; [...seg.children].forEach((c) => c.classList.toggle("on", c.dataset.role === key));
+      nameField.querySelector(".flabel").textContent = labelFor(key);
+      cityWrap.style.display = key === "venue" ? "" : "none";
+      const rb = q("#rbtn"); if (rb) rb.querySelector("span").textContent = submitLabel(key); } },
+    icon(ic, { size: 15 }), h("span", {}, label));
+  const seg = h("div", { class: "segrow" },
+    roleBtn("customer", "Müşteri", "person-outline"),
+    roleBtn("venue", "Mekan", "business-outline"),
+    roleBtn("organizer", "Organizatör", "megaphone-outline"));
 
   const submit = async (e) => {
     e.preventDefault();
     msg.textContent = ""; msg.className = "msg";
     const name = q("#rname").value.trim(); const email = q("#remail").value.trim();
     const pass = q("#rpass").value; const city = q("#rcity").value.trim();
-    if (!name) return fail(msg, (role === "venue" ? "Mekan" : "Organizasyon") + " adını gir.");
+    if (!name) return fail(msg, role === "customer" ? "Adını gir." : (role === "venue" ? "Mekan" : "Organizasyon") + " adını gir.");
     if (!email) return fail(msg, "E-posta gir.");
     if (pass.length < 6) return fail(msg, "Şifre en az 6 karakter olmalı.");
     const b = q("#rbtn"); b.disabled = true; b.querySelector("span").textContent = "Gönderiliyor…";
@@ -134,25 +142,26 @@ export function register() {
       try { await updateProfile(user, { displayName: name }); } catch (_) {}
       await setDoc(doc(db, "users", user.uid), {
         displayName: name, email: user.email, userType: role, photoURL: null,
-        createdAt: serverTimestamp(), approved: false,
+        createdAt: serverTimestamp(),
+        ...(role === "venue" || role === "organizer" ? { approved: false } : {}), // müşteri onay gerektirmez
         ...(role === "organizer" ? { orgName: name } : {}),
         ...(role === "venue" && city ? { city } : {}),
       });
       try { await sendEmailVerification(user); } catch (_) {} // doğrulama bağlantısı
-      location.hash = "#/verify"; // önce e-posta doğrulama, sonra onay bekleme
-    } catch (err) { fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = "Başvuruyu Gönder"; }
+      location.hash = "#/verify"; // önce e-posta doğrulama
+    } catch (err) { fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = submitLabel(role); }
   };
 
   const form = h("form", { onsubmit: submit }, seg, nameField, dl,
-    field({ label: "E-posta", id: "remail", type: "email", placeholder: "mekan@ornek.com" }),
+    field({ label: "E-posta", id: "remail", type: "email", placeholder: "ornek@email.com" }),
     field({ label: "Şifre", id: "rpass", type: "password", placeholder: "En az 6 karakter", hint: "Uygulamadan giriş yaparken de bu şifreyi kullanacaksın." }),
     cityWrap,
-    (() => { const x = btn("Başvuruyu Gönder", { full: true }); x.id = "rbtn"; return x; })(),
+    (() => { const x = btn(submitLabel(role), { full: true }); x.id = "rbtn"; return x; })(),
     orSep(),
     googleBtn(msg),
     msg,
   );
-  return shell(hero("Yeni Hesap", "Mekan ya da organizatör hesabı oluştur."),
+  return shell(hero("Yeni Hesap", "Hesap oluştur — müşteri, mekan ya da organizatör."),
     card(form, h("p", { class: "foot-note" }, "Zaten üye misin? ", h("a", { href: "#/login" }, "Giriş yap"))));
 }
 

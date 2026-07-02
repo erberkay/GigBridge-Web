@@ -1,7 +1,7 @@
 // Veri katmanı — app'in Firestore şemasıyla birebir sorgular.
 import {
-  db, collection, doc, getDoc, getDocs, updateDoc, addDoc, setDoc,
-  query, where, orderBy, onSnapshot, serverTimestamp, arrayRemove, increment,
+  db, collection, collectionGroup, doc, getDoc, getDocs, updateDoc, addDoc, setDoc, deleteDoc,
+  query, where, orderBy, limit, onSnapshot, serverTimestamp, arrayRemove, increment,
   storage, ref, uploadBytes, getDownloadURL,
 } from "./firebase.js";
 
@@ -251,3 +251,111 @@ export async function sendMessage({ fromId, fromName, fromType, toId, toName, te
 }
 
 export async function markRead(convId, uid) { try { await updateDoc(doc(db, "conversations", convId), { ["unreadCount." + uid]: 0 }); } catch (_) {} }
+
+// ══════════════ MÜŞTERİ (customer) ══════════════
+
+// Keşfet: yaklaşan etkinlikler (bugün 12s öncesinden itibaren), en yakın önce.
+export async function discoverEvents() {
+  const snap = await getDocs(query(collection(db, "events"), where("status", "==", "upcoming")));
+  const now = Date.now();
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    .filter((e) => { const ms = msOf(e); return ms === 0 || ms >= now - 12 * 3600e3; })
+    .sort((a, b) => msOf(a) - msOf(b));
+}
+export async function eventById(id) { const s = await getDoc(doc(db, "events", id)); return s.exists() ? { id, ...s.data() } : null; }
+export async function userById(id) { const s = await getDoc(doc(db, "users", id)); return s.exists() ? { id, ...s.data() } : null; }
+
+// Popüler sanatçılar (gerçek/tamamlanmış kayıtlar)
+export async function listRealArtists() {
+  const snap = await getDocs(query(collection(db, "users"), where("userType", "==", "artist")));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    .filter((a) => (a.displayName || "").trim() && (a.createdAt != null || (a.email || "").includes("@")));
+}
+
+// ── Katılım (events/{id}/attendees/{uid} + attendeeCount ±1) ──
+export async function isAttending(eventId, uid) { try { return (await getDoc(doc(db, "events", eventId, "attendees", uid))).exists(); } catch { return false; } }
+export async function attendEvent(ev, uid, displayName) {
+  await setDoc(doc(db, "events", ev.id, "attendees", uid), { userId: uid, displayName: displayName || "", joinedAt: serverTimestamp() });
+  await updateDoc(doc(db, "events", ev.id), { attendeeCount: increment(1) });
+}
+export async function unattendEvent(eventId, uid) {
+  await deleteDoc(doc(db, "events", eventId, "attendees", uid));
+  await updateDoc(doc(db, "events", eventId), { attendeeCount: increment(-1) });
+}
+export async function attendedEvents(uid) {
+  const snap = await getDocs(query(collectionGroup(db, "attendees"), where("userId", "==", uid)));
+  const out = [];
+  for (const d of snap.docs) {
+    try { const ev = await getDoc(d.ref.parent.parent); if (ev.exists()) out.push({ id: ev.id, ...ev.data(), joinedAt: d.data().joinedAt }); } catch (_) {}
+  }
+  return out.sort((a, b) => msOf(b) - msOf(a));
+}
+
+// ── Takip (following + ayna followers) ──
+export async function isFollowing(uid, artistId) { try { return (await getDoc(doc(db, "users", uid, "following", artistId))).exists(); } catch { return false; } }
+export async function followArtist(uid, artist) {
+  const name = artist.displayName ?? artist.name ?? "";
+  const genre = (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "";
+  await setDoc(doc(db, "users", uid, "following", artist.id), { artistId: artist.id, artistName: name, genre, followedAt: serverTimestamp() });
+  try { await setDoc(doc(db, "users", artist.id, "followers", uid), { followedAt: serverTimestamp() }); } catch (_) {}
+}
+export async function unfollowArtist(uid, artistId) {
+  await deleteDoc(doc(db, "users", uid, "following", artistId));
+  try { await deleteDoc(doc(db, "users", artistId, "followers", uid)); } catch (_) {}
+}
+export async function followingList(uid) { const s = await getDocs(collection(db, "users", uid, "following")); return s.docs.map((d) => ({ id: d.id, ...d.data() })); }
+
+// ── Favori mekan / etkinlik ──
+export async function isFavVenue(uid, venueId) { try { return (await getDoc(doc(db, "users", uid, "favorites", venueId))).exists(); } catch { return false; } }
+export async function favVenue(uid, v) { await setDoc(doc(db, "users", uid, "favorites", v.id), { venueId: v.id, venueName: v.displayName ?? v.name ?? "", city: v.city ?? "", addedAt: serverTimestamp() }); }
+export async function unfavVenue(uid, venueId) { await deleteDoc(doc(db, "users", uid, "favorites", venueId)); }
+export async function favVenues(uid) { const s = await getDocs(collection(db, "users", uid, "favorites")); return s.docs.map((d) => ({ id: d.id, ...d.data() })); }
+export async function isFavEvent(uid, eventId) { try { return (await getDoc(doc(db, "users", uid, "favoriteEvents", eventId))).exists(); } catch { return false; } }
+export async function favEvent(uid, ev) { await setDoc(doc(db, "users", uid, "favoriteEvents", ev.id), { title: ev.title ?? "", venue: ev.venueName ?? "", artist: ev.artistName ?? "", date: ev.date ?? "", genre: Array.isArray(ev.genre) ? ev.genre[0] : (ev.genre ?? ""), price: ev.ticketPrice ?? null, savedAt: serverTimestamp() }); }
+export async function unfavEvent(uid, eventId) { await deleteDoc(doc(db, "users", uid, "favoriteEvents", eventId)); }
+export async function favEvents(uid) { const s = await getDocs(collection(db, "users", uid, "favoriteEvents")); return s.docs.map((d) => ({ id: d.id, ...d.data() })); }
+
+// ── Yorumlar (reviews = sanatçı, venueReviews = mekan) ──
+export async function artistReviews(artistId) {
+  const s = await getDocs(query(collection(db, "reviews"), where("targetId", "==", artistId)));
+  return s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((r) => (r.targetType ?? "artist") === "artist").sort(byMs);
+}
+export async function submitArtistReview(uid, authorName, artist, rating, comment) {
+  await setDoc(doc(db, "reviews", `${uid}_${artist.id}`), { authorId: uid, authorName, authorType: "customer", targetId: artist.id, targetName: artist.displayName ?? "", targetType: "artist", rating, comment: comment ?? "", createdAt: serverTimestamp() });
+}
+export async function getVenueReviews(venueId) {
+  const s = await getDocs(query(collection(db, "venueReviews"), where("venueId", "==", venueId)));
+  return s.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byMs);
+}
+export async function submitVenueReview(uid, authorName, venue, rating, comment) {
+  await setDoc(doc(db, "venueReviews", `${uid}_${venue.id}`), { authorId: uid, authorName, authorType: "customer", venueId: venue.id, venueName: venue.displayName ?? "", rating, overallRating: rating, comment: comment ?? "", createdAt: serverTimestamp() });
+}
+export async function myReviews(uid) {
+  const [a, v] = await Promise.all([
+    getDocs(query(collection(db, "reviews"), where("authorId", "==", uid))),
+    getDocs(query(collection(db, "venueReviews"), where("authorId", "==", uid))),
+  ]);
+  return [...a.docs.map((d) => ({ id: d.id, _col: "reviews", ...d.data() })), ...v.docs.map((d) => ({ id: d.id, _col: "venueReviews", ...d.data() }))].sort(byMs);
+}
+
+// ── Timeline (akış) ──
+export function listenTimeline(cb) {
+  return onSnapshot(query(collection(db, "timeline"), orderBy("createdAt", "desc"), limit(50)),
+    (s) => cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))), () => cb([]));
+}
+export async function createPost(uid, name, city, content) {
+  await addDoc(collection(db, "timeline"), { authorId: uid, authorName: name, authorCity: city ?? "", type: "discovery", content, likeCount: 0, commentCount: 0, createdAt: serverTimestamp() });
+}
+export async function isLiked(postId, uid) { try { return (await getDoc(doc(db, "timeline", postId, "likes", uid))).exists(); } catch { return false; } }
+export async function toggleLike(postId, uid, liked) {
+  if (liked) { await deleteDoc(doc(db, "timeline", postId, "likes", uid)); await updateDoc(doc(db, "timeline", postId), { likeCount: increment(-1) }); }
+  else { await setDoc(doc(db, "timeline", postId, "likes", uid), { likedAt: serverTimestamp() }); await updateDoc(doc(db, "timeline", postId), { likeCount: increment(1) }); }
+}
+
+// ── Bildirimler ──
+export function listenNotifications(uid, cb) {
+  return onSnapshot(query(collection(db, "notifications"), where("toUserId", "==", uid), orderBy("createdAt", "desc")),
+    (s) => cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))), () => cb([]));
+}
+export async function markNotifRead(id) { try { await updateDoc(doc(db, "notifications", id), { read: true }); } catch (_) {} }
+export async function deleteNotif(id) { try { await deleteDoc(doc(db, "notifications", id)); } catch (_) {} }
