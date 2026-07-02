@@ -9,6 +9,14 @@ export function requestChat(target) { pending = target; }
 
 // Sekmeye monte edilir: messagesView(root, color)
 export function messagesView(root, color = ROLE.venue) {
+  // Misafir (girişsiz/anonim) → mesajlaşma için giriş gerekir
+  if (!session.user || session.guest) {
+    clear(root);
+    root.append(h("div", { class: "sect" },
+      empty("chatbubbles-outline", "Mesajlaşmak için giriş yap", "Sohbet başlatmak ve mesajlarını görmek için bir hesapla giriş yapmalısın."),
+      h("div", { class: "cta-row" }, h("a", { class: "btn btn-primary btn-full", href: "#/login" }, icon("log-in-outline", { size: 16 }), h("span", {}, "Giriş Yap")))));
+    return;
+  }
   let unsub = null;
   const cleanup = () => { if (unsub) { unsub(); unsub = null; } };
 

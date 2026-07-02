@@ -1,12 +1,13 @@
 // Oturum durumu — Auth kullanıcısı + Firestore profil dokümanı (users/{uid}).
-import { auth, db, doc, getDoc, onAuthStateChanged, signOut } from "./firebase.js";
+import { auth, db, doc, getDoc, onAuthStateChanged, signOut, signInAnonymously } from "./firebase.js";
 
 export const OWNER_EMAIL = "berkayer032@gmail.com";
 
 export const session = {
-  user: null,     // Firebase Auth user
+  user: null,     // Firebase Auth user (anonim de olabilir)
   profile: null,  // users/{uid} dokümanı ({ userType, approved, displayName, ... })
   isAdmin: false, // owner e-postası ya da adminUids/{uid}
+  guest: false,   // anonim oturum → misafir (giriş yapmadan müşteri keşif sayfaları)
   ready: false,
 };
 
@@ -21,12 +22,25 @@ export function onSession(fn) { listeners.add(fn); return () => listeners.delete
 function emit() { listeners.forEach((fn) => fn(session)); }
 
 // Auth durumunu dinle; profil dokümanını çek. app.js router'ı buna bağlar.
+// Girişsiz ziyaretçi → anonim oturum aç (Firestore kuralları tüm okumalarda isSignedIn()
+// ister; anonim kullanıcı da signed-in sayılır → misafir keşif sayfaları çalışır, PII açılmaz).
 export function initAuth() {
   onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      session.user = null; session.profile = null; session.isAdmin = false; session.guest = false;
+      try {
+        await signInAnonymously(auth); // başarılıysa onAuthStateChanged anonim user'la tekrar tetiklenir
+        return;                        // ready/emit anonim tetiklemede yapılır
+      } catch (_) {
+        session.ready = true; emit();  // anonim kapalıysa boot'u kilitleme → landing/giriş göster
+        return;
+      }
+    }
     session.user = user;
     session.profile = null;
     session.isAdmin = false;
-    if (user) {
+    session.guest = !!user.isAnonymous;
+    if (!user.isAnonymous) {
       try {
         const snap = await getDoc(doc(db, "users", user.uid));
         session.profile = snap.exists() ? { id: user.uid, ...snap.data() } : null;
@@ -51,6 +65,12 @@ export async function recheckEmailVerified() {
   if (auth.currentUser) {
     try { await auth.currentUser.reload(); } catch (_) {}
     session.user = auth.currentUser;
+    // Kayıt anındaki getDoc/setDoc yarışı profili null bırakmış olabilir; tazele ki
+    // router homeRouteFor'a gerçek profili versin (yoksa yanlışlıkla #/setup'a düşer).
+    try {
+      const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+      session.profile = snap.exists() ? { id: auth.currentUser.uid, ...snap.data() } : null;
+    } catch (_) {}
   }
   emit();
 }

@@ -102,8 +102,10 @@ export function login() {
     googleBtn(msg),
     msg,
   );
-  return shell(hero("Giriş Yap", "Mekan ve organizatör hesapları buradan girer."), card(form,
-    h("p", { class: "foot-note" }, "Hesabın yok mu? ", h("a", { href: "#/register" }, "Kayıt ol"))));
+  return shell(hero("Giriş Yap", "Müşteri, mekan ve organizatör hesapları buradan girer."), card(form,
+    h("p", { class: "foot-note" }, "Hesabın yok mu? ", h("a", { href: "#/register" }, "Kayıt ol")),
+    h("p", { class: "foot-note" }, h("a", { href: "#/kesfet" }, "← Misafir olarak keşfetmeye dön")),
+    h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi"))));
 }
 
 // ── Kayıt (mekan / organizatör) ──

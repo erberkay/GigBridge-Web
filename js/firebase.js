@@ -29,7 +29,7 @@ export {
 
 // Sayfaların tek yerden alması için Firebase fonksiyonlarını yeniden dışa aktar
 export {
-  signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously,
   signOut, onAuthStateChanged, updateProfile,
   GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification,
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";

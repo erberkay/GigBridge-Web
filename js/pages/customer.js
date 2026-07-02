@@ -24,6 +24,21 @@ const NAV = [
 const TITLES = { kesfet: "Keşfet", harita: "Harita", akis: "Akış", mesajlar: "Mesajlar", profil: "Profil" };
 const uid = () => session.user?.uid;
 const myName = () => session.profile?.displayName || session.user?.displayName || "Kullanıcı";
+// Gerçek (anonim olmayan) girişli hesap mı? Misafir → anonim oturum.
+const authed = () => !!session.user && !session.guest;
+// Misafir aksiyon kapısı: girişsizse giriş/kayıt modalı açar, true döner (işlemi durdur).
+function loginGate(action) {
+  if (authed()) return false;
+  modal({
+    title: "Giriş Gerekli",
+    body: h("p", { class: "muted" }, (action ? action + " için " : "") + "bir hesapla giriş yapman gerekiyor. Kayıt olmak ücretsiz."),
+    actions: [
+      { label: "Kayıt Ol", variant: "ghost", ic: "person-add-outline", onClick: () => go("#/register") },
+      { label: "Giriş Yap", ic: "log-in-outline", onClick: () => go("#/login") },
+    ],
+  });
+  return true;
+}
 
 function base() { return (location.hash || "#/kesfet").split("?")[0]; }
 function tabFromHash() { return base().replace("#/", "") || "kesfet"; }
@@ -42,10 +57,13 @@ export function customerPage() {
   if (b === "#/bildirimler") return detailShell("Bildirimler", notificationsView);
 
   const tab = tabFromHash();
+  const guest = !authed();
+  const rightBtn = guest
+    ? h("button", { class: "icon-btn login-chip", onclick: () => go("#/login"), title: "Giriş Yap" }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
+    : h("button", { class: "icon-btn", onclick: () => go("#/bildirimler"), title: "Bildirimler" }, icon("notifications-outline", { size: 20 }));
   const content = h("div", { class: "content" }, h("div", { class: "loading" }, spinner()));
   const page = h("div", { class: "page has-nav", style: { "--role": C } },
-    topbar(TITLES[tab] || "GigBridge", { subtitle: myName(), color: C,
-      right: h("button", { class: "icon-btn", onclick: () => go("#/bildirimler"), title: "Bildirimler" }, icon("notifications-outline", { size: 20 })) }),
+    topbar(TITLES[tab] || "GigBridge", { subtitle: guest ? "Misafir" : myName(), color: C, right: rightBtn }),
     content,
     bottomnav(NAV, tab, C));
   renderTab(tab, content);
@@ -124,19 +142,25 @@ async function renderKesfet(root) {
 
 // ── Etkinlik detay (katıl + favori) ──
 async function eventDetail(id, root) {
-  const [ev, attending, fav] = await Promise.all([eventById(id), isAttending(id, uid()), isFavEvent(uid(), id)]);
+  const [ev, attending, fav] = await Promise.all([
+    eventById(id),
+    authed() ? isAttending(id, uid()) : false,
+    authed() ? isFavEvent(uid(), id) : false,
+  ]);
   clear(root);
   if (!ev) { root.append(empty("alert-circle-outline", "Etkinlik bulunamadı")); return; }
   let att = attending, favd = fav;
   let count = ev.attendeeCount ?? 0;
 
   const heart = h("button", { class: "fab-heart", title: "Favori", onclick: async () => {
+    if (loginGate("Favorilere eklemek")) return;
     try { if (favd) { await unfavEvent(uid(), id); favd = false; } else { await favEvent(uid(), ev); favd = true; } heart.firstChild?.setAttribute("name", favd ? "heart" : "heart-outline"); toast(favd ? "Favorilere eklendi" : "Favoriden çıkarıldı"); } catch (_) { toast("İşlem başarısız", "err"); }
   } }, icon(favd ? "heart" : "heart-outline", { size: 20, color: "#f43f5e" }));
 
   const countRow = drow("people-outline", "Katılımcı", String(count));
   const joinBtn = btn(att ? "Katılımdan Ayrıl" : "Katıl", { ic: att ? "close-circle-outline" : "checkmark-circle-outline", full: true, color: att ? undefined : C, variant: att ? "ghost" : "primary" });
   joinBtn.onclick = async () => {
+    if (loginGate("Etkinliğe katılmak")) return;
     joinBtn.disabled = true;
     try {
       if (att) { await unattendEvent(id, uid()); att = false; count--; }
@@ -184,12 +208,13 @@ function drow(ic, label, value, onClick) {
 
 // ── Sanatçı detay (takip + yorum) ──
 async function artistDetail(id, root) {
-  const [a, revs, following] = await Promise.all([userById(id), artistReviews(id), isFollowing(uid(), id)]);
+  const [a, revs, following] = await Promise.all([userById(id), artistReviews(id), authed() ? isFollowing(uid(), id) : false]);
   clear(root);
   if (!a) { root.append(empty("alert-circle-outline", "Sanatçı bulunamadı")); return; }
   let foll = following;
   const followBtn = btn(foll ? "Takiptesin" : "Takip Et", { ic: foll ? "checkmark" : "person-add-outline", color: foll ? undefined : ROLE.artist, variant: foll ? "ghost" : "primary" });
   followBtn.onclick = async () => {
+    if (loginGate("Takip etmek")) return;
     followBtn.disabled = true;
     try { if (foll) { await unfollowArtist(uid(), id); foll = false; } else { await followArtist(uid(), a); foll = true; } followBtn.querySelector("span").textContent = foll ? "Takiptesin" : "Takip Et"; followBtn.className = "btn btn-" + (foll ? "ghost" : "primary"); toast(foll ? "Takip ediliyor" : "Takipten çıkıldı"); } catch (_) { toast("İşlem başarısız", "err"); }
     followBtn.disabled = false;
@@ -198,7 +223,7 @@ async function artistDetail(id, root) {
   root.append(
     profileHead(a, ROLE.artist, (Array.isArray(a.genres) ? a.genres.join(", ") : a.genre) || "Müzik"),
     h("div", { class: "action-row" }, followBtn,
-      btn("Puan Ver", { ic: "star-outline", onClick: () => reviewModal("artist", a, () => artistDetail(id, root)) }),
+      btn("Puan Ver", { ic: "star-outline", onClick: () => { if (loginGate("Puan vermek")) return; reviewModal("artist", a, () => artistDetail(id, root)); } }),
       msgBtn(a)),
     h("div", { class: "stat-grid" },
       statCard(String(a.attendanceCount ?? 0), "Katılım"), statCard(avg, "Puan"),
@@ -210,12 +235,13 @@ async function artistDetail(id, root) {
 
 // ── Mekan detay (favori + yorum + müşteri/sanatçı yorum ayrımı) ──
 async function venueDetail(id, root) {
-  const [v, revs, fav] = await Promise.all([userById(id), getVenueReviews(id), isFavVenue(uid(), id)]);
+  const [v, revs, fav] = await Promise.all([userById(id), getVenueReviews(id), authed() ? isFavVenue(uid(), id) : false]);
   clear(root);
   if (!v) { root.append(empty("alert-circle-outline", "Mekan bulunamadı")); return; }
   let favd = fav;
   const favBtn = btn(favd ? "Kaydedildi" : "Kaydet", { ic: favd ? "bookmark" : "bookmark-outline", color: favd ? undefined : ROLE.venue, variant: favd ? "ghost" : "primary" });
   favBtn.onclick = async () => {
+    if (loginGate("Kaydetmek")) return;
     favBtn.disabled = true;
     try { if (favd) { await unfavVenue(uid(), id); favd = false; } else { await favVenue(uid(), v); favd = true; } favBtn.querySelector("span").textContent = favd ? "Kaydedildi" : "Kaydet"; favBtn.className = "btn btn-" + (favd ? "ghost" : "primary"); toast(favd ? "Kaydedildi" : "Kaldırıldı"); } catch (_) { toast("İşlem başarısız", "err"); }
     favBtn.disabled = false;
@@ -228,7 +254,7 @@ async function venueDetail(id, root) {
   root.append(
     profileHead(v, ROLE.venue, [v.city, v.district].filter(Boolean).join(" · ") || v.address || "Mekan"),
     h("div", { class: "action-row" }, favBtn,
-      btn("Puan Ver", { ic: "star-outline", onClick: () => reviewModal("venue", v, () => venueDetail(id, root)) }),
+      btn("Puan Ver", { ic: "star-outline", onClick: () => { if (loginGate("Puan vermek")) return; reviewModal("venue", v, () => venueDetail(id, root)); } }),
       msgBtn(v)),
     (v.location?.lat != null) ? btn("Haritada Göster", { ic: "navigate-outline", full: true, variant: "ghost", onClick: () => window.open(`https://www.google.com/maps/search/?api=1&query=${v.location.lat},${v.location.lng}`, "_blank") }) : null,
     h("div", { class: "detail-rows" },
@@ -249,7 +275,7 @@ function profileHead(u, color, sub) {
 }
 function statCard(val, label) { return h("div", { class: "stat-card" }, h("div", { class: "stat-val" }, val), h("div", { class: "stat-label" }, label)); }
 function shortNum(n) { return n >= 1000 ? (n / 1000).toFixed(1) + "K" : String(n); }
-function msgBtn(u) { return btn("Mesaj", { ic: "chatbubble-ellipses-outline", onClick: () => { requestChat({ otherId: u.id, otherName: u.displayName || "Kullanıcı" }); go("#/mesajlar"); } }); }
+function msgBtn(u) { return btn("Mesaj", { ic: "chatbubble-ellipses-outline", onClick: () => { if (loginGate("Mesaj göndermek")) return; requestChat({ otherId: u.id, otherName: u.displayName || "Kullanıcı" }); go("#/mesajlar"); } }); }
 function stars(n) { return h("span", { class: "stars" }, ...[1, 2, 3, 4, 5].map((i) => icon(i <= (n || 0) ? "star" : "star-outline", { size: 13, color: "var(--amber)" }))); }
 function reviewCard(name, rating, comment, createdAt, isArtist) {
   return h("div", { class: "review-card" },
@@ -288,6 +314,14 @@ function reviewModal(kind, target, onDone) {
 // ── Profil ──
 async function renderProfil(root) {
   clear(root);
+  if (!authed()) {
+    root.append(
+      empty("person-circle-outline", "Misafir olarak geziyorsun", "Etkinliklere katılmak, favorilere eklemek, takip etmek ve profil oluşturmak için giriş yap."),
+      h("div", { class: "cta-row" }, btn("Giriş Yap", { ic: "log-in-outline", full: true, color: C, onClick: () => go("#/login") })),
+      h("div", { class: "cta-row" }, btn("Yeni Hesap Oluştur", { variant: "ghost", ic: "person-add-outline", full: true, onClick: () => go("#/register") })),
+    );
+    return;
+  }
   const p = session.profile || {};
   const pic = fileBtn();
   const menu = (ic, label, hash) => h("div", { class: "menu-row", onclick: () => go(hash) }, icon(ic, { size: 18, color: C }), h("span", { class: "menu-label" }, label), icon("chevron-forward", { size: 15, color: "var(--text-muted)" }));
@@ -324,7 +358,7 @@ function fileBtn() {
 // ── Akış (timeline) ──
 function renderAkis(root) {
   clear(root);
-  root.append(h("div", { class: "cta-row" }, btn("Yeni Gönderi", { ic: "add-circle-outline", full: true, color: C, onClick: postModal })));
+  root.append(h("div", { class: "cta-row" }, btn("Yeni Gönderi", { ic: "add-circle-outline", full: true, color: C, onClick: () => { if (loginGate("Gönderi paylaşmak")) return; postModal(); } })));
   const listWrap = h("div", { class: "feed" }, h("div", { class: "loading" }, spinner()));
   root.append(listWrap);
   const unsub = listenTimeline((posts) => {
@@ -337,9 +371,10 @@ function renderAkis(root) {
 function postCard(p) {
   const liked = { v: false };
   const likeBtn = h("button", { class: "post-act", onclick: async () => {
+    if (loginGate("Beğenmek")) return;
     try { await toggleLike(p.id, uid(), liked.v); liked.v = !liked.v; likeBtn.firstChild.setAttribute("name", liked.v ? "heart" : "heart-outline"); } catch (_) {}
   } }, icon("heart-outline", { size: 16 }), h("span", {}, "Beğen"));
-  isLiked(p.id, uid()).then((l) => { liked.v = l; likeBtn.firstChild.setAttribute("name", l ? "heart" : "heart-outline"); });
+  if (authed()) isLiked(p.id, uid()).then((l) => { liked.v = l; likeBtn.firstChild.setAttribute("name", l ? "heart" : "heart-outline"); });
   return h("div", { class: "post-card" },
     h("div", { class: "post-head" }, avatar(p.authorName, C),
       h("div", {}, h("div", { class: "post-author" }, p.authorName || "Kullanıcı"),
