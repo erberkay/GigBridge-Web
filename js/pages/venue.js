@@ -1,7 +1,7 @@
 // Mekan paneli — Ana Sayfa (etkinlikler + organizatör istekleri), Profil. (Faz 2: oluşturma, sanatçı bul, mesaj)
 import { session, logout, refreshProfile } from "../store.js";
 import { venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, saveProfile,
-  createEvent, listArtists, createInvitation, uploadImage } from "../data.js";
+  createEvent, listArtists, createInvitation, createResidency, venueStats, uploadImage } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, fmtTL, ROLE } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 
@@ -9,12 +9,13 @@ const GENRES = ["Electronic", "House", "Techno", "Jazz", "Pop", "Rock", "Akustik
 
 const NAV = [
   { key: "home", label: "Ana Sayfa", icon: "home-outline", href: "#/venue" },
-  { key: "olustur", label: "Etkinlik", icon: "add-circle-outline", href: "#/venue/olustur" },
   { key: "sanatci", label: "Sanatçı Bul", icon: "search-outline", href: "#/venue/sanatci" },
+  { key: "analitik", label: "Analitik", icon: "bar-chart-outline", href: "#/venue/analitik" },
   { key: "mesaj", label: "Mesajlar", icon: "chatbubbles-outline", href: "#/venue/mesaj" },
   { key: "profil", label: "Profil", icon: "person-outline", href: "#/venue/profil" },
 ];
-const TITLES = { home: "Mekan Paneli", olustur: "Etkinlik Oluştur", sanatci: "Sanatçı Bul", mesaj: "Mesajlar", profil: "Profil" };
+const TITLES = { home: "Mekan Paneli", olustur: "Etkinlik Oluştur", sanatci: "Sanatçı Bul", analitik: "Analitik", mesaj: "Mesajlar", profil: "Profil" };
+const GENRE_FILTERS = ["Tümü", "Electronic", "House", "Techno", "Jazz", "Pop", "Rock", "Akustik", "Hip-Hop"];
 
 export function venuePage() {
   const tab = tabFromHash();
@@ -35,6 +36,7 @@ async function renderTab(tab, root) {
   if (tab === "home") return renderHome(root);
   if (tab === "olustur") return renderCreate(root);
   if (tab === "sanatci") return renderArtists(root);
+  if (tab === "analitik") return renderAnalytics(root);
   if (tab === "mesaj") { clear(root); return messagesView(root, ROLE.venue); }
   clear(root);
   root.append(empty("construct-outline", "Yakında", "Bu bölüm bir sonraki güncellemede web'e geliyor."));
@@ -45,6 +47,7 @@ async function renderHome(root) {
     const uid = session.user.uid;
     const [events, reqs] = await Promise.all([venueEvents(uid), venueOrgRequests(uid)]);
     clear(root);
+    root.append(h("div", { class: "cta-row" }, btn("Etkinlik Oluştur", { ic: "add-circle-outline", full: true, onClick: () => { location.hash = "#/venue/olustur"; } })));
     if (reqs.length) {
       root.append(sect("Organizatör İstekleri", "megaphone-outline", reqs.length,
         h("div", { class: "list-card" }, ...reqs.map(reqRow))));
@@ -110,17 +113,24 @@ async function renderProfile(root) {
     h("p", { class: "muted small center" }, "Mekan adını değiştirmek 90 günde bir uygulamadan yapılır."));
 }
 
-// ── Etkinlik oluştur ──
+// ── Etkinlik oluştur (sanatçı seçme + teklif dahil) ──
 async function renderCreate(root) {
+  clear(root);
+  root.append(h("div", { class: "loading" }, spinner()));
+  let artists = [];
+  try { artists = await listArtists(); } catch (_) {}
   clear(root);
   let vip = false;
   const pic = photoPicker("Etkinlik kapağı ekle (opsiyonel)");
+  const artOpts = [{ value: "", label: "Sanatçı seçme (opsiyonel)" }, ...artists.map((a) => ({ value: a.id, label: a.displayName || a.name || "Sanatçı" }))];
   const form = h("form", { class: "form-card", onsubmit: (e) => e.preventDefault() },
     pic.node,
     field({ label: "Etkinlik Adı", id: "ctitle", placeholder: "Örn. Cumartesi Gecesi" }),
     h("div", { class: "frow" }, field({ label: "Tarih", id: "cdate", type: "date" }), field({ label: "Saat", id: "ctime", type: "time" })),
     field({ label: "Tür", id: "cgenre", options: [{ value: "", label: "Tür seç" }, ...GENRES.map((g) => ({ value: g, label: g }))] }),
     h("div", { class: "frow" }, field({ label: "Bilet Ücreti (₺)", id: "cprice", type: "number", placeholder: "Boşsa ücretsiz" }), field({ label: "Kontenjan", id: "ccap", type: "number", placeholder: "Boşsa sınırsız" })),
+    field({ label: "Sanatçı", id: "cartist", options: artOpts }),
+    field({ label: "Sanatçı Sahne Ücreti (₺)", id: "cfee", type: "number", placeholder: "Sanatçı seçtiysen en az 3500", hint: "Sanatçı seçersen bu ücretle ona teklif gönderilir; kabul ederse etkinliğe bağlanır." }),
     field({ label: "Açıklama", id: "cdesc", placeholder: "Kısa bilgi", multiline: true }),
     h("label", { class: "switch-row" },
       h("span", {}, icon("sparkles", { size: 15, color: ROLE.venue }), " VIP Etkinlik iste (yönetici onayı)"),
@@ -131,26 +141,74 @@ async function renderCreate(root) {
     const f = { title: v("#ctitle"), date: v("#cdate"), time: v("#ctime"), genre: v("#cgenre"), price: v("#cprice"), capacity: v("#ccap"), description: v("#cdesc"), vip };
     if (!f.title) return fail(msg, "Etkinlik adı gir.");
     if (!f.date) return fail(msg, "Tarih seç.");
+    const aid = v("#cartist");
+    const artist = aid ? artists.find((x) => x.id === aid) : null;
+    if (artist) {
+      f.artistId = artist.id; f.artistName = artist.displayName || artist.name || "";
+      if (!(Number(v("#cfee")) >= 3500)) return fail(msg, "Sanatçı seçtiysen sahne ücreti en az ₺3.500 olmalı.");
+      if (!v("#ctime")) return fail(msg, "Sanatçıya teklif için saat de gir.");
+    }
     try {
       if (pic.getFile()) { msg.textContent = "Fotoğraf yükleniyor…"; msg.className = "msg"; f.bannerUrl = await uploadImage(pic.getFile(), session.user.uid); }
-      await createEvent(session.profile, f);
-      toast(vip ? "Yayınlandı — VIP onayına düştü" : "Etkinlik yayınlandı"); location.hash = "#/venue";
+      const eventId = await createEvent(session.profile, f);
+      if (artist) await createInvitation(session.profile, artist, { date: f.date, time: f.time, fee: v("#cfee"), eventId });
+      toast(vip ? "Yayınlandı — VIP onayına düştü" : artist ? "Yayınlandı — sanatçıya teklif gönderildi" : "Etkinlik yayınlandı");
+      location.hash = "#/venue";
     } catch (e) { fail(msg, "Oluşturulamadı."); }
   } });
   root.append(sect("Yeni Etkinlik", "add-circle-outline", 0, form), submit, msg);
 }
 
-// ── Sanatçı bul + davet ──
+// ── Analitik ──
+async function renderAnalytics(root) {
+  clear(root);
+  root.append(h("div", { class: "loading" }, spinner()));
+  try {
+    const s = await venueStats(session.user.uid);
+    clear(root);
+    root.append(sect("Analitik", "bar-chart-outline", 0,
+      h("div", { class: "stat-grid" },
+        statCard("calendar-outline", s.eventCount, "Toplam Etkinlik"),
+        statCard("time-outline", s.upcoming, "Yaklaşan"),
+        statCard("people-outline", s.totalAttendance, "Toplam Katılım"),
+        statCard("trending-up-outline", s.avgAttendance, "Ort. Katılım"),
+        statCard("mic-outline", s.withArtist, "Sanatçılı"),
+        statCard("sparkles-outline", s.vip, "VIP Etkinlik"))));
+  } catch (e) { clear(root); root.append(errBox()); }
+}
+function statCard(ic, val, label) {
+  return h("div", { class: "stat-card" }, icon(ic, { size: 22, color: ROLE.venue }),
+    h("div", { class: "stat-val" }, String(val)), h("div", { class: "stat-label" }, label));
+}
+
+// ── Sanatçı bul + davet + rezidans ──
 async function renderArtists(root) {
   clear(root);
-  const box = h("div", { class: "list-card" }, h("div", { class: "loading" }, spinner()));
-  root.append(sect("Sanatçı Bul", "search-outline", 0, box));
-  try {
-    const artists = await listArtists();
+  root.append(h("div", { class: "loading" }, spinner()));
+  let artists = [];
+  try { artists = await listArtists(); } catch (_) {}
+  clear(root);
+  let genre = "Tümü", term = "";
+  const box = h("div", { class: "list-card" });
+  const draw = () => {
     clear(box);
-    if (!artists.length) { box.append(empty("people-outline", "Sanatçı yok", "Henüz kayıtlı sanatçı bulunmuyor.")); return; }
-    artists.forEach((a) => box.append(artistRow(a)));
-  } catch (e) { clear(box); box.append(empty("cloud-offline-outline", "Yüklenemedi", "")); }
+    const g = genre === "Tümü" ? null : genre;
+    const t = term.trim().toLocaleLowerCase("tr-TR");
+    const filtered = artists.filter((a) => {
+      const ag = Array.isArray(a.genres) ? a.genres[0] : a.genre;
+      const name = (a.displayName || a.name || "").toLocaleLowerCase("tr-TR");
+      return (!g || ag === g) && (!t || name.includes(t));
+    });
+    if (!filtered.length) { box.append(empty("people-outline", "Sanatçı yok", "Filtreyi değiştirmeyi dene.")); return; }
+    filtered.forEach((a) => box.append(artistRow(a)));
+  };
+  const search = h("input", { placeholder: "Sanatçı ara…", oninput: (e) => { term = e.target.value; draw(); } });
+  const chips = h("div", { class: "chip-row" }, ...GENRE_FILTERS.map((g) => {
+    const c = h("button", { class: "chip" + (g === genre ? " on" : ""), onclick: () => { genre = g; [...chips.children].forEach((x) => x.classList.remove("on")); c.classList.add("on"); draw(); } }, g);
+    return c;
+  }));
+  root.append(sect("Sanatçı Bul", "search-outline", 0, h("div", { class: "filter-wrap" }, search, chips), box));
+  draw();
 }
 function artistRow(a) {
   const name = a.displayName || a.name || "Sanatçı";
@@ -159,7 +217,34 @@ function artistRow(a) {
     avatar(name, ROLE.artist),
     h("div", { class: "lrow-info" }, h("div", { class: "lrow-name" }, name), genre ? h("div", { class: "lrow-meta" }, genre) : null),
     h("div", { class: "lrow-actions" },
+      h("button", { class: "act", title: "Uzun Dönem", onclick: () => residencyModal(a) }, icon("repeat-outline", { size: 15 })),
       h("button", { class: "act ok", onclick: () => inviteModal(a) }, icon("mail-outline", { size: 15 }), h("span", {}, "Davet"))));
+}
+function residencyModal(a) {
+  const name = a.displayName || a.name || "Sanatçı";
+  let months = 3; const days = new Set();
+  const monthRow = h("div", { class: "chip-row" }, ...[1, 3, 6].map((m) => {
+    const c = h("button", { class: "chip" + (m === 3 ? " on" : ""), onclick: () => { months = m; [...monthRow.children].forEach((x) => x.classList.remove("on")); c.classList.add("on"); } }, m + " ay"); return c;
+  }));
+  const DAYS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+  const dayRow = h("div", { class: "chip-row" }, ...DAYS.map((d, i) => {
+    const idx = i === 6 ? 0 : i + 1;
+    const c = h("button", { class: "chip", onclick: () => { if (days.has(idx)) { days.delete(idx); c.classList.remove("on"); } else { days.add(idx); c.classList.add("on"); } } }, d); return c;
+  }));
+  const body = h("div", {},
+    h("span", { class: "flabel" }, "Süre"), monthRow,
+    h("span", { class: "flabel" }, "Sahne Günleri"), dayRow,
+    field({ label: "Saat", id: "rtime", type: "time" }),
+    field({ label: "Gece Başına Ücret (₺)", id: "rfee", type: "number", placeholder: "En az 3500" }));
+  modal({ title: `${name} — Uzun Dönem`, body, actions: [
+    { label: "Vazgeç", variant: "ghost", onClick: () => {} },
+    { label: "Teklif Et", ic: "send", keepOpen: true, onClick: async (close) => {
+      if (!days.size) return toast("En az bir gün seç", "err");
+      if (!v("#rtime")) return toast("Saat gir", "err");
+      if (!(Number(v("#rfee")) >= 3500)) return toast("Ücret en az ₺3.500", "err");
+      try { await createResidency(session.profile, a, { months, days: [...days], time: v("#rtime"), fee: v("#rfee") }); toast("Anlaşma teklifi gönderildi"); close(); } catch (e) { toast("Gönderilemedi", "err"); }
+    } },
+  ] });
 }
 function inviteModal(a) {
   const name = a.displayName || a.name || "Sanatçı";

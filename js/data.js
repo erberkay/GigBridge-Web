@@ -122,7 +122,7 @@ export async function createEvent(venue, f) {
     title: f.title,
     venueId: venue.id,
     venueName: venue.displayName ?? "",
-    artistId: null, artistName: "",
+    artistId: f.artistId ?? null, artistName: f.artistName ?? "",
     date: f.date ?? "",
     eventAt: eventAt && !isNaN(eventAt) ? eventAt : null,
     startTime: f.time ?? "",
@@ -142,6 +142,21 @@ export async function createEvent(venue, f) {
   })).id;
 }
 
+// ── Mekan: analitik (etkinliklerden türetilir) ──
+export async function venueStats(uid) {
+  const evs = await venueEvents(uid);
+  const now = Date.now();
+  const ms = (e) => (e.eventAt?.toMillis?.() ?? Date.parse(e.date) ?? 0);
+  return {
+    eventCount: evs.length,
+    upcoming: evs.filter((e) => e.status === "upcoming" && ms(e) >= now - 6 * 3600e3).length,
+    totalAttendance: evs.reduce((s, e) => s + (e.attendeeCount ?? 0), 0),
+    withArtist: evs.filter((e) => e.artistId).length,
+    vip: evs.filter((e) => e.vipStatus === "approved").length,
+    avgAttendance: evs.length ? Math.round(evs.reduce((s, e) => s + (e.attendeeCount ?? 0), 0) / evs.length) : 0,
+  };
+}
+
 // ── Mekan: sanatçı bul + davet ──
 export async function listArtists() {
   const snap = await getDocs(query(collection(db, "users"), where("userType", "==", "artist")));
@@ -153,8 +168,22 @@ export async function createInvitation(venue, artist, f) {
     artistId: artist.id, artistName: artist.displayName ?? artist.name ?? "",
     genre: (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "",
     eventDate: f.date, eventTime: f.time, fee: Number(f.fee),
-    message: f.message ?? "", photoUrl: f.photoUrl ?? null, eventId: null,
+    message: f.message ?? "", photoUrl: f.photoUrl ?? null, eventId: f.eventId ?? null,
     status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+  });
+}
+
+// Uzun dönem (rezidans) teklifi — app'in residencies şemasıyla birebir.
+export async function createResidency(profile, artist, f) {
+  const start = new Date(); const end = new Date(); end.setMonth(end.getMonth() + (Number(f.months) || 3));
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  await addDoc(collection(db, "residencies"), {
+    venueId: profile.id, venueName: profile.displayName ?? "",
+    artistId: artist.id, artistName: artist.displayName ?? artist.name ?? "",
+    startDate: iso(start), endDate: iso(end),
+    daysOfWeek: f.days || [], time: f.time || "", fee: Number(f.fee) || null,
+    photoUrl: null, status: "pending", createdBy: profile.id, cancelledBy: null,
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
   });
 }
 
