@@ -320,6 +320,11 @@ export async function unattendEvent(eventId, uid) {
   await deleteDoc(doc(db, "events", eventId, "attendees", uid));
   await updateDoc(doc(db, "events", eventId), { attendeeCount: increment(-1) });
 }
+// Etkinlik katılımcı listesi (EventAttendeesScreen)
+export async function eventAttendees(eventId) {
+  const s = await getDocs(collection(db, "events", eventId, "attendees"));
+  return s.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
 export async function attendedEvents(uid) {
   const snap = await getDocs(query(collectionGroup(db, "attendees"), where("userId", "==", uid)));
   const out = [];
@@ -342,6 +347,15 @@ export async function unfollowArtist(uid, artistId) {
   try { await deleteDoc(doc(db, "users", artistId, "followers", uid)); } catch (_) {}
 }
 export async function followingList(uid) { const s = await getDocs(collection(db, "users", uid, "following")); return s.docs.map((d) => ({ id: d.id, ...d.data() })); }
+// Sanatçının canlı takipçi sayısı (followers alt koleksiyonu)
+export async function artistFollowerCount(artistId) {
+  try { return (await getDocs(collection(db, "users", artistId, "followers"))).size; } catch { return null; }
+}
+// Mekanın etkinlik yorumları (timeline, venueId filtresi — VenueDetail 'Etkinlik Yorumları')
+export async function venueTimeline(venueId) {
+  const s = await getDocs(query(collection(db, "timeline"), where("venueId", "==", venueId)));
+  return s.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byMs).slice(0, 20);
+}
 
 // ── Favori mekan / etkinlik ──
 export async function isFavVenue(uid, venueId) { try { return (await getDoc(doc(db, "users", uid, "favorites", venueId))).exists(); } catch { return false; } }
