@@ -1192,14 +1192,25 @@ async function renderHarita(root) {
             h("button", { class: "mp-detay", onclick: () => go("#/etkinlik/" + e.id) }, "Detay"))));
       cardBox.style.display = "";
     };
-    map.on("click", () => { cardBox.style.display = "none"; });
+    // Boş yere tıklayınca kartı kapat + önceki (uzaktan) görünüme geri dön
+    let prevView = null;
+    map.on("click", () => {
+      cardBox.style.display = "none";
+      if (prevView) { map.setView(prevView.center, prevView.zoom, { animate: true }); prevView = null; }
+    });
 
     withLoc.forEach((e) => {
       const live = isLive(e); const color = live ? "#10B981" : "#4F46E5";
       const m = L.marker([e.location.lat, e.location.lng], {
         icon: L.divIcon({ className: "", html: `<div class="mp-pin${live ? " live" : ""}" style="--pin:${color}"></div>`, iconSize: [26, 26], iconAnchor: [13, 13] }),
       }).addTo(map);
-      m.on("click", () => { showCard(e); });
+      m.on("click", () => {
+        // Etkinliğin TAM konumuna zoom (müşteri yeri net görsün); ilk zoom öncesi
+        // bakılan görünümü sakla → boşluğa tıklayınca oraya geri dönülür.
+        if (!prevView) prevView = { center: map.getCenter(), zoom: map.getZoom() };
+        map.setView([e.location.lat, e.location.lng], Math.max(map.getZoom(), 16), { animate: true });
+        showCard(e);
+      });
     });
     if (!withLoc.length) wrap.append(h("div", { class: "mp-empty" }, empty("location-outline", "Konumlu etkinlik yok", "Mekanlar konum ekledikçe burada görünür.")));
     setTimeout(() => map.invalidateSize(), 200);
