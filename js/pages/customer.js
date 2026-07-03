@@ -1116,22 +1116,63 @@ function loadLeaflet() {
   });
   return _leaflet;
 }
+// ══════════ HARİTA — app MapScreen (canlı/yaklaşan + alt etkinlik kartı) ══════════
 async function renderHarita(root) {
   clear(root);
-  const mapEl = h("div", { class: "map-el" });
-  root.append(mapEl);
+  const wrap = h("div", { class: "mp-wrap" });
+  const mapEl = h("div", { class: "mp-map" });
+  wrap.append(mapEl);
+  root.append(wrap);
   try {
     const [L, events] = await Promise.all([loadLeaflet(), discoverEvents()]);
     const withLoc = events.filter((e) => e.location?.lat != null && e.location?.lng != null);
+    const noLoc = events.length - withLoc.length;
     const center = withLoc[0] ? [withLoc[0].location.lat, withLoc[0].location.lng] : [39.0, 35.0];
-    const map = L.map(mapEl).setView(center, withLoc.length ? 11 : 6);
+    const map = L.map(mapEl, { zoomControl: false }).setView(center, withLoc.length ? 11 : 6);
+    L.control.zoom({ position: "bottomright" }).addTo(map);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap", maxZoom: 19 }).addTo(map);
+
+    // Üst başlık kartı (başlık + sayı + açıklama)
+    wrap.append(h("div", { class: "mp-head" },
+      h("div", { class: "grow" },
+        h("div", { class: "mp-title" }, "Yakınındaki Etkinlikler"),
+        h("div", { class: "mp-count" }, withLoc.length + " etkinlik"),
+        h("div", { class: "mp-legend" },
+          h("span", { class: "mp-dot", style: { background: "#10B981" } }), h("span", {}, "Şu an çalıyor"),
+          h("span", { class: "mp-dot", style: { background: "#4F46E5", marginLeft: "10px" } }), h("span", {}, "Yaklaşan")))));
+    if (noLoc > 0) wrap.append(h("div", { class: "mp-nobanner" }, icon("information-circle-outline", { size: 16, color: "var(--amber)" }),
+      h("span", {}, `${noLoc} etkinlik haritada gösterilemiyor — mekanları henüz konum eklememiş.`)));
+
+    // Alt etkinlik kartı (marker'a tıklayınca)
+    const cardBox = h("div", { class: "mp-card", style: { display: "none" } });
+    wrap.append(cardBox);
+    const showCard = (e) => {
+      const g = evGenre(e);
+      clear(cardBox);
+      cardBox.append(
+        h("div", { class: "mp-card-top" },
+          g ? h("span", { class: "mp-genre" }, g) : h("span", {}),
+          h("button", { class: "mp-close", onclick: () => { cardBox.style.display = "none"; } }, icon("close", { size: 14, color: "var(--text-muted)" }))),
+        h("div", { class: "mp-card-body" },
+          h("div", { class: "grow" },
+            h("div", { class: "mp-card-title" }, e.title || "Etkinlik"),
+            h("div", { class: "mp-card-meta" }, icon("business-outline", { size: 13, color: "var(--text-secondary)" }), " " + (e.venueName || "Mekan")),
+            h("div", { class: "mp-card-meta" }, icon("calendar-outline", { size: 13, color: "var(--text-secondary)" }), " " + eventWhen(e))),
+          h("div", { class: "mp-card-right" },
+            h("div", { class: "mp-time" }, e.ticketPrice ? fmtTL(e.ticketPrice) : "Ücretsiz"),
+            h("button", { class: "mp-detay", onclick: () => go("#/etkinlik/" + e.id) }, "Detay"))));
+      cardBox.style.display = "";
+    };
+    map.on("click", () => { cardBox.style.display = "none"; });
+
     withLoc.forEach((e) => {
-      const color = isLive(e) ? "#10b981" : "#7c3aed";
-      const m = L.circleMarker([e.location.lat, e.location.lng], { radius: 9, color: "#fff", weight: 2, fillColor: color, fillOpacity: 1 }).addTo(map);
-      m.bindPopup(`<b>${(e.title || "Etkinlik").replace(/</g, "&lt;")}</b><br>${(e.venueName || "")}<br><a href="#/etkinlik/${e.id}">Detay →</a>`);
+      const live = isLive(e); const color = live ? "#10B981" : "#4F46E5";
+      const m = L.marker([e.location.lat, e.location.lng], {
+        icon: L.divIcon({ className: "", html: `<div class="mp-pin${live ? " live" : ""}" style="--pin:${color}"></div>`, iconSize: [26, 26], iconAnchor: [13, 13] }),
+      }).addTo(map);
+      m.on("click", () => { showCard(e); });
     });
-    if (!withLoc.length) root.append(empty("location-outline", "Konumlu etkinlik yok", "Mekanlar konum ekledikçe burada görünür."));
+    if (!withLoc.length) wrap.append(h("div", { class: "mp-empty" }, empty("location-outline", "Konumlu etkinlik yok", "Mekanlar konum ekledikçe burada görünür.")));
     setTimeout(() => map.invalidateSize(), 200);
   } catch (e) { clear(root); root.append(errBox("Harita yüklenemedi.")); }
 }
