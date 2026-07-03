@@ -2,8 +2,13 @@
 import {
   db, collection, collectionGroup, doc, getDoc, getDocs, updateDoc, addDoc, setDoc, deleteDoc,
   query, where, orderBy, limit, onSnapshot, serverTimestamp, arrayRemove, increment,
-  storage, ref, uploadBytes, getDownloadURL,
+  storage, ref, uploadBytes, getDownloadURL, auth, deleteUser,
 } from "./firebase.js";
+
+// Hesabı sil — auth kullanıcısını siler; veri temizliğini onUserDeleted CF'i (KVKK cascade) yapar.
+export async function deleteMyAccount() {
+  await deleteUser(auth.currentUser);
+}
 
 // Görsel yükle (Storage) → indirilebilir URL. event_banners/{uid}/... sahibe yazılabilir.
 export async function uploadImage(file, uid) {
@@ -395,8 +400,23 @@ export function listenTimeline(cb) {
   return onSnapshot(query(collection(db, "timeline"), orderBy("createdAt", "desc"), limit(50)),
     (s) => cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))), () => cb([]));
 }
-export async function createPost(uid, name, city, content) {
-  await addDoc(collection(db, "timeline"), { authorId: uid, authorName: name, authorCity: city ?? "", type: "discovery", content, likeCount: 0, commentCount: 0, createdAt: serverTimestamp() });
+export async function createPost(uid, name, city, content, extra = {}) {
+  await addDoc(collection(db, "timeline"), {
+    authorId: uid, authorName: name, authorCity: city ?? "",
+    type: extra.type || "discovery", content,
+    event: extra.event ?? null, venue: extra.venue ?? null, venueId: extra.venueId ?? null,
+    rating: extra.rating ?? 0,
+    likeCount: 0, commentCount: 0, createdAt: serverTimestamp(),
+  });
+}
+// Gönderi yorumları (timeline/{postId}/comments)
+export function listenComments(postId, cb) {
+  return onSnapshot(query(collection(db, "timeline", postId, "comments"), orderBy("createdAt", "asc")),
+    (s) => cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))), () => cb([]));
+}
+export async function addComment(postId, uid, name, text) {
+  await addDoc(collection(db, "timeline", postId, "comments"), { authorId: uid, authorName: name, text, createdAt: serverTimestamp() });
+  try { await updateDoc(doc(db, "timeline", postId), { commentCount: increment(1) }); } catch (_) {}
 }
 export async function isLiked(postId, uid) { try { return (await getDoc(doc(db, "timeline", postId, "likes", uid))).exists(); } catch { return false; } }
 export async function toggleLike(postId, uid, liked) {
@@ -411,3 +431,378 @@ export function listenNotifications(uid, cb) {
 }
 export async function markNotifRead(id) { try { await updateDoc(doc(db, "notifications", id), { read: true }); } catch (_) {} }
 export async function deleteNotif(id) { try { await deleteDoc(doc(db, "notifications", id)); } catch (_) {} }
+
+
+// ═══════════ APP PARİTE — organizer/venue/artist veri fonksiyonları ═══════════
+export async function orgMembers(orgId) {
+  try {
+    const snap = await getDocs(query(collection(db, "organizations", orgId, "members"), orderBy("joinedAt", "asc")));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (_) {
+    // orderBy başarısızsa (eksik alan/indeks) sıralamasız oku
+    const snap = await getDocs(collection(db, "organizations", orgId, "members"));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  }
+}
+
+// Üyeyi ekipten çıkar (yalnız owner — app'teki 'Ekipten Çıkar')
+export async function removeOrgMember(orgId, memberDocId) {
+  await deleteDoc(doc(db, "organizations", orgId, "members", memberDocId));
+}
+
+// Gönderilen personel davetleri (KURAL: organizerInvites yalnız invitedByUid == uid ile sorgulanabilir)
+export async function orgInvites(uid) {
+  const snap = await getDocs(query(collection(db, "organizerInvites"), where("invitedByUid", "==", uid)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0));
+}
+
+// E-posta ile personel daveti — app TeamScreen invite modal şemasıyla birebir (duplicate kontrolü dahil)
+export async function createOrgInvite({ orgId, orgName, invitedEmail, invitedByUid, invitedByName }) {
+  const dup = await getDocs(query(collection(db, "organizerInvites"),
+    where("invitedByUid", "==", invitedByUid),
+    where("invitedEmail", "==", invitedEmail),
+    where("status", "==", "pending")));
+  if (!dup.empty) { const e = new Error("duplicate-invite"); e.code = "duplicate-invite"; throw e; }
+  await addDoc(collection(db, "organizerInvites"), {
+    orgId, orgName: orgName ?? "", invitedEmail,
+    invitedByUid, invitedByName: invitedByName ?? "",
+    status: "pending", createdAt: serverTimestamp(),
+  });
+}
+
+// Etkinlik alanlarını güncelle (OrgEditEvent: yalnız title/venueName/description — app'in updateDoc'uyla birebir)
+export async function updateEventFields(eventId, patch) {
+  await updateDoc(doc(db, "events", eventId), patch);
+}
+
+// Etkinliği kalıcı sil (yalnız owner — OrgEditEvent 'Etkinliği Sil')
+export async function deleteEventById(eventId) {
+  await deleteDoc(doc(db, "events", eventId));
+}
+
+// Staff'a düzenleme izni ver (owner). arrayUnion import edilmediğinden oku-birleştir-yaz.
+export async function approveEventEdit(eventId, staffId) {
+  const s = await getDoc(doc(db, "events", eventId));
+  if (!s.exists()) { const e = new Error("not-found"); e.code = "not-found"; throw e; }
+  const arr = Array.isArray(s.data().editApprovedFor) ? s.data().editApprovedFor : [];
+  if (!arr.includes(staffId)) await updateDoc(doc(db, "events", eventId), { editApprovedFor: [...arr, staffId] });
+}
+
+// Bildirim yaz — app notifications şemasıyla birebir (listenNotifications toUserId+createdAt okur;
+// extra düz alan olarak yayılır: edit_request → {eventId, staffId, staffName})
+export async function sendNotification(toUserId, { type, title, body, extra = {} }) {
+  await addDoc(collection(db, "notifications"), {
+    toUserId, type: type ?? "info", title: title ?? "", body: body ?? "",
+    read: false, createdAt: serverTimestamp(), ...extra,
+  });
+}
+
+// Organizatör → mekana etkinlik isteği; app'in create modal'ındaki gibi SANATÇI alanlarıyla.
+// (createVenueRequest'in artistId/artistName içeren üst kümesi; acceptOrgRequest bu alanları okur.)
+export async function createOrgVenueRequest(profile, venue, f) {
+  await addDoc(collection(db, "venueRequests"), {
+    title: f.title,
+    eventDate: f.date, eventTime: f.time ?? "", description: f.description ?? "",
+    bannerUrl: f.bannerUrl ?? null,
+    artistId: f.artistId ?? null, artistName: f.artistName ?? "",
+    organizerId: profile.orgId ?? profile.id,
+    organizerName: profile.orgName ?? profile.displayName ?? "",
+    createdByUid: profile.id,
+    venueId: venue.id, venueName: venue.displayName ?? "",
+    status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+  });
+}
+
+export async function venueResidencies(uid) {
+  const snap = await getDocs(query(collection(db, "residencies"), where("venueId", "==", uid)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    .filter((r) => r.status === "pending" || r.status === "active");
+}
+
+// Anlaşmayı iptal et (app: status='cancelled' + cancelledBy)
+export async function cancelResidencyDoc(id, uid) {
+  await updateDoc(doc(db, "residencies", id), { status: "cancelled", cancelledBy: uid ?? null, updatedAt: serverTimestamp() });
+}
+
+// ── Etkinlik güncelle / sil (EditEventScreen karşılığı; web'de endAt yazmak için de kullanılır) ──
+export async function updateEvent(id, patch) {
+  await updateDoc(doc(db, "events", id), { ...patch, updatedAt: serverTimestamp() });
+}
+// Düzenleme kaydı — app'in 2 günlük düzenleme kilidi için lastEditedAt damgalar.
+export async function saveEventEdits(id, patch) {
+  await updateDoc(doc(db, "events", id), { ...patch, lastEditedAt: serverTimestamp(), updatedAt: serverTimestamp() });
+}
+export async function deleteEvent(id) { await deleteDoc(doc(db, "events", id)); }
+
+// ── Mekanın gizli sanatçı takip listesi (users/{uid}/watchedArtists) — yalnız mekan görür ──
+export async function watchArtist(uid, artist) {
+  const name = artist.displayName ?? artist.name ?? "";
+  const genre = (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "";
+  await setDoc(doc(db, "users", uid, "watchedArtists", artist.id), {
+    artistId: artist.id, artistName: name, genre, createdAt: serverTimestamp(),
+  });
+}
+export async function unwatchArtist(uid, artistId) {
+  await deleteDoc(doc(db, "users", uid, "watchedArtists", artistId));
+}
+export async function watchedArtists(uid) {
+  const snap = await getDocs(collection(db, "users", uid, "watchedArtists"));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// ── Sanatçının etkinlikleri (ArtistPerformanceScreen: geçmiş performans + katılım) ──
+export async function eventsByArtist(artistId) {
+  const snap = await getDocs(query(collection(db, "events"), where("artistId", "==", artistId)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// ── Mekanın kabul edilmiş davetleri (ArtistReviewScreen listesi + home 'Onaylı' durumu) ──
+export async function venueAcceptedInvitations(uid) {
+  const snap = await getDocs(query(collection(db, "invitations"),
+    where("venueId", "==", uid), where("status", "==", "accepted")));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// Aynı sanatçı + aynı tarih için mevcut (reddedilmemiş) teklif var mı? (çift teklif koruması)
+export async function findExistingInvitation(venueId, artistId, eventDate) {
+  try {
+    const snap = await getDocs(query(collection(db, "invitations"),
+      where("venueId", "==", venueId), where("artistId", "==", artistId), where("eventDate", "==", eventDate)));
+    const hit = snap.docs.find((d) => d.data().status !== "rejected");
+    return hit ? { id: hit.id, ...hit.data() } : null;
+  } catch { return null; }
+}
+
+// ── Gruplar — FindArtist 'Gruplar' filtresi (koleksiyon yoksa boş liste döner) ──
+
+// Grup daveti — app gibi tüm üyelere yayılır (fan-out); üye yoksa tek doküman yazılır.
+export async function createGroupInvitation(venue, group, f) {
+  const base = {
+    venueId: venue.id, venueName: venue.displayName ?? "",
+    groupId: group.id, groupName: group.name ?? group.displayName ?? "Grup",
+    artistName: group.name ?? group.displayName ?? "Grup",
+    genre: (Array.isArray(group.genres) ? group.genres[0] : group.genre) ?? "",
+    eventDate: f.date, eventTime: f.time, fee: Number(f.fee),
+    message: f.message ?? "", photoUrl: f.photoUrl ?? null, eventId: f.eventId ?? null,
+    status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+  };
+  const members = Array.isArray(group.memberIds) ? group.memberIds : [];
+  if (!members.length) { await addDoc(collection(db, "invitations"), base); return; }
+  for (const mid of members) await addDoc(collection(db, "invitations"), { ...base, artistId: mid });
+}
+
+// ── Mekan → sanatçı değerlendirmesi (reviews, {uid}_{artistId} deterministik id — kural uyumlu) ──
+export async function submitVenueArtistReview(uid, authorName, artist, { rating, ratings, comment }) {
+  await setDoc(doc(db, "reviews", `${uid}_${artist.id}`), {
+    authorId: uid, authorName: authorName ?? "", authorType: "venue",
+    targetId: artist.id,
+    targetName: artist.artistName ?? artist.displayName ?? artist.name ?? "",
+    targetType: "artist",
+    rating: Number(rating) || 0, ratings: ratings ?? {}, comment: comment ?? "",
+    createdAt: serverTimestamp(),
+  });
+}
+
+export function listenArtistOffers(uid, cb) {
+  return onSnapshot(
+    query(collection(db, "invitations"), where("artistId", "==", uid), where("status", "==", "pending")),
+    (snap) => cb(snap.docs.map((d) => {
+      const x = d.data();
+      const fee = axParseTL(x.fee);
+      return {
+        id: d.id,
+        venue: x.venueName ?? "Mekan",
+        dateISO: x.eventDate ?? "",
+        date: x.eventDate ? axIsoToTR(x.eventDate) : "—",
+        time: x.eventTime ?? "—",
+        feeRaw: x.fee ?? null,
+        fee: fee != null ? "₺" + fee.toLocaleString("tr-TR") : "Belirtilmemiş",
+        genre: x.genre ?? "—",
+        venueId: x.venueId,
+        message: x.message,
+        eventId: x.eventId ?? null,
+        photoUrl: x.photoUrl ?? null,
+      };
+    })),
+    () => cb([]),
+  );
+}
+
+// ── Sanatçı: kabul edilmiş davetler (yaklaşan gig + kazanç + takvim) — canlı ──
+export function listenArtistAccepted(uid, cb) {
+  return onSnapshot(
+    query(collection(db, "invitations"), where("artistId", "==", uid), where("status", "==", "accepted")),
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    () => cb([]),
+  );
+}
+
+// Tek seferlik: kabul edilmiş davetler (Mekan Değerlendir + profil istatistiği)
+export async function artistAcceptedInvitations(uid) {
+  const snap = await getDocs(query(collection(db, "invitations"), where("artistId", "==", uid), where("status", "==", "accepted")));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// ── Sanatçı: rezidanslar (pending+active) — canlı ──
+export function listenArtistResidencies(uid, cb) {
+  return onSnapshot(
+    query(collection(db, "residencies"), where("artistId", "==", uid), where("status", "in", ["pending", "active"])),
+    (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    () => cb([]),
+  );
+}
+
+// Rezidans durum güncelle (sanatçı kabul/ret/iptal) — app setResidencyStatus birebir
+export async function setResidencyStatus(id, status, byUid) {
+  await updateDoc(doc(db, "residencies", id), {
+    status,
+    cancelledBy: status === "cancelled" ? byUid : null,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// Uygulama içi bildirim (notifications) — app pushAppNotification birebir
+export async function pushAppNotification(opts) {
+  if (!opts.toUserId || opts.toUserId === opts.fromUserId) return; // kendine bildirim yok
+  await addDoc(collection(db, "notifications"), {
+    toUserId: opts.toUserId, fromUserId: opts.fromUserId, fromName: opts.fromName ?? "",
+    type: opts.type, title: opts.title, body: opts.body,
+    eventId: opts.eventId ?? null, relatedUserId: opts.relatedUserId ?? null,
+    read: false, createdAt: serverTimestamp(),
+  });
+}
+
+// ── Teklif akışı konuşma mesajı (app services/offerChat.postOfferMessage birebir) ──
+export async function postOfferMessage({ fromId, fromName, fromEmoji, toId, toName, toEmoji, text }) {
+  if (!fromId || !toId || fromId === toId) return;
+  const cid = convIdFor(fromId, toId);
+  const convRef = doc(db, "conversations", cid);
+  const snap = await getDoc(convRef);
+  if (!snap.exists()) {
+    await setDoc(convRef, {
+      participants: [fromId, toId],
+      participantNames: { [fromId]: fromName, [toId]: toName },
+      participantEmojis: { [fromId]: fromEmoji, [toId]: toEmoji },
+      lastMessage: text, lastMessageTime: serverTimestamp(),
+      unreadCount: { [toId]: 1, [fromId]: 0 }, hiddenFor: [],
+    });
+  } else {
+    await updateDoc(convRef, {
+      lastMessage: text, lastMessageTime: serverTimestamp(),
+      hiddenFor: arrayRemove(fromId),
+      ["unreadCount." + toId]: increment(1),
+    });
+  }
+  await addDoc(collection(db, "conversations", cid, "messages"), {
+    senderId: fromId, senderName: fromName, text, createdAt: serverTimestamp(),
+  });
+}
+
+// ── Teklif kabul/ret — app HomeScreen/OfferDetail handleAction AKIŞI BİREBİR ──
+// Kabul: etkinliğe bağla/oluştur (NON-FATAL) → daveti güncelle → konuşmaya statik durum
+// mesajı (best-effort). me = { uid, name }.
+export async function respondToOffer(offer, action, me) {
+  if (action === "accept") {
+    try {
+      if (offer.eventId) {
+        // Mevcut etkinliğe bağla (çift etkinlik OLUŞTURMA)
+        await updateDoc(doc(db, "events", offer.eventId), {
+          artistId: me.uid,
+          artistName: me.name ?? "",
+          fee: axParseTL(offer.feeRaw ?? offer.fee) ?? 0,
+        });
+      } else {
+        // Serbest davet — mekan panelinde görünmesi için yeni etkinlik yaz
+        const { date: evDisplay, eventAt } = axEventDateFields(offer.dateISO || offer.date);
+        await addDoc(collection(db, "events"), {
+          title: `${me.name ?? "Sanatçı"} — ${offer.venue ?? "Mekan"}`,
+          venueId: offer.venueId ?? null,
+          venueName: offer.venue ?? "",
+          artistId: me.uid,
+          artistName: me.name ?? "",
+          date: evDisplay,
+          eventAt,
+          startTime: offer.time && offer.time !== "—" ? offer.time : "",
+          genre: offer.genre && offer.genre !== "—" ? [offer.genre] : [],
+          fee: axParseTL(offer.feeRaw ?? offer.fee) ?? 0,
+          bannerUrl: offer.photoUrl ?? null,
+          status: "upcoming",
+          attendeeCount: 0,
+          invitationId: offer.id,
+          createdAt: serverTimestamp(),
+        });
+      }
+    } catch (e) { console.warn("[OfferAccept] event write failed (kabul yine de devam)", e); }
+  }
+
+  await updateDoc(doc(db, "invitations", offer.id), {
+    status: action === "accept" ? "accepted" : "rejected",
+    updatedAt: serverTimestamp(),
+  });
+
+  // Statik durum mesajı — best-effort, karar mesaj yazılamasa da geçerli
+  if (offer.venueId) {
+    postOfferMessage({
+      fromId: me.uid, fromName: me.name ?? "Sanatçı", fromEmoji: "🎤",
+      toId: offer.venueId, toName: offer.venue ?? "Mekan", toEmoji: "🏢",
+      text: action === "accept"
+        ? `Teklif kabul edildi${offer.date && offer.date !== "—" ? ` — ${offer.date}` : ""}${offer.time && offer.time !== "—" ? ` · ${offer.time}` : ""}`
+        : "Teklif reddedildi",
+    }).catch(() => {});
+  }
+}
+
+// ── Sanatçının verdiği mekan değerlendirmeleri (mükerrer kontrol) ──
+export async function artistVenueReviewsGiven(uid) {
+  const snap = await getDocs(query(collection(db, "venueReviews"), where("authorId", "==", uid)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// Sanatçı → mekan değerlendirmesi (app VenueReviewScreen şemasıyla birebir).
+// Deterministik doküman kimliği `${uid}_${venueId}` — kural bu id'yi zorunlu kılar.
+export async function submitArtistVenueReview(uid, f) {
+  const isAnonymous = f.visibility === "anonymous";
+  await setDoc(doc(db, "venueReviews", `${uid}_${f.venueId}`), {
+    artistId: uid,
+    artistName: isAnonymous ? "Anonim Sanatçı" : f.artistName,
+    authorName: isAnonymous ? "Anonim Sanatçı" : f.artistName,
+    authorId: uid,
+    authorType: "artist",
+    visibility: f.visibility,          // 'everyone' | 'artists' | 'anonymous'
+    isAnonymous,                        // geriye dönük uyum
+    venueId: f.venueId,
+    venueName: f.venueName,
+    ratings: f.ratings,                 // { payment, equipment, treatment, communication }
+    overallRating: f.overallRating,
+    comment: (f.comment || "").trim(),
+    createdAt: serverTimestamp(),
+  });
+}
+
+// ── Top 10: sanatçı puanları CANLI reviews'tan (app services/ratings birebir) ──
+// Not: kural gereği hedefi kendisi olan sanatçı tüm yorumları okuyamayabilir;
+// çağıran taraf .catch(() => new Map()) ile boş haritayla devam etmeli.
+export async function fetchArtistRatings() {
+  const sums = new Map();
+  const snap = await getDocs(query(collection(db, "reviews"), where("targetType", "==", "artist")));
+  snap.docs.forEach((d) => {
+    const x = d.data();
+    const rating = x.rating ?? 0;
+    if (!x.targetId || !(rating > 0)) return;
+    const cur = sums.get(x.targetId) ?? { sum: 0, count: 0 };
+    cur.sum += rating; cur.count += 1;
+    sums.set(x.targetId, cur);
+  });
+  const out = new Map();
+  sums.forEach((v, k) => out.set(k, { avg: Math.round((v.sum / v.count) * 10) / 10, count: v.count }));
+  return out;
+}
+
+// ── Top 10: gruplar (şehir filtresi opsiyonel) ──
+export async function listGroups(city) {
+  const base = collection(db, "groups");
+  const snap = await getDocs(city ? query(base, where("city", "==", city)) : base);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+

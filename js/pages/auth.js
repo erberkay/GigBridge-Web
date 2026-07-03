@@ -117,16 +117,17 @@ export function register() {
   const dl = h("datalist", { id: "cityList" }, ...PROVINCES.map((p) => h("option", { value: p })));
   const nameField = field({ label: "Ad Soyad", id: "rname", placeholder: "Adın soyadın" });
 
-  const labelFor = (k) => k === "venue" ? "Mekan Adı" : k === "organizer" ? "Organizasyon Adı" : "Ad Soyad";
-  const submitLabel = (k) => k === "customer" ? "Kayıt Ol" : "Başvuruyu Gönder";
+  const labelFor = (k) => k === "venue" ? "Mekan Adı" : k === "organizer" ? "Organizasyon Adı" : k === "artist" ? "Sanatçı Adı" : "Ad Soyad";
+  const submitLabel = (k) => (k === "customer" || k === "artist") ? "Kayıt Ol" : "Başvuruyu Gönder";
   const roleBtn = (key, label, ic) => h("button", { type: "button", class: "seg" + (role === key ? " on" : ""), dataset: { role: key },
     onclick: () => { role = key; [...seg.children].forEach((c) => c.classList.toggle("on", c.dataset.role === key));
       nameField.querySelector(".flabel").textContent = labelFor(key);
-      cityWrap.style.display = key === "venue" ? "" : "none";
+      cityWrap.style.display = (key === "venue" || key === "artist") ? "" : "none";
       const rb = q("#rbtn"); if (rb) rb.querySelector("span").textContent = submitLabel(key); } },
     icon(ic, { size: 15 }), h("span", {}, label));
-  const seg = h("div", { class: "segrow" },
+  const seg = h("div", { class: "segrow wrap4" },
     roleBtn("customer", "Müşteri", "person-outline"),
+    roleBtn("artist", "Sanatçı", "mic-outline"),
     roleBtn("venue", "Mekan", "business-outline"),
     roleBtn("organizer", "Organizatör", "megaphone-outline"));
 
@@ -145,9 +146,9 @@ export function register() {
       await setDoc(doc(db, "users", user.uid), {
         displayName: name, email: user.email, userType: role, photoURL: null,
         createdAt: serverTimestamp(),
-        ...(role === "venue" || role === "organizer" ? { approved: false } : {}), // müşteri onay gerektirmez
+        ...(role === "venue" || role === "organizer" ? { approved: false } : {}), // müşteri/sanatçı onay gerektirmez
         ...(role === "organizer" ? { orgName: name } : {}),
-        ...(role === "venue" && city ? { city } : {}),
+        ...((role === "venue" || role === "artist") && city ? { city } : {}),
       });
       try { await sendEmailVerification(user); } catch (_) {} // doğrulama bağlantısı
       location.hash = "#/verify"; // önce e-posta doğrulama
