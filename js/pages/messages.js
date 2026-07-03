@@ -1,6 +1,6 @@
 // Ortak mesajlaşma görünümü — app MessagesScreen birebir (konuşma listesi + sohbet + yeni mesaj).
 import { session } from "../store.js";
-import { listenConversations, listenMessages, sendMessage, markRead, convIdFor, listArtists, followingList } from "../data.js";
+import { listenConversations, listenMessages, sendMessage, markRead, convIdFor, listArtists, followingList, respondToOffer, getInvitationStatus } from "../data.js";
 import { h, clear, icon, empty, spinner, toast, ROLE } from "../ui.js";
 
 // Bir karttan "Mesaj" ile gelinince açılacak hedef ({ otherId, otherName }).
@@ -162,11 +162,46 @@ export function messagesView(root, color = ROLE.venue) {
 
 function bubble(m, me, isGroup) {
   const mine = m.senderId === me;
+  // Teklif mesajı + ben alıcıyım (sanatçı) → Evet/Hayır butonlu kart
+  if (m.type === "offer" && !mine && m.invitationId) return offerBubble(m);
   return h("div", { class: "brow " + (mine ? "me" : "them") },
-    h("div", { class: "bubble " + (mine ? "b-me" : "b-them") },
+    h("div", { class: "bubble " + (mine ? "b-me" : "b-them") + (m.type === "offer" ? " b-offer" : "") },
       (isGroup && !mine && m.senderName) ? h("div", { class: "ms-sender" }, m.senderName) : null,
       h("div", {}, m.text || ""),
       h("div", { class: "b-time" }, m.createdAt ? timeShort(m.createdAt) : "")));
+}
+
+// Sanatçının aldığı sahne teklifi — sohbette Evet/Hayır butonlu kart (kabul → respondToOffer).
+function offerBubble(m) {
+  const meta = m.offerMeta || {};
+  const card = h("div", { class: "bubble b-them offer-card" },
+    h("div", { class: "offer-head" }, icon("mail-outline", { size: 13 }), h("span", {}, "Sahne Teklifi")),
+    h("div", { class: "offer-text" }, m.text || ""));
+  const yes = h("button", { class: "offer-btn yes" }, "Evet");
+  const no = h("button", { class: "offer-btn no" }, "Hayır");
+  const actions = h("div", { class: "offer-actions" }, yes, no);
+  const respond = async (action) => {
+    yes.disabled = no.disabled = true; actions.classList.add("busy");
+    const status = await getInvitationStatus(m.invitationId);
+    if (status && status !== "pending") {
+      actions.replaceWith(h("div", { class: "offer-done" }, "Bu teklif zaten yanıtlandı"));
+      return;
+    }
+    try {
+      await respondToOffer({ id: m.invitationId, ...meta }, action, { uid: session.user.uid, name: session.profile?.displayName ?? "Sanatçı" });
+      actions.replaceWith(h("div", { class: "offer-done " + (action === "accept" ? "ok" : "rej") },
+        icon(action === "accept" ? "checkmark-circle" : "close-circle", { size: 15 }),
+        h("span", {}, action === "accept" ? "Kabul edildi" : "Reddedildi")));
+      toast(action === "accept" ? `${meta.venue || "Mekan"} teklifi kabul edildi ✓` : "Teklif reddedildi", action === "accept" ? "ok" : "err");
+    } catch (e) {
+      yes.disabled = no.disabled = false; actions.classList.remove("busy");
+      toast("İşlem başarısız, tekrar dene", "err");
+    }
+  };
+  yes.onclick = () => respond("accept");
+  no.onclick = () => respond("reject");
+  card.append(actions, h("div", { class: "b-time" }, m.createdAt ? timeShort(m.createdAt) : ""));
+  return h("div", { class: "brow them" }, card);
 }
 
 function timeShort(v) {

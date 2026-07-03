@@ -1567,3 +1567,22 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
   .ax-filterrow { max-width: 620px; }
   .ax-cover { margin: -28px -36px 20px; border-radius: 0 0 20px 20px; }
 }
+
+/* ── Sohbette sahne teklifi kartı + animasyonlu Evet/Hayır ── */
+.offer-card { border: 1px solid color-mix(in srgb, var(--role, #A855F7) 42%, transparent); background: color-mix(in srgb, var(--role, #A855F7) 9%, var(--surface, #0D0D18)); }
+.offer-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; color: var(--role, #A855F7); margin-bottom: 6px; }
+.offer-head ion-icon { color: var(--role, #A855F7); }
+.offer-text { white-space: pre-wrap; margin-bottom: 10px; }
+.offer-actions { display: flex; gap: 10px; margin-bottom: 4px; }
+.offer-actions.busy { opacity: .55; pointer-events: none; }
+.offer-btn { flex: 1; position: relative; border: 1px solid transparent; border-radius: 12px; padding: 10px 14px; font-weight: 800; font-size: 14px; color: #fff; cursor: pointer; transition: transform .18s ease, box-shadow .35s ease, filter .25s ease; }
+.offer-btn:active { transform: scale(.96); }
+.offer-btn:disabled { cursor: default; }
+.offer-btn.yes { background: linear-gradient(135deg, #10B981, #059669); border-color: rgba(16,185,129,.5); }
+.offer-btn.yes:hover { transform: translateY(-1px); filter: brightness(1.08); box-shadow: 0 8px 24px -5px rgba(16,185,129,.7); }
+.offer-btn.no { background: linear-gradient(135deg, #F43F5E, #BE123C); border-color: rgba(244,63,94,.5); }
+.offer-btn.no:hover { transform: translateY(-1px); filter: brightness(1.08); box-shadow: 0 8px 24px -5px rgba(244,63,94,.7); }
+.offer-done { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; padding: 8px 2px; }
+.offer-done.ok { color: #10B981; }
+.offer-done.rej { color: #F43F5E; }
+.offer-done ion-icon { font-size: 15px; }

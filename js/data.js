@@ -233,14 +233,31 @@ export async function listArtists() {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 export async function createInvitation(venue, artist, f) {
-  await addDoc(collection(db, "invitations"), {
+  const genre = (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "";
+  const feeN = Number(f.fee);
+  const ref = await addDoc(collection(db, "invitations"), {
     venueId: venue.id, venueName: venue.displayName ?? "",
     artistId: artist.id, artistName: artist.displayName ?? artist.name ?? "",
-    genre: (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "",
-    eventDate: f.date, eventTime: f.time, fee: Number(f.fee),
+    genre,
+    eventDate: f.date, eventTime: f.time, fee: feeN,
     message: f.message ?? "", photoUrl: f.photoUrl ?? null, eventId: f.eventId ?? null,
     status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
   });
+  // Sohbete de teklifi düşür — sanatçı mesajlardan Evet/Hayır ile yanıtlayabilsin (best-effort).
+  try {
+    const feeTxt = isFinite(feeN) && feeN > 0 ? "₺" + feeN.toLocaleString("tr-TR") : "Belirtilmemiş";
+    await postOfferMessage({
+      fromId: venue.id, fromName: venue.displayName ?? "Mekan", fromEmoji: "🏢",
+      toId: artist.id, toName: artist.displayName ?? artist.name ?? "Sanatçı", toEmoji: "🎤",
+      text: `Sahne teklifi — ${axIsoToTR(f.date)}${f.time ? " · " + f.time : ""} · ${feeTxt}${f.message ? "\n" + f.message : ""}`,
+      type: "offer", invitationId: ref.id,
+      offerMeta: {
+        venueId: venue.id, venue: venue.displayName ?? "Mekan",
+        eventId: f.eventId ?? null, dateISO: f.date ?? "", time: f.time ?? "",
+        feeRaw: isFinite(feeN) ? feeN : null, genre, photoUrl: f.photoUrl ?? null,
+      },
+    });
+  } catch (e) { console.warn("[createInvitation] teklif mesajı yazılamadı", e); }
 }
 
 // Uzun dönem (rezidans) teklifi — app'in residencies şemasıyla birebir.
@@ -715,7 +732,7 @@ export async function pushAppNotification(opts) {
 }
 
 // ── Teklif akışı konuşma mesajı (app services/offerChat.postOfferMessage birebir) ──
-export async function postOfferMessage({ fromId, fromName, fromEmoji, toId, toName, toEmoji, text }) {
+export async function postOfferMessage({ fromId, fromName, fromEmoji, toId, toName, toEmoji, text, type, invitationId, offerMeta }) {
   if (!fromId || !toId || fromId === toId) return;
   const cid = convIdFor(fromId, toId);
   const convRef = doc(db, "conversations", cid);
@@ -735,9 +752,17 @@ export async function postOfferMessage({ fromId, fromName, fromEmoji, toId, toNa
       ["unreadCount." + toId]: increment(1),
     });
   }
-  await addDoc(collection(db, "conversations", cid, "messages"), {
-    senderId: fromId, senderName: fromName, text, createdAt: serverTimestamp(),
-  });
+  const msg = { senderId: fromId, senderName: fromName, text, createdAt: serverTimestamp() };
+  if (type) msg.type = type;                       // "offer" → sohbette Evet/Hayır butonlu kart
+  if (invitationId) msg.invitationId = invitationId;
+  if (offerMeta) msg.offerMeta = offerMeta;
+  await addDoc(collection(db, "conversations", cid, "messages"), msg);
+}
+
+// Davet durumu (yarış koruması: mesajdan yanıtlarken hâlâ pending mi?).
+export async function getInvitationStatus(id) {
+  try { const s = await getDoc(doc(db, "invitations", id)); return s.exists() ? (s.data().status ?? null) : null; }
+  catch { return null; }
 }
 
 // ── Teklif kabul/ret — app HomeScreen/OfferDetail handleAction AKIŞI BİREBİR ──
