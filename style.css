@@ -890,6 +890,10 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .au-submit { width: 100%; height: 52px; border: none; border-radius: 11px; background: linear-gradient(90deg, #F43F5E, #A855F7); color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 0.3px; cursor: pointer; margin-top: 8px; }
 .au-submit:disabled { opacity: 0.6; }
 @media (min-width: 900px) { .au-wrap { min-height: 100vh; justify-content: center; } }
+.legal-footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.legal-footer a { color: var(--text-muted); font-size: 12px; }
+.legal-footer a:hover { color: var(--text-secondary); }
+.legal-footer span { color: var(--text-muted); font-size: 12px; }
 
 /* Detay sayfası: mobilde tam sayfa (kenar çubuğu yok — app gibi), masaüstünde kenar çubuğu korunur */
 .page.has-nav.dtl { padding-bottom: 0; }

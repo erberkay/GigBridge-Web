@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hesap Silme · GigBridge</title>
+<meta name="description" content="GigBridge Hesap Silme" />
+<link rel="icon" type="image/png" href="favicon.png" />
+<style>
+:root{--bg:#07070F;--surface:#0D0D18;--surface2:#131321;--border:#1E1E35;--text:#EEEEF5;--sec:#9090B0;--muted:#555570;--primary:#A855F7}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.65}
+.wrap{max-width:820px;margin:0 auto;padding:32px 20px 80px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.dot{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,#A855F7,#F59E0B)}
+.brand{font-size:19px;font-weight:800;background:linear-gradient(135deg,#fff,#d8b4fe);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.back{margin-left:auto;color:var(--sec);text-decoration:none;font-size:14px}
+.back:hover{color:var(--text)}
+h1{font-size:28px;font-weight:800;letter-spacing:-0.4px;margin:0 0 18px}
+h2{font-size:20px;font-weight:800;margin:34px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{font-size:16px;font-weight:700;margin:22px 0 8px;color:var(--text)}
+h4{font-size:14px;font-weight:700;margin:16px 0 6px;color:var(--sec)}
+p,li{color:var(--sec);font-size:15px}
+strong{color:var(--text)}
+a{color:var(--primary)}
+ul,ol{padding-left:22px}
+li{margin:5px 0}
+hr{border:none;border-top:1px solid var(--border);margin:26px 0}
+blockquote{margin:16px 0;padding:12px 16px;background:var(--surface);border-left:3px solid var(--primary);border-radius:0 10px 10px 0;color:var(--text)}
+code{background:var(--surface2);padding:2px 6px;border-radius:6px;font-size:13px;color:#d8b4fe}
+.tblwrap{overflow-x:auto;margin:16px 0}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--surface2);color:var(--text);font-weight:700}
+td{color:var(--sec)}
+.foot{margin-top:40px;padding-top:20px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;display:flex;gap:16px;flex-wrap:wrap}
+.foot a{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span class="dot"></span><span class="brand">GigBridge</span><a class="back" href="/">← Ana sayfa</a></div>
+  <h2>GigBridge — Hesabımı Sil</h2>
+<p><strong>Son güncelleme: 03.07.2026</strong></p>
+<p>Bu sayfa, GigBridge hesabınızı ve hesabınızla ilişkili verileri nasıl kalıcı olarak sileceğinizi açıklar. GigBridge canlı müzik ve etkinlik platformu (iOS, Android ve gigbridges.com) Berkay Er (şahıs geliştirici) tarafından işletilmektedir. Hesap silme talepleri için herhangi bir ücret alınmaz.</p>
+<p>Uygulamayı indirmenize gerek kalmadan da bu sayfadaki adımlarla silme talebinde bulunabilirsiniz.</p>
+<hr>
+<h3>1. Uygulama İçinden Hesabınızı Silme (Önerilen)</h3>
+<p>En hızlı yol, uygulama içinden silme işlemini kendinizin başlatmasıdır:</p>
+<ol>
+<li>GigBridge mobil uygulamasını (iOS veya Android) açın ve hesabınıza giriş yapın.</li>
+<li><strong>Profil / Ayarlar</strong> bölümüne gidin.</li>
+<li><strong>"Hesabımı Sil"</strong> seçeneğine dokunun.</li>
+<li>Uyarıyı okuyup işlemi onaylayın.</li>
+</ol>
+<p>Onayınızın ardından hesabınız ve ilişkili verileriniz, sunucu tarafında çalışan bir Cloud Function aracılığıyla zincirleme (cascade) olarak <strong>kalıcı biçimde silinir.</strong> İşlem geri alınamaz.</p>
+<hr>
+<h3>2. Uygulama Olmadan Silme (E-posta ile Talep)</h3>
+<p>Uygulamaya erişiminiz yoksa veya uygulamayı indirmeden silme talebinde bulunmak istiyorsanız:</p>
+<ol>
+<li><strong>gigbridge.tr@gmail.com</strong> adresine, hesabınızın kayıtlı olduğu e-posta adresinden bir e-posta gönderin.</li>
+<li>Konu satırına <strong>"Hesap Silme Talebi"</strong> yazın.</li>
+<li>E-postada, hesabınıza ait kayıtlı e-posta adresini ve varsa görünen adınızı belirtin.</li>
+</ol>
+<p>Talebinizi aldıktan sonra, hesabın size ait olduğunu doğrulamak için kimlik doğrulaması yapabiliriz. Doğrulamanın ardından talebiniz, uygulama içi silme ile aynı esaslara göre sonuçlandırılır. Silme talepleri makul en kısa sürede işleme alınır.</p>
+<hr>
+<h3>3. Hangi Veriler Silinir?</h3>
+<p>Hesap silme işlemiyle aşağıdaki veriler <strong>kalıcı olarak</strong> kaldırılır:</p>
+<ul>
+<li>Hesap ve profil bilgileriniz (ad/görünen ad, e-posta, profil fotoğrafı, şehir/ilçe, rol ve role özgü bilgiler)</li>
+<li>Oluşturduğunuz etkinlikler</li>
+<li>Yorumlarınız ve puanlarınız (değerlendirmeler)</li>
+<li>Akış (feed) gönderileriniz ve bunlara yaptığınız yorumlar</li>
+<li>Mesajlarınız</li>
+<li>Favorileriniz ve takip ilişkileriniz</li>
+<li>Bildirim (report) ve engelleme (block) işlemlerinize ait kayıtlar</li>
+<li>Hesabınıza bağlı kimlik doğrulama kaydı</li>
+</ul>
+<hr>
+<h3>4. Saklama ve İstisnalar</h3>
+<ul>
+<li>Silme işlemi <strong>geri alınamaz.</strong></li>
+<li>Verileriniz, teknik yedekleme döngüleri nedeniyle sistem yedeklerinden en geç yaklaşık <strong>30 gün</strong> içinde temizlenir.</li>
+<li>Yalnızca yürürlükteki mevzuatın saklanmasını zorunlu kıldığı asgari veriler, ilgili yasal süre boyunca ve yalnızca bu amaçla saklanabilir; bu süre dolduğunda söz konusu veriler de silinir.</li>
+<li>Diğer kullanıcıların yeniden paylaştığı içerikler bu hükmün istisnası olabilir.</li>
+</ul>
+<p>Kişisel verilerinizin işlenmesi ve saklama süreleri hakkında ayrıntılı bilgi için <strong>Gizlilik Politikası</strong>'na bakabilirsiniz.</p>
+<hr>
+<h3>5. İletişim</h3>
+<p>Hesap silme veya kişisel verileriniz hakkında her türlü soru ve talep için:</p>
+<ul>
+<li><strong>Veri Sorumlusu / Geliştirici:</strong> Berkay Er</li>
+<li><strong>E-posta:</strong> gigbridge.tr@gmail.com</li>
+<li><strong>Web:</strong> gigbridges.com/hesap-sil</li>
+</ul>
+  <div class="foot">
+    <a href="/gizlilik.html">Gizlilik Politikası</a>
+    <a href="/kullanim-kosullari.html">Kullanım Koşulları</a>
+    <a href="/hesap-sil.html">Hesap Silme</a>
+    <span>© GigBridge</span>
+  </div>
+</div>
+</body>
+</html>

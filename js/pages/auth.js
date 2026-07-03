@@ -54,6 +54,16 @@ function googleBtn(msg) {
 }
 const orSep = () => h("div", { class: "sep" }, "veya");
 
+// Yasal sayfa bağlantıları (statik HTML — mağaza/kullanıcı için her zaman erişilebilir)
+function legalFooter() {
+  return h("div", { class: "legal-footer" },
+    h("a", { href: "gizlilik.html" }, "Gizlilik Politikası"),
+    h("span", {}, "·"),
+    h("a", { href: "kullanim-kosullari.html" }, "Kullanım Koşulları"),
+    h("span", {}, "·"),
+    h("a", { href: "hesap-sil.html" }, "Hesap Silme"));
+}
+
 // ── Landing — app WelcomeScreen birebir ──
 export function landing() {
   const feat = (ic, text) => h("div", { class: "wl-feat" },
@@ -71,7 +81,8 @@ export function landing() {
     h("div", { class: "wl-btns" },
       h("button", { class: "wl-login", onclick: () => (location.hash = "#/login") }, "Giriş Yap"),
       h("button", { class: "wl-register", onclick: () => (location.hash = "#/register") }, "Hesap Oluştur"),
-      h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi"))));
+      h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi"))),
+    legalFooter());
 }
 
 // ── Giriş — app LoginScreen birebir ──
@@ -118,7 +129,8 @@ export function login() {
       msg),
     h("p", { class: "foot-note" }, "Hesabınız yok mu? ", h("a", { href: "#/register" }, "Kayıt Olun")),
     h("p", { class: "foot-note" }, h("a", { href: "#/kesfet" }, "← Misafir olarak keşfetmeye dön")),
-    h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi")));
+    h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi")),
+    legalFooter());
 }
 
 // ── Kayıt — app RegisterScreen birebir (2 adım: rol kartları → bilgiler) ──

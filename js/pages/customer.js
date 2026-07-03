@@ -944,7 +944,10 @@ async function renderProfil(root) {
       menuRow("compass-outline", "Etkinlikleri Keşfet", () => go("#/etkinlikler")),
       menuRow("chatbox-ellipses-outline", "Yorumlarım", () => go("#/yorumlarim"), badges.yorum),
       menuRow("bookmark-outline", "Favorilerim", () => go("#/favoriler"), badges.fav),
-      menuRow("notifications-outline", "Bildirimler", () => go("#/bildirimler"), null, true)),
+      menuRow("notifications-outline", "Bildirimler", () => go("#/bildirimler")),
+      h("a", { class: "cp-menurow", href: "gizlilik.html" }, h("span", { class: "cp-menuic" }, icon("shield-checkmark-outline", { size: 18, color: "var(--text-secondary)" })), h("span", { class: "cp-menulbl" }, "Gizlilik Politikası"), icon("open-outline", { size: 15, color: "var(--text-muted)" })),
+      h("a", { class: "cp-menurow", href: "kullanim-kosullari.html" }, h("span", { class: "cp-menuic" }, icon("document-text-outline", { size: 18, color: "var(--text-secondary)" })), h("span", { class: "cp-menulbl" }, "Kullanım Koşulları"), icon("open-outline", { size: 15, color: "var(--text-muted)" })),
+      h("a", { class: "cp-menurow last", href: "hesap-sil.html" }, h("span", { class: "cp-menuic" }, icon("trash-outline", { size: 18, color: "#EF4444" })), h("span", { class: "cp-menulbl" }, "Hesap Silme"), icon("open-outline", { size: 15, color: "var(--text-muted)" }))),
     h("button", { class: "cp-logout", onclick: () => {
       modal({ title: "Çıkış", body: h("p", { class: "muted" }, "Hesabınızdan çıkmak istediğinize emin misiniz?"),
         actions: [{ label: "Vazgeç", variant: "ghost", onClick: () => {} }, { label: "Çıkış Yap", variant: "danger", onClick: () => logout() }] });
