@@ -76,9 +76,15 @@ export function field({ label, id, type = "text", placeholder, value = "", hint,
 }
 
 // Fotoğraf seçici — { node, getFile }. Seçilen dosya submit'te uploadImage ile yüklenir.
-export function photoPicker(label = "Fotoğraf ekle (opsiyonel)") {
+// currentUrl verilirse mevcut fotoğraf önizleme olarak gösterilir (profil fotoğrafı düzenleme).
+export function photoPicker(label = "Fotoğraf ekle (opsiyonel)", currentUrl) {
   let file = null;
   const box = h("div", { class: "photo-box" }, icon("image-outline", { size: 26, color: "#6b6b82" }), h("span", { class: "photo-hint" }, label));
+  if (currentUrl) {
+    box.style.backgroundImage = `url(${currentUrl})`;
+    box.classList.add("has-img"); clear(box);
+    box.append(h("span", { class: "photo-edit" }, icon("camera", { size: 13, color: "#fff" }), " Değiştir"));
+  }
   const input = h("input", { type: "file", accept: "image/*", class: "photo-input", onchange: (e) => {
     file = (e.target.files || [])[0] || null;
     if (file) {

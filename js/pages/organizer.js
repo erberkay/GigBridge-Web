@@ -708,7 +708,7 @@ async function renderProfile(root) {
   // App parite başlığı: 88px avatar + ad + e-posta + organizasyon rozeti (rol pill'li)
   const roleColor = isOwner ? C : "#3B82F6";
   const hero = h("div", { class: "ox-phero" },
-    h("div", { class: "ox-pavatar" }, initials(p.displayName || p.orgName)),
+    h("div", { class: "ox-pavatar", style: p.photoURL ? { backgroundImage: `url(${p.photoURL})`, backgroundSize: "cover", backgroundPosition: "center" } : null }, p.photoURL ? null : initials(p.displayName || p.orgName)),
     h("div", { class: "ox-pname" }, p.displayName || p.orgName || "Organizatör"),
     h("div", { class: "ox-pmail" }, p.email || ""),
     h("div", { class: "ox-orgbadge" },
@@ -719,7 +719,7 @@ async function renderProfile(root) {
         isOwner ? "Sahip" : "Personel")));
 
   // Mevcut profil kayıt formu (orgName/city/phone/bio + foto) — korunuyor
-  const pic = photoPicker("Organizasyon / profil fotoğrafı (opsiyonel)");
+  const pic = photoPicker("Organizasyon / profil fotoğrafı (opsiyonel)", p.photoURL);
   const form = h("form", { class: "form-card", onsubmit: (e) => e.preventDefault() },
     pic.node,
     field({ label: "Organizasyon Adı", id: "porg", value: p.orgName || p.displayName || "", placeholder: "Organizasyon adı" }),

@@ -437,7 +437,7 @@ async function renderProfile(root) {
   let ncPending = p.nameChangeStatus === "pending";
   if (ncPending && p.nameChangeRequested && (p.displayName || "") === p.nameChangeRequested) { ncPending = false; clearNameChangeFlag(uid); }
 
-  const pic = photoPicker("Mekan / profil fotoğrafı (opsiyonel)");
+  const pic = photoPicker("Mekan / profil fotoğrafı (opsiyonel)", p.photoURL);
 
   // Profil özeti (app profileStats: etkinlik / puan / katılım / sanatçı)
   const statsBox = h("div", { class: "stat-grid" }, h("div", { class: "loading" }, spinner()));
@@ -469,7 +469,8 @@ async function renderProfile(root) {
   }));
 
   const form = h("form", { class: "form-card", onsubmit: (e) => e.preventDefault() },
-    h("div", { class: "profile-head" }, avatar(p.displayName, AMBER),
+    h("div", { class: "profile-head" },
+      p.photoURL ? h("div", { class: "acard-photo big", style: { backgroundImage: `url(${p.photoURL})` } }) : avatar(p.displayName, AMBER),
       h("div", { class: "grow" }, h("div", { class: "ph-name" }, p.displayName || "Mekan"), h("div", { class: "ph-mail" }, p.email || "")),
       btn("Adını Değiştir", { variant: "ghost", ic: "create-outline", onClick: () => nameChangeModal(root, p) })),
     ncPending ? h("div", { class: "nc-banner" }, icon("hourglass-outline", { size: 14, color: AMBER }),

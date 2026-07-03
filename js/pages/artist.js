@@ -931,7 +931,7 @@ async function renderProfile(root) {
     }
   })();
 
-  const pic = photoPicker("Profil fotoğrafı (opsiyonel)");
+  const pic = photoPicker("Profil fotoğrafı (opsiyonel)", p.photoURL);
   const cityList = h("datalist", { id: "ax-citylist" }, ...PROVINCES.map((c) => h("option", { value: c })));
 
   // Müzik türleri — çoklu seçim (öneri çipleri + özel tür ekleme)
