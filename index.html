@@ -10,11 +10,27 @@
   <link rel="shortcut icon" type="image/png" href="favicon.png" />
   <link rel="apple-touch-icon" href="icon.png" />
   <meta name="theme-color" content="#0a0a0f" />
-  <link rel="preconnect" href="https://www.gstatic.com" />
+  <!-- Hız: bağlantıları erkenden kur (ikon CDN'i + Firebase + Google API'leri) -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin />
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="style.css" />
-  <!-- App ile aynı ikon seti (Ionicons) -->
-  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <!-- Kritik JS modüllerini paralel önyükle (şelaleyi kır) -->
+  <link rel="modulepreload" href="js/app.js" />
+  <link rel="modulepreload" href="js/firebase.js" />
+  <link rel="modulepreload" href="js/store.js" />
+  <link rel="modulepreload" href="js/ui.js" />
+  <link rel="modulepreload" href="js/data.js" />
+  <link rel="modulepreload" href="js/pages/auth.js" />
+  <link rel="modulepreload" href="js/pages/customer.js" />
+  <link rel="modulepreload" href="js/pages/messages.js" />
+  <!-- App ile aynı ikon seti (Ionicons) — jsdelivr daha hızlı + iyi önbellek -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
   <div id="app">

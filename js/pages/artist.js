@@ -979,6 +979,7 @@ async function renderProfile(root) {
   // Sosyal medya
   const SOCIAL_META = [
     { key: "instagram", ic: "logo-instagram", label: "Instagram", ph: "kullanıcı adı ya da bağlantı" },
+    { key: "soundcloud", ic: "logo-soundcloud", label: "SoundCloud", ph: "kullanıcı adı ya da bağlantı" },
     { key: "spotify", ic: "musical-notes-outline", label: "Spotify", ph: "sanatçı adı ya da bağlantı" },
     { key: "youtube", ic: "logo-youtube", label: "YouTube", ph: "kanal ya da bağlantı" },
   ];
@@ -1003,7 +1004,7 @@ async function renderProfile(root) {
       priceMin: minNum != null ? String(minNum) : "",
       priceMax: maxNum != null ? String(maxNum) : "",
       genres: [...genres],
-      social: { instagram: v("#asoc_instagram"), spotify: v("#asoc_spotify"), youtube: v("#asoc_youtube") },
+      social: { instagram: v("#asoc_instagram"), soundcloud: v("#asoc_soundcloud"), spotify: v("#asoc_spotify"), youtube: v("#asoc_youtube") },
       city: v("#acity"), district: v("#adistrict"),
       experienceYears: v("#aexp") ? Number(v("#aexp").replace(/[^0-9]/g, "")) : null,
     };

@@ -1,12 +1,18 @@
 // Önyükleme + hash router + rol/onay guard'ları.
 import { initAuth, session, onSession, homeRouteFor } from "./store.js";
 import { landing, login, register, pending, adminLogin, unsupported, setup, verify } from "./pages/auth.js";
-import { adminPage } from "./pages/admin.js";
-import { venuePage } from "./pages/venue.js";
-import { organizerPage } from "./pages/organizer.js";
-import { artistPage } from "./pages/artist.js";
 import { customerPage } from "./pages/customer.js";
 import { mount, h } from "./ui.js";
+
+// Rol panelleri tembel-yüklenir: müşteri/misafir bunların kodunu indirmez (hız).
+const _lazy = {};
+function mountLazy(path, fn) {
+  const at = base(location.hash);
+  mount(h("div", { class: "boot" }, h("div", { class: "spinner" })));
+  (_lazy[path] || (_lazy[path] = import(path))).then((m) => {
+    if (base(location.hash) === at) mount(m[fn]());
+  }).catch(() => { _lazy[path] = null; mount(h("div", { class: "content" }, h("p", { class: "muted center" }, "Sayfa yüklenemedi. Bağlantını kontrol edip yenile."))); });
+}
 
 const PUBLIC = ["#/", "#/login", "#/register", "#/yonetici"];
 
@@ -71,10 +77,10 @@ function render() {
   else if (b === "#/yonetici") node = adminLogin();
   else if (b === "#/setup") node = setup();
   else if (b === "#/unsupported") node = unsupported();
-  else if (matches(b, "#/admin")) node = adminPage();
-  else if (matches(b, "#/venue")) node = venuePage();
-  else if (matches(b, "#/organizer")) node = organizerPage();
-  else if (matches(b, "#/artist")) node = artistPage();
+  else if (matches(b, "#/admin")) return mountLazy("./pages/admin.js", "adminPage");
+  else if (matches(b, "#/venue")) return mountLazy("./pages/venue.js", "venuePage");
+  else if (matches(b, "#/organizer")) return mountLazy("./pages/organizer.js", "organizerPage");
+  else if (matches(b, "#/artist")) return mountLazy("./pages/artist.js", "artistPage");
   else if (["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil", "#/etkinlikler"].includes(b)
     || matches(b, "#/etkinlik") || matches(b, "#/sanatci") || matches(b, "#/mekan") || matches(b, "#/katilimcilar")) node = customerPage();
   else node = landing();

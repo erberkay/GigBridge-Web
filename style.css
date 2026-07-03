@@ -891,6 +891,19 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .au-submit:disabled { opacity: 0.6; }
 @media (min-width: 900px) { .au-wrap { min-height: 100vh; justify-content: center; } }
 
+/* Detay sayfası: mobilde tam sayfa (kenar çubuğu yok — app gibi), masaüstünde kenar çubuğu korunur */
+.page.has-nav.dtl { padding-bottom: 0; }
+.page.has-nav.dtl > .bottomnav { display: none; }
+.pd-socials { display: flex; gap: 12px; flex-wrap: wrap; }
+.pd-social { width: 46px; height: 46px; border-radius: 12px; background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.25); display: flex; align-items: center; justify-content: center; }
+.pd-social:hover { background: rgba(168,85,247,0.18); }
+@media (min-width: 900px) {
+  .page.has-nav.dtl { display: grid; grid-template-columns: 248px minmax(0, 1fr); grid-template-rows: 1fr; grid-template-areas: "side main"; max-width: none; }
+  .page.has-nav.dtl > .bottomnav { display: flex; grid-area: side; }
+  .page.has-nav.dtl > :not(.bottomnav) { grid-area: main; min-width: 0; width: 100%; }
+  .page.has-nav.dtl .ed-page, .page.has-nav.dtl .pd-page, .page.has-nav.dtl .at-page, .page.has-nav.dtl .dsh-wrap { max-width: 860px; }
+}
+
 /* Keşfet masaüstü uyarlaması */
 @media (min-width: 900px) {
   .page.has-nav > .content.hs-content { padding: 16px 20px 56px; }

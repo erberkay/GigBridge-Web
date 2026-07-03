@@ -45,6 +45,11 @@ function tabFromHash() { return base().replace("#/", "") || "kesfet"; }
 function go(hash) { location.hash = hash; }
 const seg = (i) => decodeURIComponent(base().split("/")[i] || "");
 
+// Detay sayfası sarmalayıcı: masaüstünde müşteri kenar çubuğunu korur (mobilde tam sayfa — app gibi).
+function dtlWrap(...children) {
+  return h("div", { class: "page has-nav dtl", style: { "--role": C } }, ...children, bottomnav(NAV, "", C));
+}
+
 // ── Keşfet (app HomeScreen paritesi) durum + yardımcılar ──
 const PROVINCES = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkâri","Hatay","Iğdır","Isparta","İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars","Kastamonu","Kayseri","Kilis","Kırıkkale","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu","Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli","Uşak","Van","Yalova","Yozgat","Zonguldak"];
 const TRX = { "ı": "i", "İ": "i", "ş": "s", "Ş": "s", "ç": "c", "Ç": "c", "ğ": "g", "Ğ": "g", "ö": "o", "Ö": "o", "ü": "u", "Ü": "u", "â": "a", "î": "i", "û": "u" };
@@ -431,7 +436,7 @@ const evGenre = (ev) => (Array.isArray(ev.genre) ? ev.genre[0] : ev.genre) || ""
 
 function eventDetailPage(id) {
   const content = h("div", { class: "ed-page" }, h("div", { class: "loading" }, spinner()));
-  const page = h("div", { class: "page", style: { "--role": C } }, content);
+  const page = dtlWrap(content);
   eventDetail(id, content);
   return page;
 }
@@ -563,7 +568,7 @@ async function eventDetail(id, root) {
 const AVATAR_PALETTES = [["#8B5CF6", "#6D28D9"], ["#EF4444", "#B91C1C"], ["#10B981", "#059669"], ["#F59E0B", "#D97706"], ["#EC4899", "#BE185D"], ["#06B6D4", "#0891B2"], ["#F97316", "#EA580C"], ["#6366F1", "#4F46E5"], ["#14B8A6", "#0D9488"], ["#A855F7", "#9333EA"], ["#84CC16", "#65A30D"], ["#FB7185", "#E11D48"]];
 function attendeesPage(id) {
   const content = h("div", { class: "at-page" }, h("div", { class: "loading" }, spinner()));
-  const page = h("div", { class: "page", style: { "--role": C } }, content);
+  const page = dtlWrap(content);
   (async () => {
     let ev = null, list = [];
     try { [ev, list] = await Promise.all([eventById(id), eventAttendees(id)]); } catch (_) {}
@@ -634,10 +639,27 @@ function rvCard(name, rating, comment, createdAt, opts = {}) {
     comment ? h("p", { class: "rv-comment" }, comment) : null);
 }
 function rvEmpty(text) { return h("div", { class: "rv-empty" }, icon("star-outline", { size: 32, color: "var(--text-muted)" }), h("div", {}, text)); }
+// Sanatçı sosyal bağlantıları (app socialUrl birebir)
+function socialUrl(key, val) {
+  const s = String(val || "").trim(); if (!s) return null;
+  if (/^https?:\/\//i.test(s)) return s;
+  const hn = s.replace(/^@/, "");
+  if (key === "instagram") return "https://instagram.com/" + hn;
+  if (key === "soundcloud") return "https://soundcloud.com/" + hn;
+  if (key === "youtube") return "https://www.youtube.com/results?search_query=" + encodeURIComponent(s);
+  return "https://open.spotify.com/search/" + encodeURIComponent(s); // spotify
+}
+function socialBlock(social) {
+  if (!social) return null;
+  const META = [["instagram", "logo-instagram"], ["soundcloud", "logo-soundcloud"], ["spotify", "musical-notes"], ["youtube", "logo-youtube"]];
+  const links = META.map(([k, ic]) => { const u = socialUrl(k, social[k]); return u ? h("a", { class: "pd-social", href: u, target: "_blank", rel: "noopener" }, icon(ic, { size: 20, color: "var(--primary)" })) : null; }).filter(Boolean);
+  if (!links.length) return null;
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Sosyal"), h("div", { class: "pd-socials" }, ...links));
+}
 
 function artistDetailPage(id) {
   const content = h("div", { class: "pd-page" }, h("div", { class: "loading" }, spinner()));
-  const page = h("div", { class: "page", style: { "--role": C } }, content);
+  const page = dtlWrap(content);
   artistDetail(id, content);
   return page;
 }
@@ -691,6 +713,7 @@ async function artistDetail(id, root) {
       a.experienceYears ? h("div", { class: "pd-exp" }, icon("time-outline", { size: 14, color: "var(--text-secondary)" }), h("span", {}, a.experienceYears + " yıl deneyim")) : null),
     genres.length ? h("div", { class: "ed-sect" }, pdTitle("Müzik Tarzları"),
       h("div", { class: "pd-tags" }, ...genres.map((g) => h("span", { class: "pd-tag" }, g)))) : null,
+    socialBlock(a.social),
     h("div", { class: "ed-sect" },
       h("div", { class: "rv-head" }, pdTitle("Yorumlar"),
         h("button", { class: "rv-add", onclick: () => { if (loginGate("Yorum yapmak")) return; reviewModal("artist", a, () => artistDetail(id, root)); } }, "+ Yorum Yap")),
@@ -701,7 +724,7 @@ async function artistDetail(id, root) {
 // ══════════ MEKAN DETAY — app VenueDetailScreen birebir ══════════
 function venueDetailPage(id) {
   const content = h("div", { class: "pd-page" }, h("div", { class: "loading" }, spinner()));
-  const page = h("div", { class: "page", style: { "--role": C } }, content);
+  const page = dtlWrap(content);
   venueDetail(id, content);
   return page;
 }
@@ -1406,12 +1429,13 @@ function notifIcon(t) {
 function detailShell(title, loader, id) {
   const subEl = h("div", { class: "dsh-sub" });
   const content = h("div", { class: "content detail dsh-content" }, h("div", { class: "loading" }, spinner()));
-  const page = h("div", { class: "page", style: { "--role": C } },
-    h("div", { class: "dsh-head" },
-      h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "rgba(255,255,255,0.8)" })),
-      h("h1", { class: "dsh-title" }, title),
-      subEl),
-    content);
+  const page = dtlWrap(
+    h("div", { class: "dsh-wrap" },
+      h("div", { class: "dsh-head" },
+        h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "rgba(255,255,255,0.8)" })),
+        h("h1", { class: "dsh-title" }, title),
+        subEl),
+      content));
   loader(id, content, subEl);
   return page;
 }
