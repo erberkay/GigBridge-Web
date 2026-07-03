@@ -1586,3 +1586,41 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .offer-done.ok { color: #10B981; }
 .offer-done.rej { color: #F43F5E; }
 .offer-done ion-icon { font-size: 15px; }
+
+/* ── Biletlerim: bilet satırı + "Bileti Gör" + holografik bilet kartı ── */
+.tk-row { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+.tk-rowbot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.tk-see { display: inline-flex; align-items: center; gap: 5px; background: color-mix(in srgb, var(--primary) 18%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 50%, transparent); color: var(--primary); font-weight: 800; font-size: 12px; padding: 8px 12px; border-radius: 10px; cursor: pointer; white-space: nowrap; transition: filter .2s, transform .15s; }
+.tk-see:hover { filter: brightness(1.15); }
+.tk-see:active { transform: scale(.96); }
+
+.tk-overlay { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 20px; background: rgba(0,0,0,.78); backdrop-filter: blur(5px); opacity: 0; transition: opacity .25s ease; }
+.tk-overlay.show { opacity: 1; }
+.tk-close { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); color: #fff; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer; }
+.tk-close:hover { background: rgba(255,255,255,.2); }
+
+.tk-card { --w: 210px; --h: 380px; --perf: 12px; --cut: 74px; position: relative; display: grid; grid-template-rows: auto 1fr auto; gap: .6rem; width: var(--w); height: var(--h); padding: var(--perf) 0; font-family: "Inter", system-ui, sans-serif; user-select: none; overflow: hidden; filter: drop-shadow(0 10px 9px #00000030) drop-shadow(0 26px 26px #00000035); animation: tk-hover 3s ease infinite; will-change: transform, filter; }
+@keyframes tk-hover { 50% { transform: translateY(-7px) scale(1.02); } }
+.tk-bg { position: absolute; inset: 0;
+  background-image: linear-gradient(to bottom, #ffee5588, 90%, #00000022),
+    conic-gradient(at 60% 50%, #ccc, #ff6bfe, #00f9f8, #ddd, #0081fd, #eef0bc, #0081fd, #ff6bfe, #00000022, #0081fd, #ddd, #01fefb, #ccc);
+  mask:
+    radial-gradient(circle at 50% 0, #fff0 calc(var(--perf) - 5px), #000 calc(var(--perf) - 4px)),
+    radial-gradient(circle at 50% 100%, #fff0 calc(var(--perf) - 5px), #000 calc(var(--perf) - 4px)),
+    radial-gradient(circle 8px at left center, #000 98%, #0000 100%),
+    radial-gradient(circle 8px at right center, #000 98%, #0000 100%),
+    repeating-linear-gradient(90deg, #000 10px, #000 15px, #0000 16px, #0000 24px);
+  mask-repeat: repeat-x, repeat-x, no-repeat, no-repeat, repeat-x;
+  mask-size: calc(var(--perf) * 2) 100%, calc(var(--perf) * 2) 100%, 16px 16px, 16px 16px, 10px 2px;
+  mask-position: calc(.5 * var(--perf)) top, calc(.5 * var(--perf)) bottom, left var(--cut), right var(--cut), 0 calc(var(--cut) + 7px);
+  mask-composite: intersect, exclude, add, add;
+}
+.tk-header { position: relative; z-index: 1; margin: 0 10px; padding-top: 4px; text-align: center; font-family: "Impact", "Inter", sans-serif; font-size: 1.4rem; line-height: 1.05; letter-spacing: 1px; text-transform: uppercase; color: #111; word-break: break-word; }
+.tk-body { position: relative; z-index: 1; margin: 0 16px; display: flex; flex-direction: column; justify-content: center; gap: 9px; color: #141414; font-size: 13px; font-weight: 600; }
+.tk-line { display: flex; align-items: center; gap: 8px; }
+.tk-line ion-icon { color: #222; min-width: 15px; font-size: 13px; }
+.tk-line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tk-footer { position: relative; z-index: 1; margin: 0 16px 8px; }
+.tk-number { text-align: center; color: #000; font-size: 11px; letter-spacing: 1.5px; margin-bottom: 8px; }
+.tk-number .bold { font-weight: 800; }
+.tk-barcode { height: 34px; border-radius: 2px; background-image: repeating-linear-gradient(90deg, #000 0 2px, #0000 2px 4px, #000 4px 7px, #0000 7px 9px, #000 9px 12px, #0000 12px 17px, #000 17px 19px, #0000 19px 23px); }

@@ -73,6 +73,7 @@ export function customerPage() {
   if (b === "#/takip")       return detailShell("Takip Ettiklerim", followingView);
   if (b === "#/favoriler")   return detailShell("Favorilerim", favoritesView);
   if (b === "#/katildiklarim") return detailShell("Katıldıklarım", attendedView);
+  if (b === "#/biletlerim")    return detailShell("Biletlerim", ticketsView);
   if (b === "#/yorumlarim")  return detailShell("Yorumlarım", myReviewsView);
   if (b === "#/bildirimler") return detailShell("Bildirimler", notificationsView);
 
@@ -939,6 +940,7 @@ async function renderProfil(root) {
       stat("star", stVal.avg, "Ort. Verdiğim", null, true)),
     h("div", { class: "cp-menu" },
       menuRow("location-outline", "Şehrim", cityPicker, h("span", { class: "cp-cityval" }, p.city || "Seç")),
+      menuRow("ticket-outline", "Biletlerim", () => go("#/biletlerim"), null, false, true),
       menuRow("heart-outline", "Takip Ettiklerim", () => go("#/takip"), badges.takip),
       menuRow("checkmark-done-outline", "Katıldığım Etkinlikler", () => go("#/katildiklarim"), badges.kat),
       menuRow("compass-outline", "Etkinlikleri Keşfet", () => go("#/etkinlikler")),
@@ -1312,6 +1314,77 @@ async function attendedView(_id, root, subEl) {
       icon("chevron-forward", { size: 16, color: "var(--border)" })));
   });
   root.append(box);
+}
+
+// ── Biletlerim — katıldığın, henüz BİTMEMİŞ etkinlikler; "Bileti Gör" → holografik kart ──
+function ticketEventMs(e) {
+  const v = e.eventAt;
+  if (v && typeof v.toMillis === "function") return v.toMillis();
+  if (e.dateKey) { const t = new Date(e.dateKey).getTime(); if (!isNaN(t)) return t; }
+  if (typeof v === "string") { const t = new Date(v).getTime(); if (!isNaN(t)) return t; }
+  return 0;
+}
+async function ticketsView(_id, root, subEl) {
+  clear(root);
+  let list = [];
+  try { list = await attendedEvents(uid()); } catch (e) { root.append(errBox()); return; }
+  const now = Date.now();
+  // Bilet, etkinlik başlangıcından ~6 saat sonrasına kadar geçerli (etkinlik bitene kadar durur)
+  const tickets = list.filter((e) => { const ms = ticketEventMs(e); return ms === 0 || ms + 6 * 3600 * 1000 > now; });
+  if (subEl) subEl.textContent = tickets.length + " aktif bilet";
+
+  // Mesafe için konum yoksa bir kez dene (izin verilirse yeniden çizilir)
+  if (!userCoords && navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      if (location.hash === "#/biletlerim") go("#/biletlerim");
+    }, () => {}, { timeout: 8000 });
+  }
+
+  if (!tickets.length) {
+    root.append(h("div", { class: "hs-empty" }, icon("ticket-outline", { size: 48, color: "var(--text-muted)" }),
+      h("div", { class: "hs-empty-title" }, "Aktif biletin yok."),
+      h("div", { class: "hs-empty-sub" }, "Keşfet'ten bir etkinliğe \"Katıl\" dediğinde bileti burada görünür.")));
+    return;
+  }
+  const boxEl = h("div", { class: "sl-list" });
+  tickets.forEach((e) => {
+    const [g1, g2] = genreGrad(evGenre(e));
+    boxEl.append(h("div", { class: "tk-row" },
+      h("div", { class: "at-evav", style: { background: `linear-gradient(135deg, ${g1}, ${g2})` } }, icon("ticket", { size: 20, color: "#fff" })),
+      h("div", { class: "grow", style: { minWidth: 0 } },
+        h("div", { class: "sl-name" }, e.title || "Etkinlik"),
+        h("div", { class: "sl-meta" }, icon("mic-outline", { size: 11, color: "var(--text-muted)" }), h("span", {}, e.artistName || "Sanatçı")),
+        h("div", { class: "sl-meta" }, icon("business-outline", { size: 11, color: "var(--text-muted)" }), h("span", {}, e.venueName || "—")),
+        h("div", { class: "tk-rowbot" },
+          h("span", { class: "sl-meta" }, icon("time-outline", { size: 11, color: "var(--text-muted)" }), h("span", {}, eventWhen(e))),
+          distPill(e) || null)),
+      h("button", { class: "tk-see", onclick: () => showTicketCard(e) }, icon("qr-code-outline", { size: 14 }), h("span", {}, "Bileti Gör"))));
+  });
+  root.append(boxEl);
+}
+function showTicketCard(e) {
+  let distTxt = "—";
+  if (userCoords && e.location?.lat != null) {
+    const km = haversineKm(userCoords, { lat: e.location.lat, lng: e.location.lng });
+    distTxt = km < 1 ? Math.round(km * 1000) + " m" : km.toFixed(1) + " km";
+  }
+  const num = String(e.id || "").replace(/[^a-zA-Z0-9]/g, "").slice(-8).toUpperCase().padStart(8, "0");
+  const overlay = h("div", { class: "tk-overlay", onclick: (ev) => { if (ev.target === overlay) overlay.remove(); } });
+  const card = h("div", { class: "tk-card" },
+    h("div", { class: "tk-bg" }),
+    h("div", { class: "tk-header" }, (e.title || "BİLET").toLocaleUpperCase("tr-TR")),
+    h("div", { class: "tk-body" },
+      h("div", { class: "tk-line" }, icon("mic", { size: 13 }), h("span", {}, e.artistName || "Sanatçı")),
+      h("div", { class: "tk-line" }, icon("business", { size: 13 }), h("span", {}, e.venueName || "Mekan")),
+      h("div", { class: "tk-line" }, icon("calendar", { size: 13 }), h("span", {}, eventWhen(e))),
+      h("div", { class: "tk-line" }, icon("navigate", { size: 13 }), h("span", {}, distTxt))),
+    h("div", { class: "tk-footer" },
+      h("div", { class: "tk-number" }, "BİLET ", h("span", { class: "bold" }, num)),
+      h("div", { class: "tk-barcode" })));
+  overlay.append(card, h("button", { class: "tk-close", onclick: () => overlay.remove() }, icon("close", { size: 18 }), h("span", {}, "Kapat")));
+  document.body.append(overlay);
+  requestAnimationFrame(() => overlay.classList.add("show"));
 }
 
 // Yorumlarım — app MyReviews birebir (düzenle/sil + ortalama)
