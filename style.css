@@ -778,6 +778,66 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .mp-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 300; }
 @media (min-width: 900px) { .mp-wrap { height: calc(100vh - 120px); margin: -16px -20px 0; } .mp-card { max-width: 520px; left: 50%; transform: translateX(-50%); right: auto; width: calc(100% - 32px); } }
 
+/* ══════════════ MESAJLAR — app MessagesScreen birebir ══════════════ */
+.ms-head { display: flex; align-items: center; gap: 12px; padding: 4px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.ms-title { font-size: 28px; font-weight: 800; color: var(--text); }
+.ms-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.ms-compose { width: 40px; height: 40px; border-radius: 20px; background: var(--primary); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; }
+.ms-back { background: none; border: none; cursor: pointer; padding: 4px; display: flex; }
+.ms-list { display: flex; flex-direction: column; }
+.ms-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.ms-row:hover { background: var(--surface); }
+.ms-av { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; flex: 0 0 auto; }
+.ms-row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ms-name { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-time { font-size: 11px; color: var(--text-muted); flex: 0 0 auto; }
+.ms-row-bot { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.ms-last { flex: 1; font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-unread { min-width: 20px; height: 20px; border-radius: 10px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; flex: 0 0 auto; }
+.ms-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 80px; text-align: center; }
+.ms-empty-t { color: var(--text-secondary); font-size: 15px; }
+.ms-empty-s { color: var(--text-muted); font-size: 13px; line-height: 19px; }
+.ms-search { display: flex; align-items: center; gap: 8px; margin: 12px 0; background: #191930; border-radius: 12px; border: 1px solid var(--border); padding: 0 14px; }
+.ms-search input { background: none; border: none; box-shadow: none; border-radius: 0; padding: 10px 0; font-size: 15px; }
+.ms-crow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.ms-cav { width: 44px; height: 44px; border-radius: 22px; background: #191930; display: flex; align-items: center; justify-content: center; color: var(--text); font-size: 18px; font-weight: 800; flex: 0 0 auto; }
+.ms-ctype { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.ms-chathead { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.ms-status { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.ms-sender { color: var(--primary); font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+.ms-inputrow { display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+.ms-input { flex: 1; background: #191930; border-radius: 20px; border: 1px solid var(--border); padding: 10px 16px; color: var(--text); font-size: 13px; }
+.ms-send { width: 44px; height: 44px; border-radius: 22px; background: var(--primary); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; }
+/* Sohbet balonları — app: kendi mor düz, karşı yüzey */
+.bubble { max-width: 75%; padding: 12px 14px; border-radius: 16px; font-size: 13px; line-height: 20px; border: 1px solid transparent; }
+.b-me { background: var(--primary); border-color: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+.b-them { background: var(--surface); border-color: var(--border); border-bottom-left-radius: 4px; }
+
+/* ══════════════ BİLDİRİMLER — app NotificationsFeed birebir ══════════════ */
+.nf-list { display: flex; flex-direction: column; gap: 10px; }
+.nf-card { display: flex; align-items: flex-start; gap: 12px; background: var(--surface); border-radius: 11px; padding: 16px; border: 1px solid var(--border); }
+.nf-card.unread { border-color: rgba(168,85,247,0.33); background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
+.nf-ic { width: 38px; height: 38px; border-radius: 19px; background: rgba(168,85,247,0.09); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.nf-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.nf-body { font-size: 13px; color: var(--text-secondary); line-height: 19px; }
+.nf-time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.nf-x { background: none; border: none; cursor: pointer; padding: 2px; flex: 0 0 auto; }
+.nf-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 90px; color: var(--text-muted); font-size: 13px; }
+
+/* ══════════════ LANDING — app WelcomeScreen birebir ══════════════ */
+.wl-wrap { max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; padding: 60px 24px 40px; background: linear-gradient(180deg, #07070F, #1A0830 45%, #07070F); }
+.wl-hero { text-align: center; margin-bottom: 40px; }
+.wl-logo { font-size: 34px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(135deg, #fff, #d8b4fe); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.wl-tagline { color: var(--text); font-size: 15px; line-height: 22px; margin-top: 14px; }
+.wl-feats { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.wl-feat { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 13px; }
+.wl-featic { width: 36px; height: 36px; border-radius: 10px; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.25); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.wl-feattext { color: var(--text); font-size: 13px; font-weight: 500; flex: 1; }
+.wl-btns { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
+.wl-login { height: 52px; border: none; border-radius: 11px; background: linear-gradient(90deg, #F43F5E, #A855F7); color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 0.3px; cursor: pointer; }
+.wl-register { height: 52px; border: 1.5px solid var(--border); border-radius: 11px; background: transparent; color: var(--text); font-size: 15px; font-weight: 600; cursor: pointer; }
+@media (min-width: 900px) { .wl-wrap { min-height: 100vh; justify-content: center; } .wl-feats { flex: 0 0 auto; } }
+
 /* Keşfet masaüstü uyarlaması */
 @media (min-width: 900px) {
   .page.has-nav > .content.hs-content { padding: 16px 20px 56px; }

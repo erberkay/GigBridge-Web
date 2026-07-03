@@ -54,17 +54,24 @@ function googleBtn(msg) {
 }
 const orSep = () => h("div", { class: "sep" }, "veya");
 
-// ── Landing ──
+// ── Landing — app WelcomeScreen birebir ──
 export function landing() {
-  return shell(
-    hero("Mekan & Organizatör Paneli", "GigBridge'e mekan ya da organizatör olarak katıl; giriş yap, etkinliklerini yönet."),
-    card(
-      btn("Giriş Yap", { ic: "log-in-outline", full: true, onClick: () => (location.hash = "#/login") }),
-      h("div", { class: "sep" }, "veya"),
-      btn("Yeni Hesap Oluştur", { variant: "ghost", ic: "person-add-outline", full: true, onClick: () => (location.hash = "#/register") }),
-      h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi")),
-    ),
-  );
+  const feat = (ic, text) => h("div", { class: "wl-feat" },
+    h("span", { class: "wl-featic" }, icon(ic, { size: 17, color: "var(--primary)" })),
+    h("span", { class: "wl-feattext" }, text));
+  return h("main", { class: "wl-wrap" },
+    h("div", { class: "wl-hero" },
+      h("div", { class: "brand" }, h("span", { class: "brand-dot" }), h("span", { class: "wl-logo" }, "GigBridge")),
+      h("p", { class: "wl-tagline" }, "Sanatçılar, Mekanlar ve", h("br"), "Müzik Severler Bir Arada")),
+    h("div", { class: "wl-feats" },
+      feat("mic-outline", "Sanatçı profilleri ve portföyler"),
+      feat("business-outline", "Mekanları keşfet ve etkinlikleri takip et"),
+      feat("map-outline", "Yakınındaki etkinlikleri haritada gör"),
+      feat("star-outline", "Sanatçı ve mekanlara puan ver")),
+    h("div", { class: "wl-btns" },
+      h("button", { class: "wl-login", onclick: () => (location.hash = "#/login") }, "Giriş Yap"),
+      h("button", { class: "wl-register", onclick: () => (location.hash = "#/register") }, "Hesap Oluştur"),
+      h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi"))));
 }
 
 // ── Giriş ──

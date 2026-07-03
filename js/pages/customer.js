@@ -1258,21 +1258,46 @@ async function myReviewsView(_id, root) {
     root.append(h("div", {}, ...list.map((r) => reviewCard(r.targetName || r.venueName || "—", r.overallRating ?? r.rating, r.comment, r.createdAt))));
   } catch (e) { root.append(errBox()); }
 }
+// Bildirimler — app NotificationsFeedScreen birebir
+function timeAgo(v) {
+  try {
+    const d = typeof v?.toDate === "function" ? v.toDate() : new Date(v);
+    if (isNaN(d)) return "";
+    const m = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (m < 1) return "şimdi";
+    if (m < 60) return m + " dk önce";
+    if (m < 1440) return Math.floor(m / 60) + " sa önce";
+    return d.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+  } catch { return ""; }
+}
 function notificationsView(_id, root) {
   clear(root);
-  const wrap = h("div", {}, h("div", { class: "loading" }, spinner()));
+  const wrap = h("div", { class: "nf-list" }, h("div", { class: "loading" }, spinner()));
   root.append(wrap);
   listenNotifications(uid(), (list) => {
     clear(wrap);
-    if (!list.length) { wrap.append(empty("notifications-off-outline", "Bildirim yok")); return; }
+    if (!list.length) { wrap.append(h("div", { class: "nf-empty" }, icon("notifications-off-outline", { size: 44, color: "var(--text-muted)" }), h("div", {}, "Henüz bildiriminiz yok."))); return; }
     list.forEach((n) => { if (n.read === false) markNotifRead(n.id); });
-    list.forEach((n) => wrap.append(h("div", { class: "notif" + (n.read === false ? " unread" : "") },
-      icon(notifIcon(n.type), { size: 18, color: C }),
-      h("div", { class: "notif-body" }, h("div", { class: "notif-title" }, n.title || "Bildirim"), h("div", { class: "notif-text" }, n.body || ""), h("div", { class: "notif-time" }, fmtDate(n.createdAt))),
-      h("button", { class: "notif-x", onclick: () => deleteNotif(n.id) }, icon("close", { size: 15 })))));
+    list.forEach((n) => {
+      const card = h("div", { class: "nf-card" + (n.read === false ? " unread" : "") },
+        h("span", { class: "nf-ic" }, icon(notifIcon(n.type), { size: 20, color: "var(--primary)" })),
+        h("div", { class: "grow" },
+          h("div", { class: "nf-title" }, n.title || "Bildirim"),
+          h("div", { class: "nf-body" }, n.body || ""),
+          h("div", { class: "nf-time" }, timeAgo(n.createdAt))),
+        h("button", { class: "nf-x", onclick: (e) => { e.stopPropagation(); deleteNotif(n.id); card.remove(); } }, icon("close", { size: 16, color: "var(--text-muted)" })));
+      wrap.append(card);
+    });
   });
 }
-function notifIcon(t) { return ({ event_invite: "mic-outline", event_deleted: "trash-outline", invitation: "mail-outline", group_invite: "people-outline", residency_offer: "calendar-outline" })[t] || "notifications-outline"; }
+function notifIcon(t) {
+  return ({
+    event_deleted: "trash-outline", venue_request: "business-outline", venue_request_update: "checkmark-done-outline",
+    invitation: "mail-outline", invitation_update: "checkmark-done-outline", event_invite: "mic-outline",
+    group_invite: "people-outline", residency_offer: "repeat-outline", residency_update: "repeat-outline",
+    edit_request: "key-outline", edit_approved: "checkmark-circle-outline",
+  })[t] || "notifications-outline";
+}
 
 // Detay ekran sarmalayıcı (geri butonu + async yükleme)
 function detailShell(title, loader, id) {
