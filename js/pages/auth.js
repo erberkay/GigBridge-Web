@@ -5,7 +5,7 @@ import {
   GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification,
 } from "../firebase.js";
 import { session, logout, computeIsAdmin, refreshProfile, recheckEmailVerified } from "../store.js";
-import { h, icon, btn, field, card, toast, ROLE } from "../ui.js";
+import { h, clear, icon, btn, field, card, toast, ROLE } from "../ui.js";
 
 const PROVINCES = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkâri","Hatay","Iğdır","Isparta","İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars","Kastamonu","Kayseri","Kilis","Kırıkkale","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu","Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli","Uşak","Van","Yalova","Yozgat","Zonguldak"];
 
@@ -74,7 +74,7 @@ export function landing() {
       h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi"))));
 }
 
-// ── Giriş ──
+// ── Giriş — app LoginScreen birebir ──
 export function login() {
   const msg = h("p", { class: "msg" });
   const submit = async (e) => {
@@ -100,79 +100,106 @@ export function login() {
     } catch (err) { fail(msg, trError(err && err.code)); }
     finally { link.style.pointerEvents = ""; link.textContent = old; }
   } }, "Şifremi unuttum");
-  const form = h("form", { onsubmit: submit },
-    field({ label: "E-posta", id: "lemail", type: "email", placeholder: "mekan@ornek.com" }),
-    field({ label: "Şifre", id: "lpass", type: "password", placeholder: "Şifren" }),
-    h("div", { class: "forgot-row" }, forgot),
-    (() => { const x = btn("Giriş Yap", { full: true }); x.id = "lbtn"; return x; })(),
-    orSep(),
-    googleBtn(msg),
-    msg,
-  );
-  return shell(hero("Giriş Yap", "Müşteri, mekan ve organizatör hesapları buradan girer."), card(form,
-    h("p", { class: "foot-note" }, "Hesabın yok mu? ", h("a", { href: "#/register" }, "Kayıt ol")),
+  return h("main", { class: "au-wrap" },
+    h("div", { class: "au-head" },
+      h("button", { class: "au-back", onclick: () => (location.hash = "#/") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
+      h("div", { class: "au-logorow" },
+        h("span", { class: "au-logo" }, icon("musical-notes", { size: 24, color: "#fff" })),
+        h("span", { class: "au-appname" }, "GigBridge")),
+      h("h1", { class: "au-title" }, "Hoş Geldiniz"),
+      h("p", { class: "au-sub" }, "Hesabınıza giriş yapın")),
+    h("form", { onsubmit: submit },
+      field({ label: "E-posta", id: "lemail", type: "email", placeholder: "ornek@email.com" }),
+      field({ label: "Şifre", id: "lpass", type: "password", placeholder: "Şifrenizi girin" }),
+      h("div", { class: "forgot-row" }, forgot),
+      (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Giriş Yap")); x.id = "lbtn"; return x; })(),
+      orSep(),
+      googleBtn(msg),
+      msg),
+    h("p", { class: "foot-note" }, "Hesabınız yok mu? ", h("a", { href: "#/register" }, "Kayıt Olun")),
     h("p", { class: "foot-note" }, h("a", { href: "#/kesfet" }, "← Misafir olarak keşfetmeye dön")),
-    h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi"))));
+    h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi")));
 }
 
-// ── Kayıt (mekan / organizatör) ──
+// ── Kayıt — app RegisterScreen birebir (2 adım: rol kartları → bilgiler) ──
+const REG_TYPES = [
+  ["customer", "Müşteri", "Etkinlikleri keşfet, sanatçıları takip et", "headset-outline", ["#06B6D4", "#0891B2"]],
+  ["artist", "Sanatçı", "Profilini oluştur, mekanlardan teklif al", "mic-outline", ["#A855F7", "#7C3AED"]],
+  ["venue", "Mekan", "Sanatçıları bul, etkinlik planla", "business-outline", ["#F59E0B", "#D97706"]],
+  ["organizer", "Organizatör", "Ekip kur, etkinlik yönet, mekanlarla çalış", "calendar-outline", ["#F43F5E", "#BE123C"]],
+];
 export function register() {
-  let role = "customer";
-  const msg = h("p", { class: "msg" });
-  const cityWrap = field({ label: "Şehir", id: "rcity", placeholder: "Örn. İstanbul", list: "cityList" });
-  cityWrap.style.display = "none"; // yalnız mekan rolünde görünür
-  const dl = h("datalist", { id: "cityList" }, ...PROVINCES.map((p) => h("option", { value: p })));
-  const nameField = field({ label: "Ad Soyad", id: "rname", placeholder: "Adın soyadın" });
-
+  let step = 1, role = "customer";
+  const wrap = h("main", { class: "au-wrap" });
   const labelFor = (k) => k === "venue" ? "Mekan Adı" : k === "organizer" ? "Organizasyon Adı" : k === "artist" ? "Sanatçı Adı" : "Ad Soyad";
-  const submitLabel = (k) => (k === "customer" || k === "artist") ? "Kayıt Ol" : "Başvuruyu Gönder";
-  const roleBtn = (key, label, ic) => h("button", { type: "button", class: "seg" + (role === key ? " on" : ""), dataset: { role: key },
-    onclick: () => { role = key; [...seg.children].forEach((c) => c.classList.toggle("on", c.dataset.role === key));
-      nameField.querySelector(".flabel").textContent = labelFor(key);
-      cityWrap.style.display = (key === "venue" || key === "artist") ? "" : "none";
-      const rb = q("#rbtn"); if (rb) rb.querySelector("span").textContent = submitLabel(key); } },
-    icon(ic, { size: 15 }), h("span", {}, label));
-  const seg = h("div", { class: "segrow wrap4" },
-    roleBtn("customer", "Müşteri", "person-outline"),
-    roleBtn("artist", "Sanatçı", "mic-outline"),
-    roleBtn("venue", "Mekan", "business-outline"),
-    roleBtn("organizer", "Organizatör", "megaphone-outline"));
 
-  const submit = async (e) => {
-    e.preventDefault();
-    msg.textContent = ""; msg.className = "msg";
-    const name = q("#rname").value.trim(); const email = q("#remail").value.trim();
-    const pass = q("#rpass").value; const city = q("#rcity").value.trim();
-    if (!name) return fail(msg, role === "customer" ? "Adını gir." : (role === "venue" ? "Mekan" : "Organizasyon") + " adını gir.");
-    if (!email) return fail(msg, "E-posta gir.");
-    if (pass.length < 6) return fail(msg, "Şifre en az 6 karakter olmalı.");
-    const b = q("#rbtn"); b.disabled = true; b.querySelector("span").textContent = "Gönderiliyor…";
-    try {
-      const { user } = await createUserWithEmailAndPassword(auth, email, pass);
-      try { await updateProfile(user, { displayName: name }); } catch (_) {}
-      await setDoc(doc(db, "users", user.uid), {
-        displayName: name, email: user.email, userType: role, photoURL: null,
-        createdAt: serverTimestamp(),
-        ...(role === "venue" || role === "organizer" ? { approved: false } : {}), // müşteri/sanatçı onay gerektirmez
-        ...(role === "organizer" ? { orgName: name } : {}),
-        ...((role === "venue" || role === "artist") && city ? { city } : {}),
-      });
-      try { await sendEmailVerification(user); } catch (_) {} // doğrulama bağlantısı
-      location.hash = "#/verify"; // önce e-posta doğrulama
-    } catch (err) { fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = submitLabel(role); }
-  };
+  function draw() {
+    clear(wrap);
+    const back = h("button", { class: "au-back", onclick: () => { if (step === 2) { step = 1; draw(); } else location.hash = "#/"; } },
+      icon("chevron-back", { size: 22, color: "var(--text-secondary)" }));
+    const dots = h("div", { class: "au-steps" }, ...[1, 2].map((s) => h("span", { class: "au-dot" + (step >= s ? " on" : "") })));
 
-  const form = h("form", { onsubmit: submit }, seg, nameField, dl,
-    field({ label: "E-posta", id: "remail", type: "email", placeholder: "ornek@email.com" }),
-    field({ label: "Şifre", id: "rpass", type: "password", placeholder: "En az 6 karakter", hint: "Uygulamadan giriş yaparken de bu şifreyi kullanacaksın." }),
-    cityWrap,
-    (() => { const x = btn(submitLabel(role), { full: true }); x.id = "rbtn"; return x; })(),
-    orSep(),
-    googleBtn(msg),
-    msg,
-  );
-  return shell(hero("Yeni Hesap", "Hesap oluştur — müşteri, mekan ya da organizatör."),
-    card(form, h("p", { class: "foot-note" }, "Zaten üye misin? ", h("a", { href: "#/login" }, "Giriş yap"))));
+    if (step === 1) {
+      wrap.append(
+        h("div", { class: "au-head" }, back,
+          h("h1", { class: "au-title" }, "Hesap Tipini Seç"),
+          h("p", { class: "au-sub" }, "Platforma nasıl katılmak istiyorsun?"), dots),
+        h("div", { class: "au-typecards" }, ...REG_TYPES.map(([k, l, d, ic, [g1, g2]]) =>
+          h("button", { class: "au-typecard", style: { background: `linear-gradient(135deg, ${g1}, ${g2})` }, onclick: () => { role = k; step = 2; draw(); } },
+            icon(ic, { size: 28, color: "#fff" }),
+            h("div", { class: "au-typelabel" }, l),
+            h("div", { class: "au-typedesc" }, d),
+            h("span", { class: "au-typearrow" }, icon("arrow-forward", { size: 16, color: "rgba(255,255,255,0.8)" }))))),
+        h("p", { class: "foot-note" }, "Zaten üye misin? ", h("a", { href: "#/login" }, "Giriş yap")));
+      return;
+    }
+
+    // Adım 2 — bilgiler
+    const msg = h("p", { class: "msg" });
+    const dl = h("datalist", { id: "cityList" }, ...PROVINCES.map((p) => h("option", { value: p })));
+    const submit = async (e) => {
+      e.preventDefault();
+      msg.textContent = ""; msg.className = "msg";
+      const name = q("#rname").value.trim(); const email = q("#remail").value.trim();
+      const pass = q("#rpass").value; const city = (q("#rcity")?.value || "").trim();
+      if (!name) return fail(msg, labelFor(role).replace(" Adı", "") + " adını gir.");
+      if (!email) return fail(msg, "E-posta gir.");
+      if (pass.length < 6) return fail(msg, "Şifre en az 6 karakter olmalı.");
+      const b = q("#rbtn"); b.disabled = true; b.querySelector("span").textContent = "Gönderiliyor…";
+      try {
+        const { user } = await createUserWithEmailAndPassword(auth, email, pass);
+        try { await updateProfile(user, { displayName: name }); } catch (_) {}
+        await setDoc(doc(db, "users", user.uid), {
+          displayName: name, email: user.email, userType: role, photoURL: null,
+          createdAt: serverTimestamp(),
+          ...(role === "venue" || role === "organizer" ? { approved: false } : {}), // müşteri/sanatçı onay gerektirmez
+          ...(role === "organizer" ? { orgName: name } : {}),
+          ...((role === "venue" || role === "artist") && city ? { city } : {}),
+        });
+        try { await sendEmailVerification(user); } catch (_) {} // doğrulama bağlantısı
+        location.hash = "#/verify"; // önce e-posta doğrulama
+      } catch (err) { fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = "Kayıt Ol"; }
+    };
+    const t = REG_TYPES.find((x) => x[0] === role);
+    wrap.append(
+      h("div", { class: "au-head" }, back,
+        h("h1", { class: "au-title" }, "Bilgilerini Gir"),
+        h("p", { class: "au-sub" }, "Hesap bilgilerini doldur"), dots),
+      h("div", { class: "au-rolechip", style: { borderColor: t[4][0] + "66", color: t[4][0], background: t[4][0] + "1a" } }, icon(t[3], { size: 14, color: t[4][0] }), h("span", {}, t[1])),
+      h("form", { onsubmit: submit },
+        field({ label: labelFor(role), id: "rname", placeholder: labelFor(role) }),
+        dl,
+        field({ label: "E-posta", id: "remail", type: "email", placeholder: "ornek@email.com" }),
+        field({ label: "Şifre", id: "rpass", type: "password", placeholder: "En az 6 karakter", hint: "Uygulamadan giriş yaparken de bu şifreyi kullanacaksın." }),
+        (role === "venue" || role === "artist") ? field({ label: "Şehir", id: "rcity", placeholder: "Örn. İstanbul", list: "cityList" }) : null,
+        (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Kayıt Ol")); x.id = "rbtn"; return x; })(),
+        orSep(),
+        googleBtn(msg),
+        msg),
+      h("p", { class: "foot-note" }, "Zaten üye misin? ", h("a", { href: "#/login" }, "Giriş yap")));
+  }
+  draw();
+  return wrap;
 }
 
 // ── Hesabı tamamla (Google ile yeni giriş → profil yok) ──

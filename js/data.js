@@ -387,6 +387,9 @@ export async function getVenueReviews(venueId) {
 export async function submitVenueReview(uid, authorName, venue, rating, comment) {
   await setDoc(doc(db, "venueReviews", `${uid}_${venue.id}`), { authorId: uid, authorName, authorType: "customer", venueId: venue.id, venueName: venue.displayName ?? "", rating, overallRating: rating, comment: comment ?? "", createdAt: serverTimestamp() });
 }
+// Kendi yorumunu düzenle/sil (MyReviewsScreen — kurallar author'a izin verir; denorm'u CF günceller)
+export async function updateMyReview(col, id, patch) { await updateDoc(doc(db, col, id), patch); }
+export async function deleteMyReview(col, id) { await deleteDoc(doc(db, col, id)); }
 export async function myReviews(uid) {
   const [a, v] = await Promise.all([
     getDocs(query(collection(db, "reviews"), where("authorId", "==", uid))),

@@ -838,6 +838,59 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .wl-register { height: 52px; border: 1.5px solid var(--border); border-radius: 11px; background: transparent; color: var(--text); font-size: 15px; font-weight: 600; cursor: pointer; }
 @media (min-width: 900px) { .wl-wrap { min-height: 100vh; justify-content: center; } .wl-feats { flex: 0 0 auto; } }
 
+/* ══════════════ ALT EKRAN BAŞLIĞI + Katıldıklarım/Yorumlarım — app parite ══════════════ */
+.dsh-head { background: linear-gradient(180deg, #1A0A2E, var(--bg)); padding: 12px 24px 24px; }
+.dsh-head .ed-iconbtn { margin-left: -10px; margin-bottom: 8px; }
+.dsh-title { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.dsh-sub { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; min-height: 16px; }
+.fav-total { display: inline-flex; align-items: center; gap: 4px; background: rgba(239,68,68,0.13); border: 1px solid rgba(239,68,68,0.27); border-radius: 999px; padding: 4px 10px; color: #EF4444; font-size: 11px; font-weight: 700; }
+.sl-meta { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.at-evav { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.mr-top { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+.mr-av { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: 800; flex: 0 0 auto; }
+.mr-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.mr-event { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--primary); margin-bottom: 2px; }
+.mr-date { font-size: 11px; color: var(--text-muted); }
+.mr-acts { display: flex; gap: 4px; flex: 0 0 auto; }
+.mr-act { background: none; border: none; cursor: pointer; padding: 6px; display: flex; }
+.mr-stars { display: flex; align-items: center; gap: 2px; margin-bottom: 8px; }
+.mr-type { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.mr-type.art { background: rgba(168,85,247,0.13); color: var(--primary); }
+.mr-type.ven { background: rgba(245,158,11,0.13); color: #F59E0B; }
+.mr-editlbl { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+.mr-editstars { display: flex; gap: 4px; margin-bottom: 16px; }
+.fv-ecard { display: flex; background: var(--surface); border-radius: 11px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; }
+.fv-ecard:hover { background: var(--surface-2); }
+.fv-banner { width: 70px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.95); font-size: 22px; font-weight: 900; }
+.fv-info { flex: 1; padding: 12px; min-width: 0; }
+.fv-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; padding: 12px; gap: 4px; }
+.fv-genre { padding: 3px 7px; border-radius: 999px; border: 1px solid; font-size: 9px; font-weight: 800; letter-spacing: 0.2px; }
+.fv-price { font-size: 13px; font-weight: 700; color: var(--amber); }
+.fv-price.free { color: var(--success); }
+
+/* ══════════════ GİRİŞ / KAYIT — app Login/Register birebir ══════════════ */
+.au-wrap { max-width: 520px; margin: 0 auto; min-height: 100dvh; padding: 24px 24px 40px; display: flex; flex-direction: column; }
+.au-head { margin-bottom: 28px; }
+.au-back { background: none; border: none; cursor: pointer; padding: 4px; margin: 0 0 24px -6px; display: flex; }
+.au-logorow { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.au-logo { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #F43F5E, #A855F7); display: flex; align-items: center; justify-content: center; }
+.au-appname { font-size: 22px; font-weight: 800; color: var(--text); }
+.au-title { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.au-sub { font-size: 15px; color: var(--text-secondary); }
+.au-steps { display: flex; gap: 6px; margin-top: 16px; }
+.au-dot { width: 8px; height: 8px; border-radius: 4px; background: var(--surface-3); transition: background 0.2s, width 0.2s; }
+.au-dot.on { background: var(--primary); width: 20px; }
+.au-typecards { display: flex; flex-direction: column; gap: 16px; }
+.au-typecard { position: relative; text-align: left; padding: 24px; border-radius: 14px; border: none; color: #fff; cursor: pointer; transition: transform 0.12s; }
+.au-typecard:hover { transform: translateY(-2px); }
+.au-typelabel { font-size: 18px; font-weight: 800; margin-top: 10px; color: #fff; }
+.au-typedesc { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 4px; }
+.au-typearrow { position: absolute; right: 18px; bottom: 18px; }
+.au-rolechip { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 6px 14px; border-radius: 999px; border: 1px solid; font-size: 13px; font-weight: 700; margin-bottom: 16px; }
+.au-submit { width: 100%; height: 52px; border: none; border-radius: 11px; background: linear-gradient(90deg, #F43F5E, #A855F7); color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 0.3px; cursor: pointer; margin-top: 8px; }
+.au-submit:disabled { opacity: 0.6; }
+@media (min-width: 900px) { .au-wrap { min-height: 100vh; justify-content: center; } }
+
 /* Keşfet masaüstü uyarlaması */
 @media (min-width: 900px) {
   .page.has-nav > .content.hs-content { padding: 16px 20px 56px; }
