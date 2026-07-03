@@ -2,7 +2,7 @@
 // + Takip/Favoriler/Katıldıklarım/Yorumlarım/Bildirimler. App backend'iyle birebir.
 import { session, logout, refreshProfile } from "../store.js";
 import {
-  discoverEvents, eventById, userById, listRealArtists, saveProfile, uploadImage,
+  discoverEvents, eventById, userById, listRealArtists, listVenues, saveProfile, uploadImage,
   isAttending, attendEvent, unattendEvent, attendedEvents,
   isFollowing, followArtist, unfollowArtist, followingList,
   isFavVenue, favVenue, unfavVenue, favVenues, isFavEvent, favEvent, unfavEvent, favEvents,
@@ -45,8 +45,22 @@ function tabFromHash() { return base().replace("#/", "") || "kesfet"; }
 function go(hash) { location.hash = hash; }
 const seg = (i) => decodeURIComponent(base().split("/")[i] || "");
 
+// ── Keşfet (app HomeScreen paritesi) durum + yardımcılar ──
+const PROVINCES = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkâri","Hatay","Iğdır","Isparta","İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars","Kastamonu","Kayseri","Kilis","Kırıkkale","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu","Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli","Uşak","Van","Yalova","Yozgat","Zonguldak"];
+const TRX = { "ı": "i", "İ": "i", "ş": "s", "Ş": "s", "ç": "c", "Ç": "c", "ğ": "g", "Ğ": "g", "ö": "o", "Ö": "o", "ü": "u", "Ü": "u", "â": "a", "î": "i", "û": "u" };
+const fold = (s) => String(s || "").replace(/[ıİşŞçÇğĞöÖüÜâîû]/g, (c) => TRX[c] || c).toLowerCase();
+let activeCity = localStorage.getItem("gb_city") || "TÜMÜ";
+let activeCategory = "TÜMÜ";
+let userCoords = null; // "Konumumu Kullan" sonrası {lat,lng} — mesafe rozetleri için
+function haversineKm(a, b) {
+  const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
 export function customerPage() {
   const b = base();
+  if (b === "#/etkinlikler")       return detailShell("Etkinlikler", eventsListView);
   if (b.startsWith("#/etkinlik/")) return detailShell("Etkinlik", eventDetail, seg(2));
   if (b.startsWith("#/sanatci/"))  return detailShell("Sanatçı", artistDetail, seg(2));
   if (b.startsWith("#/mekan/"))    return detailShell("Mekan", venueDetail, seg(2));
@@ -57,6 +71,7 @@ export function customerPage() {
   if (b === "#/bildirimler") return detailShell("Bildirimler", notificationsView);
 
   const tab = tabFromHash();
+  if (tab === "kesfet") return kesfetPage(); // app HomeScreen paritesi — özel başlık + bölümler
   const guest = !authed();
   const rightBtn = guest
     ? h("button", { class: "icon-btn login-chip", onclick: () => go("#/login"), title: "Giriş Yap" }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
@@ -71,7 +86,6 @@ export function customerPage() {
 }
 
 async function renderTab(tab, root) {
-  if (tab === "kesfet")   return renderKesfet(root);
   if (tab === "mesajlar") { clear(root); return messagesView(root, C); }
   if (tab === "profil")   return renderProfil(root);
   if (tab === "harita")   return renderHarita(root);
@@ -109,35 +123,304 @@ function eventCard(ev) {
       h("div", { class: "ecard-meta" }, icon("calendar-outline", { size: 12 }), " " + eventWhen(ev)),
       h("div", { class: "ecard-meta", style: { color: ev.ticketPrice ? "var(--amber)" : "var(--success)", fontWeight: "700" } }, ev.ticketPrice ? fmtTL(ev.ticketPrice) : "Ücretsiz")));
 }
-function artistCard(a) {
-  return h("div", { class: "acard", onclick: () => go("#/sanatci/" + a.id), style: { cursor: "pointer" } },
-    a.photoURL ? h("div", { class: "acard-photo", style: { backgroundImage: `url(${a.photoURL})` } }) : avatar(a.displayName, ROLE.artist),
-    h("div", { class: "acard-name" }, a.displayName || "Sanatçı"),
-    h("div", { class: "acard-sub" }, (Array.isArray(a.genres) ? a.genres[0] : a.genre) || "Müzik"));
+// ══════════ KEŞFET — app HomeScreen ile birebir ══════════
+function kesfetPage() {
+  const guest = !authed();
+  const cityLabel = h("span", { class: "hs-city-label" }, activeCity);
+  const chev = icon("chevron-down", { size: 11, color: "#9090B0" });
+  const cityDrop = h("div", { class: "hs-citydrop", style: { display: "none" } });
+  let dropOpen = false;
+  const setDrop = (v) => { dropOpen = v; cityDrop.style.display = v ? "" : "none"; chev.setAttribute("name", v ? "chevron-up" : "chevron-down"); chev.style.color = v ? "#A855F7" : "#9090B0"; };
+  const cityChip = h("button", { class: "hs-citychip", onclick: () => setDrop(!dropOpen) },
+    icon("location-sharp", { size: 11, color: "var(--primary)" }), cityLabel, chev);
+  const bell = guest
+    ? h("button", { class: "icon-btn login-chip", onclick: () => go("#/login") }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
+    : h("button", { class: "hs-bell", onclick: () => go("#/bildirimler"), title: "Bildirimler" }, icon("notifications-outline", { size: 20 }));
+  const header = h("header", { class: "topbar hs-topbar", style: { "--role": C } },
+    h("div", { class: "hs-logo" }, "GigBridge"), cityChip, bell);
+  const content = h("div", { class: "content hs-content" }, h("div", { class: "loading" }, spinner()));
+  const page = h("div", { class: "page has-nav", style: { "--role": C } }, header, content, bottomnav(NAV, "kesfet", C));
+  renderKesfet(content, { cityDrop, cityLabel, closeDrop: () => setDrop(false) });
+  return page;
 }
 
-// ── Keşfet ──
-async function renderKesfet(root) {
+async function renderKesfet(root, hdr) {
+  let events = [], artists = [], venues = [], followSet = new Set();
   try {
-    const [events, artists] = await Promise.all([discoverEvents(), listRealArtists()]);
-    clear(root);
-    const search = h("input", { class: "search-input", type: "search", placeholder: "Etkinlik, mekan veya sanatçı ara…" });
-    const grid = h("div", { class: "grid" });
-    const draw = () => {
-      const q = search.value.trim().toLocaleLowerCase("tr-TR");
-      const list = !q ? events : events.filter((e) => [e.title, e.venueName, e.artistName].some((x) => (x || "").toLocaleLowerCase("tr-TR").includes(q)));
-      clear(grid);
-      if (!list.length) { grid.append(empty("search-outline", "Sonuç yok", "Başka bir arama dene.")); return; }
-      list.forEach((e) => grid.append(eventCard(e)));
-    };
-    search.oninput = draw;
-    root.append(h("div", { class: "search-box" }, icon("search-outline", { size: 15, color: "var(--text-muted)" }), search));
-    const liveEvents = events.filter(isLive);
-    if (liveEvents.length) root.append(sect("Şu an çalıyor", "radio-outline", liveEvents.length, h("div", { class: "grid" }, ...liveEvents.map(eventCard))));
-    root.append(sect("Yaklaşan Etkinlikler", "calendar-outline", events.length, grid));
-    draw();
-    if (artists.length) root.append(sect("Popüler Sanatçılar", "mic-outline", artists.length, h("div", { class: "grid grid-artists" }, ...artists.slice(0, 12).map(artistCard))));
-  } catch (e) { clear(root); root.append(errBox("Keşfet yüklenemedi.")); }
+    [events, artists, venues] = await Promise.all([discoverEvents(), listRealArtists(), listVenues()]);
+    if (authed()) { try { followSet = new Set((await followingList(uid())).map((f) => f.artistId || f.id)); } catch (_) {} }
+  } catch (e) { clear(root); root.append(errBox("Keşfet yüklenemedi.")); return; }
+  clear(root);
+
+  // ── Şehir açılır listesi (Konumumu Kullan + arama + 81 il) ──
+  const cityNames = ["TÜMÜ", ...[...new Set([...events.map((e) => (e.city || e.location?.city || "").trim()).filter(Boolean), ...PROVINCES])]];
+  const listBox = h("div", { class: "hs-citylist" });
+  const cSearch = h("input", { placeholder: "Şehir ara...", oninput: () => drawCities() });
+  const setCity = (c) => { activeCity = c; try { localStorage.setItem("gb_city", c); } catch (_) {} hdr.cityLabel.textContent = c; hdr.closeDrop(); drawBody(); drawCities(); };
+  const drawCities = () => {
+    clear(listBox);
+    const q = fold(cSearch.value.trim());
+    const list = cityNames.filter((c) => !q || fold(c).includes(q));
+    if (!list.length) { listBox.append(h("div", { class: "hs-city-empty" }, "Şehir bulunamadı")); return; }
+    list.forEach((c) => listBox.append(h("button", { class: "hs-city-item" + (c === activeCity ? " on" : ""), onclick: () => setCity(c) }, c)));
+  };
+  const locBtn = h("button", { class: "hs-locate", onclick: () => {
+    if (!navigator.geolocation) return toast("Tarayıcı konumu desteklemiyor", "err");
+    locBtn.disabled = true;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${userCoords.lat}&lon=${userCoords.lng}&accept-language=tr`);
+        const j = await r.json();
+        const prov = j.address?.province || j.address?.state || j.address?.city || "";
+        const match = PROVINCES.find((p) => fold(p) === fold(prov));
+        if (match) { setCity(match); toast(match + " olarak ayarlandı"); } else toast("Şehir belirlenemedi", "err");
+      } catch (_) { toast("Şehir belirlenemedi", "err"); }
+      locBtn.disabled = false; drawBody();
+    }, () => { toast("Konum alınamadı (izin?)", "err"); locBtn.disabled = false; });
+  } }, icon("navigate", { size: 14, color: "var(--primary)" }), h("span", {}, "Konumumu Kullan"));
+  hdr.cityDrop.append(locBtn,
+    h("div", { class: "hs-citysearch" }, icon("search-outline", { size: 14, color: "var(--text-muted)" }), cSearch),
+    listBox);
+  drawCities();
+
+  // ── Arama + kategori sekmeleri ──
+  let term = "";
+  const sInput = h("input", { placeholder: "Etkinlik, mekan veya sanatçı ara...", oninput: (e) => { term = e.target.value; drawBody(); } });
+  const searchBar = h("div", { class: "hs-search" }, icon("search-outline", { size: 16, color: "var(--text-muted)" }), sInput);
+  const CATS = [["TÜMÜ", "grid-outline"], ["ETKİNLİKLER", "ticket-outline"], ["MEKANLAR", "business-outline"], ["SANATÇILAR", "mic-outline"]];
+  const tabsRow = h("div", { class: "hs-tabs" });
+  const drawTabs = () => {
+    clear(tabsRow);
+    CATS.forEach(([k, ic]) => tabsRow.append(h("button", { class: "hs-tab" + (k === activeCategory ? " on" : ""), onclick: () => {
+      if (k === "ETKİNLİKLER") return go("#/etkinlikler");
+      activeCategory = k; drawTabs(); drawBody();
+    } }, icon(ic, { size: 13 }), h("span", {}, k))));
+  };
+  drawTabs();
+
+  const body = h("div", { class: "hs-body" });
+  root.append(hdr.cityDrop, searchBar, tabsRow, body);
+
+  const inCity = (ev) => activeCity === "TÜMÜ" || fold((ev.city || ev.location?.city || "").trim()) === fold(activeCity);
+
+  function drawBody() {
+    clear(body);
+    const cityEvents = events.filter(inCity);
+    const q = fold(term.trim());
+
+    if (q) { // arama sonuçları
+      const list = cityEvents.filter((e) => [e.title, e.venueName, e.artistName].some((x) => fold(x).includes(q)));
+      if (!list.length) { body.append(h("div", { class: "hs-empty" }, icon("search-outline", { size: 32, color: "var(--text-muted)" }), h("div", { class: "hs-empty-sub" }, "Sonuç bulunamadı"))); return; }
+      body.append(h("div", { class: "hs-vlist" }, ...list.map((e) => ecard2(e, true))));
+      return;
+    }
+
+    if (activeCategory === "MEKANLAR") {
+      if (!venues.length) { body.append(hsEmpty("business-outline", "Henüz mekan yok", "Mekanlar katıldıkça burada listelenecek.")); return; }
+      body.append(h("div", { class: "hs-vlist" }, ...venues.map(venueCardBig)));
+      return;
+    }
+    if (activeCategory === "SANATÇILAR") {
+      if (!artists.length) { body.append(hsEmpty("mic-outline", "Henüz sanatçı yok", "Sanatçılar katıldıkça burada görünecek.")); return; }
+      body.append(h("div", { class: "hs-alist" }, ...artists.map((a) => artistRowHome(a, followSet))));
+      return;
+    }
+
+    // TÜMÜ
+    if (!cityEvents.length) {
+      body.append(hsEmpty("compass-outline", activeCity === "TÜMÜ" ? "Henüz etkinlik yok" : `${activeCity} için etkinlik yok`, "Yakında canlı müzik etkinlikleri burada görünecek."));
+    } else {
+      // Hero: VIP önce, sonra tarihe göre — ilk 5
+      const hero = [...cityEvents].sort((a, b) => ((b.vipStatus === "approved") - (a.vipStatus === "approved")) || (msOf(a) ?? 0) - (msOf(b) ?? 0)).slice(0, 5);
+      body.append(heroCarousel(hero));
+      // Top 10 — katılımcı sayısına göre
+      const top = [...cityEvents].sort((a, b) => (b.attendeeCount ?? 0) - (a.attendeeCount ?? 0)).slice(0, 10);
+      body.append(hsSect("GigBridge Top 10", null, () => go("#/etkinlikler")),
+        h("div", { class: "hs-hscroll" }, ...top.map((e, i) => top10Card(e, i + 1))));
+    }
+    // Sadece GigBridge'de — her zaman görünür
+    const excl = cityEvents.filter((e) => e.vipStatus === "approved" || e.isExclusive);
+    body.append(hsSect("Sadece GigBridge'de", "Özel etkinlikler, VIP deneyimler", () => go("#/etkinlikler")));
+    if (excl.length) body.append(h("div", { class: "hs-hscroll" }, ...excl.map((e) => ecard2(e))));
+    else body.append(h("div", { class: "hs-excl-empty" }, icon("sparkles-outline", { size: 18, color: "var(--text-muted)" }), h("span", {}, "Şu an özel etkinlik yok — VIP deneyimler yakında burada.")));
+    // En Yeniler (yalnız varsa)
+    const news = cityEvents.filter((e) => e.isNew === true);
+    if (news.length) body.append(hsSect("GigBridge'de En Yeniler!", null, () => go("#/etkinlikler")),
+      h("div", { class: "hs-hscroll" }, ...news.map((e) => ecard2(e))));
+    // Bu Hafta
+    const week = cityEvents.filter((e) => { const ms = msOf(e); return ms != null && ms <= Date.now() + 7 * 86400e3; });
+    if (week.length) body.append(hsSect("Bu Hafta", activeCity !== "TÜMÜ" ? activeCity : null, () => go("#/etkinlikler")),
+      h("div", { class: "hs-hscroll" }, ...week.map((e) => ecard2(e))));
+    // Popüler Sanatçılar
+    if (artists.length) body.append(hsSect("Popüler Sanatçılar", null, () => { activeCategory = "SANATÇILAR"; drawTabs(); drawBody(); }),
+      h("div", { class: "hs-alist" }, ...artists.slice(0, 5).map((a) => artistRowHome(a, followSet))));
+  }
+  drawBody();
+}
+
+// Bölüm başlığı — mor vurgu çubuğu + başlık + TÜMÜ
+function hsSect(title, sub, onSeeAll) {
+  return h("div", { class: "hs-secthead" },
+    h("div", { class: "hs-accent" }),
+    h("div", { class: "grow" }, h("div", { class: "hs-secttitle" }, title), sub ? h("div", { class: "hs-sectsub" }, sub) : null),
+    onSeeAll ? h("button", { class: "hs-seeall", onclick: onSeeAll }, h("span", {}, "TÜMÜ"), icon("chevron-forward", { size: 12, color: "var(--primary)" })) : null);
+}
+function hsEmpty(ic, title, sub) {
+  return h("div", { class: "hs-empty" }, icon(ic, { size: 44, color: "var(--text-muted)" }),
+    h("div", { class: "hs-empty-title" }, title), h("div", { class: "hs-empty-sub" }, sub));
+}
+
+// Durum rozeti — app öncelik sırası: dolu > vip > exclusive > yoğun > popüler > yeni
+function statusBadge(ev) {
+  const att = ev.attendeeCount ?? 0;
+  if (ev.capacity && att >= ev.capacity) return h("span", { class: "sbadge sb-soldout" }, "Bekleme Listesine Katıl!");
+  if (ev.vipStatus === "approved") return h("span", { class: "sbadge sb-vip" }, icon("sparkles", { size: 9, color: "#F59E0B" }), "VIP DENEYİM");
+  if (ev.isExclusive) return h("span", { class: "sbadge sb-excl" }, icon("star", { size: 9, color: "#F59E0B" }), "SADECE GİGBRİDGE'DE");
+  if (att > 400) return h("span", { class: "sbadge sb-hot" }, "YOĞUN İLGİ");
+  if (att > 200) return h("span", { class: "sbadge sb-trend" }, icon("trending-up", { size: 9, color: "#A855F7" }), "ŞİMDİ POPÜLER");
+  if (ev.isNew) return h("span", { class: "sbadge sb-new" }, "YENİ");
+  return null;
+}
+function genrePills(ev) {
+  const gs = (Array.isArray(ev.genre) ? ev.genre : ev.genre ? [ev.genre] : []).filter(Boolean);
+  if (!gs.length) return null;
+  const row = h("div", { class: "gpills" }, ...gs.slice(0, 2).map((g) => h("span", { class: "gpill" }, String(g).toLocaleUpperCase("tr-TR"))));
+  if (gs.length > 2) row.append(h("span", { class: "gpill gp-more" }, "+" + (gs.length - 2)));
+  return row;
+}
+const priceTxt = (ev) => ev.ticketPrice ? fmtTL(ev.ticketPrice) : "ÜCRETSİZ";
+function pricePill(ev) { return h("span", { class: "ppill" + (ev.ticketPrice ? "" : " free") }, priceTxt(ev)); }
+function distPill(ev) {
+  if (!userCoords || ev.location?.lat == null) return null;
+  const km = haversineKm(userCoords, { lat: ev.location.lat, lng: ev.location.lng });
+  return h("span", { class: "dpill" }, icon("navigate", { size: 10, color: "var(--primary)" }), (km < 1 ? Math.round(km * 1000) + " m" : km.toFixed(1) + " km"));
+}
+
+// Hero carousel — 4sn otomatik + noktalar
+function heroCarousel(list) {
+  const slides = list.map((ev) => h("div", { class: "hero-slide", onclick: () => go("#/etkinlik/" + ev.id), style: ev.bannerUrl ? { backgroundImage: `url(${ev.bannerUrl})` } : null },
+    h("div", { class: "hero-grad" }),
+    h("div", { class: "hero-body" },
+      statusBadge(ev),
+      h("div", { class: "hero-title" }, ev.title || "Etkinlik"),
+      h("div", { class: "hero-sub" }, ev.artistName ? [icon("mic", { size: 12, color: "rgba(255,255,255,0.85)" }), " " + ev.artistName + " · " + (ev.venueName || "")] : (ev.venueName || "")),
+      h("div", { class: "hero-meta" },
+        h("span", { class: "hero-pill" }, icon("calendar-outline", { size: 11, color: "#9090B0" }), eventWhen(ev)),
+        distPill(ev)),
+      genrePills(ev),
+      h("div", { class: "hero-foot" }, h("span", { class: "hero-price" + (ev.ticketPrice ? "" : " free") }, priceTxt(ev))))));
+  const slider = h("div", { class: "hero-slider" }, ...slides);
+  const dots = h("div", { class: "hero-dots" }, ...list.map((_, i) => h("span", { class: "hdot" + (i === 0 ? " on" : "") })));
+  const setDot = (i) => [...dots.children].forEach((d, j) => d.classList.toggle("on", j === i));
+  let idx = 0;
+  slider.addEventListener("scroll", () => { const i = Math.round(slider.scrollLeft / slider.clientWidth); if (i !== idx) { idx = i; setDot(i); } });
+  if (list.length > 1) {
+    const iv = setInterval(() => {
+      if (!slider.isConnected) return clearInterval(iv);
+      idx = (idx + 1) % list.length;
+      slider.scrollTo({ left: idx * slider.clientWidth, behavior: "smooth" });
+      setDot(idx);
+    }, 4000);
+  }
+  return h("div", { class: "hero-wrap" }, slider, dots);
+}
+
+// Top 10 kartı — 270px, sıra rozeti
+function top10Card(ev, rank) {
+  return h("div", { class: "t10", onclick: () => go("#/etkinlik/" + ev.id), style: ev.bannerUrl ? { backgroundImage: `url(${ev.bannerUrl})` } : null },
+    h("div", { class: "t10-grad" }),
+    h("div", { class: "t10-rank" }, String(rank)),
+    h("div", { class: "t10-body" },
+      statusBadge(ev),
+      h("div", { class: "t10-title" }, ev.title || "Etkinlik"),
+      h("div", { class: "t10-sub" }, [ev.artistName, ev.venueName].filter(Boolean).join(" · ")),
+      h("div", { class: "hero-meta" }, h("span", { class: "hero-pill" }, icon("calendar-outline", { size: 10, color: "var(--text-muted)" }), eventWhen(ev)), distPill(ev)),
+      genrePills(ev),
+      h("div", { class: "t10-foot" }, h("span", { class: "t10-price" + (ev.ticketPrice ? "" : " free") }, priceTxt(ev)))));
+}
+
+// Standart etkinlik kartı — 210×270 görsel zemin (full=true: arama sonucu, tam genişlik)
+function ecard2(ev, full) {
+  return h("div", { class: "ecard2" + (full ? " full" : ""), onclick: () => go("#/etkinlik/" + ev.id), style: ev.bannerUrl ? { backgroundImage: `url(${ev.bannerUrl})` } : null },
+    h("div", { class: "ecard2-grad" }),
+    statusBadge(ev) ? h("div", { class: "ecard2-badge" }, statusBadge(ev)) : null,
+    h("div", { class: "ecard2-body" },
+      h("div", { class: "ecard2-title" }, ev.title || "Etkinlik"),
+      h("div", { class: "ecard2-sub" }, [ev.artistName, ev.venueName].filter(Boolean).join(" · ") || "—"),
+      genrePills(ev),
+      h("div", { class: "ecard2-foot" },
+        h("span", { class: "ecard2-date" }, icon("calendar-outline", { size: 10, color: "rgba(255,255,255,0.6)" }), " " + eventWhen(ev)),
+        pricePill(ev))));
+}
+
+// Mekan kartı — 160px görsel zemin
+function venueCardBig(v) {
+  const gs = (Array.isArray(v.genres) ? v.genres : v.genre ? [v.genre] : []).filter(Boolean);
+  return h("div", { class: "vcard", onclick: () => go("#/mekan/" + v.id), style: v.photoURL ? { backgroundImage: `url(${v.photoURL})` } : null },
+    h("div", { class: "vcard-grad" }),
+    h("div", { class: "vcard-body" },
+      h("span", { class: "vcard-type" }, "MEKAN"),
+      h("div", { class: "vcard-name" }, v.displayName || "Mekan"),
+      h("div", { class: "vcard-meta" },
+        icon("location-outline", { size: 11, color: "rgba(255,255,255,0.6)" }), h("span", {}, v.city || "—"),
+        v.avgRating ? [h("span", { class: "vdot" }, "·"), icon("star", { size: 10, color: "#F59E0B" }), h("span", { class: "vrate" }, Number(v.avgRating).toFixed(1))] : null,
+        v.capacity ? [h("span", { class: "vdot" }, "·"), h("span", { class: "vcap" }, v.capacity + " kişi")] : null),
+      gs.length ? h("div", { class: "gpills" }, ...gs.slice(0, 2).map((g) => h("span", { class: "gpill gp-purple" }, String(g).toLocaleUpperCase("tr-TR")))) : null));
+}
+
+// Sanatçı satırı — 52px foto, takip butonu (app tasarımı)
+function artistRowHome(a, followSet) {
+  const name = a.displayName || "Sanatçı";
+  let on = followSet.has(a.id);
+  const fBtn = h("button", { class: "hs-follow" + (on ? " on" : ""), onclick: async (e) => {
+    e.stopPropagation();
+    if (loginGate("Takip etmek")) return;
+    fBtn.disabled = true;
+    try {
+      if (on) { await unfollowArtist(uid(), a.id); followSet.delete(a.id); on = false; }
+      else { await followArtist(uid(), a); followSet.add(a.id); on = true; }
+      fBtn.classList.toggle("on", on); fBtn.textContent = on ? "TAKİP" : "TAKİP ET";
+    } catch (_) { toast("İşlem başarısız", "err"); }
+    fBtn.disabled = false;
+  } }, on ? "TAKİP" : "TAKİP ET");
+  return h("div", { class: "hs-artist", onclick: () => go("#/sanatci/" + a.id) },
+    a.photoURL ? h("div", { class: "hs-aphoto", style: { backgroundImage: `url(${a.photoURL})` } }) : h("div", { class: "hs-aphoto ph" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
+    h("div", { class: "grow" },
+      h("div", { class: "hs-aname" }, name),
+      h("div", { class: "hs-agenre" }, (Array.isArray(a.genres) ? a.genres[0] : a.genre) || "Müzik"),
+      h("div", { class: "hs-afoll" }, (a.followerCount ?? 0) + " takipçi")),
+    fBtn);
+}
+
+// ── Etkinlikler listesi (app EventsScreen) — tarih filtreli tam liste ──
+async function eventsListView(_id, root) {
+  let events = [];
+  try { events = await discoverEvents(); } catch (_) { clear(root); root.append(errBox()); return; }
+  clear(root);
+  const FILTERS = ["Tümü", "Bugün", "Yarın", "Bu Hafta", "Bu Ay"];
+  let df = "Tümü";
+  const chipRow = h("div", { class: "chip-row" });
+  const listBox = h("div", { class: "hs-vlist" });
+  const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
+  const draw = () => {
+    clear(chipRow); clear(listBox);
+    FILTERS.forEach((f) => chipRow.append(h("button", { class: "chip" + (f === df ? " on" : ""), onclick: () => { df = f; draw(); } }, f)));
+    const now = Date.now(), today0 = startOfDay(now);
+    const list = events.filter((e) => {
+      if (activeCity !== "TÜMÜ" && fold((e.city || e.location?.city || "").trim()) !== fold(activeCity)) return false;
+      const ms = msOf(e); if (ms == null) return df === "Tümü";
+      if (df === "Bugün") return startOfDay(ms) === today0;
+      if (df === "Yarın") return startOfDay(ms) === today0 + 86400e3;
+      if (df === "Bu Hafta") return ms <= now + 7 * 86400e3;
+      if (df === "Bu Ay") return ms <= now + 30 * 86400e3;
+      return true;
+    });
+    if (!list.length) { listBox.append(hsEmpty("calendar-outline", "Etkinlik yok", "Bu filtrede etkinlik bulunamadı.")); return; }
+    list.forEach((e) => listBox.append(ecard2(e, true)));
+  };
+  draw();
+  root.append(chipRow, listBox);
 }
 
 // ── Etkinlik detay (katıl + favori) ──

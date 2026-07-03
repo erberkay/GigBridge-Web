@@ -23,7 +23,7 @@ function resolve() {
   // Kişisel/aksiyon rotaları (mesaj/profil/takip/…) girişe yönlenir.
   if (s.guest) {
     if (b === "#/") return "#/kesfet"; // kök → müşteri anasayfası
-    const GUEST = ["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil", "#/login", "#/register", "#/yonetici"];
+    const GUEST = ["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil", "#/etkinlikler", "#/login", "#/register", "#/yonetici"];
     if (GUEST.includes(b) || matches(b, "#/etkinlik") || matches(b, "#/sanatci") || matches(b, "#/mekan")) return b;
     return "#/login"; // takip/favoriler/katıldıklarım/yorumlarım/bildirimler → giriş
   }
@@ -40,7 +40,7 @@ function resolve() {
 
   // Müşteri: sekmeler (kesfet/harita/akis/mesajlar/profil) + detaylar (etkinlik/sanatci/mekan)
   if (home === "#/kesfet") {
-    const CUST = ["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil"];
+    const CUST = ["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil", "#/etkinlikler"];
     if (CUST.includes(b) || matches(b, "#/etkinlik") || matches(b, "#/sanatci") || matches(b, "#/mekan")) return b;
     return "#/kesfet";
   }
@@ -72,7 +72,7 @@ function render() {
   else if (matches(b, "#/admin")) node = adminPage();
   else if (matches(b, "#/venue")) node = venuePage();
   else if (matches(b, "#/organizer")) node = organizerPage();
-  else if (["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil"].includes(b)
+  else if (["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil", "#/etkinlikler"].includes(b)
     || matches(b, "#/etkinlik") || matches(b, "#/sanatci") || matches(b, "#/mekan")) node = customerPage();
   else node = landing();
   mount(node instanceof Node ? node : h("div", {}, "…"));
