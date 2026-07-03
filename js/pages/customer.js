@@ -1018,17 +1018,18 @@ function postCard(p) {
   let liked = false, likeCount = p.likeCount ?? 0;
   const likeIc = () => icon(liked ? "heart" : "heart-outline", { size: 22, color: liked ? "#EF4444" : "var(--text-secondary)" });
   const likeCnt = h("span", { class: "tl-actcount" }, String(likeCount));
-  const likeBtn = h("button", { class: "tl-act" }, likeIc(), likeCnt);
+  const likeBtn = h("button", { class: "tl-act tl-like" }, likeIc(), likeCnt);
   likeBtn.onclick = async () => {
     if (loginGate("Beğenmek")) return;
     try {
       await toggleLike(p.id, uid(), liked);
       liked = !liked; likeCount += liked ? 1 : -1;
       likeBtn.replaceChild(likeIc(), likeBtn.firstChild);
+      likeBtn.classList.toggle("liked", liked);   // beğenilince ripple animasyonu aktif kalır
       likeCnt.textContent = String(likeCount); likeCnt.style.color = liked ? "#EF4444" : "";
     } catch (_) {}
   };
-  if (authed()) isLiked(p.id, uid()).then((l) => { liked = l; likeBtn.replaceChild(likeIc(), likeBtn.firstChild); likeCnt.style.color = l ? "#EF4444" : ""; });
+  if (authed()) isLiked(p.id, uid()).then((l) => { liked = l; likeBtn.replaceChild(likeIc(), likeBtn.firstChild); likeBtn.classList.toggle("liked", l); likeCnt.style.color = l ? "#EF4444" : ""; });
   const cmtCnt = h("span", { class: "tl-actcount" }, String(p.commentCount ?? 0));
   const shareText = async () => {
     const text = `${p.authorName}: ${p.content || ""}`;
