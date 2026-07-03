@@ -737,6 +737,22 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .cp-logout { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 0; border-radius: 10px; border: 1px solid rgba(239,68,68,0.25); background: rgba(239,68,68,0.05); color: #F87171; font-size: 15px; font-weight: 600; cursor: pointer; }
 .cp-delete { width: 100%; text-align: center; padding: 14px 0; margin-top: 4px; background: none; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; text-decoration: underline; cursor: pointer; }
 
+/* ══════════════ ALT LİSTELER (Takip / Favoriler) — app parite ══════════════ */
+.sl-list { display: flex; flex-direction: column; gap: 10px; }
+.sl-card { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 11px; border: 1px solid var(--border); padding: 16px; cursor: pointer; }
+.sl-card:hover { background: var(--surface-2); }
+.sl-av { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; flex: 0 0 auto; }
+.sl-name { font-size: 15px; font-weight: 700; color: var(--text); }
+.sl-genre { display: inline-block; margin-top: 4px; padding: 3px 10px; background: rgba(168,85,247,0.13); border: 1px solid rgba(168,85,247,0.27); border-radius: 999px; color: var(--primary); font-size: 11px; font-weight: 600; }
+.sl-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.sl-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+.sl-heart { background: none; border: none; cursor: pointer; padding: 4px; display: flex; }
+.fav-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
+.fav-tabs::-webkit-scrollbar { display: none; }
+.fav-tab { display: flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--border); background: #191930; color: var(--text-secondary); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; flex: 0 0 auto; }
+.fav-tab.on { background: linear-gradient(90deg, #7C3AED, #A855F7); border-color: transparent; color: #fff; }
+.fav-count { background: rgba(0,0,0,0.25); padding: 2px 7px; border-radius: 999px; font-size: 11px; }
+
 /* Keşfet masaüstü uyarlaması */
 @media (min-width: 900px) {
   .page.has-nav > .content.hs-content { padding: 16px 20px 56px; }

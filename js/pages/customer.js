@@ -1137,29 +1137,69 @@ async function renderHarita(root) {
 }
 
 // ── Alt sayfalar ──
+// Tür-gradyan avatar (app Following/Favorites kartları)
+function gAv(name, genre, size) { const [a, b] = genreGrad(genre); return h("div", { class: "sl-av", style: { width: size + "px", height: size + "px", borderRadius: (size / 2) + "px", background: `linear-gradient(135deg, ${a}, ${b})`, fontSize: Math.round(size * 0.4) + "px" } }, (name || "?").charAt(0).toLocaleUpperCase("tr-TR")); }
+
 async function followingView(_id, root) {
   clear(root);
-  try {
-    const list = await followingList(uid());
-    if (!list.length) { root.append(empty("heart-outline", "Kimseyi takip etmiyorsun", "Sanatçı profillerinden takip et.")); return; }
-    root.append(h("div", { class: "list-card" }, ...list.map((f) => h("div", { class: "lrow", onclick: () => go("#/sanatci/" + (f.artistId || f.id)), style: { cursor: "pointer" } },
-      avatar(f.artistName, ROLE.artist),
-      h("div", { class: "lrow-info" }, h("div", { class: "lrow-name" }, f.artistName || "Sanatçı"), h("div", { class: "lrow-meta" }, f.genre || "")),
-      icon("chevron-forward", { size: 16, color: "var(--text-muted)" })))));
-  } catch (e) { root.append(errBox()); }
+  let list = [];
+  try { list = await followingList(uid()); } catch (_) { root.append(errBox()); return; }
+  let term = "";
+  const box = h("div", { class: "sl-list" });
+  const draw = () => {
+    clear(box);
+    const f = list.filter((x) => !term || fold(x.artistName).includes(fold(term)));
+    if (!f.length) { box.append(empty(term ? "search-outline" : "musical-notes-outline", term ? "Kullanıcı bulunamadı." : "Henüz kimseyi takip etmiyorsunuz.", term ? "İsmin baş harflerini kontrol edip tekrar deneyin." : "Sanatçı profillerinden takip et.")); return; }
+    f.forEach((x) => {
+      const aid = x.artistId || x.id;
+      const heart = h("button", { class: "sl-heart", onclick: async (e) => { e.stopPropagation(); try { await unfollowArtist(uid(), aid); list = list.filter((y) => (y.artistId || y.id) !== aid); draw(); toast("Takipten çıkıldı"); } catch (_) { toast("İşlem başarısız", "err"); } } }, icon("heart", { size: 20, color: "#EF4444" }));
+      box.append(h("div", { class: "sl-card", onclick: () => go("#/sanatci/" + aid) },
+        gAv(x.artistName, x.genre, 56),
+        h("div", { class: "grow" }, h("div", { class: "sl-name" }, x.artistName || "Sanatçı"),
+          x.genre ? h("span", { class: "sl-genre" }, x.genre) : null),
+        h("div", { class: "sl-right" }, heart, icon("chevron-forward", { size: 14, color: "var(--border)" }))));
+    });
+  };
+  const search = h("div", { class: "hs-search" }, icon("search-outline", { size: 16, color: "var(--text-muted)" }),
+    h("input", { placeholder: "Kullanıcı ara (sanatçı, mekan...)", oninput: (e) => { term = e.target.value; draw(); } }));
+  root.append(search, box);
+  draw();
 }
+
 async function favoritesView(_id, root) {
   clear(root);
-  try {
-    const [venues, events] = await Promise.all([favVenues(uid()), favEvents(uid())]);
-    if (!venues.length && !events.length) { root.append(empty("bookmark-outline", "Favori yok", "Etkinlik ve mekanları kaydet.")); return; }
-    if (events.length) root.append(sect("Etkinlikler", "calendar-outline", events.length,
-      h("div", { class: "list-card" }, ...events.map((e) => h("div", { class: "lrow", onclick: () => go("#/etkinlik/" + e.id), style: { cursor: "pointer" } },
-        avatar(e.title, C), h("div", { class: "lrow-info" }, h("div", { class: "lrow-name" }, e.title), h("div", { class: "lrow-meta" }, [e.venue, e.date].filter(Boolean).join(" · "))), icon("chevron-forward", { size: 16, color: "var(--text-muted)" }))))));
-    if (venues.length) root.append(sect("Mekanlar", "business-outline", venues.length,
-      h("div", { class: "list-card" }, ...venues.map((v) => h("div", { class: "lrow", onclick: () => go("#/mekan/" + (v.venueId || v.id)), style: { cursor: "pointer" } },
-        avatar(v.venueName, ROLE.venue), h("div", { class: "lrow-info" }, h("div", { class: "lrow-name" }, v.venueName), h("div", { class: "lrow-meta" }, v.city || "")), icon("chevron-forward", { size: 16, color: "var(--text-muted)" }))))));
-  } catch (e) { root.append(errBox()); }
+  let arts = [], venues = [], events = [];
+  try { [arts, venues, events] = await Promise.all([followingList(uid()), favVenues(uid()), favEvents(uid())]); } catch (_) { root.append(errBox()); return; }
+  let tab = "sanatci";
+  const tabsRow = h("div", { class: "fav-tabs" });
+  const box = h("div", { class: "sl-list" });
+  const drawTabs = () => {
+    clear(tabsRow);
+    [["sanatci", "Sanatçılar", arts.length], ["mekan", "Mekanlar", venues.length], ["etkinlik", "Etkinlikler", events.length]].forEach(([k, l, n]) =>
+      tabsRow.append(h("button", { class: "fav-tab" + (k === tab ? " on" : ""), onclick: () => { tab = k; drawTabs(); draw(); } }, h("span", {}, l), h("span", { class: "fav-count" }, String(n)))));
+  };
+  const draw = () => {
+    clear(box);
+    if (tab === "sanatci") {
+      if (!arts.length) { box.append(empty("heart-outline", "Favori sanatçı yok", "Sanatçı profillerinden takip et.")); return; }
+      arts.forEach((x) => { const aid = x.artistId || x.id;
+        box.append(h("div", { class: "sl-card", onclick: () => go("#/sanatci/" + aid) }, gAv(x.artistName, x.genre, 52),
+          h("div", { class: "grow" }, h("div", { class: "sl-name" }, x.artistName || "Sanatçı"), x.genre ? h("div", { class: "sl-sub" }, x.genre) : null),
+          h("button", { class: "sl-heart", onclick: async (e) => { e.stopPropagation(); try { await unfollowArtist(uid(), aid); arts = arts.filter((y) => (y.artistId || y.id) !== aid); drawTabs(); draw(); } catch (_) {} } }, icon("heart", { size: 22, color: "#EF4444" })))); });
+    } else if (tab === "mekan") {
+      if (!venues.length) { box.append(empty("bookmark-outline", "Favori mekan yok", "Mekan profillerinden kaydet.")); return; }
+      venues.forEach((v) => { const vid = v.venueId || v.id;
+        box.append(h("div", { class: "sl-card", onclick: () => go("#/mekan/" + vid) }, gAv(v.venueName, null, 52),
+          h("div", { class: "grow" }, h("div", { class: "sl-name" }, v.venueName || "Mekan"), v.city ? h("div", { class: "sl-sub" }, v.city) : null),
+          h("button", { class: "sl-heart", onclick: async (e) => { e.stopPropagation(); try { await unfavVenue(uid(), vid); venues = venues.filter((y) => (y.venueId || y.id) !== vid); drawTabs(); draw(); } catch (_) {} } }, icon("heart", { size: 22, color: "#EF4444" })))); });
+    } else {
+      if (!events.length) { box.append(empty("calendar-outline", "Favori etkinlik yok", "Etkinlik detayından kaydet.")); return; }
+      events.forEach((e) => box.append(h("div", { class: "sl-card", onclick: () => go("#/etkinlik/" + e.id) }, gAv(e.title, e.genre, 52),
+        h("div", { class: "grow" }, h("div", { class: "sl-name" }, e.title || "Etkinlik"), h("div", { class: "sl-sub" }, [e.venue, e.date].filter(Boolean).join(" · "))),
+        h("button", { class: "sl-heart", onclick: async (ev) => { ev.stopPropagation(); try { await unfavEvent(uid(), e.id); events = events.filter((y) => y.id !== e.id); drawTabs(); draw(); } catch (_) {} } }, icon("heart", { size: 22, color: "#EF4444" })))));
+    }
+  };
+  root.append(tabsRow, box); drawTabs(); draw();
 }
 async function attendedView(_id, root) {
   clear(root);
