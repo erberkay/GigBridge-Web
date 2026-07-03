@@ -5,6 +5,33 @@ import {
   storage, ref, uploadBytes, getDownloadURL, auth, deleteUser,
 } from "./firebase.js";
 
+// ── Yardımcılar (app utils/price.ts + eventDate.ts karşılığı) ──
+// TL ayrıştır: sayıysa aynen; "2.500" gibi string ise rakamları toplar (nokta binlik ayraç).
+function axParseTL(v) {
+  if (v == null) return null;
+  if (typeof v === "number") return isFinite(v) ? v : null;
+  const digits = String(v).replace(/[^\d]/g, "");
+  if (!digits) return null;
+  const n = parseInt(digits, 10);
+  return isFinite(n) ? n : null;
+}
+// ISO tarihi ("2026-07-15") TR görünümüne çevirir; geçersizse ham metni ya da "—".
+function axIsoToTR(iso) {
+  const d = iso ? new Date(iso) : null;
+  if (!d || isNaN(d)) return (typeof iso === "string" && iso) ? iso : "—";
+  return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" });
+}
+// Etkinlik tarih alanları: { date (TR gösterim), eventAt (JS Date → Firestore Timestamp'e dönüşür), dateKey (ISO) }.
+function axEventDateFields(input) {
+  const d = input ? new Date(input) : null;
+  if (!d || isNaN(d)) return { date: (typeof input === "string" ? input : ""), eventAt: null, dateKey: "" };
+  return {
+    date: d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" }),
+    eventAt: d,
+    dateKey: d.toISOString().slice(0, 10),
+  };
+}
+
 // Hesabı sil — auth kullanıcısını siler; veri temizliğini onUserDeleted CF'i (KVKK cascade) yapar.
 export async function deleteMyAccount() {
   await deleteUser(auth.currentUser);
@@ -248,8 +275,9 @@ export async function createVenueRequest(profile, venue, f) {
 export function convIdFor(a, b) { return [a, b].sort().join("__"); }
 const emojiFor = (t) => (t === "artist" ? "🎤" : t === "venue" ? "🏢" : t === "organizer" ? "📣" : "👤");
 
+const _convPhotoCache = {};   // otherId → photoURL (oturum içi; mesaj listesi avatarları için)
 export function listenConversations(uid, cb) {
-  return onSnapshot(query(collection(db, "conversations"), where("participants", "array-contains", uid)), (snap) => {
+  return onSnapshot(query(collection(db, "conversations"), where("participants", "array-contains", uid)), async (snap) => {
     const list = snap.docs
       .filter((d) => !((d.data().hiddenFor ?? []).includes(uid)))
       .map((d) => {
@@ -260,9 +288,19 @@ export function listenConversations(uid, cb) {
           otherName: data.isGroup ? (data.name ?? "Grup") : (data.participantNames?.[other] ?? "Kullanıcı"),
           lastMessage: data.lastMessage ?? "", lastMessageTime: data.lastMessageTime,
           unread: data.unreadCount?.[uid] ?? 0, isGroup: data.isGroup === true,
+          otherPhoto: null,
         };
       })
       .sort((a, b) => msOf(b) - msOf(a));
+    // Karşı tarafın profil fotoğrafı (grup değilse) — mesaj avatarında göstermek için, cache'li.
+    await Promise.all(list.filter((c) => !c.isGroup && c.otherId).map(async (c) => {
+      if (c.otherId in _convPhotoCache) { c.otherPhoto = _convPhotoCache[c.otherId]; return; }
+      try {
+        const s = await getDoc(doc(db, "users", c.otherId));
+        const ph = s.exists() ? (s.data().photoURL ?? null) : null;
+        _convPhotoCache[c.otherId] = ph; c.otherPhoto = ph;
+      } catch { c.otherPhoto = null; }
+    }));
     cb(list);
   }, () => cb([]));
 }

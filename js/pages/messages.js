@@ -9,10 +9,18 @@ export function requestChat(target) { pending = target; }
 
 // Rol/emoji tabanlı avatar gradyanı (app getConvColors karşılığı)
 const GRADS = { artist: ["#A855F7", "#7C3AED"], venue: ["#F59E0B", "#0A7A9E"], customer: ["#06B6D4", "#0369A1"], organizer: ["#F43F5E", "#BE123C"] };
-function msAv(name, size, type) {
+function msAv(name, size, type, photoUrl) {
   const [a, b] = GRADS[type] || GRADS.customer;
-  return h("div", { class: "ms-av", style: { width: size + "px", height: size + "px", borderRadius: (size / 2) + "px", background: `linear-gradient(135deg, ${a}, ${b})`, fontSize: Math.round(size * 0.42) + "px" } },
-    (name || "?").charAt(0).toLocaleUpperCase("tr-TR"));
+  const style = { width: size + "px", height: size + "px", borderRadius: (size / 2) + "px", fontSize: Math.round(size * 0.42) + "px" };
+  // Foto varsa arka plan olarak göster (baş harf yerine)
+  if (photoUrl) {
+    style.backgroundImage = `url(${photoUrl})`;
+    style.backgroundSize = "cover";
+    style.backgroundPosition = "center";
+    return h("div", { class: "ms-av", style });
+  }
+  style.background = `linear-gradient(135deg, ${a}, ${b})`;
+  return h("div", { class: "ms-av", style }, (name || "?").charAt(0).toLocaleUpperCase("tr-TR"));
 }
 
 // Sekmeye monte edilir: messagesView(root, color)
@@ -54,7 +62,7 @@ export function messagesView(root, color = ROLE.venue) {
 
   function convRow(c) {
     return h("div", { class: "ms-row", onclick: () => showChat(c) },
-      msAv(c.otherName, 52, c.isGroup ? "artist" : myType === "venue" ? "artist" : "venue"),
+      msAv(c.otherName, 52, c.isGroup ? "artist" : myType === "venue" ? "artist" : "venue", c.otherPhoto),
       h("div", { class: "grow", style: { minWidth: 0 } },
         h("div", { class: "ms-row-top" },
           h("span", { class: "ms-name" }, c.otherName),
@@ -114,7 +122,7 @@ export function messagesView(root, color = ROLE.venue) {
     const view = h("div", { class: "chat" },
       h("div", { class: "ms-chathead" },
         h("button", { class: "ms-back", onclick: showList }, icon("chevron-back", { size: 22, color: "var(--text)" })),
-        msAv(conv.otherName, 40, conv.isGroup ? "artist" : myType === "venue" ? "artist" : "venue"),
+        msAv(conv.otherName, 40, conv.isGroup ? "artist" : myType === "venue" ? "artist" : "venue", conv.otherPhoto),
         h("div", {}, h("div", { class: "ms-name" }, conv.otherName), h("div", { class: "ms-status" }, conv.isGroup ? "Grup sohbeti" : "GigBridge"))),
       list,
       h("div", { class: "ms-inputrow" }, input, sendBtn));
