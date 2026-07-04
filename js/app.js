@@ -47,7 +47,7 @@ function resolve() {
 
   // Müşteri: sekmeler (kesfet/harita/akis/mesajlar/profil) + detaylar (etkinlik/sanatci/mekan)
   if (home === "#/kesfet") {
-    const CUST = ["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil", "#/etkinlikler"];
+    const CUST = ["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil", "#/etkinlikler", "#/takip", "#/favoriler", "#/katildiklarim", "#/biletlerim", "#/yorumlarim", "#/bildirimler"];
     if (CUST.includes(b) || matches(b, "#/etkinlik") || matches(b, "#/sanatci") || matches(b, "#/mekan") || matches(b, "#/katilimcilar")) return b;
     return "#/kesfet";
   }
@@ -81,7 +81,7 @@ function render() {
   else if (matches(b, "#/venue")) return mountLazy("./pages/venue.js", "venuePage");
   else if (matches(b, "#/organizer")) return mountLazy("./pages/organizer.js", "organizerPage");
   else if (matches(b, "#/artist")) return mountLazy("./pages/artist.js", "artistPage");
-  else if (["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil", "#/etkinlikler"].includes(b)
+  else if (["#/kesfet", "#/harita", "#/akis", "#/mesajlar", "#/profil", "#/etkinlikler", "#/takip", "#/favoriler", "#/katildiklarim", "#/biletlerim", "#/yorumlarim", "#/bildirimler"].includes(b)
     || matches(b, "#/etkinlik") || matches(b, "#/sanatci") || matches(b, "#/mekan") || matches(b, "#/katilimcilar")) node = customerPage();
   else node = landing();
   mount(node instanceof Node ? node : h("div", {}, "…"));
