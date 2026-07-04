@@ -193,6 +193,7 @@ async function renderKesfet(root, hdr) {
 
   // ── Arama + kategori sekmeleri ──
   let term = "";
+  let genreFilter = "";
   // Animasyonlu arama input (curvy-earwig-22) — dönen conic-gradient border glow + arama/filtre ikonları
   const sInput = h("input", { class: "input", placeholder: "Ara...", oninput: (e) => { term = e.target.value; drawBody(); } });
   const filterSvg = '<svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none"><path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" stroke-width="1" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
@@ -226,11 +227,31 @@ async function renderKesfet(root, hdr) {
   const body = h("div", { class: "hs-body" });
   root.append(hdr.cityDrop, searchBar, tabsRow, body);
 
+  // ── Filtre paneli (#filter-icon tıklayınca açılır) ──
+  const filterDrop = h("div", { class: "hs-filterdrop", style: { display: "none" } });
+  const GENRE_OPTS = [...new Set([...events.flatMap((e) => Array.isArray(e.genre) ? e.genre : (e.genre ? [e.genre] : [])), ...artists.flatMap((a) => Array.isArray(a.genres) ? a.genres : (a.genre ? [a.genre] : []))].map((g) => (g || "").trim()).filter(Boolean))];
+  const drawFilter = () => {
+    clear(filterDrop);
+    filterDrop.append(h("div", { class: "hs-fdrop-title" }, "Türe göre filtrele"));
+    const cr = h("div", { class: "hs-fdrop-chips" });
+    cr.append(h("button", { class: "chip" + (!genreFilter ? " on" : ""), onclick: () => { genreFilter = ""; drawFilter(); drawBody(); } }, "Tümü"));
+    GENRE_OPTS.forEach((g) => cr.append(h("button", { class: "chip" + (genreFilter === g ? " on" : ""), onclick: () => { genreFilter = g; drawFilter(); drawBody(); } }, g)));
+    filterDrop.append(cr);
+    filterDrop.append(h("button", { class: "hs-fdrop-artists", onclick: () => { activeCategory = "SANATÇILAR"; drawTabs(); drawBody(); filterDrop.style.display = "none"; } }, icon("mic-outline", { size: 14 }), h("span", {}, "Sanatçıları Ara")));
+  };
+  drawFilter();
+  const fIcon = searchBar.querySelector("#filter-icon");
+  if (fIcon) { fIcon.style.cursor = "pointer"; fIcon.onclick = (e) => { e.stopPropagation(); filterDrop.style.display = filterDrop.style.display === "none" ? "block" : "none"; }; }
+  searchBar.after(filterDrop);
+
   const inCity = (ev) => activeCity === "TÜMÜ" || fold((ev.city || ev.location?.city || "").trim()) === fold(activeCity);
 
   function drawBody() {
     clear(body);
-    const cityEvents = events.filter(inCity);
+    const mg = (item) => { if (!genreFilter) return true; const raw = item.genres ?? item.genre; const gs = Array.isArray(raw) ? raw : (raw ? [raw] : []); return gs.some((g) => fold(g) === fold(genreFilter)); };
+    const cityEvents = events.filter(inCity).filter(mg);
+    const fArtists = artists.filter(mg);
+    const fVenues = venues.filter(mg);
     const q = fold(term.trim());
 
     if (q) { // arama sonuçları
@@ -241,13 +262,13 @@ async function renderKesfet(root, hdr) {
     }
 
     if (activeCategory === "MEKANLAR") {
-      if (!venues.length) { body.append(hsEmpty("business-outline", "Henüz mekan yok", "Mekanlar katıldıkça burada listelenecek.")); return; }
-      body.append(h("div", { class: "hs-vlist" }, ...venues.map(venueCardBig)));
+      if (!fVenues.length) { body.append(hsEmpty("business-outline", "Henüz mekan yok", "Mekanlar katıldıkça burada listelenecek.")); return; }
+      body.append(h("div", { class: "hs-vlist" }, ...fVenues.map(venueCardBig)));
       return;
     }
     if (activeCategory === "SANATÇILAR") {
-      if (!artists.length) { body.append(hsEmpty("mic-outline", "Henüz sanatçı yok", "Sanatçılar katıldıkça burada görünecek.")); return; }
-      body.append(h("div", { class: "hs-alist" }, ...artists.map((a) => artistRowHome(a, followSet))));
+      if (!fArtists.length) { body.append(hsEmpty("mic-outline", "Henüz sanatçı yok", "Sanatçılar katıldıkça burada görünecek.")); return; }
+      body.append(h("div", { class: "hs-alist" }, ...fArtists.map((a) => artistRowHome(a, followSet))));
       return;
     }
 
@@ -277,8 +298,8 @@ async function renderKesfet(root, hdr) {
     if (week.length) body.append(hsSect("Bu Hafta", activeCity !== "TÜMÜ" ? activeCity : null, () => go("#/etkinlikler")),
       h("div", { class: "hs-hscroll" }, ...week.map((e) => ecard2(e))));
     // Popüler Sanatçılar
-    if (artists.length) body.append(hsSect("Popüler Sanatçılar", null, () => { activeCategory = "SANATÇILAR"; drawTabs(); drawBody(); }),
-      h("div", { class: "hs-alist" }, ...artists.slice(0, 5).map((a) => artistRowHome(a, followSet))));
+    if (fArtists.length) body.append(hsSect("Popüler Sanatçılar", null, () => { activeCategory = "SANATÇILAR"; drawTabs(); drawBody(); }),
+      h("div", { class: "hs-alist" }, ...fArtists.slice(0, 5).map((a) => artistRowHome(a, followSet))));
   }
   drawBody();
 }
