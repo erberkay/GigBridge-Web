@@ -227,7 +227,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .stat-val { font-size: 26px; font-weight: 800; margin-top: 6px; }
 .stat-label { color: var(--text-secondary); font-size: 12.5px; margin-top: 2px; }
 .filter-wrap { margin-bottom: 12px; }
-.chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; margin-bottom: 18px; }
 .chip { padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; }
 .chip.on { background: var(--role); border-color: var(--role); color: #fff; }
 .filter-label { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 12px; }
@@ -557,6 +557,9 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 
 /* Dikey listeler + sanatçı satırları */
 .hs-vlist { display: flex; flex-direction: column; gap: 12px; padding: 0 16px; }
+.ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; padding: 0 16px; align-content: start; }
+.cp-toggle { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+.cp-toggle.on { background: rgba(245,158,11,0.15); color: #F59E0B; border-color: rgba(245,158,11,0.4); }
 .hs-alist { padding: 0 16px; }
 .hs-artist { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
 .hs-aphoto { width: 52px; height: 52px; border-radius: 26px; background-size: cover; background-position: center; flex: 0 0 auto; }
@@ -845,15 +848,20 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .b-them { background: var(--surface); border-color: var(--border); border-bottom-left-radius: 4px; }
 
 /* ══════════════ BİLDİRİMLER — app NotificationsFeed birebir ══════════════ */
-.nf-list { display: flex; flex-direction: column; gap: 10px; }
-.nf-card { display: flex; align-items: flex-start; gap: 12px; background: var(--surface); border-radius: 11px; padding: 16px; border: 1px solid var(--border); }
+.nf-list { display: flex; flex-direction: column; gap: 12px; max-width: 720px; padding-bottom: 24px; }
+.nf-card { display: flex; align-items: flex-start; gap: 14px; background: var(--surface); border-radius: 14px; padding: 16px 18px; border: 1px solid var(--border); transition: border-color .15s, background .15s; }
+.nf-card:hover { border-color: rgba(168,85,247,0.35); }
 .nf-card.unread { border-color: rgba(168,85,247,0.33); background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
-.nf-ic { width: 38px; height: 38px; border-radius: 19px; background: rgba(168,85,247,0.09); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
-.nf-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
-.nf-body { font-size: 13px; color: var(--text-secondary); line-height: 19px; }
-.nf-time { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-.nf-x { background: none; border: none; cursor: pointer; padding: 2px; flex: 0 0 auto; }
-.nf-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 90px; color: var(--text-muted); font-size: 13px; }
+.nf-ic { width: 42px; height: 42px; border-radius: 12px; background: rgba(168,85,247,0.1); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.nf-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--primary); margin-right: 7px; vertical-align: middle; }
+.nf-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.nf-body { font-size: 13px; color: var(--text-secondary); line-height: 20px; }
+.nf-time { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+.nf-x { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; background: none; border: none; cursor: pointer; flex: 0 0 auto; opacity: .55; transition: opacity .15s, background .15s; }
+.nf-x:hover { opacity: 1; background: rgba(239,68,68,0.12); }
+.nf-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 70px 24px; text-align: center; color: var(--text-muted); }
+.nf-empty-title { font-size: 15px; font-weight: 700; color: var(--text-secondary); }
+.nf-empty-sub { font-size: 13px; color: var(--text-muted); max-width: 300px; line-height: 19px; }
 
 /* ══════════════ LANDING — app WelcomeScreen birebir ══════════════ */
 .wl-wrap { max-width: 520px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; padding: 60px 24px 40px; background: linear-gradient(180deg, #07070F, #1A0830 45%, #07070F); }

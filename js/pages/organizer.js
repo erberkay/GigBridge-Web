@@ -5,7 +5,7 @@ import {
   organizerEvents, organizerRequests, saveProfile, listVenues, listArtists, createVenueRequest, uploadImage,
   eventById, listenNotifications, markNotifRead, deleteNotif,
   orgMembers, removeOrgMember, orgInvites, createOrgInvite,
-  updateEventFields, deleteEventById, sendNotification, createOrgVenueRequest, approveEventEdit,
+  updateEventFields, deleteEventById, sendNotification, createOrgVenueRequest, approveEventEdit, eventStartMs,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, ROLE } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
@@ -401,6 +401,8 @@ function openEditEvent(ev, opts = {}) {
   const isOwner = (p.orgRole || "owner") !== "staff";
   const approvedForMe = Array.isArray(ev.editApprovedFor) && ev.editApprovedFor.includes(uid);
   const canEdit = isOwner || approvedForMe;
+  const startedMs = eventStartMs(ev);
+  const started = startedMs != null && startedMs <= Date.now();
   const dateLabel = typeof ev.date === "string" && ev.date ? ev.date : fmtDate(ev.eventAt);
   const when = [dateLabel, ev.startTime].filter(Boolean).join(" · ");
   const onDone = opts.onDone || (() => {});
@@ -408,7 +410,7 @@ function openEditEvent(ev, opts = {}) {
   const fTitle = field({ label: "Etkinlik Adı *", id: "oxetitle", value: ev.title || "", placeholder: "Etkinlik adı" });
   const fVenue = field({ label: "Mekan", id: "oxevenue", value: ev.venueName || "", placeholder: "Mekan adı" });
   const fDesc = field({ label: "Açıklama", id: "oxedesc", value: ev.description || "", placeholder: "Etkinlik hakkında kısa bilgi...", multiline: true });
-  if (!canEdit) [fTitle, fVenue, fDesc].forEach((f) => { const inp = f.querySelector("input, textarea"); if (inp) inp.disabled = true; });
+  if (!canEdit || started) [fTitle, fVenue, fDesc].forEach((f) => { const inp = f.querySelector("input, textarea"); if (inp) inp.disabled = true; });
 
   let banner = null;
   if (isOwner && opts.approveStaffId) {
@@ -430,6 +432,9 @@ function openEditEvent(ev, opts = {}) {
     !canEdit ? h("div", { class: "ox-banner dim" },
       icon("lock-closed", { size: 16, color: "#555570" }),
       h("span", { class: "grow" }, "Bu etkinliği düzenlemek için organizasyon sahibinin izni gerekir.")) : null,
+    started ? h("div", { class: "ox-banner dim" },
+      icon("time-outline", { size: 16, color: "#F59E0B" }),
+      h("span", { class: "grow" }, "Etkinlik başladı — artık düzenlenemez.")) : null,
     h("div", { class: "ox-lockrow" },
       icon("calendar", { size: 18, color: C }),
       h("div", { class: "grow" },
@@ -443,13 +448,15 @@ function openEditEvent(ev, opts = {}) {
     fTitle, fVenue, fDesc,
     isOwner ? h("button", { class: "ox-delbtn", onclick: confirmDelete }, icon("trash-outline", { size: 16 }), "Etkinliği Sil") : null);
 
-  const m = modal({ title: "Etkinliği Düzenle", body, actions: canEdit ? [
+  const m = modal({ title: "Etkinliği Düzenle", body, actions: started ? [
+    { label: "Kapat", variant: "ghost", onClick: () => {} },
+  ] : (canEdit ? [
     { label: "Kapat", variant: "ghost", onClick: () => {} },
     { label: "Değişiklikleri Kaydet", ic: "save-outline", keepOpen: true, onClick: (close) => confirmSave(close) },
   ] : [
     { label: "Kapat", variant: "ghost", onClick: () => {} },
     { label: "Düzenleme İzni İste", ic: "key-outline", keepOpen: true, onClick: () => requestEditPermission() },
-  ] });
+  ]) });
 
   function confirmSave(closeEdit) {
     const patch = { title: v("#oxetitle"), venueName: v("#oxevenue"), description: v("#oxedesc") };

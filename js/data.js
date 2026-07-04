@@ -56,6 +56,24 @@ function msOf(x) {
   } catch { return 0; }
 }
 
+// Etkinlik başlangıç ms (createdAt fallback YOK — yalnız gerçek etkinlik zamanı)
+export function eventStartMs(e) {
+  if (e?.eventAt && typeof e.eventAt.toMillis === "function") { const t = e.eventAt.toMillis(); if (!isNaN(t)) return t; }
+  if (e?.dateKey) { const t = Date.parse(e.dateKey + (e.startTime ? "T" + e.startTime : "T00:00")); if (!isNaN(t)) return t; }
+  if (typeof e?.date === "string") { const t = Date.parse(e.date); if (!isNaN(t)) return t; }
+  return null;
+}
+// Etkinlik bitiş ms: endAt varsa onu, yoksa endTime, yoksa başlangıç + 6 saat
+export function eventEndMs(e) {
+  if (e?.endAt && typeof e.endAt.toMillis === "function") { const t = e.endAt.toMillis(); if (!isNaN(t)) return t; }
+  const s = eventStartMs(e);
+  if (s == null) return null;
+  if (e?.endTime && e?.dateKey) { let t = Date.parse(e.dateKey + "T" + e.endTime); if (!isNaN(t)) { if (t <= s) t += 86400e3; return t; } }
+  return s + 6 * 3600e3;
+}
+// Etkinlik bitti mi (saati geçti mi) — bittiyse listelerde gösterilmez
+export function isEventOver(e) { const t = eventEndMs(e); return t != null && t < Date.now(); }
+
 // ── Etkinlikler ──
 export async function venueEvents(uid) {
   const snap = await getDocs(query(collection(db, "events"), where("venueId", "==", uid)));
@@ -355,9 +373,8 @@ export async function markRead(convId, uid) { try { await updateDoc(doc(db, "con
 // Keşfet: yaklaşan etkinlikler (bugün 12s öncesinden itibaren), en yakın önce.
 export async function discoverEvents() {
   const snap = await getDocs(query(collection(db, "events"), where("status", "==", "upcoming")));
-  const now = Date.now();
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-    .filter((e) => { const ms = msOf(e); return ms === 0 || ms >= now - 12 * 3600e3; })
+    .filter((e) => !isEventOver(e))
     .sort((a, b) => msOf(a) - msOf(b));
 }
 export async function eventById(id) { const s = await getDoc(doc(db, "events", id)); return s.exists() ? { id, ...s.data() } : null; }
@@ -372,8 +389,8 @@ export async function listRealArtists() {
 
 // ── Katılım (events/{id}/attendees/{uid} + attendeeCount ±1) ──
 export async function isAttending(eventId, uid) { try { return (await getDoc(doc(db, "events", eventId, "attendees", uid))).exists(); } catch { return false; } }
-export async function attendEvent(ev, uid, displayName) {
-  await setDoc(doc(db, "events", ev.id, "attendees", uid), { userId: uid, displayName: displayName || "", joinedAt: serverTimestamp() });
+export async function attendEvent(ev, uid, displayName, anonymous) {
+  await setDoc(doc(db, "events", ev.id, "attendees", uid), { userId: uid, displayName: displayName || "", anonymous: anonymous === true, joinedAt: serverTimestamp() });
   await updateDoc(doc(db, "events", ev.id), { attendeeCount: increment(1) });
 }
 export async function unattendEvent(eventId, uid) {

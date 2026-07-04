@@ -408,7 +408,7 @@ async function eventsListView(_id, root) {
   const FILTERS = ["Tümü", "Bugün", "Yarın", "Bu Hafta", "Bu Ay"];
   let df = "Tümü";
   const chipRow = h("div", { class: "chip-row" });
-  const listBox = h("div", { class: "hs-vlist" });
+  const listBox = h("div", { class: "ev-grid" });
   const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
   const draw = () => {
     clear(chipRow); clear(listBox);
@@ -536,7 +536,7 @@ async function eventDetail(id, root) {
       if (att) { await unattendEvent(id, uid()); att = false; count--; }
       else {
         if (ev.capacity && count >= ev.capacity) { toast("Kontenjan dolu", "err"); joinBtn.disabled = false; joinTxt.textContent = "Katıl"; return; }
-        await attendEvent(ev, uid(), myName()); att = true; count++;
+        await attendEvent(ev, uid(), myName(), session.profile?.anonymousAttendance === true); att = true; count++;
       }
       statVal.textContent = String(count);
       attHead.querySelector(".ed-secttitle").textContent = `Katılıyor (${count})`;
@@ -579,10 +579,10 @@ function attendeesPage(id) {
     const listBox = h("div", { class: "at-list" });
     const draw = () => {
       clear(listBox);
-      const f = list.filter((a) => !q || fold(a.displayName || a.name).includes(fold(q)));
+      const f = list.filter((a) => { const nm = a.anonymous ? "anonim katılımcı" : (a.displayName || a.name || ""); return !q || fold(nm).includes(fold(q)); });
       if (!f.length) { listBox.append(h("div", { class: "at-empty" }, icon("people-outline", { size: 48, color: "var(--text-muted)" }), h("div", {}, "Eşleşen katılımcı bulunamadı."))); return; }
       f.forEach((a, i) => {
-        const name = a.displayName || a.name || "Kullanıcı";
+        const name = a.anonymous ? "Anonim Katılımcı" : (a.displayName || a.name || "Kullanıcı");
         const [p1, p2] = AVATAR_PALETTES[i % AVATAR_PALETTES.length];
         listBox.append(h("div", { class: "at-card" },
           h("div", { class: "at-av", style: { background: `linear-gradient(135deg, ${p1}, ${p2})` } }, name.charAt(0).toLocaleUpperCase("tr-TR")),
@@ -927,6 +927,19 @@ async function renderProfil(root) {
     h("span", { class: "cp-menulbl" + (highlight ? " hl" : "") }, label),
     right || null, icon("chevron-forward", { size: 18, color: "var(--text-muted)" }));
 
+  const anonPill = h("span", { class: "cp-toggle" + (p.anonymousAttendance === true ? " on" : "") }, p.anonymousAttendance === true ? "Gizli" : "Açık");
+  const toggleAnon = async () => {
+    const next = !(p.anonymousAttendance === true);
+    try {
+      await saveProfile(uid(), { anonymousAttendance: next });
+      p.anonymousAttendance = next;
+      if (session.profile) session.profile.anonymousAttendance = next;
+      anonPill.textContent = next ? "Gizli" : "Açık";
+      anonPill.classList.toggle("on", next);
+      toast(next ? "Katılımlarda adın gizlenecek" : "Katılımlarda adın görünecek");
+    } catch (_) { toast("Kaydedilemedi", "err"); }
+  };
+
   root.append(
     h("div", { class: "cp-hero" },
       avatarBox,
@@ -947,6 +960,7 @@ async function renderProfil(root) {
       menuRow("chatbox-ellipses-outline", "Yorumlarım", () => go("#/yorumlarim"), badges.yorum),
       menuRow("bookmark-outline", "Favorilerim", () => go("#/favoriler"), badges.fav),
       menuRow("notifications-outline", "Bildirimler", () => go("#/bildirimler")),
+      menuRow("eye-off-outline", "Katılımlarda adımı gizle", toggleAnon, anonPill),
       h("a", { class: "cp-menurow", href: "gizlilik.html" }, h("span", { class: "cp-menuic" }, icon("shield-checkmark-outline", { size: 18, color: "var(--text-secondary)" })), h("span", { class: "cp-menulbl" }, "Gizlilik Politikası"), icon("open-outline", { size: 15, color: "var(--text-muted)" })),
       h("a", { class: "cp-menurow", href: "kullanim-kosullari.html" }, h("span", { class: "cp-menuic" }, icon("document-text-outline", { size: 18, color: "var(--text-secondary)" })), h("span", { class: "cp-menulbl" }, "Kullanım Koşulları"), icon("open-outline", { size: 15, color: "var(--text-muted)" })),
       h("a", { class: "cp-menurow last", href: "hesap-sil.html" }, h("span", { class: "cp-menuic" }, icon("trash-outline", { size: 18, color: "#EF4444" })), h("span", { class: "cp-menulbl" }, "Hesap Silme"), icon("open-outline", { size: 15, color: "var(--text-muted)" }))),
@@ -1490,16 +1504,16 @@ function notificationsView(_id, root) {
   root.append(wrap);
   listenNotifications(uid(), (list) => {
     clear(wrap);
-    if (!list.length) { wrap.append(h("div", { class: "nf-empty" }, icon("notifications-off-outline", { size: 44, color: "var(--text-muted)" }), h("div", {}, "Henüz bildiriminiz yok."))); return; }
+    if (!list.length) { wrap.append(h("div", { class: "nf-empty" }, icon("notifications-off-outline", { size: 52, color: "var(--text-muted)" }), h("div", { class: "nf-empty-title" }, "Henüz bildiriminiz yok"), h("div", { class: "nf-empty-sub" }, "Yeni teklif, davet ve güncellemeler burada görünecek."))); return; }
     list.forEach((n) => { if (n.read === false) markNotifRead(n.id); });
     list.forEach((n) => {
       const card = h("div", { class: "nf-card" + (n.read === false ? " unread" : "") },
         h("span", { class: "nf-ic" }, icon(notifIcon(n.type), { size: 20, color: "var(--primary)" })),
         h("div", { class: "grow" },
-          h("div", { class: "nf-title" }, n.title || "Bildirim"),
+          h("div", { class: "nf-title" }, n.read === false ? h("span", { class: "nf-dot" }) : null, n.title || "Bildirim"),
           h("div", { class: "nf-body" }, n.body || ""),
           h("div", { class: "nf-time" }, timeAgo(n.createdAt))),
-        h("button", { class: "nf-x", onclick: (e) => { e.stopPropagation(); deleteNotif(n.id); card.remove(); } }, icon("close", { size: 16, color: "var(--text-muted)" })));
+        h("button", { class: "nf-x", title: "Bildirimi sil", onclick: (e) => { e.stopPropagation(); deleteNotif(n.id); card.remove(); } }, icon("close", { size: 15, color: "var(--text-muted)" })));
       wrap.append(card);
     });
   });
