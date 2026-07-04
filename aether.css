@@ -1,0 +1,227 @@
+/* ============================================================
+   AETHER OVERLAY — GigBridge-Web
+   style.css'ten SONRA yuklenir. Token remap + atom reskin.
+   Editorial dark: void + halftone, Space Grotesk + Instrument Serif
+   + JetBrains Mono, prizma gradyani (cyan-magenta-amber) SADECE kenarda.
+   KORUNANLAR: #poda arama input'u + .tkx holografik bilet (hedeflenmez).
+   ============================================================ */
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+/* ---------- Token remap: GigBridge degiskenleri -> Aether paleti ---------- */
+:root {
+  --bg: #06070A;            /* void */
+  --surface: #0E1014;       /* stratum */
+  --surface-2: #14171D;     /* strata */
+  --surface-3: #14171D;
+  --border: #1F232B;        /* hairline */
+  --border-strong: #2A2F38;
+  --text: #F2F1EE;          /* ink */
+  --text-secondary: #8A8E97;/* vapor */
+  --text-muted: #6E727C;
+  --primary: #FF4FA3;       /* prism-magenta = tek solid aksan */
+  --primary-dark: #E63C8E;
+  --amber: #FF8A2A;         /* prism-amber */
+  --amber-dark: #E5761B;
+  --rose: #FF4FA3;
+  --cyan: #4ED8FF;          /* prism-cyan */
+  --success: #7CE0B0;
+  --free: #7CE0B0;
+  --error: #FF5A6E;
+  --radius: 6px;
+
+  --font-sans: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --grad-prism: linear-gradient(90deg, #4ED8FF 0%, #FF4FA3 52%, #FF8A2A 100%);
+  --tex-halftone: radial-gradient(circle, rgba(242,241,238,0.06) 1px, transparent 1.5px);
+}
+
+/* ---------- Zemin: duz void + halftone (mor radial glow'lar kaldirildi) ---------- */
+body {
+  font-family: var(--font-sans);
+  background: var(--tex-halftone) 0 0 / 8px 8px, var(--bg) !important;
+  background-attachment: fixed !important;
+  letter-spacing: 0;
+}
+::selection { background: #FF4FA3; color: #06070A; }
+a { color: var(--text); }
+
+/* ---------- Tipografi ---------- */
+.hero-title, .tb-title, .card__title, .dsh-title, .hs-secttitle, .ed-title,
+.ed-name, .pd-name, .cp-name, .sect-title, .ms-title, h1, h2, h3, .mp-evtitle {
+  font-family: var(--font-sans);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+.hero-sub, .card__body, .cp-mail, .hero-title + p { font-family: var(--font-sans); }
+
+/* Sidebar marka: "GigBridge" -> Aether ink (mor gradyan text-fill iptal) */
+.bottomnav::before {
+  font-family: var(--font-sans) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--text) !important;
+  color: var(--text) !important;
+}
+
+/* Mono caps etiketler: rozet / pill / durum */
+.badge, .dpill, .hero-pill, .ppill, .sbadge, .count-pill, .pend-badge,
+.vip-badge, .ecard-badge, .cp-badge, .cp-typebadge, .cp-stat-lbl, .mr-type,
+.hs-fdrop-title, .tl-srctab, .rv-badge, .nf-time, .caption {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 500 !important;
+}
+
+/* ---------- Butonlar: Aether ---------- */
+/* Primary = ink dolgu + void yazi + alt kenarda prizma seridi */
+.btn {
+  position: relative;
+  background: var(--text) !important;
+  color: #06070A !important;
+  border: 1px solid var(--text) !important;
+  border-radius: var(--radius) !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 13px 20px 15px !important;
+  overflow: hidden;
+}
+.btn::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--grad-prism); transition: height 0.12s ease;
+}
+.btn:hover { opacity: 1; transform: translateY(-1px); }
+.btn:hover::after { height: 3px; }
+/* Secondary/ghost = seffaf + hairline */
+.btn-ghost {
+  background: transparent !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+.btn-ghost::after { display: none; }
+.btn-ghost:hover { border-color: var(--border-strong) !important; background: rgba(242,241,238,0.03) !important; }
+.btn-danger { background: transparent !important; color: #FF5A6E !important; border: 1px solid rgba(255,90,110,0.4) !important; }
+.btn-danger::after { display: none; }
+.btn-google { background: var(--text) !important; color: #06070A !important; }
+.btn-google::after { display: none; }
+.btn-google ion-icon { color: #06070A !important; }
+
+/* ---------- Kartlar: hairline, keskin kose, GOLGE YOK ---------- */
+.card, .ecard, .ecard2, .acard, .cp-stats, .cp-menu, .form-card, .dsh-card,
+.list-card, .sl-card, .fv-ecard, .nf-card, .t10-card, .ed-infocard, .ed-vercard,
+.pd-feats, .rv-card, .at-card, .vx-facard, .vx-wcard, .mp-card, .ms-row, .overlay {
+  border-radius: var(--radius) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface);
+}
+.ecard, .ecard2 { overflow: hidden; }
+
+/* Avatar/gradyan halka: mor -> prizma */
+.brand-dot { background: var(--grad-prism) !important; box-shadow: none !important; }
+.brand-name {
+  font-family: var(--font-sans) !important; font-weight: 700 !important;
+  background: none !important; -webkit-text-fill-color: var(--text) !important; color: var(--text) !important;
+}
+
+/* ---------- Sekmeler (kategori chip'leri) -> Aether underline ---------- */
+.hs-tab {
+  border: none !important;
+  background: none !important;
+  border-radius: 0 !important;
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.14em;
+  color: var(--text-secondary) !important;
+  padding: 8px 2px !important;
+  position: relative;
+}
+.hs-tab.on { color: var(--text) !important; }
+.hs-tab.on::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px;
+  background: var(--grad-prism);
+}
+.hs-tabs { gap: 24px !important; }
+
+/* Filtre türü chip'leri (tür filtresi) — pill kalir ama Aether renkli */
+.chip { font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.12em; border-radius: 999px !important; }
+.chip.on { background: transparent !important; border-color: var(--text) !important; color: var(--text) !important; }
+
+/* ---------- Inputlar: bare hairline alt kenar (Aether — kutu yok) ---------- */
+.flabel {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 11px !important;
+  color: var(--text-secondary) !important;
+}
+.field input:not([type=checkbox]):not([type=radio]),
+.field select, .field textarea {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  padding: 11px 0 !important;
+  font-family: var(--font-sans) !important;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none !important;
+  border-bottom: 2px solid #FF4FA3 !important;
+}
+/* Auth submit — Aether primary (ink + prizma kenar) */
+.au-submit {
+  background: var(--text) !important;
+  color: #06070A !important;
+  border: 1px solid var(--text) !important;
+  border-radius: var(--radius) !important;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 600 !important;
+  position: relative;
+  overflow: hidden;
+}
+.au-submit::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--grad-prism); }
+.au-submit:hover { transform: translateY(-1px); }
+
+/* Icon butonlari (bildirim zili vb.) — hairline, keskin */
+.icon-btn {
+  border-radius: var(--radius) !important;
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+.icon-btn:hover { color: var(--text) !important; border-color: var(--border-strong) !important; }
+/* Giris chip'i — Aether primary (ink + prizma kenar), rol cyan yerine */
+.icon-btn.login-chip {
+  background: var(--text) !important;
+  color: #06070A !important;
+  border-color: var(--text) !important;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  position: relative;
+  overflow: hidden;
+}
+.icon-btn.login-chip::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--grad-prism); }
+.icon-btn.login-chip:hover { filter: none !important; transform: translateY(-1px); }
+.icon-btn.login-chip ion-icon { color: #06070A !important; }
+
+/* Sehir secici pill (TUMU) — mono caps, hairline */
+.hs-citybtn, .hs-cityval, .city-chip {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-radius: var(--radius) !important;
+}
+
+/* Bildirim/aktif rol vurgusu: --role hala inline (musteri cyan) — Aether cyan'a yakin, korunur */
+.bn-item.active { color: var(--role); }
