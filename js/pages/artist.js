@@ -8,6 +8,7 @@ import {
   listenArtistOffers, listenArtistAccepted, listenArtistResidencies, respondToOffer,
   setResidencyStatus, pushAppNotification, artistAcceptedInvitations,
   artistVenueReviewsGiven, submitArtistVenueReview, fetchArtistRatings, listGroups,
+  serverTimestamp,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, modal, fmtDate, ROLE } from "../ui.js";
 import { messagesView } from "./messages.js";
@@ -998,6 +999,19 @@ async function renderProfile(root) {
     if (minNum != null && minNum < MIN_STAGE_FEE) return fail(saveMsg, `Sanatçılar en az ${tl(MIN_STAGE_FEE)} ücretle sahne alabilir — minimum ücretin bunun altında olamaz.`);
     if (maxNum != null && maxNum < MIN_STAGE_FEE) return fail(saveMsg, `Maksimum ücret de en az ${tl(MIN_STAGE_FEE)} olmalıdır.`);
     if (minNum != null && maxNum != null && maxNum < minNum) return fail(saveMsg, "Maksimum ücret, minimum ücretten küçük olamaz.");
+
+    // Sanatçı adı değişikliği cooldown (90 gün) — mekan desenindeki gibi displayNameChangedAt damgasıyla.
+    const nameChanged = dn !== (p.displayName || "");
+    if (nameChanged) {
+      const ROLE_DAYS = 90;
+      const lastMs = toMs(p.displayNameChangedAt);
+      const canChange = lastMs == null || (Date.now() - lastMs) >= ROLE_DAYS * 86400000;
+      if (!canChange) {
+        const nextDate = new Date(lastMs + ROLE_DAYS * 86400000).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+        return fail(saveMsg, `Sanatçı adını 90 günde bir değiştirebilirsin. Bir sonraki değişiklik: ${nextDate}.`);
+      }
+    }
+
     const patch = {
       displayName: dn,
       bio: v("#abio"),
@@ -1008,6 +1022,8 @@ async function renderProfile(root) {
       city: v("#acity"), district: v("#adistrict"),
       experienceYears: v("#aexp") ? Number(v("#aexp").replace(/[^0-9]/g, "")) : null,
     };
+    // Ad gerçekten değiştiyse cooldown damgasını yaz (yalnız o zaman).
+    if (nameChanged) patch.displayNameChangedAt = serverTimestamp();
     try {
       if (pic.getFile()) { saveMsg.textContent = "Fotoğraf yükleniyor…"; saveMsg.className = "msg"; patch.photoURL = await uploadImage(pic.getFile(), uid); }
       await saveProfile(uid, patch);

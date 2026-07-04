@@ -2,8 +2,10 @@
 import {
   db, collection, collectionGroup, doc, getDoc, getDocs, updateDoc, addDoc, setDoc, deleteDoc,
   query, where, orderBy, limit, onSnapshot, serverTimestamp, arrayRemove, increment,
-  storage, ref, uploadBytes, getDownloadURL, auth, deleteUser,
+  storage, ref, uploadBytes, getDownloadURL, deleteObject, auth, deleteUser,
 } from "./firebase.js";
+// Sayfaların data.js üzerinden alabilmesi için yeniden dışa aktar (artist.js isim cooldown damgası).
+export { serverTimestamp } from "./firebase.js";
 
 // ── Yardımcılar (app utils/price.ts + eventDate.ts karşılığı) ──
 // TL ayrıştır: sayıysa aynen; "2.500" gibi string ise rakamları toplar (nokta binlik ayraç).
@@ -45,6 +47,12 @@ export async function uploadImage(file, uid) {
   return await getDownloadURL(r);
 }
 
+// Storage'daki afiş görselini sil (bitmiş etkinlik temizliği). Hata yut — best-effort.
+export async function deleteBanner(bannerUrl) {
+  if (!bannerUrl) return;
+  try { await deleteObject(ref(storage, bannerUrl)); } catch (_) {}
+}
+
 const byMs = (a, b) => (msOf(b) - msOf(a));
 function msOf(x) {
   const v = x.eventAt ?? x.createdAt ?? x.date;
@@ -75,13 +83,26 @@ export function eventEndMs(e) {
 export function isEventOver(e) { const t = eventEndMs(e); return t != null && t < Date.now(); }
 
 // ── Etkinlikler ──
+// Bitmiş etkinliklerin afiş görsellerini fire-and-forget temizle (Storage + bannerUrl).
+// Doküman SİLİNMEZ; yalnız foto + bannerUrl gider, bannerCleaned=true işaretlenir. Bloklamaz, hata yutar.
+function cleanupEventBanners(events) {
+  for (const e of events) {
+    if (!e || !e.bannerUrl || e.bannerCleaned || !isEventOver(e)) continue;
+    deleteBanner(e.bannerUrl);
+    updateDoc(doc(db, "events", e.id), { bannerUrl: null, bannerCleaned: true }).catch(() => {});
+  }
+}
 export async function venueEvents(uid) {
   const snap = await getDocs(query(collection(db, "events"), where("venueId", "==", uid)));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byMs);
+  const events = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byMs);
+  cleanupEventBanners(events);
+  return events;
 }
 export async function organizerEvents(orgId) {
   const snap = await getDocs(query(collection(db, "events"), where("organizerId", "==", orgId)));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byMs);
+  const events = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byMs);
+  cleanupEventBanners(events);
+  return events;
 }
 
 // ── Organizatör ↔ Mekan istekleri (venueRequests) ──

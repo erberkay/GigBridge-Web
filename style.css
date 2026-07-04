@@ -87,7 +87,7 @@ input:focus, textarea:focus, select:focus {
 }
 .hs-citysearch input:focus { box-shadow: none; border-color: var(--border); }
 input::placeholder, textarea::placeholder { color: var(--text-muted); }
-input:focus, textarea:focus, select:focus { outline: none; border-color: var(--role); box-shadow: 0 0 0 3px rgba(168,85,247,0.14); }
+input:focus, textarea:focus, select:focus { outline: none; border-color: #ffbf48; box-shadow: 0 0 0 3px rgba(255,191,72,0.22); }
 .msg { margin-top: 12px; font-size: 14px; text-align: center; min-height: 16px; }
 .msg.err { color: var(--error); } .msg.ok { color: var(--success); }
 .forgot-row { display: flex; justify-content: flex-end; margin: -4px 0 10px; }

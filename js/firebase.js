@@ -24,7 +24,7 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 export {
-  ref, uploadBytes, getDownloadURL,
+  ref, uploadBytes, getDownloadURL, deleteObject,
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
 
 // Sayfaların tek yerden alması için Firebase fonksiyonlarını yeniden dışa aktar

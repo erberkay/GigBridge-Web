@@ -8,7 +8,7 @@ import {
   isFavVenue, favVenue, unfavVenue, favVenues, isFavEvent, favEvent, unfavEvent, favEvents,
   artistReviews, submitArtistReview, getVenueReviews, submitVenueReview, myReviews, updateMyReview, deleteMyReview,
   listenTimeline, createPost, isLiked, toggleLike, listenComments, addComment,
-  listenNotifications, markNotifRead, deleteNotif, deleteMyAccount,
+  listenNotifications, markNotifRead, deleteNotif, deleteMyAccount, serverTimestamp,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, fmtDate, fmtTL, ROLE } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
@@ -536,7 +536,7 @@ async function eventDetail(id, root) {
       if (att) { await unattendEvent(id, uid()); att = false; count--; }
       else {
         if (ev.capacity && count >= ev.capacity) { toast("Kontenjan dolu", "err"); joinBtn.disabled = false; joinTxt.textContent = "Katıl"; return; }
-        await attendEvent(ev, uid(), myName(), session.profile?.anonymousAttendance === true); att = true; count++;
+        await attendEvent(ev, uid(), myName(), session.profile?.privacySettings?.anonymousAttendance === true); att = true; count++;
       }
       statVal.textContent = String(count);
       attHead.querySelector(".ed-secttitle").textContent = `Katılıyor (${count})`;
@@ -848,6 +848,47 @@ function reviewModal(kind, target, onDone) {
   });
 }
 
+// ── Müşteri isim değiştirme cooldown (30 gün) — mekan/sanatçı desenindeki displayNameChangedAt damgasıyla, admin onayı YOK ──
+function nameStampMs(v) {
+  if (v == null) return null;
+  if (typeof v === "number") return v > 1e12 ? v : v * 1000;
+  if (typeof v === "string") { const t = Date.parse(v); return isNaN(t) ? null : t; }
+  if (typeof v?.toMillis === "function") return v.toMillis();
+  if (typeof v?.seconds === "number") return v.seconds * 1000;
+  if (v instanceof Date) return v.getTime();
+  return null;
+}
+function nameChangeModal(root, p) {
+  const cur = p.displayName || "Müşteri";
+  const body = h("div", {},
+    h("p", { class: "muted small mb6" }, "Adını 30 günde bir değiştirebilirsin."),
+    h("div", { class: "nc-current" }, "Mevcut ad: ", h("b", {}, cur)),
+    field({ label: "Yeni Ad", id: "cnc_new", value: cur, placeholder: "Yeni adın" }));
+  modal({ title: "Adımı Değiştir", body, actions: [
+    { label: "Vazgeç", variant: "ghost", onClick: () => {} },
+    { label: "Kaydet", ic: "checkmark", keepOpen: true, onClick: async (close) => {
+      const nn = (document.querySelector("#cnc_new")?.value || "").trim();
+      if (!nn) return toast("Yeni ad gir", "err");
+      if (nn === cur) return toast("Ad zaten aynı", "err");
+      // Ad değiştiyse cooldown kontrol — müşteri 30 gün
+      const roleDays = (session.profile?.userType === "customer") ? 30 : 90;
+      const lastMs = nameStampMs(session.profile?.displayNameChangedAt);
+      const canChange = lastMs == null || (Date.now() - lastMs) >= roleDays * 86400000;
+      if (!canChange) {
+        const nextDate = new Date(lastMs + roleDays * 86400000).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+        return toast(`${nextDate} tarihinde değiştirebilirsin`, "err");
+      }
+      try {
+        await saveProfile(uid(), { displayName: nn, displayNameChangedAt: serverTimestamp() });
+        await refreshProfile();
+        toast("Adın güncellendi");
+        close();
+        renderProfil(root);
+      } catch (_) { toast("Kaydedilemedi", "err"); }
+    } },
+  ] });
+}
+
 // ══════════ PROFİL — app müşteri ProfileScreen birebir ══════════
 async function renderProfil(root) {
   clear(root);
@@ -927,13 +968,13 @@ async function renderProfil(root) {
     h("span", { class: "cp-menulbl" + (highlight ? " hl" : "") }, label),
     right || null, icon("chevron-forward", { size: 18, color: "var(--text-muted)" }));
 
-  const anonPill = h("span", { class: "cp-toggle" + (p.anonymousAttendance === true ? " on" : "") }, p.anonymousAttendance === true ? "Gizli" : "Açık");
+  const anonPill = h("span", { class: "cp-toggle" + (p.privacySettings?.anonymousAttendance === true ? " on" : "") }, p.privacySettings?.anonymousAttendance === true ? "Gizli" : "Açık");
   const toggleAnon = async () => {
-    const next = !(p.anonymousAttendance === true);
+    const next = !(p.privacySettings?.anonymousAttendance === true);
     try {
-      await saveProfile(uid(), { anonymousAttendance: next });
-      p.anonymousAttendance = next;
-      if (session.profile) session.profile.anonymousAttendance = next;
+      await saveProfile(uid(), { privacySettings: { ...(session.profile?.privacySettings || {}), anonymousAttendance: next } });
+      p.privacySettings = { ...(p.privacySettings || {}), anonymousAttendance: next };
+      if (session.profile) session.profile.privacySettings = { ...(session.profile.privacySettings || {}), anonymousAttendance: next };
       anonPill.textContent = next ? "Gizli" : "Açık";
       anonPill.classList.toggle("on", next);
       toast(next ? "Katılımlarda adın gizlenecek" : "Katılımlarda adın görünecek");
@@ -953,6 +994,7 @@ async function renderProfil(root) {
       stat("star", stVal.avg, "Ort. Verdiğim", null, true)),
     h("div", { class: "cp-menu" },
       menuRow("location-outline", "Şehrim", cityPicker, h("span", { class: "cp-cityval" }, p.city || "Seç")),
+      menuRow("create-outline", "Adımı Değiştir", () => nameChangeModal(root, p)),
       menuRow("ticket-outline", "Biletlerim", () => go("#/biletlerim"), null, false, true),
       menuRow("heart-outline", "Takip Ettiklerim", () => go("#/takip"), badges.takip),
       menuRow("checkmark-done-outline", "Katıldığım Etkinlikler", () => go("#/katildiklarim"), badges.kat),
