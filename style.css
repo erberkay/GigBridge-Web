@@ -779,6 +779,9 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .cp-logout { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 0; border-radius: 10px; border: 1px solid rgba(239,68,68,0.25); background: rgba(239,68,68,0.05); color: #F87171; font-size: 15px; font-weight: 600; cursor: pointer; }
 .cp-delete { width: 100%; text-align: center; padding: 14px 0; margin-top: 4px; background: none; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; text-decoration: underline; cursor: pointer; }
 
+/* Masaüstü: .cp-hero/.cp-stats kısayol `margin` (yukarıda) ortalamayı eziyordu → yeniden ortala (hero/stats/menu/logout aynı hizada) */
+@media (min-width: 900px) { .cp-hero, .cp-stats { margin-left: auto; margin-right: auto; } }
+
 /* ══════════════ ALT LİSTELER (Takip / Favoriler) — app parite ══════════════ */
 .sl-list { display: flex; flex-direction: column; gap: 10px; }
 .sl-card { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 11px; border: 1px solid var(--border); padding: 16px; cursor: pointer; }
