@@ -87,7 +87,7 @@ input:focus, textarea:focus, select:focus {
 }
 .hs-citysearch input:focus { box-shadow: none; border-color: var(--border); }
 input::placeholder, textarea::placeholder { color: var(--text-muted); }
-input:focus, textarea:focus, select:focus { outline: none; border-color: #ffbf48; box-shadow: 0 0 0 3px rgba(255,191,72,0.22); }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--role); box-shadow: 0 0 0 3px rgba(168,85,247,0.14); }
 .msg { margin-top: 12px; font-size: 14px; text-align: center; min-height: 16px; }
 .msg.err { color: var(--error); } .msg.ok { color: var(--success); }
 .forgot-row { display: flex; justify-content: flex-end; margin: -4px 0 10px; }
@@ -402,7 +402,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #ffbf48
   .topbar { padding: 20px 36px 16px; align-items: center; }
   .tb-brand { display: none; } /* marka kenar çubuğunda */
   .tb-title { font-size: 24px; }
-  .page.has-nav > .content { padding: 28px 36px 56px; max-width: 1180px; }
+  .page.has-nav > .content { padding: 28px 36px 56px; max-width: 1180px; margin-inline: auto; }
 
   /* Grid'ler — çok sütun */
   .grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
@@ -412,10 +412,13 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #ffbf48
   .ecard, .acard { transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
   .ecard:hover, .acard:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--role) 45%, var(--border)); box-shadow: 0 16px 36px rgba(0,0,0,0.42); }
 
-  /* Formlar/arama gereksiz genişlemesin */
-  .form-card { max-width: 760px; }
-  .search-box { max-width: 620px; }
+  /* Formlar/arama gereksiz genişlemesin — ORTALANIR (sola yaslı asimetri önlenir) */
+  .form-card { max-width: 760px; margin-left: auto; margin-right: auto; }
+  .search-box { max-width: 620px; margin-left: auto; margin-right: auto; }
   .ellipsis { max-width: 420px; }
+  /* Tek-sütun içerik (müşteri profil kartları + etkinlik grid) desktop'ta ortalanır */
+  .cp-hero, .cp-stats, .cp-menu, .cp-logout, .cp-delete { max-width: 760px; margin-left: auto; margin-right: auto; }
+  .ev-grid { max-width: 900px; margin-left: auto; margin-right: auto; }
 
   /* Kenar çubuksuz sayfalar (detay + yönetici) — geniş orta sütun */
   .page:not(.has-nav) { max-width: 1020px; }
@@ -944,7 +947,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: #ffbf48
   .page.has-nav.dtl { display: grid; grid-template-columns: 248px minmax(0, 1fr); grid-template-rows: 1fr; grid-template-areas: "side main"; max-width: none; }
   .page.has-nav.dtl > .bottomnav { display: flex; grid-area: side; }
   .page.has-nav.dtl > :not(.bottomnav) { grid-area: main; min-width: 0; width: 100%; }
-  .page.has-nav.dtl .ed-page, .page.has-nav.dtl .pd-page, .page.has-nav.dtl .at-page, .page.has-nav.dtl .dsh-wrap { max-width: 860px; }
+  .page.has-nav.dtl .ed-page, .page.has-nav.dtl .pd-page, .page.has-nav.dtl .at-page, .page.has-nav.dtl .dsh-wrap { max-width: 860px; margin-left: auto; margin-right: auto; }
 }
 
 /* Keşfet masaüstü uyarlaması */
