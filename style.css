@@ -402,7 +402,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
   .topbar { padding: 20px 36px 16px; align-items: center; }
   .tb-brand { display: none; } /* marka kenar çubuğunda */
   .tb-title { font-size: 24px; }
-  .page.has-nav > .content { padding: 28px 36px 56px; max-width: 1180px; }
+  .page.has-nav > .content { padding: 28px 36px 56px; max-width: 1180px; margin-inline: auto; width: 100%; }
 
   /* Grid'ler — çok sütun */
   .grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
@@ -1715,10 +1715,10 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 /* ── Toggle (aç/kapa anahtarı) — kullanıcı tasarımı, koyu temaya uyarlı ── */
 .toggle-wrapper { position: relative; display: inline-flex; align-items: center; font-size: 1em; line-height: 1; }
 .toggle-checkbox { appearance: none; -webkit-appearance: none; position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 2; }
-.toggle-container { width: 3em; height: 1.5em; background: #e8e8e8; border-radius: 999px; transition: background .25s ease; pointer-events: none; }
+.toggle-container { position: relative; width: 3em; height: 1.5em; background: #e8e8e8; border-radius: 999px; transition: background .25s ease; pointer-events: none; }
 .toggle-checkbox:checked + .toggle-container { background: #f3b519; }
 .toggle-button { position: absolute; top: 50%; left: .1875em; transform: translateY(-50%); width: 1.375em; height: 1.375em; background: radial-gradient(circle at 50% 40%, #fff, #e2e2e2); border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: left .25s ease; pointer-events: none; }
-.toggle-checkbox:checked ~ .toggle-button { left: calc(100% - 1.375em - .1875em); }
+.toggle-checkbox:checked + .toggle-container > .toggle-button { left: calc(100% - 1.375em - .1875em); }
 .toggle-button-circles-container { display: grid; grid-template-columns: repeat(3, min-content); gap: .0938em; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .toggle-button-circle { width: .1563em; height: .1563em; border-radius: 50%; background-image: radial-gradient(circle at 50% 40%, #d0d0d0, #b8b8b8); }
 
