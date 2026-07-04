@@ -2081,3 +2081,9 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
     transform: translate(0px, 0px);
   }
 }
+
+
+/* UI fixes (Claude) */
+.hero-body .hero-sub{margin:0 0 12px;max-width:none}
+.ms-title,.ms-sub{display:none}
+.cp-menulbl.hl{color:var(--text)}
