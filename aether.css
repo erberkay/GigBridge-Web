@@ -278,6 +278,43 @@ input:focus, textarea:focus, select:focus {
 }
 .ox-fab ion-icon { color: #06070A !important; }
 
+/* ---------- Mekan paneli: gradyan quick-action tile'ları → Aether hairline + renkli ikon ---------- */
+.vx-q-amber, .vx-q-purple, .vx-q-green, .vx-q-cyan {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.vx-q-amber:hover, .vx-q-purple:hover, .vx-q-green:hover, .vx-q-cyan:hover { border-color: var(--border-strong) !important; }
+.vx-q-amber ion-icon  { color: #FF8A2A !important; }
+.vx-q-purple ion-icon { color: #FF4FA3 !important; }
+.vx-q-green ion-icon  { color: #7CE0B0 !important; }
+.vx-q-cyan ion-icon   { color: #4ED8FF !important; }
+/* Amber glow'ları/gelir barı → düz hairline */
+.vx-head-glow, .ox-head-glow { display: none !important; }
+.vx-revbar { background: var(--surface) !important; border-color: var(--border) !important; }
+
+/* ---------- Organizatör paneli: rose gradyanlar → Aether (onaya kadar önizlenemez, kör düzeltme) ---------- */
+.ox-header { background: transparent !important; }
+.ox-orgcard { background: var(--surface) !important; border: 1px solid var(--border) !important; border-radius: var(--radius) !important; }
+.ox-teamfab { background: var(--text) !important; color: #06070A !important; border-radius: var(--radius) !important; box-shadow: none !important; font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.12em; }
+.ox-teamfab ion-icon { color: #06070A !important; }
+.ox-orgicon, .ox-pavatar { background: var(--surface-2) !important; }
+.ox-orgicon ion-icon { color: #FF4FA3 !important; }
+.ox-evthumb.round { background-image: none !important; background: var(--surface-2) !important; }
+.ox-evdot { background: #FF4FA3 !important; }
+
+/* ---------- Landing (karşılama) giriş butonu → Aether primary ---------- */
+.wl-login {
+  background: var(--text) !important; color: #06070A !important;
+  border-radius: var(--radius) !important;
+  font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.14em;
+  position: relative; overflow: hidden;
+}
+.wl-login::after { content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background: var(--grad-prism); }
+
 /* ---------- Chip satırları / segment (tür filtresi, rol seçici) ---------- */
 .chip-row .chip, .seg {
   font-family: var(--font-mono) !important;
@@ -297,15 +334,22 @@ input:focus, textarea:focus, select:focus {
   overflow: hidden;
   padding-left: 22px !important;
 }
-.au-tc-customer  { --tc: #4ED8FF; }
-.au-tc-artist    { --tc: #FF4FA3; }
-.au-tc-venue     { --tc: #FF8A2A; }
-.au-tc-organizer { --tc: #FF4FA3; }
+/* Per-rol renk — nth-child (DOM sırası sabit: müşteri/sanatçı/mekan/organizatör) + au-tc class (ikisi de) */
+.au-typecards .au-typecard:nth-child(1), .au-tc-customer  { --tc: #4ED8FF; } /* Müşteri — cyan */
+.au-typecards .au-typecard:nth-child(2), .au-tc-artist    { --tc: #FF4FA3; } /* Sanatçı — magenta */
+.au-typecards .au-typecard:nth-child(3), .au-tc-venue     { --tc: #FF8A2A; } /* Mekan — amber */
+.au-typecards .au-typecard:nth-child(4), .au-tc-organizer { --tc: #B06BFF; } /* Organizatör — violet */
+/* Sol bar: rol rengi (belirgin, farklı) — solid */
 .au-typecard::before {
-  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
   background: var(--tc, #FF4FA3);
 }
-.au-typecard > ion-icon { color: var(--tc) !important; }
+/* İkon: rol rengi (cyan / magenta / amber / violet) — belirgin ayrım */
+.au-typecard > ion-icon {
+  color: var(--tc, #FF4FA3) !important;
+  width: 30px; height: 30px;
+}
+.au-typecard.on { border-color: var(--tc) !important; }
 .au-typecard:hover { border-color: var(--border-strong) !important; transform: translateY(-1px); }
 .au-typelabel { font-family: var(--font-sans) !important; font-weight: 700 !important; }
 .au-typedesc { color: var(--text-secondary) !important; }
@@ -315,6 +359,48 @@ input:focus, textarea:focus, select:focus {
 /* ---------- Admin: bölüm/liste ---------- */
 .sect, .list-card { border-radius: var(--radius) !important; box-shadow: none !important; }
 .sect-head { font-family: var(--font-sans) !important; }
+
+/* ---------- Aether: .dtl liste/detay sayfaları SOLA ÇAPALI (editoryal, left-anchored) ---------- */
+.page.has-nav.dtl .dsh-wrap,
+.page.has-nav.dtl .ed-page,
+.page.has-nav.dtl .pd-page,
+.page.has-nav.dtl .at-page {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  max-width: 980px !important;
+}
+
+/* ---------- Profil/başlık hero mor gradyanları → düz void (Aether: gradyan dolgu yok) ---------- */
+.cp-hero, .ax-cover, .dsh-head, .vx-head, .ox-head {
+  background: transparent !important;
+}
+.ax-cover { border-bottom: 1px solid var(--border) !important; }
+/* Rol/üye rozeti (profil) — mono caps pill, hairline */
+.cp-typebadge, .pd-role, .ax-role {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  border-radius: 999px !important;
+}
+
+/* ---------- "Hesabımı Sil" / "Çıkış Yap" — Aether (altı çizili komik metin yerine) ---------- */
+.cp-delete {
+  text-decoration: none !important;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 11px !important;
+  color: var(--text-muted) !important;
+}
+.cp-delete:hover { color: #FF5A6E !important; }
+.cp-logout {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px !important;
+  border-radius: var(--radius) !important;
+  background: transparent !important;
+  border: 1px solid rgba(255,90,110,0.4) !important;
+}
 
 /* Bildirim/aktif rol vurgusu: --role artık prizma (müşteri cyan #4ED8FF) */
 .bn-item.active { color: var(--role); }
