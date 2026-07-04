@@ -667,6 +667,11 @@ async function renderCreate(root) {
     const title = v("#ctitle"), date = v("#cdate"), time = v("#ctime"), end = v("#cend");
     if (!title) return fail(msgEl, "Etkinlik adı gir.");
     if (!date) return fail(msgEl, "Tarih seç.");
+    // Mekan konumu pinlenmemişse etkinlik oluşturulamaz (haritada görünürlük şart).
+    if (session.profile?.location?.lat == null || session.profile?.location?.lng == null) {
+      toast("Etkinlik oluşturmadan önce mekan konumunu haritada işaretle.", "err");
+      return fail(msgEl, "Etkinlik oluşturmadan önce mekan konumunu haritada işaretle. (Profil > Mekan Konumu)");
+    }
     const lcT = title.toLocaleLowerCase("tr-TR");
     if (myEvents.some((e) => e.date === date && (e.title || "").trim().toLocaleLowerCase("tr-TR") === lcT))
       return fail(msgEl, "Aynı gün aynı adla bir etkinlik zaten var.");

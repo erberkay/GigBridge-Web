@@ -968,18 +968,34 @@ async function renderProfil(root) {
     h("span", { class: "cp-menulbl" + (highlight ? " hl" : "") }, label),
     right || null, icon("chevron-forward", { size: 18, color: "var(--text-muted)" }));
 
-  const anonPill = h("span", { class: "cp-toggle" + (p.privacySettings?.anonymousAttendance === true ? " on" : "") }, p.privacySettings?.anonymousAttendance === true ? "Gizli" : "Açık");
-  const toggleAnon = async () => {
-    const next = !(p.privacySettings?.anonymousAttendance === true);
+  // Anonim katılım toggle'ı — checkbox tabanlı (.toggle-wrapper) yeni tasarım
+  const anonCheckbox = h("input", { type: "checkbox", class: "toggle-checkbox" });
+  anonCheckbox.checked = p.privacySettings?.anonymousAttendance === true;
+  const anonToggle = h("label", { class: "toggle-wrapper", onclick: (e) => e.stopPropagation() },
+    anonCheckbox,
+    h("div", { class: "toggle-container" },
+      h("div", { class: "toggle-button" },
+        h("div", { class: "toggle-button-circles-container" },
+          ...Array.from({ length: 12 }, () => h("div", { class: "toggle-button-circle" }))))));
+
+  let savingAnon = false;
+  const applyAnon = async (next) => {
+    if (savingAnon) return;
+    savingAnon = true;
     try {
       await saveProfile(uid(), { privacySettings: { ...(session.profile?.privacySettings || {}), anonymousAttendance: next } });
       p.privacySettings = { ...(p.privacySettings || {}), anonymousAttendance: next };
       if (session.profile) session.profile.privacySettings = { ...(session.profile.privacySettings || {}), anonymousAttendance: next };
-      anonPill.textContent = next ? "Gizli" : "Açık";
-      anonPill.classList.toggle("on", next);
+      anonCheckbox.checked = next;
       toast(next ? "Katılımlarda adın gizlenecek" : "Katılımlarda adın görünecek");
-    } catch (_) { toast("Kaydedilemedi", "err"); }
+    } catch (_) {
+      anonCheckbox.checked = !next; // hata: eski duruma geri al
+      toast("Kaydedilemedi", "err");
+    } finally { savingAnon = false; }
   };
+  anonCheckbox.addEventListener("change", () => applyAnon(anonCheckbox.checked));
+  // Satırın herhangi bir yerine tıklanınca da toggle'ı çevir (checkbox stopPropagation yapar)
+  const toggleAnon = () => { anonCheckbox.checked = !anonCheckbox.checked; applyAnon(anonCheckbox.checked); };
 
   root.append(
     h("div", { class: "cp-hero" },
@@ -1002,7 +1018,7 @@ async function renderProfil(root) {
       menuRow("chatbox-ellipses-outline", "Yorumlarım", () => go("#/yorumlarim"), badges.yorum),
       menuRow("bookmark-outline", "Favorilerim", () => go("#/favoriler"), badges.fav),
       menuRow("notifications-outline", "Bildirimler", () => go("#/bildirimler")),
-      menuRow("eye-off-outline", "Katılımlarda adımı gizle", toggleAnon, anonPill),
+      menuRow("eye-off-outline", "Katılımlarda adımı gizle", toggleAnon, anonToggle),
       h("a", { class: "cp-menurow", href: "gizlilik.html" }, h("span", { class: "cp-menuic" }, icon("shield-checkmark-outline", { size: 18, color: "var(--text-secondary)" })), h("span", { class: "cp-menulbl" }, "Gizlilik Politikası"), icon("open-outline", { size: 15, color: "var(--text-muted)" })),
       h("a", { class: "cp-menurow", href: "kullanim-kosullari.html" }, h("span", { class: "cp-menuic" }, icon("document-text-outline", { size: 18, color: "var(--text-secondary)" })), h("span", { class: "cp-menulbl" }, "Kullanım Koşulları"), icon("open-outline", { size: 15, color: "var(--text-muted)" })),
       h("a", { class: "cp-menurow last", href: "hesap-sil.html" }, h("span", { class: "cp-menuic" }, icon("trash-outline", { size: 18, color: "#EF4444" })), h("span", { class: "cp-menulbl" }, "Hesap Silme"), icon("open-outline", { size: 15, color: "var(--text-muted)" }))),
@@ -1225,8 +1241,14 @@ async function renderHarita(root) {
         h("div", { class: "mp-legend" },
           h("span", { class: "mp-dot", style: { background: "#10B981" } }), h("span", {}, "Şu an çalıyor"),
           h("span", { class: "mp-dot", style: { background: "#4F46E5", marginLeft: "10px" } }), h("span", {}, "Yaklaşan")))));
-    if (noLoc > 0) wrap.append(h("div", { class: "mp-nobanner" }, icon("information-circle-outline", { size: 16, color: "var(--amber)" }),
-      h("span", {}, `${noLoc} etkinlik haritada gösterilemiyor — mekanları henüz konum eklememiş.`)));
+    if (noLoc > 0) {
+      const noBanner = h("div", { class: "mp-nobanner" },
+        icon("information-circle-outline", { size: 16, color: "var(--amber)" }),
+        h("span", {}, `${noLoc} etkinlik haritada gösterilemiyor — mekanları henüz konum eklememiş.`),
+        h("button", { class: "mp-nobanner-close", "aria-label": "Kapat", onclick: () => noBanner.remove() },
+          icon("close", { size: 14, color: "var(--amber)" })));
+      wrap.append(noBanner);
+    }
 
     // Alt etkinlik kartı (marker'a tıklayınca)
     const cardBox = h("div", { class: "mp-card", style: { display: "none" } });

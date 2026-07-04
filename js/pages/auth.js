@@ -120,8 +120,8 @@ export function login() {
       h("h1", { class: "au-title" }, "Hoş Geldiniz"),
       h("p", { class: "au-sub" }, "Hesabınıza giriş yapın")),
     h("form", { onsubmit: submit },
-      field({ label: "E-posta", id: "lemail", type: "email", placeholder: "ornek@email.com" }),
-      field({ label: "Şifre", id: "lpass", type: "password", placeholder: "Şifrenizi girin" }),
+      ac(field({ label: "E-posta", id: "lemail", type: "email", placeholder: "ornek@email.com" }), "email"),
+      ac(field({ label: "Şifre", id: "lpass", type: "password", placeholder: "Şifrenizi girin" }), "current-password"),
       h("div", { class: "forgot-row" }, forgot),
       (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Giriş Yap")); x.id = "lbtn"; return x; })(),
       orSep(),
@@ -199,10 +199,10 @@ export function register() {
         h("p", { class: "au-sub" }, "Hesap bilgilerini doldur"), dots),
       h("div", { class: "au-rolechip", style: { borderColor: t[4][0] + "66", color: t[4][0], background: t[4][0] + "1a" } }, icon(t[3], { size: 14, color: t[4][0] }), h("span", {}, t[1])),
       h("form", { onsubmit: submit },
-        field({ label: labelFor(role), id: "rname", placeholder: labelFor(role) }),
+        ac(field({ label: labelFor(role), id: "rname", placeholder: labelFor(role) }), "name"),
         dl,
-        field({ label: "E-posta", id: "remail", type: "email", placeholder: "ornek@email.com" }),
-        field({ label: "Şifre", id: "rpass", type: "password", placeholder: "En az 6 karakter", hint: "Uygulamadan giriş yaparken de bu şifreyi kullanacaksın." }),
+        ac(field({ label: "E-posta", id: "remail", type: "email", placeholder: "ornek@email.com" }), "email"),
+        ac(field({ label: "Şifre", id: "rpass", type: "password", placeholder: "En az 6 karakter", hint: "Uygulamadan giriş yaparken de bu şifreyi kullanacaksın." }), "new-password"),
         (role === "venue" || role === "artist") ? field({ label: "Şehir", id: "rcity", placeholder: "Örn. İstanbul", list: "cityList" }) : null,
         (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Kayıt Ol")); x.id = "rbtn"; return x; })(),
         orSep(),
@@ -320,8 +320,8 @@ export function adminLogin() {
     } catch (err) { fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = "Giriş Yap"; }
   };
   const form = h("form", { onsubmit: submit },
-    field({ label: "Yönetici E-posta", id: "aemail", type: "email", placeholder: "yonetici@ornek.com" }),
-    field({ label: "Şifre", id: "apass", type: "password" }),
+    ac(field({ label: "Yönetici E-posta", id: "aemail", type: "email", placeholder: "yonetici@ornek.com" }), "email"),
+    ac(field({ label: "Şifre", id: "apass", type: "password" }), "current-password"),
     (() => { const x = btn("Giriş Yap", { full: true, ic: "shield-checkmark-outline" }); x.id = "abtn"; return x; })(),
     msg,
   );
@@ -338,3 +338,5 @@ export function unsupported() {
 
 function q(sel) { return document.querySelector(sel); }
 function fail(msg, text) { msg.textContent = text; msg.className = "msg err"; }
+// field() sarmalayıcısındaki <input>e autocomplete özniteliği ekler — Chrome "autocomplete attributes" uyarısını susturur.
+function ac(node, value) { const inp = node.querySelector("input"); if (inp) inp.setAttribute("autocomplete", value); return node; }
