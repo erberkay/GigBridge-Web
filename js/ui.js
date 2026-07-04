@@ -191,3 +191,8 @@ export function loadLeaflet() {
   });
   return _leaflet;
 }
+
+
+/* Native append(): null/false cocuklari atla — venue detay 'null' fix (Claude) */
+const _origAppend = Element.prototype.append;
+Element.prototype.append = function(...kids){ return _origAppend.apply(this, kids.filter(x => x != null && x !== false)); };
