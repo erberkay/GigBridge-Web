@@ -60,6 +60,7 @@ function resolve() {
   return home; // public/auth rotaları veya bilinmeyen → ev
 }
 
+let _lastRenderedHash = null;
 function render() {
   if (!session.ready) return; // boot spinner
   const target = resolve();
@@ -68,6 +69,12 @@ function render() {
     return;
   }
   const b = base(location.hash);
+  // Aynı rotada oturum-verisi (emit → refreshProfile/token yenileme) tetikli tam yeniden
+  // kurulum, odaktaki input'u yok edip mobilde klavyeyi kapatmasın: bir metin alanı
+  // odaktaysa ve rota DEĞİŞMEDİYSE yeniden çizmeyi atla. (Navigasyon/redirect üstte hallolur.)
+  const _ae = document.activeElement;
+  if (b === _lastRenderedHash && _ae && (_ae.tagName === "INPUT" || _ae.tagName === "TEXTAREA" || _ae.isContentEditable)) return;
+  _lastRenderedHash = b;
   let node;
   if (b === "#/") node = landing();
   else if (b === "#/login") node = login();
