@@ -594,9 +594,11 @@ async function eventDetail(id, root) {
     h("div", { class: "ed-sect" }, sectTitle("Etkinlik Hakkında"),
       ev.description ? h("p", { class: "ed-desc" }, ev.description) : h("p", { class: "ed-desc dim" }, "Açıklama eklenmemiş.")),
     h("div", { class: "ed-sect" }, sectTitle("Mekan"),
-      infoCard((ev.venueName || "M").charAt(0).toLocaleUpperCase("tr-TR"), ["#0D3B5E", "#1A5276"], ev.venueName || "Mekan", ev.city || ev.location?.city || "Mekan profilini görüntüle", ev.venueId ? () => go("#/mekan/" + ev.venueId) : null)),
+      infoCard((ev.venueName || "M").charAt(0).toLocaleUpperCase("tr-TR"), ["#0D3B5E", "#1A5276"], ev.venueName || "Mekan", ev.city || ev.location?.city || "Mekan profilini görüntüle", ev.venueId ? () => go("#/mekan/" + ev.venueId) : null),
+      ev.venueId ? btn("Değerlendir", { variant: "ghost", ic: "star-outline", onClick: () => { if (loginGate("Değerlendirme yapmak")) return; reviewModal("venue", { id: ev.venueId, name: ev.venueName }, () => eventDetail(id, root), { id, title: ev.title }); } }) : null),
     ev.artistName ? h("div", { class: "ed-sect" }, sectTitle("Sanatçı"),
-      infoCard(ev.artistName.charAt(0).toLocaleUpperCase("tr-TR"), [g1, g2], ev.artistName, g || "Müzik", ev.artistId ? () => go("#/sanatci/" + ev.artistId) : null)) : null,
+      infoCard(ev.artistName.charAt(0).toLocaleUpperCase("tr-TR"), [g1, g2], ev.artistName, g || "Müzik", ev.artistId ? () => go("#/sanatci/" + ev.artistId) : null),
+      ev.artistId ? btn("Değerlendir", { variant: "ghost", ic: "star-outline", onClick: () => { if (loginGate("Değerlendirme yapmak")) return; reviewModal("artist", { id: ev.artistId, name: ev.artistName }, () => eventDetail(id, root), { id, title: ev.title }); } }) : null) : null,
     verWrap,
     h("div", { class: "ed-sect" }, attHead),
     h("div", { style: { height: "16px" } }),
@@ -863,7 +865,7 @@ function reviewsBlock(title, cards) {
 }
 
 // Puan & Yorum modalı — app bottom-sheet tasarımı (36px yıldız, min 10 karakter)
-function reviewModal(kind, target, onDone) {
+function reviewModal(kind, target, onDone, ev) {
   let rating = 0;
   const starRow = h("div", { class: "rv-starpick" });
   const paint = () => { clear(starRow); [1, 2, 3, 4, 5].forEach((i) => starRow.append(h("button", { class: "star-btn", onclick: () => { rating = i; paint(); } }, icon(i <= rating ? "star" : "star-outline", { size: 36, color: i <= rating ? "#F59E0B" : "var(--text-muted)" })))); };
@@ -878,8 +880,8 @@ function reviewModal(kind, target, onDone) {
         if (rating < 1) { toast("Puan seç", "err"); return; }
         if (ta.value.trim().length < 10) { toast("Yorum en az 10 karakter olmalı", "err"); return; }
         try {
-          if (kind === "artist") await submitArtistReview(uid(), myName(), target, rating, ta.value.trim());
-          else await submitVenueReview(uid(), myName(), target, rating, ta.value.trim());
+          if (kind === "artist") await submitArtistReview(uid(), myName(), target, rating, ta.value.trim(), ev);
+          else await submitVenueReview(uid(), myName(), target, rating, ta.value.trim(), ev);
           toast("Yorumun gönderildi"); close(); onDone && onDone();
         } catch (_) { toast("Gönderilemedi", "err"); }
       } }],
@@ -1616,7 +1618,8 @@ function notificationsView(_id, root) {
     if (!list.length) { wrap.append(h("div", { class: "nf-empty" }, icon("notifications-off-outline", { size: 52, color: "var(--text-muted)" }), h("div", { class: "nf-empty-title" }, "Henüz bildiriminiz yok"), h("div", { class: "nf-empty-sub" }, "Yeni teklif, davet ve güncellemeler burada görünecek."))); return; }
     list.forEach((n) => { if (n.read === false) markNotifRead(n.id); });
     list.forEach((n) => {
-      const card = h("div", { class: "nf-card" + (n.read === false ? " unread" : "") },
+      const canGo = n.type === "review_prompt" && n.eventId;
+      const card = h("div", { class: "nf-card" + (n.read === false ? " unread" : "") + (canGo ? " clickable" : ""), onclick: canGo ? () => go("#/etkinlik/" + n.eventId) : null },
         h("span", { class: "nf-ic" }, icon(notifIcon(n.type), { size: 20, color: "var(--primary)" })),
         h("div", { class: "grow" },
           h("div", { class: "nf-title" }, n.read === false ? h("span", { class: "nf-dot" }) : null, n.title || "Bildirim"),
@@ -1633,6 +1636,7 @@ function notifIcon(t) {
     invitation: "mail-outline", invitation_update: "checkmark-done-outline", event_invite: "mic-outline",
     group_invite: "people-outline", residency_offer: "repeat-outline", residency_update: "repeat-outline",
     edit_request: "key-outline", edit_approved: "checkmark-circle-outline",
+    review_prompt: "star-outline",
   })[t] || "notifications-outline";
 }
 

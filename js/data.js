@@ -470,15 +470,15 @@ export async function artistReviews(artistId) {
   const s = await getDocs(query(collection(db, "reviews"), where("targetId", "==", artistId)));
   return s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((r) => (r.targetType ?? "artist") === "artist").sort(byMs);
 }
-export async function submitArtistReview(uid, authorName, artist, rating, comment) {
-  await setDoc(doc(db, "reviews", `${uid}_${artist.id}`), { authorId: uid, authorName, authorType: "customer", targetId: artist.id, targetName: artist.displayName ?? "", targetType: "artist", rating, comment: comment ?? "", createdAt: serverTimestamp() });
+export async function submitArtistReview(uid, authorName, artist, rating, comment, ev) {
+  await setDoc(doc(db, "reviews", `${uid}_${artist.id}`), { authorId: uid, authorName, authorType: "customer", targetId: artist.id, targetName: artist.displayName ?? "", targetType: "artist", rating, comment: comment ?? "", eventId: ev?.id ?? null, event: ev?.title ?? "", createdAt: serverTimestamp() });
 }
 export async function getVenueReviews(venueId) {
   const s = await getDocs(query(collection(db, "venueReviews"), where("venueId", "==", venueId)));
   return s.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byMs);
 }
-export async function submitVenueReview(uid, authorName, venue, rating, comment) {
-  await setDoc(doc(db, "venueReviews", `${uid}_${venue.id}`), { authorId: uid, authorName, authorType: "customer", venueId: venue.id, venueName: venue.displayName ?? "", rating, overallRating: rating, comment: comment ?? "", createdAt: serverTimestamp() });
+export async function submitVenueReview(uid, authorName, venue, rating, comment, ev) {
+  await setDoc(doc(db, "venueReviews", `${uid}_${venue.id}`), { authorId: uid, authorName, authorType: "customer", venueId: venue.id, venueName: venue.displayName ?? "", rating, overallRating: rating, comment: comment ?? "", eventId: ev?.id ?? null, event: ev?.title ?? "", createdAt: serverTimestamp() });
 }
 // Kendi yorumunu düzenle/sil (MyReviewsScreen — kurallar author'a izin verir; denorm'u CF günceller)
 export async function updateMyReview(col, id, patch) { await updateDoc(doc(db, col, id), patch); }
