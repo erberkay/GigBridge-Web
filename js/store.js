@@ -1,5 +1,5 @@
 // Oturum durumu — Auth kullanıcısı + Firestore profil dokümanı (users/{uid}).
-import { auth, db, doc, getDoc, onAuthStateChanged, signOut, signInAnonymously } from "./firebase.js";
+import { auth, db, doc, getDoc, onAuthStateChanged, signOut, signInAnonymously, getRedirectResult } from "./firebase.js";
 
 export const OWNER_EMAIL = "berkayer032@gmail.com";
 
@@ -25,6 +25,9 @@ function emit() { listeners.forEach((fn) => fn(session)); }
 // Girişsiz ziyaretçi → anonim oturum aç (Firestore kuralları tüm okumalarda isSignedIn()
 // ister; anonim kullanıcı da signed-in sayılır → misafir keşif sayfaları çalışır, PII açılmaz).
 export function initAuth() {
+  // Google REDIRECT akışını tamamla: dönüşte bir kez çağrılır. onAuthStateChanged oturumu
+  // zaten yakalar; bu çağrı redirect sonucunu işler. Hata (redirect yoksa/başarısızsa) yutulur.
+  getRedirectResult(auth).catch(() => {});
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       session.user = null; session.profile = null; session.isAdmin = false; session.guest = false;

@@ -2,7 +2,7 @@
 import {
   auth, db, doc, setDoc, serverTimestamp,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
-  GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification,
+  GoogleAuthProvider, signInWithRedirect, sendPasswordResetEmail, sendEmailVerification,
 } from "../firebase.js";
 import { session, logout, computeIsAdmin, refreshProfile, recheckEmailVerified } from "../store.js";
 import { h, clear, icon, btn, field, card, toast, ROLE } from "../ui.js";
@@ -39,14 +39,13 @@ function trError(code) {
 function googleBtn(msg) {
   const b = h("button", { type: "button", class: "btn btn-google btn-full", onclick: async () => {
     b.disabled = true;
-    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+    // Popup yerine REDIRECT: sayfa Google'a gider, döndüğünde getRedirectResult (store.js) akışı tamamlar.
+    try { await signInWithRedirect(auth, new GoogleAuthProvider()); }
     catch (err) {
       b.disabled = false;
       const code = err && err.code;
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return;
       fail(msg, code === "auth/unauthorized-domain"
         ? "Bu alan Google girişine yetkili değil. Firebase → Authentication → Settings → Authorized domains'e alan adını ekleyin."
-        : code === "auth/popup-blocked" ? "Tarayıcı açılır pencereyi engelledi. İzin verip tekrar deneyin."
         : "Google ile giriş başarısız. Tekrar deneyin.");
     }
   } }, icon("logo-google", { size: 18 }), h("span", {}, "Google ile devam et"));

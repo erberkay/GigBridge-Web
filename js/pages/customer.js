@@ -1461,18 +1461,25 @@ function showTicketCard(e) {
   }
   const num = String(e.id || "").replace(/[^a-zA-Z0-9]/g, "").slice(-8).toUpperCase().padStart(8, "0");
   const overlay = h("div", { class: "tk-overlay", onclick: (ev) => { if (ev.target === overlay) overlay.remove(); } });
-  const card = h("div", { class: "tk-card" },
-    h("div", { class: "tk-bg" }),
-    h("div", { class: "tk-header" }, (e.title || "BİLET").toLocaleUpperCase("tr-TR")),
-    h("div", { class: "tk-body" },
+  // Kağıt doku bump'ı için gizli inline SVG filtresi (yoksa filter no-op olur, sorun değil)
+  const svgFilter = h("div", { html: '<svg width="0" height="0" style="position:absolute"><filter id="bump"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.15" numOctaves="2" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="3"/></filter></svg>' });
+  const card = h("div", { class: "card" },
+    h("div", { class: "bg holographic" }),
+    h("div", { class: "notes" }, "♪"),
+    h("div", { class: "notes" }, "♪"),
+    h("div", { class: "notes" }, "♪"),
+    h("div", { class: "symbol" }, "♪"),
+    h("div", { class: "header" }, (e.title || "BİLET").toLocaleUpperCase("tr-TR")),
+    h("div", { class: "body" },
       h("div", { class: "tk-line" }, icon("mic", { size: 13 }), h("span", {}, e.artistName || "Sanatçı")),
       h("div", { class: "tk-line" }, icon("business", { size: 13 }), h("span", {}, e.venueName || "Mekan")),
       h("div", { class: "tk-line" }, icon("calendar", { size: 13 }), h("span", {}, eventWhen(e))),
       h("div", { class: "tk-line" }, icon("navigate", { size: 13 }), h("span", {}, distTxt))),
-    h("div", { class: "tk-footer" },
-      h("div", { class: "tk-number" }, "BİLET ", h("span", { class: "bold" }, num)),
-      h("div", { class: "tk-barcode" })));
-  overlay.append(card, h("button", { class: "tk-close", onclick: () => overlay.remove() }, icon("close", { size: 18 }), h("span", {}, "Kapat")));
+    h("div", { class: "footer" },
+      h("div", { class: "number" }, "BİLET ", h("span", { class: "bold" }, num)),
+      h("div", { class: "barcode" })));
+  const wrap = h("div", { class: "tkx" }, svgFilter, card);
+  overlay.append(wrap, h("button", { class: "tk-close", onclick: () => overlay.remove() }, icon("close", { size: 18 }), h("span", {}, "Kapat")));
   document.body.append(overlay);
   requestAnimationFrame(() => overlay.classList.add("show"));
 }
