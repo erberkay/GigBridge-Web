@@ -39,7 +39,8 @@ export function icon(name, opts = {}) {
 }
 
 export const ROLE = {
-  customer: "#06B6D4", artist: "#A855F7", venue: "#F59E0B", organizer: "#F43F5E", admin: "#A855F7",
+  // Aether prizma paleti: cyan / magenta / amber (organizatör + admin = magenta)
+  customer: "#4ED8FF", artist: "#FF4FA3", venue: "#FF8A2A", organizer: "#FF4FA3", admin: "#FF4FA3",
 };
 
 // ── Bileşenler ──

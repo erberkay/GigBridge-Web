@@ -223,5 +223,98 @@ a { color: var(--text); }
   border-radius: var(--radius) !important;
 }
 
-/* Bildirim/aktif rol vurgusu: --role hala inline (musteri cyan) — Aether cyan'a yakin, korunur */
+/* ============================================================
+   TAM SÜPÜRME — tüm sayfalar/roller (müşteri detay, mekan, organizatör, artist, admin)
+   ============================================================ */
+
+/* ---------- Gölge/glow temizliği (Aether: kartta gölge yok) ---------- */
+.card, .ecard, .acard, .ecard2, .t10-card, .list-card, .sl-card, .fv-ecard,
+.nf-card, .ed-infocard, .ed-vercard, .rv-card, .at-card, .vx-facard, .vx-wcard,
+.pd-feats, .dsh-card, .form-card, .cp-stats, .cp-menu, .ms-row {
+  box-shadow: none !important;
+}
+.ecard:hover, .acard:hover, .ecard2:hover { box-shadow: none !important; }
+.pd-av { box-shadow: none !important; }
+.ox-fab, .ox-teamfab { box-shadow: none !important; }
+
+/* Odak halkası: mor glow -> ince prizma-magenta çizgi */
+input:focus, textarea:focus, select:focus {
+  box-shadow: none !important;
+  border-color: #FF4FA3 !important;
+}
+
+/* ---------- Köşe küçültme (keskin, editoryal) ---------- */
+.card, .ecard, .ecard2, .t10-card, .list-card, .sl-card, .fv-ecard, .fv-banner,
+.nf-card, .ed-infocard, .ed-vercard, .rv-card, .at-card, .vx-facard, .vx-wcard,
+.pd-feats, .dsh-card, .form-card, .modal, .hs-filterdrop, .overlay, .ms-row,
+.ed-hero, .pd-hero, .mp-card, .ecard-banner, .sbadge, .vip-badge, .pend-badge,
+.dpill, .hero-pill, .ppill, .mr-type {
+  border-radius: var(--radius) !important;
+}
+
+/* ---------- Başlıklar & bölüm etiketleri (Space Grotesk / mono) ---------- */
+.dsh-title, .dsh-head h1, .dsh-head h2, .sect-title, .sect-head, .vx-pgtitle,
+.ed-name, .pd-name, .at-title, .ms-title, .mr-title, .rv-title, .tl-title,
+.vx-pghead, .mp-evtitle, .fv-title, .sl-name {
+  font-family: var(--font-sans) !important;
+  letter-spacing: -0.02em;
+}
+.sect-lbl, .dsh-sub, .ed-secttitle, .pd-sect-title, .vx-sect-lbl, .caption,
+.stat-lbl, .ed-stat-lbl, .pd-stat-lbl, .cp-stat-lbl, .vx-pstat-lbl, .count-pill {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* ---------- Modallar / overlay: hairline (gölge sadece overlay'de kalabilir) ---------- */
+.modal, .hs-filterdrop { border: 1px solid var(--border) !important; }
+.modal-actions .btn { border-radius: var(--radius) !important; }
+
+/* ---------- Organizatör FAB (rose glow -> ink + prizma) ---------- */
+.ox-fab {
+  background: var(--text) !important;
+  color: #06070A !important;
+  border-radius: var(--radius) !important;
+}
+.ox-fab ion-icon { color: #06070A !important; }
+
+/* ---------- Chip satırları / segment (tür filtresi, rol seçici) ---------- */
+.chip-row .chip, .seg {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-radius: var(--radius) !important;
+}
+.seg.on, .chip.on { border-color: var(--text) !important; color: var(--text) !important; background: transparent !important; }
+
+/* ---------- Kayıt: rol kartları — Aether hairline + per-rol prizma accent ---------- */
+.au-typecard {
+  position: relative;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  padding-left: 22px !important;
+}
+.au-tc-customer  { --tc: #4ED8FF; }
+.au-tc-artist    { --tc: #FF4FA3; }
+.au-tc-venue     { --tc: #FF8A2A; }
+.au-tc-organizer { --tc: #FF4FA3; }
+.au-typecard::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--tc, #FF4FA3);
+}
+.au-typecard > ion-icon { color: var(--tc) !important; }
+.au-typecard:hover { border-color: var(--border-strong) !important; transform: translateY(-1px); }
+.au-typelabel { font-family: var(--font-sans) !important; font-weight: 700 !important; }
+.au-typedesc { color: var(--text-secondary) !important; }
+.au-typearrow ion-icon { color: var(--text-secondary) !important; }
+.au-rolechip { font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* ---------- Admin: bölüm/liste ---------- */
+.sect, .list-card { border-radius: var(--radius) !important; box-shadow: none !important; }
+.sect-head { font-family: var(--font-sans) !important; }
+
+/* Bildirim/aktif rol vurgusu: --role artık prizma (müşteri cyan #4ED8FF) */
 .bn-item.active { color: var(--role); }
