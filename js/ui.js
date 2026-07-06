@@ -27,7 +27,25 @@ export function h(tag, attrs = {}, ...kids) {
 }
 
 export function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
-export function mount(node) { const app = document.getElementById("app"); clear(app); app.append(node); return node; }
+export function mount(node) {
+  const app = document.getElementById("app"); clear(app); app.append(node);
+  // Sayfa geçişi: detay sayfaları spinner'la açılıp async içerik dolunca "pat" diye görünüyordu.
+  // Spinner gidince (içerik geldi) geçiş animasyonu BİTTİYSE bir kez tekrar oynat (içerik kaysın);
+  // hâlâ oynuyorsa dokunma (içerik zaten kayan kabın içinde doğal olarak kayıyor).
+  const dp = node.querySelector && node.querySelector(".ed-page, .pd-page, .at-page, .dsh-content");
+  if (dp && dp.querySelector(".loading")) {
+    let done = false;
+    const obs = new MutationObserver(() => {
+      if (done || dp.querySelector(".loading")) return;
+      done = true; obs.disconnect();
+      const anims = dp.getAnimations ? dp.getAnimations() : [];
+      if (!anims.some((a) => a.playState === "running")) { dp.style.animation = "none"; void dp.offsetWidth; dp.style.animation = ""; }
+    });
+    obs.observe(dp, { childList: true });
+    setTimeout(() => obs.disconnect(), 3000);
+  }
+  return node;
+}
 
 // Ionicons
 export function icon(name, opts = {}) {
