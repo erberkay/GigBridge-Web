@@ -2,7 +2,7 @@
 import {
   auth, db, doc, setDoc, serverTimestamp,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
-  GoogleAuthProvider, signInWithRedirect, sendPasswordResetEmail, sendEmailVerification,
+  GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification,
 } from "../firebase.js";
 import { session, logout, computeIsAdmin, refreshProfile, recheckEmailVerified } from "../store.js";
 import { h, clear, icon, btn, field, card, toast, ROLE } from "../ui.js";
@@ -39,16 +39,46 @@ function trError(code) {
 function googleBtn(msg) {
   const b = h("button", { type: "button", class: "btn btn-google btn-full", onclick: async () => {
     b.disabled = true;
-    // Popup yerine REDIRECT: sayfa Google'a gider, döndüğünde getRedirectResult (store.js) akışı tamamlar.
-    try { await signInWithRedirect(auth, new GoogleAuthProvider()); }
+    // POPUP: özel alan adında (gigbridges.com) çalışır. signInWithRedirect, Chrome'un 3rd-party
+    // storage bölümlemesi yüzünden özel alanda getRedirectResult'ı null döndürüp oturumu
+    // tamamlayamıyordu (admin dahil Google girişi olmuyordu). Popup opener ilişkisini kullanır.
+    // Başarılı → onAuthStateChanged router'ı tetikler (admin ise #/admin, yeni kullanıcı ise #/setup).
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
     catch (err) {
       b.disabled = false;
       const code = err && err.code;
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") return; // kullanıcı iptal etti → sessiz
       fail(msg, code === "auth/unauthorized-domain"
         ? "Bu alan Google girişine yetkili değil. Firebase → Authentication → Settings → Authorized domains'e alan adını ekleyin."
+        : code === "auth/popup-blocked"
+        ? "Tarayıcı pop-up'ı engelledi. Adres çubuğundaki pop-up iznini verip tekrar deneyin."
         : "Google ile giriş başarısız. Tekrar deneyin.");
     }
   } }, icon("logo-google", { size: 18 }), h("span", {}, "Google ile devam et"));
+  return b;
+}
+
+// Yönetici sayfası için Google girişi — popup + admin doğrulaması (owner e-postası / adminUids).
+// Admin değilse çıkış + uyarı. Google-only admin hesapları (şifresiz) buradan girebilir.
+function adminGoogleBtn(msg) {
+  const b = h("button", { type: "button", class: "btn btn-google btn-full", onclick: async () => {
+    b.disabled = true;
+    try {
+      const { user } = await signInWithPopup(auth, new GoogleAuthProvider());
+      const ok = await computeIsAdmin(user);
+      if (!ok) { await logout(); fail(msg, "Bu Google hesabı yönetici değil."); b.disabled = false; return; }
+      location.hash = "#/admin"; // router isAdmin görünce paneli açar
+    } catch (err) {
+      b.disabled = false;
+      const code = err && err.code;
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || code === "auth/user-cancelled") return;
+      fail(msg, code === "auth/unauthorized-domain"
+        ? "Bu alan Google girişine yetkili değil. Firebase → Authentication → Settings → Authorized domains'e alan adını ekleyin."
+        : code === "auth/popup-blocked"
+        ? "Tarayıcı pop-up'ı engelledi. Adres çubuğundaki pop-up iznini verip tekrar deneyin."
+        : "Google ile giriş başarısız. Tekrar deneyin.");
+    }
+  } }, icon("logo-google", { size: 18 }), h("span", {}, "Google ile giriş"));
   return b;
 }
 const orSep = () => h("div", { class: "sep" }, "veya");
@@ -322,6 +352,8 @@ export function adminLogin() {
     ac(field({ label: "Yönetici E-posta", id: "aemail", type: "email", placeholder: "yonetici@ornek.com" }), "email"),
     ac(field({ label: "Şifre", id: "apass", type: "password" }), "current-password"),
     (() => { const x = btn("Giriş Yap", { full: true, ic: "shield-checkmark-outline" }); x.id = "abtn"; return x; })(),
+    orSep(),
+    adminGoogleBtn(msg),
     msg,
   );
   return shell(hero("Yönetici Girişi", "Onay ve yönetim paneli."),
