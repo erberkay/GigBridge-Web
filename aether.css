@@ -722,6 +722,28 @@ input:focus, textarea:focus, select:focus {
   .page.has-nav > .topbar:not(.hs-topbar) { max-width: 1320px; }
 }
 
+/* ══════════ Panel içerik bölümleri TEK HİZADA + tutarlı genişlik ══════════ */
+/* Sorun: form kartı/bazı bölümler max-width:760 + ortalı (dar, içeri girintili) iken harita/
+   KAYDET/özellikler tam genişlikti → "dağınık, biri büyük biri küçük". Çözüm: panel içeriğindeki
+   tüm bölümlerin dar+ortalı sınırını kaldır → hepsi içerik genişliğinde, tek sol + tek sağ kenar. */
+@media (min-width: 900px) {
+  .page.has-nav .form-card,
+  .page.has-nav .vx-secthead, .page.has-nav .vx-morebtn, .page.has-nav .vx-overall,
+  .page.has-nav .vx-critcard, .page.has-nav .vx-pstats, .page.has-nav .vx-fa-search,
+  .page.has-nav .vx-sortrow, .page.has-nav .vx-chiprow, .page.has-nav .vx-periodrow,
+  .page.has-nav .vx-smrow, .page.has-nav .vx-submit, .page.has-nav .vx-qgrid,
+  .page.has-nav .ax-rank, .page.has-nav .ax-review, .page.has-nav .ax-crit,
+  .page.has-nav .ax-vrow, .page.has-nav .ax-visrow, .page.has-nav .ax-pend,
+  .page.has-nav .ax-overall {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  /* Stat kartları: auto-fill boş kolon bırakıyordu (kartlar sağda kısa kalıyordu) → auto-fit
+     ile kartlar tam genişliğe yayılır, form/harita ile aynı sağ kenarda biter. */
+  .page.has-nav .stat-grid { grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)) !important; }
+}
+
 /* ══════════ Mekan analitik: müşteri yorumları listesi + Genel Özet boşluğu ══════════ */
 .vx-reviewbox { margin-bottom: 28px; }   /* "Genel Özet" ile dip dibe değil, ferah dursun */
 .vx-revlist { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; }
