@@ -7,6 +7,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/fireba
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB6nrk5SnXMl51Qdpv_ctdFcWPrisiYbCc",
@@ -22,6 +23,9 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app);
+// Özel şifre sıfırlama e-postası (Cloud Function: sendPasswordReset, us-central1)
+export const sendPasswordResetMail = httpsCallable(functions, "sendPasswordReset");
 
 export {
   ref, uploadBytes, getDownloadURL, deleteObject,

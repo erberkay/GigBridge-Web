@@ -3,7 +3,21 @@ import {
   auth, db, doc, setDoc, serverTimestamp,
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
   GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification,
+  sendPasswordResetMail,
 } from "../firebase.js";
+
+// Şifre sıfırlama: önce özel HTML e-posta (Cloud Function: sendPasswordReset),
+// fonksiyon deploy edilmemişse ya da SMTP hata verirse Firebase'in yerleşik
+// e-postasına düşer — kullanıcı her hâlükârda çalışan bir sıfırlama bağlantısı alır.
+async function requestPasswordReset(email) {
+  try {
+    await sendPasswordResetMail({ email });
+  } catch (err) {
+    const code = err && err.code;
+    if (code === "functions/invalid-argument" || code === "invalid-argument") throw err;
+    await sendPasswordResetEmail(auth, email);
+  }
+}
 import { session, logout, computeIsAdmin, refreshProfile, recheckEmailVerified } from "../store.js";
 import { h, clear, icon, btn, field, card, toast, modal, ROLE } from "../ui.js";
 
@@ -135,7 +149,7 @@ export function login() {
     const link = e.currentTarget; const old = link.textContent;
     link.style.pointerEvents = "none"; link.textContent = "Gönderiliyor…";
     try {
-      await sendPasswordResetEmail(auth, email);
+      await requestPasswordReset(email);
       msg.textContent = "Şifre sıfırlama bağlantısı e-postana gönderildi."; msg.className = "msg ok";
     } catch (err) { fail(msg, trError(err && err.code)); }
     finally { link.style.pointerEvents = ""; link.textContent = old; }
@@ -180,7 +194,7 @@ export function loginModal() {
     const email = q("#lmemail").value.trim();
     if (!email) { fail(msg, "Önce e-posta adresini gir."); q("#lmemail").focus(); return; }
     const link = e.currentTarget, old = link.textContent; link.style.pointerEvents = "none"; link.textContent = "Gönderiliyor…";
-    try { await sendPasswordResetEmail(auth, email); msg.textContent = "Şifre sıfırlama bağlantısı e-postana gönderildi."; msg.className = "msg ok"; }
+    try { await requestPasswordReset(email); msg.textContent = "Şifre sıfırlama bağlantısı e-postana gönderildi."; msg.className = "msg ok"; }
     catch (err) { fail(msg, trError(err && err.code)); }
     finally { link.style.pointerEvents = ""; link.textContent = old; }
   } }, "Şifremi unuttum");
