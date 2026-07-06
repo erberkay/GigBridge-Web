@@ -763,8 +763,10 @@ async function renderAnalytics(root) {
   try {
     const uid = session.user.uid;
     const p = session.profile || {};
-    const [events, s] = await Promise.all([venueEvents(uid), venueStats(uid)]);
+    const [events, s, reviews] = await Promise.all([venueEvents(uid), venueStats(uid), getVenueReviews(uid).catch(() => [])]);
     const { avg: avgRating, count: reviewCount } = await venueRating(uid, p);
+    // Yalnızca MÜŞTERİ yorumları (sanatçı↔mekan karşılıklı puanları gizli kalır — baskı önlemi)
+    const custReviews = (reviews || []).filter((r) => (r.authorType ?? "customer") === "customer");
     clear(root);
 
     const PERIODS = [["Bu Hafta", 7], ["Bu Ay", 30], ["3 Ay", 90], ["1 Yıl", 365]];
@@ -876,16 +878,19 @@ async function renderAnalytics(root) {
             a.rev ? h("span", { class: "vx-sa-price" }, fmtTL(a.rev)) : null)));
       });
 
-      // Yorum & puanlama (kör değerlendirme notu)
+      // Yorum & puanlama — MÜŞTERİ yorumları görünür (sanatçı↔mekan karşılıklı puanları hariç)
       body.append(chartHead("star-outline", "Yorum & Puanlama"));
+      const revWithText = custReviews.filter((r) => String(r.comment || "").trim());
       body.append(h("div", { class: "vx-reviewbox" },
         h("div", { class: "vx-scorebox" },
           h("div", { class: "vx-scoreval" }, avgRating ? avgRating.toFixed(1) : "—"),
           h("div", { class: "vx-scorelbl" }, "Ortalama Puan"),
           h("div", { class: "vx-scorestars" }, ...[1, 2, 3, 4, 5].map((i) => icon(i <= Math.round(avgRating) ? "star" : "star-outline", { size: 10, color: AMBER }))),
           h("div", { class: "vx-scorelbl" }, reviewCount + " değerlendirme")),
-        h("div", { class: "vx-blindnote" }, icon("lock-closed-outline", { size: 16, color: "var(--text-muted)" }),
-          h("span", {}, "Yorum metinleri ve puan dağılımı gizlidir; yalnızca ortalama puanınız gösterilir. Bu, sanatçı ve mekanların birbirine baskı yapmasını önler."))));
+        revWithText.length
+          ? h("div", { class: "vx-revlist" }, ...revWithText.map(reviewItem))
+          : h("div", { class: "vx-blindnote" }, icon("chatbubbles-outline", { size: 16, color: "var(--text-muted)" }),
+              h("span", {}, "Henüz müşteri yorumu yok. Müşteriler etkinliklerine katıldıkça yorumları burada görünür."))));
 
       // Genel özet (tüm zamanlar) — mevcut web istatistikleri korunur (venueStats)
       body.append(sect("Genel Özet (Tüm Zamanlar)", "bar-chart-outline", 0,
@@ -906,6 +911,16 @@ function mCard(ic, val, label, color) {
     icon(ic, { size: 22, color }),
     h("div", { class: "vx-mval", style: { color } }, String(val)),
     h("div", { class: "vx-mlbl" }, label));
+}
+// Tek müşteri yorumu (ad + yıldız + metin + etkinlik)
+function reviewItem(r) {
+  const rt = Math.round(Number(r.overallRating ?? r.rating) || 0);
+  return h("div", { class: "vx-revitem" },
+    h("div", { class: "vx-revitem-head" },
+      h("span", { class: "vx-revitem-name" }, r.authorName || "Müşteri"),
+      h("span", { class: "vx-revitem-stars" }, ...[1, 2, 3, 4, 5].map((i) => icon(i <= rt ? "star" : "star-outline", { size: 10, color: AMBER })))),
+    r.comment ? h("div", { class: "vx-revitem-text" }, r.comment) : null,
+    r.event ? h("div", { class: "vx-revitem-ev" }, icon("calendar-outline", { size: 10, color: "var(--text-muted)" }), h("span", {}, " " + r.event)) : null);
 }
 function smCard(ic, val, label, valColor) {
   return h("div", { class: "vx-smcard" },

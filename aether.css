@@ -717,3 +717,17 @@ input:focus, textarea:focus, select:focus {
   .ax-stats, .vx-revbar { max-width: none !important; width: 100% !important; }
   .ax-stat { flex: 1 1 0 !important; }
 }
+/* ≥1440px'te içerik max-width 1320'ye çıkıyor (style.css:455) — header'ı da eşitle ki hiza bozulmasın */
+@media (min-width: 1440px) {
+  .page.has-nav > .topbar:not(.hs-topbar) { max-width: 1320px; }
+}
+
+/* ══════════ Mekan analitik: müşteri yorumları listesi + Genel Özet boşluğu ══════════ */
+.vx-reviewbox { margin-bottom: 28px; }   /* "Genel Özet" ile dip dibe değil, ferah dursun */
+.vx-revlist { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; }
+.vx-revitem { padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; }
+.vx-revitem-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.vx-revitem-name { font-size: 12.5px; font-weight: 700; color: var(--text); }
+.vx-revitem-stars { flex: 0 0 auto; display: inline-flex; gap: 1px; }
+.vx-revitem-text { font-size: 12.5px; line-height: 1.5; color: var(--text-secondary); word-break: break-word; }
+.vx-revitem-ev { display: flex; align-items: center; gap: 3px; margin-top: 5px; font-size: 10.5px; color: var(--text-muted); }
