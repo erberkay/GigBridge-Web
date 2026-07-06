@@ -340,6 +340,14 @@ input:focus, textarea:focus, select:focus {
 .login-modal .foot-note a { color: var(--text); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; }
 .login-modal .au-submit { margin-top: 4px; }
 
+/* ---------- Kayıt modalı (2 adım aynı modalda, ayrı sayfa yok) ---------- */
+.register-modal { min-width: 340px; max-height: 68vh; overflow-y: auto; }
+.register-modal .au-typecards { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.register-modal .au-sub { color: var(--text-secondary); font-size: 13px; }
+.au-back-inline { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--text-secondary); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; cursor: pointer; padding: 0; margin-bottom: 12px; }
+.au-back-inline:hover { color: var(--text); }
+.register-modal .au-rolechip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; margin-bottom: 14px; }
+
 /* ---------- Landing (karşılama) giriş butonu → Aether primary ---------- */
 .wl-login {
   background: var(--text) !important; color: #06070A !important;

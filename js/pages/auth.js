@@ -194,7 +194,7 @@ export function loginModal() {
       googleBtn(msg, () => m.close()),
       msg),
     h("p", { class: "foot-note" }, "Hesabınız yok mu? ",
-      h("a", { href: "#", onclick: (e) => { e.preventDefault(); m.close(); location.hash = "#/register"; } }, "Kayıt Olun")));
+      h("a", { href: "#", onclick: (e) => { e.preventDefault(); m.close(); registerModal(); } }, "Kayıt Olun")));
   m = modal({ title: "Giriş Yap", body, actions: [] });
 }
 
@@ -277,6 +277,77 @@ export function register() {
   }
   draw();
   return wrap;
+}
+
+// ── Kayıt MODALI — "Kayıt Olun" tıklanınca yerinde açılır (ayrı sayfaya gitmeden), 2 adım aynı modalda ──
+export function registerModal() {
+  let step = 1, role = "customer", m;
+  const labelFor = (k) => k === "venue" ? "Mekan Adı" : k === "organizer" ? "Organizasyon Adı" : k === "artist" ? "Sanatçı Adı" : "Ad Soyad";
+  const body = h("div", { class: "login-modal register-modal" });
+  const setTitle = (t) => { const el = body.closest(".modal") && body.closest(".modal").querySelector(".modal-head h3"); if (el) el.textContent = t; };
+  const toLogin = (e) => { e.preventDefault(); m.close(); loginModal(); };
+
+  function draw() {
+    clear(body);
+    if (step === 1) {
+      setTitle("Hesap Tipini Seç");
+      body.append(
+        h("p", { class: "au-sub", style: { margin: "0 0 14px" } }, "Platforma nasıl katılmak istiyorsun?"),
+        h("div", { class: "au-typecards" }, ...REG_TYPES.map(([k, l, d, ic]) =>
+          h("button", { class: "au-typecard au-tc-" + k, onclick: () => { role = k; step = 2; draw(); } },
+            icon(ic, { size: 28, color: "#fff" }),
+            h("div", { class: "au-typelabel" }, l),
+            h("div", { class: "au-typedesc" }, d),
+            h("span", { class: "au-typearrow" }, icon("arrow-forward", { size: 16, color: "rgba(255,255,255,0.8)" }))))),
+        h("p", { class: "foot-note" }, "Zaten üye misin? ", h("a", { href: "#", onclick: toLogin }, "Giriş yap")));
+      return;
+    }
+    // Adım 2 — bilgiler
+    setTitle("Bilgilerini Gir");
+    const msg = h("p", { class: "msg" });
+    const dl = h("datalist", { id: "cityListM" }, ...PROVINCES.map((p) => h("option", { value: p })));
+    const submit = async (e) => {
+      e.preventDefault();
+      msg.textContent = ""; msg.className = "msg";
+      const name = q("#rmname").value.trim(); const email = q("#rmemail").value.trim();
+      const pass = q("#rmpass").value; const city = (q("#rmcity") ? q("#rmcity").value : "").trim();
+      if (!name) return fail(msg, labelFor(role).replace(" Adı", "") + " adını gir.");
+      if (!email) return fail(msg, "E-posta gir.");
+      if (pass.length < 6) return fail(msg, "Şifre en az 6 karakter olmalı.");
+      const b = q("#rmbtn"); b.disabled = true; b.querySelector("span").textContent = "Gönderiliyor…";
+      try {
+        const { user } = await createUserWithEmailAndPassword(auth, email, pass);
+        try { await updateProfile(user, { displayName: name }); } catch (_) {}
+        await setDoc(doc(db, "users", user.uid), {
+          displayName: name, email: user.email, userType: role, photoURL: null,
+          createdAt: serverTimestamp(),
+          ...(role === "venue" || role === "organizer" ? { approved: false } : {}),
+          ...(role === "organizer" ? { orgName: name } : {}),
+          ...((role === "venue" || role === "artist") && city ? { city } : {}),
+        });
+        try { await sendEmailVerification(user); } catch (_) {}
+        m.close(); location.hash = "#/verify";
+      } catch (err) { fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = "Kayıt Ol"; }
+    };
+    const t = REG_TYPES.find((x) => x[0] === role);
+    body.append(
+      h("button", { type: "button", class: "au-back-inline", onclick: () => { step = 1; draw(); } }, icon("chevron-back", { size: 16 }), h("span", {}, "Geri")),
+      h("div", { class: "au-rolechip", style: { borderColor: t[4][0] + "66", color: t[4][0], background: t[4][0] + "1a" } }, icon(t[3], { size: 14, color: t[4][0] }), h("span", {}, t[1])),
+      h("form", { onsubmit: submit },
+        ac(field({ label: labelFor(role), id: "rmname", placeholder: labelFor(role) }), "name"),
+        dl,
+        ac(field({ label: "E-posta", id: "rmemail", type: "email", placeholder: "ornek@email.com" }), "email"),
+        ac(field({ label: "Şifre", id: "rmpass", type: "password", placeholder: "En az 6 karakter" }), "new-password"),
+        (role === "venue" || role === "artist") ? field({ label: "Şehir", id: "rmcity", placeholder: "Örn. İstanbul", list: "cityListM" }) : null,
+        (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Kayıt Ol")); x.id = "rmbtn"; return x; })(),
+        orSep(),
+        googleBtn(msg, () => m.close()),
+        msg),
+      h("p", { class: "foot-note" }, "Zaten üye misin? ", h("a", { href: "#", onclick: toLogin }, "Giriş yap")));
+  }
+
+  m = modal({ title: "Hesap Tipini Seç", body, actions: [] });
+  draw();
 }
 
 // ── Hesabı tamamla (Google ile yeni giriş → profil yok) ──
