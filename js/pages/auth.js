@@ -14,7 +14,10 @@ async function requestPasswordReset(email) {
     await sendPasswordResetMail({ email });
   } catch (err) {
     const code = err && err.code;
-    if (code === "functions/invalid-argument" || code === "invalid-argument") throw err;
+    // Kullanıcı hataları + rate-limit → fallback YAPMA (yoksa Firebase yerleşik e-postası limiti baypas eder), kullanıcıya göster.
+    if (code === "functions/invalid-argument" || code === "invalid-argument" ||
+        code === "functions/resource-exhausted" || code === "resource-exhausted") throw err;
+    // Yalnız altyapı hatası (fonksiyon henüz deploy değil / SMTP) → Firebase yerleşik e-postasına düş.
     await sendPasswordResetEmail(auth, email);
   }
 }
@@ -45,6 +48,8 @@ function trError(code) {
     "auth/user-not-found": "Böyle bir hesap yok.",
     "auth/too-many-requests": "Çok fazla deneme. Biraz sonra tekrar dene.",
     "auth/network-request-failed": "İnternet bağlantı hatası.",
+    "functions/resource-exhausted": "Çok fazla şifre sıfırlama isteği. Lütfen birkaç dakika sonra tekrar dene.",
+    "resource-exhausted": "Çok fazla şifre sıfırlama isteği. Lütfen birkaç dakika sonra tekrar dene.",
   };
   return m[code] || "İşlem başarısız. Tekrar dene.";
 }
