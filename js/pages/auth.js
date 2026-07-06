@@ -186,7 +186,7 @@ export function register() {
           h("h1", { class: "au-title" }, "Hesap Tipini Seç"),
           h("p", { class: "au-sub" }, "Platforma nasıl katılmak istiyorsun?"), dots),
         h("div", { class: "au-typecards" }, ...REG_TYPES.map(([k, l, d, ic, [g1, g2]]) =>
-          h("button", { class: "au-typecard", style: { background: `linear-gradient(135deg, ${g1}, ${g2})` }, onclick: () => { role = k; step = 2; draw(); } },
+          h("button", { class: "au-typecard au-tc-" + k, onclick: () => { role = k; step = 2; draw(); } },
             icon(ic, { size: 28, color: "#fff" }),
             h("div", { class: "au-typelabel" }, l),
             h("div", { class: "au-typedesc" }, d),
