@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>GigBridge · Hesap İşlemi</title>
+  <link rel="icon" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --void: #06070A; --stratum: #0E1014; --hairline: #1F232B; --hairline-2: #2A2F38;
+      --ink: #F2F1EE; --vapor: #8A8E97; --muted: #6E727C;
+      --magenta: #FF4FA3; --cyan: #4ED8FF; --amber: #FF8A2A;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: var(--void); color: var(--ink);
+      font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      width: 100%; max-width: 440px; background: var(--stratum);
+      border: 1px solid var(--hairline); border-radius: 14px; overflow: hidden;
+    }
+    .ribbon { height: 4px; background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--amber)); }
+    .pad { padding: 34px 34px 36px; }
+    .brand { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 26px; }
+    h1 { font-size: 23px; font-weight: 700; line-height: 1.2; margin: 0 0 12px; }
+    p { font-size: 15px; line-height: 1.6; color: var(--vapor); margin: 0 0 20px; }
+    label { display: block; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--vapor); margin: 0 0 8px; }
+    .pw-wrap { position: relative; margin-bottom: 6px; }
+    input {
+      width: 100%; background: var(--void); border: 1px solid var(--hairline);
+      border-radius: 8px; color: var(--ink); font: inherit; font-size: 15px;
+      padding: 13px 44px 13px 14px; outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus { border-color: var(--magenta); box-shadow: 0 0 0 3px rgba(255,79,163,0.15); }
+    .eye { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 13px; padding: 6px; }
+    .hint { font-size: 12px; color: var(--muted); margin: 0 0 20px; }
+    button.primary {
+      width: 100%; background: var(--magenta); color: #fff; border: 0; border-radius: 8px;
+      font: inherit; font-weight: 700; font-size: 15px; padding: 14px; cursor: pointer;
+      letter-spacing: 0.2px; transition: filter .15s, opacity .15s;
+    }
+    button.primary:hover { filter: brightness(1.06); }
+    button.primary:disabled { opacity: .55; cursor: default; }
+    .msg { font-size: 13px; margin: 14px 0 0; min-height: 18px; }
+    .msg.err { color: #FF6B6B; }
+    .msg.ok { color: #4ADE80; }
+    .link { display: inline-block; margin-top: 22px; color: var(--magenta); text-decoration: none; font-weight: 600; font-size: 14px; }
+    .link:hover { text-decoration: underline; }
+    .center { text-align: center; }
+    .icon-badge { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 18px; }
+    .badge-ok { background: rgba(74,222,128,0.12); }
+    .badge-err { background: rgba(255,107,107,0.12); }
+    .spin { width: 26px; height: 26px; border: 3px solid var(--hairline-2); border-top-color: var(--magenta); border-radius: 50%; margin: 8px auto 0; animation: sp .7s linear infinite; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    .foot { text-align: center; font-size: 11px; color: #4A4D55; margin: 18px 0 0; }
+    .foot a { color: #4A4D55; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="card">
+      <div class="ribbon"></div>
+      <div class="pad">
+        <div class="brand">GigBridge</div>
+        <div id="view"><div class="spin"></div><p style="margin-top:16px;text-align:center;">Bağlantı doğrulanıyor…</p></div>
+      </div>
+    </div>
+    <p class="foot">&copy; GigBridge · <a href="https://gigbridges.com">gigbridges.com</a></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import {
+      getAuth, verifyPasswordResetCode, confirmPasswordReset, applyActionCode,
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+    const app = initializeApp({
+      apiKey: "AIzaSyB6nrk5SnXMl51Qdpv_ctdFcWPrisiYbCc",
+      authDomain: "djing-ba986.firebaseapp.com",
+      projectId: "djing-ba986",
+      storageBucket: "djing-ba986.firebasestorage.app",
+      messagingSenderId: "70897940978",
+      appId: "1:70897940978:web:37f6c8f2c36c454d43d36b",
+    });
+    const auth = getAuth(app);
+    const LOGIN = "https://gigbridges.com/#/login";
+    const HOME = "https://gigbridges.com/";
+    const view = document.getElementById("view");
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    const params = new URLSearchParams(location.search);
+    const mode = params.get("mode");
+    const oobCode = params.get("oobCode");
+
+    function errCard(title, body, showLogin) {
+      view.innerHTML =
+        `<div class="center"><div class="icon-badge badge-err">⚠️</div>
+         <h1>${esc(title)}</h1><p>${esc(body)}</p>
+         ${showLogin ? `<a class="link" href="${LOGIN}">Giriş sayfasına dön</a>` : ""}</div>`;
+    }
+    function okCard(title, body, linkHref, linkText) {
+      view.innerHTML =
+        `<div class="center"><div class="icon-badge badge-ok">✓</div>
+         <h1>${esc(title)}</h1><p>${esc(body)}</p>
+         <a class="link" href="${linkHref}">${esc(linkText)}</a></div>`;
+    }
+    const trErr = (code) => ({
+      "auth/expired-action-code": "Bağlantının süresi dolmuş. Lütfen yeni bir istek gönder.",
+      "auth/invalid-action-code": "Bağlantı geçersiz ya da daha önce kullanılmış. Lütfen yeni bir istek gönder.",
+      "auth/user-disabled": "Bu hesap devre dışı bırakılmış.",
+      "auth/user-not-found": "Hesap bulunamadı.",
+      "auth/weak-password": "Şifre en az 6 karakter olmalı.",
+    }[code] || "İşlem tamamlanamadı. Lütfen tekrar dene.");
+
+    async function handleReset() {
+      let email;
+      try { email = await verifyPasswordResetCode(auth, oobCode); }
+      catch (e) { return errCard("Bağlantı geçersiz", trErr(e && e.code), true); }
+      view.innerHTML = `
+        <h1>Şifre Sıfırlama</h1>
+        <p><b style="color:var(--ink)">${esc(email)}</b> için yeni bir şifre belirle.</p>
+        <label for="pw">Yeni şifre</label>
+        <div class="pw-wrap">
+          <input id="pw" type="password" placeholder="En az 6 karakter" autocomplete="new-password" />
+          <button class="eye" id="eye" type="button">Göster</button>
+        </div>
+        <p class="hint">Uygulamadan ve web'den giriş yaparken bu şifreyi kullanacaksın.</p>
+        <button class="primary" id="save">Şifremi Sıfırla</button>
+        <p class="msg" id="msg"></p>`;
+      const pw = document.getElementById("pw");
+      const msg = document.getElementById("msg");
+      const save = document.getElementById("save");
+      document.getElementById("eye").onclick = () => {
+        pw.type = pw.type === "password" ? "text" : "password";
+        document.getElementById("eye").textContent = pw.type === "password" ? "Göster" : "Gizle";
+      };
+      pw.focus();
+      const submit = async () => {
+        msg.textContent = ""; msg.className = "msg";
+        if (pw.value.length < 6) { msg.textContent = "Şifre en az 6 karakter olmalı."; msg.className = "msg err"; return; }
+        save.disabled = true; save.textContent = "Kaydediliyor…";
+        try {
+          await confirmPasswordReset(auth, oobCode, pw.value);
+          okCard("Şifren güncellendi", "Yeni şifrenle giriş yapabilirsin.", LOGIN, "Giriş Yap");
+        } catch (e) {
+          msg.textContent = trErr(e && e.code); msg.className = "msg err";
+          save.disabled = false; save.textContent = "Şifremi Sıfırla";
+        }
+      };
+      save.onclick = submit;
+      pw.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+    }
+
+    async function handleApply(kind) {
+      try { await applyActionCode(auth, oobCode); }
+      catch (e) { return errCard("Bağlantı geçersiz", trErr(e && e.code), true); }
+      if (kind === "verify") okCard("E-postan doğrulandı", "Hesabın hazır. Artık giriş yapabilirsin.", LOGIN, "Giriş Yap");
+      else okCard("İşlem tamamlandı", "E-posta değişikliği geri alındı.", LOGIN, "Giriş Yap");
+    }
+
+    if (!oobCode || !mode) {
+      errCard("Geçersiz bağlantı", "Bu bağlantı eksik ya da hatalı görünüyor.", true);
+    } else if (mode === "resetPassword") {
+      handleReset();
+    } else if (mode === "verifyEmail") {
+      handleApply("verify");
+    } else if (mode === "recoverEmail") {
+      handleApply("recover");
+    } else {
+      errCard("Bilinmeyen işlem", "Bu bağlantı türü desteklenmiyor.", true);
+    }
+  </script>
+</body>
+</html>
