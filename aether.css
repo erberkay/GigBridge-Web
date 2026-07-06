@@ -478,6 +478,10 @@ input:focus, textarea:focus, select:focus {
   margin-right: auto !important;
   max-width: 980px !important;
 }
+/* Detay sayfaları (event/sanatçı/mekan/katılımcı) daha geniş — geniş ekranda dar kalmasın */
+.page.has-nav.dtl .ed-page,
+.page.has-nav.dtl .pd-page,
+.page.has-nav.dtl .at-page { max-width: 1600px !important; }
 
 /* ---------- Profil/başlık hero mor gradyanları → düz void (Aether: gradyan dolgu yok) ---------- */
 .cp-hero, .ax-cover, .dsh-head, .vx-head, .ox-head {
