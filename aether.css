@@ -482,8 +482,10 @@ input:focus, textarea:focus, select:focus {
 .page.has-nav.dtl .ed-page,
 .page.has-nav.dtl .pd-page,
 .page.has-nav.dtl .at-page { max-width: 1600px !important; }
-/* KATIL butonu: geniş detayda footer'ın %62'si ~990px oluyordu → makul CTA boyutu (sağa hizalı) */
+/* KATIL butonu: geniş detayda footer'ın %62'si ~990px oluyordu → makul CTA boyutu */
 .ed-join { flex: 0 1 340px !important; max-width: 340px !important; }
+/* Fiyat kutusu tüm genişliği alıp butonu en sağa itiyordu → sınırla ki KATIL sola gelsin */
+.ed-footer > .grow { flex: 0 1 auto !important; max-width: 420px !important; }
 
 /* ---------- Profil/başlık hero mor gradyanları → düz void (Aether: gradyan dolgu yok) ---------- */
 .cp-hero, .ax-cover, .dsh-head, .vx-head, .ox-head {
