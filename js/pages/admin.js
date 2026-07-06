@@ -6,15 +6,69 @@ import {
   listReports, resolveReport, approveNameChange, rejectNameChange,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, empty, spinner, toast, avatar, fmtDate, ROLE } from "../ui.js";
+import { kesfetPage } from "./customer.js";
 
 export function adminPage() {
   const content = h("div", { class: "content" }, h("div", { class: "loading" }, spinner()));
   const page = h("div", { class: "page" },
     topbar("Yönetici Paneli", { subtitle: session.user?.email || "", color: ROLE.admin,
-      right: iconBtn("log-out-outline", logout) }),
+      right: h("div", { class: "tb-actions" },
+        h("button", { class: "km-open", onclick: openKesfetPreview, title: "Keşfet ekranını önizle" },
+          icon("compass-outline", { size: 18 }), h("span", {}, "Keşfet")),
+        iconBtn("log-out-outline", logout)) }),
     content);
   load(content);
   return page;
+}
+
+// Yönetici, müşterilerin gördüğü Keşfet ekranını modal önizlemede görür.
+// Küçült/büyüt toggle'ı + navigasyon kilidi (admin panelden dışarı atılmasın).
+let kmOpen = false;
+function openKesfetPreview() {
+  if (kmOpen) return;               // zaten açık
+  kmOpen = true;
+  const root = document.getElementById("modal-root");
+
+  const minBtn = iconBtn("contract-outline", null);
+  minBtn.title = "Küçült";
+  const closeBtn = iconBtn("close", () => close());
+  closeBtn.title = "Kapat";
+
+  const frame = h("div", { class: "km-frame" },
+    h("div", { class: "km-bar" },
+      h("div", { class: "km-title" }, icon("compass", { size: 15, color: "var(--primary)" }), h("span", {}, "Keşfet — Önizleme")),
+      h("div", { class: "km-actions" }, minBtn, closeBtn)),
+    h("div", { class: "km-body" }, kesfetPage()));
+  const overlay = h("div", { class: "km-overlay" }, frame);
+
+  // Modal içindeki navigasyonları etkisizleştir (kartlar/zil/"TÜMÜ"/alt sekmeler): filtre + arama + kaydırma çalışır.
+  frame.addEventListener("click", (e) => {
+    const nav = e.target.closest('a[href^="#/"], .hs-bell, .hs-seeall, .login-chip, .ecard, .ecard2, .t10, .hero-slide, .vcard, .hs-artist');
+    if (nav) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true);
+  // Emniyet: yine de bir tık kaçarsa hash'i admin'de tut.
+  const onHash = () => { if (kmOpen && !location.hash.startsWith("#/admin")) history.replaceState(null, "", "#/admin"); };
+  window.addEventListener("hashchange", onHash);
+
+  // Küçült ↔ büyüt (aynı buton toggle)
+  let mini = false;
+  minBtn.onclick = () => {
+    mini = !mini;
+    overlay.classList.toggle("min", mini);
+    clear(minBtn); minBtn.append(icon(mini ? "expand-outline" : "contract-outline", { size: 20 }));
+    minBtn.title = mini ? "Büyüt" : "Küçült";
+  };
+
+  function close() {
+    kmOpen = false;
+    window.removeEventListener("hashchange", onHash);
+    overlay.classList.remove("show");
+    setTimeout(() => overlay.remove(), 200);
+  }
+  overlay.addEventListener("click", (e) => { if (e.target === overlay && !mini) close(); }); // backdrop → kapat (yalnız büyükken)
+
+  root.append(overlay);
+  requestAnimationFrame(() => overlay.classList.add("show"));
 }
 
 async function load(root) {

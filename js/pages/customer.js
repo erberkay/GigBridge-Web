@@ -132,7 +132,8 @@ function eventCard(ev) {
       h("div", { class: "ecard-meta", style: { color: ev.ticketPrice ? "var(--amber)" : "var(--success)", fontWeight: "700" } }, ev.ticketPrice ? fmtTL(ev.ticketPrice) : "Ücretsiz")));
 }
 // ══════════ KEŞFET — app HomeScreen ile birebir ══════════
-function kesfetPage() {
+// export: yönetici paneli bu ekranı modal olarak gömerek önizler (admin.js).
+export function kesfetPage() {
   const guest = !authed();
   const cityLabel = h("span", { class: "hs-city-label" }, activeCity);
   const chev = icon("chevron-down", { size: 11, color: "#9090B0" });
