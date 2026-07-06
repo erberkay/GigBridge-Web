@@ -683,3 +683,37 @@ input:focus, textarea:focus, select:focus {
   .km-overlay { padding: 0; }
   .km-frame { width: 100vw; height: 100vh; border-radius: 0; border: none; }
 }
+
+/* ══════════ Butonlar: MAT SİYAH (kullanıcı isteği — beyaz/magenta yerine düz mat siyah) ══════════ */
+/* Bu blok en sonda: yukarıdaki beyaz/magenta buton kurallarını topluca ezer, TÜM aksiyon butonları tek tip. */
+.btn, .btn-google, .au-submit, .wl-login, .icon-btn.login-chip,
+.ed-join, .pd-act.solid, .ox-cta, .ox-teamfab, .ox-fab, .tl-sharebtn, .ms-compose {
+  background: #16181D !important;
+  color: var(--text) !important;
+  border: 1px solid #2C303A !important;
+}
+.btn:hover, .btn-google:hover, .au-submit:hover, .wl-login:hover, .icon-btn.login-chip:hover,
+.ed-join:hover, .pd-act.solid:hover, .ox-cta:hover, .ox-teamfab:hover, .ox-fab:hover, .tl-sharebtn:hover, .ms-compose:hover {
+  background: #1E2129 !important;
+  border-color: #3A3F4B !important;
+}
+.btn ion-icon, .btn-google ion-icon, .au-submit ion-icon, .wl-login ion-icon, .icon-btn.login-chip ion-icon,
+.ed-join ion-icon, .pd-act.solid ion-icon, .ox-cta ion-icon, .ox-teamfab ion-icon, .ox-fab ion-icon, .tl-sharebtn ion-icon, .ms-compose ion-icon {
+  color: var(--text) !important;
+}
+/* Seçili sekmeler (on) — beyaz yerine mat siyah + magenta metin/kenar (seçili olduğu belli) */
+.ox-tab.on, .tl-srctab.on, .fav-tab.on, .ax-visrow.on, .ax-cal-day.sel {
+  background: #16181D !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+/* ══════════ Panel düzeni: header ↔ içerik HİZALI (dağınık/kaymış görünümü düzeltir) ══════════ */
+/* Sorun: masaüstünde içerik 1180px'de ortalıyken header tam genişlik kalıyor → stat barı
+   içerikten kayık/dar duruyordu. Çözüm: header'ı da aynı 1180px'e sabitle + ortala, stat
+   barlarını içerik kartlarıyla aynı genişliğe yay. (Keşfet başlığı hariç — kendi düzeni var.) */
+@media (min-width: 900px) {
+  .page.has-nav > .topbar:not(.hs-topbar) { max-width: 1180px; margin-inline: auto; width: 100%; }
+  .ax-stats, .vx-revbar { max-width: none !important; width: 100% !important; }
+  .ax-stat { flex: 1 1 0 !important; }
+}

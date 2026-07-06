@@ -63,6 +63,11 @@ function resolve() {
 let _lastRenderedHash = null;
 function render() {
   if (!session.ready) return; // boot spinner
+  // Çıkış sonrası anonim (misafir) oturum kuruluyor: landing/giriş ekranını YAKALATMA, kısa spinner göster.
+  if (session.reauthing && !session.user) {
+    mount(h("div", { class: "boot" }, h("div", { class: "spinner" })));
+    return;
+  }
   const target = resolve();
   if (target !== base(location.hash)) {
     location.hash = target; // yönlendir → hashchange tekrar render eder

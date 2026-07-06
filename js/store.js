@@ -8,6 +8,7 @@ export const session = {
   profile: null,  // users/{uid} dokümanı ({ userType, approved, displayName, ... })
   isAdmin: false, // owner e-postası ya da adminUids/{uid}
   guest: false,   // anonim oturum → misafir (giriş yapmadan müşteri keşif sayfaları)
+  reauthing: false, // çıkış sonrası anonim (misafir) oturum kuruluyor → landing yerine spinner göster
   ready: false,
 };
 
@@ -31,14 +32,16 @@ export function initAuth() {
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       session.user = null; session.profile = null; session.isAdmin = false; session.guest = false;
+      session.reauthing = true; emit(); // misafir oturum geliyor → router landing yerine spinner göstersin
       try {
         await signInAnonymously(auth); // başarılıysa onAuthStateChanged anonim user'la tekrar tetiklenir
         return;                        // ready/emit anonim tetiklemede yapılır
       } catch (_) {
-        session.ready = true; emit();  // anonim kapalıysa boot'u kilitleme → landing/giriş göster
+        session.reauthing = false; session.ready = true; emit(); // anonim kapalıysa → landing/giriş göster
         return;
       }
     }
+    session.reauthing = false;
     session.user = user;
     session.profile = null;
     session.isAdmin = false;
@@ -79,8 +82,9 @@ export async function recheckEmailVerified() {
 }
 
 export async function logout() {
+  session.reauthing = true;    // anonim (misafir) oturum kurulana kadar landing/giriş ekranı gösterme
   await signOut(auth);
-  location.hash = "#/";
+  location.hash = "#/kesfet";  // çıkışta misafir olarak Keşfet'e in (giriş/kayıt ekranına atma)
 }
 
 // Rol + onay durumundan hedef rota

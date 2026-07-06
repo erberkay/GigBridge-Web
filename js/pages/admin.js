@@ -6,7 +6,9 @@ import {
   listReports, resolveReport, approveNameChange, rejectNameChange,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, empty, spinner, toast, avatar, fmtDate, ROLE } from "../ui.js";
-import { kesfetPage } from "./customer.js";
+// NOT: kesfetPage'i STATİK import ETME — admin panelini customer.js'e bağlar; önbellek
+// uyumsuzluğunda (eski customer.js) import patlar ve panel "Sayfa yüklenemedi" verir.
+// Onun yerine butona basınca DİNAMİK import ediyoruz (aşağıda openKesfetPreview).
 
 export function adminPage() {
   const content = h("div", { class: "content" }, h("div", { class: "loading" }, spinner()));
@@ -24,7 +26,7 @@ export function adminPage() {
 // Yönetici, müşterilerin gördüğü Keşfet ekranını modal önizlemede görür.
 // Küçült/büyüt toggle'ı + navigasyon kilidi (admin panelden dışarı atılmasın).
 let kmOpen = false;
-function openKesfetPreview() {
+async function openKesfetPreview() {
   if (kmOpen) return;               // zaten açık
   kmOpen = true;
   const root = document.getElementById("modal-root");
@@ -34,11 +36,12 @@ function openKesfetPreview() {
   const closeBtn = iconBtn("close", () => close());
   closeBtn.title = "Kapat";
 
+  const kmBody = h("div", { class: "km-body" }, h("div", { class: "loading" }, spinner()));
   const frame = h("div", { class: "km-frame" },
     h("div", { class: "km-bar" },
       h("div", { class: "km-title" }, icon("compass", { size: 15, color: "var(--primary)" }), h("span", {}, "Keşfet — Önizleme")),
       h("div", { class: "km-actions" }, minBtn, closeBtn)),
-    h("div", { class: "km-body" }, kesfetPage()));
+    kmBody);
   const overlay = h("div", { class: "km-overlay" }, frame);
 
   // Modal içindeki navigasyonları etkisizleştir (kartlar/zil/"TÜMÜ"/alt sekmeler): filtre + arama + kaydırma çalışır.
@@ -69,6 +72,15 @@ function openKesfetPreview() {
 
   root.append(overlay);
   requestAnimationFrame(() => overlay.classList.add("show"));
+
+  // Keşfet ekranını tembel yükle — admin paneli customer.js export'una STATİK bağlı değil,
+  // önbellek uyumsuzluğu olsa bile panel açılır; Keşfet gelmezse zarifçe hata gösterir.
+  try {
+    const { kesfetPage } = await import("./customer.js");
+    if (kmOpen) { clear(kmBody); kmBody.append(kesfetPage()); }
+  } catch (_) {
+    clear(kmBody); kmBody.append(empty("cloud-offline-outline", "Keşfet yüklenemedi", "Sayfayı yenileyip tekrar dene."));
+  }
 }
 
 async function load(root) {
