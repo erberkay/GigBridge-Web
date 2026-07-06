@@ -1,10 +1,11 @@
-/* GigBridge Service Worker — network-first.
-   Amaç: her deploy'da kendi JS/CSS/HTML'imiz OTOMATİK taze gelsin (cache takılması bitsin).
-   - Sadece KENDİ origin'imizdeki GET istekleri yakalanır (Firebase/Google/CDN/fontlar cross-origin → dokunulmaz).
-   - Her istek sunucudan taze çekilir (cache: 'no-store' → tarayıcı HTTP cache'i baypas edilir).
-   - Ağ yoksa (offline) son bilinen sürüm cache'ten sunulur.
+/* GigBridge Service Worker — stale-while-revalidate (hız + otomatik güncelleme).
+   - Cache'ten ANINDA sunar (hızlı açılış) + arka planda sunucudan taze çekip cache'i günceller.
+   - Deploy sonrası: ilk açılış cache'ten (hızlı, eski olabilir), arka planda yeni indirilir →
+     BİR SONRAKİ açılış güncel. (Hemen görmek istersen tek hard-refresh yeter.)
+   - Yalnız KENDİ origin GET istekleri; Firebase/Google/CDN/font (cross-origin) dokunulmaz.
+   - Offline: son bilinen sürüm cache'ten sunulur.
 */
-const CACHE = "gb-runtime-v1";
+const CACHE = "gb-runtime-v2";
 
 self.addEventListener("install", () => self.skipWaiting());
 
@@ -18,17 +19,18 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  // Yalnız kendi origin + GET (POST, cross-origin API/auth/font'lara karışma)
   if (event.request.method !== "GET" || url.origin !== self.location.origin) return;
 
   event.respondWith(
-    fetch(event.request, { cache: "no-store" })
-      .then((response) => {
-        // Taze cevabı offline yedeği olarak sakla
-        const copy = response.clone();
-        caches.open(CACHE).then((c) => c.put(event.request, copy)).catch(() => {});
-        return response;
+    caches.open(CACHE).then((cache) =>
+      cache.match(event.request).then((cached) => {
+        // Arka planda taze çek (cache: 'reload' → sunucuya git, HTTP cache'i baypas et) + cache'i güncelle
+        const fresh = fetch(event.request, { cache: "reload" })
+          .then((res) => { cache.put(event.request, res.clone()).catch(() => {}); return res; })
+          .catch(() => cached);
+        // Cache varsa ANINDA dön (hızlı); yoksa (ilk ziyaret) network'ü bekle
+        return cached || fresh;
       })
-      .catch(() => caches.match(event.request)) // offline → son sürüm
+    )
   );
 });
