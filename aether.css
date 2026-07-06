@@ -305,6 +305,11 @@ input:focus, textarea:focus, select:focus {
 .ox-orgicon ion-icon { color: #FF4FA3 !important; }
 .ox-evthumb.round { background-image: none !important; background: var(--surface-2) !important; }
 .ox-evdot { background: #FF4FA3 !important; }
+/* Kalan rose tint'ler (ekip/etkinlik oluşturma alt sayfaları) → hairline/neutral */
+.ox-orgbadge { background: var(--surface) !important; border-color: var(--border) !important; }
+.ox-banner, .ox-clearbtn { background: transparent !important; border-color: var(--border) !important; }
+.ox-metag, .ox-rp-owner, .ox-pickav { background: var(--surface-2) !important; }
+.ox-metag, .ox-rp-owner { font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.08em; }
 
 /* ---------- Landing (karşılama) giriş butonu → Aether primary ---------- */
 .wl-login {
