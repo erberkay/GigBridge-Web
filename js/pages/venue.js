@@ -669,8 +669,14 @@ async function renderCreate(root) {
     if (!date) return fail(msgEl, "Tarih seç.");
     // Mekan konumu pinlenmemişse etkinlik oluşturulamaz (haritada görünürlük şart).
     if (session.profile?.location?.lat == null || session.profile?.location?.lng == null) {
-      toast("Etkinlik oluşturmadan önce mekan konumunu haritada işaretle.", "err");
-      return fail(msgEl, "Etkinlik oluşturmadan önce mekan konumunu haritada işaretle. (Profil > Mekan Konumu)");
+      fail(msgEl, "Etkinliğin haritada görünmesi için önce mekan konumunu ayarla.");
+      if (!document.querySelector(".vx-locfix")) {
+        msgEl.after(h("button", { type: "button", class: "vx-locfix",
+          onclick: () => { location.hash = "#/venue/profil"; },
+          style: { display: "block", margin: "10px auto 0", padding: "11px 22px", background: "var(--amber)", color: "#06070A", border: "0", borderRadius: "8px", fontWeight: "700", cursor: "pointer", font: "inherit" } },
+          "📍 Mekan Konumunu Ayarla →"));
+      }
+      return;
     }
     const lcT = title.toLocaleLowerCase("tr-TR");
     if (myEvents.some((e) => e.date === date && (e.title || "").trim().toLocaleLowerCase("tr-TR") === lcT))

@@ -580,8 +580,11 @@ input:focus, textarea:focus, select:focus {
   from { opacity: 0; transform: translateX(52px); }
   to   { opacity: 1; transform: translateX(0); }
 }
-/* .content = tab/liste sayfaları; .ed-page/.pd-page/.at-page = detay sayfaları (event/sanatçı/mekan/katılımcı) */
+/* .content = tab/liste sayfaları; .ed-page/.pd-page/.at-page = detay sayfaları (event/sanatçı/mekan/katılımcı);
+   .dsh-wrap = detailShell alt sayfaları (Etkinlikler/Biletlerim/Takip/Favoriler/Katıldıklarım/Yorumlarım/Bildirimler)
+   — bunlar da kayarak girsin, yoksa "ayrı sayfa" gibi pat diye açılıyorlardı. */
 .page.has-nav > .content,
+.page.has-nav > .dsh-wrap,
 .page.has-nav > .ed-page,
 .page.has-nav > .pd-page,
 .page.has-nav > .at-page { animation: ae-page-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
