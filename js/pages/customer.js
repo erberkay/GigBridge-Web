@@ -228,7 +228,7 @@ async function renderKesfet(root, hdr) {
 
   const body = h("div", { class: "hs-body" });
   // Kategori değişince içerik SOLA KAYARAK gelsin (ayrı sayfaya gitmeden — app'teki tab davranışı)
-  const slideBody = () => { body.style.animation = "none"; void body.offsetWidth; body.style.animation = "ae-page-in 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both"; };
+  const slideBody = () => { body.style.animation = "none"; void body.offsetWidth; body.style.animation = "kes-tab-slide 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both"; };
   root.append(hdr.cityDrop, searchBar, tabsRow, body);
 
   // ── Filtre paneli (#filter-icon tıklayınca açılır) ──

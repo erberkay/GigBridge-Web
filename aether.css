@@ -81,9 +81,9 @@ a { color: var(--text); }
 /* Primary = ink dolgu + void yazi + alt kenarda prizma seridi */
 .btn {
   position: relative;
-  background: var(--text) !important;
-  color: #06070A !important;
-  border: 1px solid var(--text) !important;
+  background: color-mix(in srgb, var(--primary) 15%, #131620) !important;
+  color: var(--text) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 40%, var(--border)) !important;
   border-radius: var(--radius) !important;
   font-family: var(--font-mono) !important;
   font-weight: 600 !important;
@@ -97,7 +97,7 @@ a { color: var(--text); }
   content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
   background: var(--grad-prism); transition: height 0.12s ease;
 }
-.btn:hover { opacity: 1; transform: translateY(-1px); }
+.btn:hover { opacity: 1; transform: translateY(-1px); background: color-mix(in srgb, var(--primary) 24%, #131620) !important; border-color: color-mix(in srgb, var(--primary) 60%, var(--border)) !important; }
 .btn:hover::after { height: 3px; }
 /* Secondary/ghost = seffaf + hairline */
 .btn-ghost {
@@ -109,9 +109,10 @@ a { color: var(--text); }
 .btn-ghost:hover { border-color: var(--border-strong) !important; background: rgba(242,241,238,0.03) !important; }
 .btn-danger { background: transparent !important; color: #FF5A6E !important; border: 1px solid rgba(255,90,110,0.4) !important; }
 .btn-danger::after { display: none; }
-.btn-google { background: var(--text) !important; color: #06070A !important; }
+.btn-google { background: #14171D !important; color: var(--text) !important; border: 1px solid var(--border-strong) !important; }
 .btn-google::after { display: none; }
-.btn-google ion-icon { color: #06070A !important; }
+.btn-google ion-icon { color: var(--text) !important; }
+.btn-google:hover { background: #191D25 !important; border-color: var(--text-muted) !important; }
 
 /* ---------- Kartlar: hairline, keskin kose, GOLGE YOK ---------- */
 .card, .ecard, .ecard2, .acard, .cp-stats, .cp-menu, .form-card, .dsh-card,
@@ -176,9 +177,9 @@ a { color: var(--text); }
 }
 /* Auth submit — Aether primary (ink + prizma kenar) */
 .au-submit {
-  background: var(--text) !important;
-  color: #06070A !important;
-  border: 1px solid var(--text) !important;
+  background: color-mix(in srgb, var(--primary) 15%, #131620) !important;
+  color: var(--text) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 40%, var(--border)) !important;
   border-radius: var(--radius) !important;
   font-family: var(--font-mono) !important;
   text-transform: uppercase;
@@ -188,7 +189,7 @@ a { color: var(--text); }
   overflow: hidden;
 }
 .au-submit::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--grad-prism); }
-.au-submit:hover { transform: translateY(-1px); }
+.au-submit:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--primary) 24%, #131620) !important; border-color: color-mix(in srgb, var(--primary) 60%, var(--border)) !important; }
 
 /* Icon butonlari (bildirim zili vb.) — hairline, keskin */
 .icon-btn {
@@ -200,9 +201,9 @@ a { color: var(--text); }
 .icon-btn:hover { color: var(--text) !important; border-color: var(--border-strong) !important; }
 /* Giris chip'i — Aether primary (ink + prizma kenar), rol cyan yerine */
 .icon-btn.login-chip {
-  background: var(--text) !important;
-  color: #06070A !important;
-  border-color: var(--text) !important;
+  background: color-mix(in srgb, var(--primary) 15%, #131620) !important;
+  color: var(--text) !important;
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border)) !important;
   font-family: var(--font-mono) !important;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -213,7 +214,7 @@ a { color: var(--text); }
 }
 .icon-btn.login-chip::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--grad-prism); }
 .icon-btn.login-chip:hover { filter: none !important; transform: translateY(-1px); }
-.icon-btn.login-chip ion-icon { color: #06070A !important; }
+.icon-btn.login-chip ion-icon { color: var(--text) !important; }
 
 /* Sehir secici pill (TUMU) — mono caps, hairline */
 .hs-citybtn, .hs-cityval, .city-chip {
@@ -340,6 +341,18 @@ input:focus, textarea:focus, select:focus {
 .login-modal .foot-note a { color: var(--text); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; }
 .login-modal .au-submit { margin-top: 4px; }
 
+/* Auth butonları EŞİT boyut — "biri büyük biri küçük" düzeltmesi (GİRİŞ YAP = GOOGLE İLE DEVAM ET) */
+.au-submit, .btn-google {
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 0 20px !important;
+  font-size: 13px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px;
+}
+
 /* ---------- Kayıt modalı (2 adım aynı modalda, ayrı sayfa yok) ---------- */
 .register-modal { min-width: 340px; max-height: 68vh; overflow-y: auto; }
 .register-modal .au-typecards { display: flex; flex-direction: column; gap: 10px; margin: 0; }
@@ -350,7 +363,8 @@ input:focus, textarea:focus, select:focus {
 
 /* ---------- Landing (karşılama) giriş butonu → Aether primary ---------- */
 .wl-login {
-  background: var(--text) !important; color: #06070A !important;
+  background: color-mix(in srgb, var(--primary) 15%, #131620) !important; color: var(--text) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 40%, var(--border)) !important;
   border-radius: var(--radius) !important;
   font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.14em;
   position: relative; overflow: hidden;
@@ -578,6 +592,12 @@ input:focus, textarea:focus, select:focus {
 /* Sidebar + topbar sabit kalır (ayrı grid alanları); sadece .content animasyonlu. */
 @keyframes ae-page-in {
   from { opacity: 0; transform: translateX(52px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+/* Keşfet kategori sekmesi geçişi — belirgin sola kayma (app hissi), yatay taşmayı klipler */
+.hs-body { overflow-x: clip; }
+@keyframes kes-tab-slide {
+  from { opacity: 0; transform: translateX(72px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 /* .content = tab/liste sayfaları; .ed-page/.pd-page/.at-page = detay sayfaları (event/sanatçı/mekan/katılımcı);
