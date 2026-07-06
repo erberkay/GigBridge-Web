@@ -594,3 +594,9 @@ input:focus, textarea:focus, select:focus {
 
 /* Bildirim/aktif rol vurgusu: --role artık prizma (müşteri cyan #4ED8FF) */
 .bn-item.active { color: var(--role); }
+
+/* reCAPTCHA v3 rozetini gizle — yerine .recaptcha-note ile Google ToS atıf metni gösterilir */
+.grecaptcha-badge { visibility: hidden !important; }
+.recaptcha-note { margin: 14px 0 0; font-size: 11px; line-height: 1.5; color: var(--text-secondary); text-align: center; }
+.recaptcha-note a { color: var(--text-secondary); text-decoration: underline; }
+.recaptcha-note a:hover { color: var(--text); }

@@ -5,7 +5,7 @@
    - Yalnız KENDİ origin GET istekleri; Firebase/Google/CDN/font (cross-origin) dokunulmaz.
    - Offline: son bilinen sürüm cache'ten sunulur.
 */
-const CACHE = "gb-runtime-v3";
+const CACHE = "gb-runtime-v4";
 
 self.addEventListener("install", () => self.skipWaiting());
 

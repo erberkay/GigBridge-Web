@@ -9,9 +9,9 @@ import {
 // Şifre sıfırlama: önce özel HTML e-posta (Cloud Function: sendPasswordReset),
 // fonksiyon deploy edilmemişse ya da SMTP hata verirse Firebase'in yerleşik
 // e-postasına düşer — kullanıcı her hâlükârda çalışan bir sıfırlama bağlantısı alır.
-async function requestPasswordReset(email) {
+async function requestPasswordReset(email, recaptchaToken) {
   try {
-    await sendPasswordResetMail({ email });
+    await sendPasswordResetMail({ email, recaptchaToken });
   } catch (err) {
     const code = err && err.code;
     // Kullanıcı hataları + rate-limit → fallback YAPMA (yoksa Firebase yerleşik e-postası limiti baypas eder), kullanıcıya göster.
@@ -20,6 +20,40 @@ async function requestPasswordReset(email) {
     // Yalnız altyapı hatası (fonksiyon henüz deploy değil / SMTP) → Firebase yerleşik e-postasına düş.
     await sendPasswordResetEmail(auth, email);
   }
+}
+
+// ── reCAPTCHA v3 (görünmez bot koruması). Site anahtarı PUBLIC'tir; yalnız gerektiğinde yüklenir. ──
+const RECAPTCHA_SITE_KEY = "6LeW9kctAAAAAIDWQ9SCMngGL7OcHMqIl_H90db5";
+let _grecaptcha = null;
+function loadRecaptcha() {
+  if (_grecaptcha) return _grecaptcha;
+  _grecaptcha = new Promise((resolve, reject) => {
+    if (window.grecaptcha && window.grecaptcha.execute) return resolve(window.grecaptcha);
+    const s = document.createElement("script");
+    s.src = "https://www.google.com/recaptcha/api.js?render=" + RECAPTCHA_SITE_KEY;
+    s.async = true; s.defer = true;
+    s.onload = () => resolve(window.grecaptcha);
+    s.onerror = reject;
+    document.head.append(s);
+  });
+  return _grecaptcha;
+}
+// Token üret (action bazlı). Yüklenemezse null döner → backend rate-limit'e güvenir (meşru kullanıcı engellenmez).
+async function recaptchaToken(action) {
+  try {
+    const g = await loadRecaptcha();
+    await new Promise((r) => g.ready(r));
+    return await g.execute(RECAPTCHA_SITE_KEY, { action });
+  } catch { return null; }
+}
+// Rozet CSS ile gizlendiğinde Google ToS gereği gösterilmesi gereken atıf metni.
+function recaptchaNote() {
+  return h("p", { class: "recaptcha-note" },
+    "Bu site reCAPTCHA ile korunur; Google ",
+    h("a", { href: "https://policies.google.com/privacy", target: "_blank", rel: "noopener" }, "Gizlilik"),
+    " ve ",
+    h("a", { href: "https://policies.google.com/terms", target: "_blank", rel: "noopener" }, "Şartlar"),
+    " geçerlidir.");
 }
 import { session, logout, computeIsAdmin, refreshProfile, recheckEmailVerified } from "../store.js";
 import { h, clear, icon, btn, field, card, toast, modal, ROLE } from "../ui.js";
@@ -154,7 +188,8 @@ export function login() {
     const link = e.currentTarget; const old = link.textContent;
     link.style.pointerEvents = "none"; link.textContent = "Gönderiliyor…";
     try {
-      await requestPasswordReset(email);
+      const rc = await recaptchaToken("password_reset");
+      await requestPasswordReset(email, rc);
       msg.textContent = "Şifre sıfırlama bağlantısı e-postana gönderildi."; msg.className = "msg ok";
     } catch (err) { fail(msg, trError(err && err.code)); }
     finally { link.style.pointerEvents = ""; link.textContent = old; }
@@ -174,7 +209,8 @@ export function login() {
       (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Giriş Yap")); x.id = "lbtn"; return x; })(),
       orSep(),
       googleBtn(msg),
-      msg),
+      msg,
+      recaptchaNote()),
     h("p", { class: "foot-note" }, "Hesabınız yok mu? ", h("a", { href: "#/register" }, "Kayıt Olun")),
     h("p", { class: "foot-note" }, h("a", { href: "#/kesfet" }, "← Misafir olarak keşfetmeye dön")),
     h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi")),
@@ -199,7 +235,7 @@ export function loginModal() {
     const email = q("#lmemail").value.trim();
     if (!email) { fail(msg, "Önce e-posta adresini gir."); q("#lmemail").focus(); return; }
     const link = e.currentTarget, old = link.textContent; link.style.pointerEvents = "none"; link.textContent = "Gönderiliyor…";
-    try { await requestPasswordReset(email); msg.textContent = "Şifre sıfırlama bağlantısı e-postana gönderildi."; msg.className = "msg ok"; }
+    try { const rc = await recaptchaToken("password_reset"); await requestPasswordReset(email, rc); msg.textContent = "Şifre sıfırlama bağlantısı e-postana gönderildi."; msg.className = "msg ok"; }
     catch (err) { fail(msg, trError(err && err.code)); }
     finally { link.style.pointerEvents = ""; link.textContent = old; }
   } }, "Şifremi unuttum");
@@ -211,7 +247,8 @@ export function loginModal() {
       (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Giriş Yap")); x.id = "lmbtn"; return x; })(),
       orSep(),
       googleBtn(msg, () => m.close()),
-      msg),
+      msg,
+      recaptchaNote()),
     h("p", { class: "foot-note" }, "Hesabınız yok mu? ",
       h("a", { href: "#", onclick: (e) => { e.preventDefault(); m.close(); registerModal(); } }, "Kayıt Olun")));
   m = modal({ title: "Giriş Yap", body, actions: [] });
