@@ -747,7 +747,7 @@ async function renderProfile(root) {
     profMenuRow("notifications-outline", "Bildirimler", () => { location.hash = "#/organizer/bildirim"; }),
     profMenuRow("log-out-outline", "Çıkış Yap", confirmLogout, true));
 
-  root.append(hero, sect("Organizasyon Bilgileri", "megaphone-outline", 0, form), save, saveMsg, menu);
+  root.append(h("div", { class: "ox-pwrap" }, hero, sect("Organizasyon Bilgileri", "megaphone-outline", 0, form), save, saveMsg, menu));
 }
 
 function profMenuRow(ic, label, onclick, danger) {

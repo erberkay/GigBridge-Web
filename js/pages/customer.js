@@ -12,6 +12,7 @@ import {
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, fmtDate, fmtTL, ROLE } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
+import { loginModal } from "./auth.js";
 
 const C = ROLE.customer;
 const NAV = [
@@ -34,7 +35,7 @@ function loginGate(action) {
     body: h("p", { class: "muted" }, (action ? action + " için " : "") + "bir hesapla giriş yapman gerekiyor. Kayıt olmak ücretsiz."),
     actions: [
       { label: "Kayıt Ol", variant: "ghost", ic: "person-add-outline", onClick: () => go("#/register") },
-      { label: "Giriş Yap", ic: "log-in-outline", onClick: () => go("#/login") },
+      { label: "Giriş Yap", ic: "log-in-outline", onClick: () => loginModal() },
     ],
   });
   return true;
@@ -81,7 +82,7 @@ export function customerPage() {
   if (tab === "kesfet") return kesfetPage(); // app HomeScreen paritesi — özel başlık + bölümler
   const guest = !authed();
   const rightBtn = guest
-    ? h("button", { class: "icon-btn login-chip", onclick: () => go("#/login"), title: "Giriş Yap" }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
+    ? h("button", { class: "icon-btn login-chip", onclick: () => loginModal(), title: "Giriş Yap" }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
     : h("button", { class: "icon-btn", onclick: () => go("#/bildirimler"), title: "Bildirimler" }, icon("notifications-outline", { size: 20 }));
   const content = h("div", { class: "content" }, h("div", { class: "loading" }, spinner()));
   const page = h("div", { class: "page has-nav", style: { "--role": C } },
@@ -141,7 +142,7 @@ function kesfetPage() {
   const cityChip = h("button", { class: "hs-citychip", onclick: () => setDrop(!dropOpen) },
     icon("location-sharp", { size: 11, color: "var(--primary)" }), cityLabel, chev);
   const bell = guest
-    ? h("button", { class: "icon-btn login-chip", onclick: () => go("#/login") }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
+    ? h("button", { class: "icon-btn login-chip", onclick: () => loginModal() }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
     : h("button", { class: "hs-bell", onclick: () => go("#/bildirimler"), title: "Bildirimler" }, icon("notifications-outline", { size: 20 }));
   const header = h("header", { class: "topbar hs-topbar", style: { "--role": C } },
     h("div", { class: "hs-logo" }, "GigBridge"), cityChip, bell);
@@ -935,7 +936,7 @@ async function renderProfil(root) {
   if (!authed()) {
     root.append(
       empty("person-circle-outline", "Misafir olarak geziyorsun", "Etkinliklere katılmak, favorilere eklemek, takip etmek ve profil oluşturmak için giriş yap."),
-      h("div", { class: "cta-row" }, btn("Giriş Yap", { ic: "log-in-outline", full: true, color: C, onClick: () => go("#/login") })),
+      h("div", { class: "cta-row" }, btn("Giriş Yap", { ic: "log-in-outline", full: true, color: C, onClick: () => loginModal() })),
       h("div", { class: "cta-row" }, btn("Yeni Hesap Oluştur", { variant: "ghost", ic: "person-add-outline", full: true, onClick: () => go("#/register") })),
     );
     return;

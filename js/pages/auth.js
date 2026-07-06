@@ -5,7 +5,7 @@ import {
   GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification,
 } from "../firebase.js";
 import { session, logout, computeIsAdmin, refreshProfile, recheckEmailVerified } from "../store.js";
-import { h, clear, icon, btn, field, card, toast, ROLE } from "../ui.js";
+import { h, clear, icon, btn, field, card, toast, modal, ROLE } from "../ui.js";
 
 const PROVINCES = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkâri","Hatay","Iğdır","Isparta","İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars","Kastamonu","Kayseri","Kilis","Kırıkkale","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu","Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli","Uşak","Van","Yalova","Yozgat","Zonguldak"];
 
@@ -36,14 +36,14 @@ function trError(code) {
 }
 
 // Google ile devam — yeni kullanıcı ise router #/setup'a (rol seç) götürür.
-function googleBtn(msg) {
+function googleBtn(msg, onDone) {
   const b = h("button", { type: "button", class: "btn btn-google btn-full", onclick: async () => {
     b.disabled = true;
     // POPUP: özel alan adında (gigbridges.com) çalışır. signInWithRedirect, Chrome'un 3rd-party
     // storage bölümlemesi yüzünden özel alanda getRedirectResult'ı null döndürüp oturumu
     // tamamlayamıyordu (admin dahil Google girişi olmuyordu). Popup opener ilişkisini kullanır.
     // Başarılı → onAuthStateChanged router'ı tetikler (admin ise #/admin, yeni kullanıcı ise #/setup).
-    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); if (onDone) onDone(); }
     catch (err) {
       b.disabled = false;
       const code = err && err.code;
@@ -160,6 +160,42 @@ export function login() {
     h("p", { class: "foot-note" }, h("a", { href: "#/kesfet" }, "← Misafir olarak keşfetmeye dön")),
     h("a", { class: "admin-link", href: "#/yonetici" }, icon("shield-checkmark-outline", { size: 14 }), h("span", {}, "Yönetici Girişi")),
     legalFooter());
+}
+
+// ── Giriş MODALI — Keşfet'ten "GİRİŞ" tıklanınca yerinde açılır (ayrı sayfaya gitmeden) ──
+export function loginModal() {
+  const msg = h("p", { class: "msg" });
+  let m;
+  const submit = async (e) => {
+    e.preventDefault();
+    msg.textContent = ""; msg.className = "msg";
+    const email = q("#lmemail").value.trim(); const pass = q("#lmpass").value;
+    if (!email || !pass) { fail(msg, "E-posta ve şifre gir."); return; }
+    const b = q("#lmbtn"); b.disabled = true; b.querySelector("span").textContent = "Giriş yapılıyor…";
+    try { await signInWithEmailAndPassword(auth, email, pass); m.close(); /* router yönlendirir */ }
+    catch (err) { fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = "Giriş Yap"; }
+  };
+  const forgot = h("a", { href: "#", class: "forgot-link", onclick: async (e) => {
+    e.preventDefault(); msg.textContent = ""; msg.className = "msg";
+    const email = q("#lmemail").value.trim();
+    if (!email) { fail(msg, "Önce e-posta adresini gir."); q("#lmemail").focus(); return; }
+    const link = e.currentTarget, old = link.textContent; link.style.pointerEvents = "none"; link.textContent = "Gönderiliyor…";
+    try { await sendPasswordResetEmail(auth, email); msg.textContent = "Şifre sıfırlama bağlantısı e-postana gönderildi."; msg.className = "msg ok"; }
+    catch (err) { fail(msg, trError(err && err.code)); }
+    finally { link.style.pointerEvents = ""; link.textContent = old; }
+  } }, "Şifremi unuttum");
+  const body = h("div", { class: "login-modal" },
+    h("form", { onsubmit: submit },
+      ac(field({ label: "E-posta", id: "lmemail", type: "email", placeholder: "ornek@email.com" }), "email"),
+      ac(field({ label: "Şifre", id: "lmpass", type: "password", placeholder: "Şifrenizi girin" }), "current-password"),
+      h("div", { class: "forgot-row" }, forgot),
+      (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Giriş Yap")); x.id = "lmbtn"; return x; })(),
+      orSep(),
+      googleBtn(msg, () => m.close()),
+      msg),
+    h("p", { class: "foot-note" }, "Hesabınız yok mu? ",
+      h("a", { href: "#", onclick: (e) => { e.preventDefault(); m.close(); location.hash = "#/register"; } }, "Kayıt Olun")));
+  m = modal({ title: "Giriş Yap", body, actions: [] });
 }
 
 // ── Kayıt — app RegisterScreen birebir (2 adım: rol kartları → bilgiler) ──
