@@ -23,8 +23,9 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const functions = getFunctions(app);
-// Özel şifre sıfırlama e-postası (Cloud Function: sendPasswordReset, us-central1)
+// europe-west1: fonksiyonlar Avrupa'ya taşındı (eur3 Firestore collocation). Bölge EŞLEŞMELİ.
+export const functions = getFunctions(app, "europe-west1");
+// Özel şifre sıfırlama e-postası (Cloud Function: sendPasswordReset, europe-west1)
 export const sendPasswordResetMail = httpsCallable(functions, "sendPasswordReset");
 
 export {
