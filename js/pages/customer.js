@@ -219,13 +219,15 @@ async function renderKesfet(root, hdr) {
   const drawTabs = () => {
     clear(tabsRow);
     CATS.forEach(([k, ic]) => tabsRow.append(h("button", { class: "hs-tab" + (k === activeCategory ? " on" : ""), onclick: () => {
-      if (k === "ETKİNLİKLER") return go("#/etkinlikler");
-      activeCategory = k; drawTabs(); drawBody();
+      if (k === activeCategory) return;
+      activeCategory = k; drawTabs(); drawBody(); slideBody(); // ayrı sayfaya gitmeden, içerik sola kayarak gelir (app gibi)
     } }, icon(ic, { size: 13 }), h("span", {}, k))));
   };
   drawTabs();
 
   const body = h("div", { class: "hs-body" });
+  // Kategori değişince içerik SOLA KAYARAK gelsin (ayrı sayfaya gitmeden — app'teki tab davranışı)
+  const slideBody = () => { body.style.animation = "none"; void body.offsetWidth; body.style.animation = "ae-page-in 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both"; };
   root.append(hdr.cityDrop, searchBar, tabsRow, body);
 
   // ── Filtre paneli (#filter-icon tıklayınca açılır) ──
@@ -270,6 +272,12 @@ async function renderKesfet(root, hdr) {
     if (activeCategory === "SANATÇILAR") {
       if (!fArtists.length) { body.append(hsEmpty("mic-outline", "Henüz sanatçı yok", "Sanatçılar katıldıkça burada görünecek.")); return; }
       body.append(h("div", { class: "hs-alist" }, ...fArtists.map((a) => artistRowHome(a, followSet))));
+      return;
+    }
+    if (activeCategory === "ETKİNLİKLER") {
+      if (!cityEvents.length) { body.append(hsEmpty("ticket-outline", activeCity === "TÜMÜ" ? "Henüz etkinlik yok" : `${activeCity} için etkinlik yok`, "Yakında canlı müzik etkinlikleri burada görünecek.")); return; }
+      const sorted = [...cityEvents].sort((a, b) => (msOf(a) ?? 0) - (msOf(b) ?? 0));
+      body.append(h("div", { class: "hs-vlist" }, ...sorted.map((e) => ecard2(e, true))));
       return;
     }
 
