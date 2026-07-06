@@ -522,5 +522,18 @@ input:focus, textarea:focus, select:focus {
   color: var(--text) !important;
 }
 
+/* ---------- Sayfa geçişi: navigasyonda içerik SAĞDAN kayarak girer (statik değişim yerine) ---------- */
+/* Sidebar + topbar sabit kalır (ayrı grid alanları); sadece .content animasyonlu. */
+@keyframes ae-page-in {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.page.has-nav > .content { animation: ae-page-in 0.26s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+/* Auth kartları da yumuşak girsin */
+.auth-wrap .card, .au-wrap { animation: ae-page-in 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .page.has-nav > .content, .auth-wrap .card, .au-wrap { animation: none !important; }
+}
+
 /* Bildirim/aktif rol vurgusu: --role artık prizma (müşteri cyan #4ED8FF) */
 .bn-item.active { color: var(--role); }
