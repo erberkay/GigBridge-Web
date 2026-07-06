@@ -315,6 +315,81 @@ input:focus, textarea:focus, select:focus {
 }
 .wl-login::after { content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background: var(--grad-prism); }
 
+/* ---------- Etkinlik detay: gradyan stat kartları (Katılımcı/Bilet/Durum) + join butonu → Aether ---------- */
+.ed-stat {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+}
+.ed-join {
+  background: var(--text) !important;
+  color: #06070A !important;
+  border-radius: var(--radius) !important;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  position: relative;
+  overflow: hidden;
+}
+.ed-join::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--grad-prism); }
+.ed-join ion-icon { color: #06070A !important; }
+
+/* ---------- Sanatçı/Mekan detay (pd-*) — mor/mavi gradyanlar → Aether ---------- */
+.pd-hero.pd-artist, .pd-hero.pd-venue { background: transparent !important; border-bottom: 1px solid var(--border) !important; }
+.pd-av {
+  box-shadow: none !important;
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border) !important;
+  background-image: none;              /* initials: mor gradyanı kaldır (foto inline backgroundImage ile korunur) */
+  background-color: var(--surface-2);
+}
+/* Aksiyon butonları (Kaydet/Mesaj/Haritada Göster) → hairline */
+.pd-act {
+  border: 1px solid var(--border) !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  border-radius: var(--radius) !important;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px !important;
+}
+.pd-act:hover { border-color: var(--border-strong) !important; }
+.pd-act ion-icon { color: var(--text-secondary) !important; }
+/* Ana aksiyon (Puan Ver, .solid) → ink primary + prizma kenar */
+.pd-act.solid {
+  background: var(--text) !important;
+  color: #06070A !important;
+  border-color: var(--text) !important;
+  position: relative;
+  overflow: hidden;
+}
+.pd-act.solid::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--grad-prism); }
+.pd-act.solid ion-icon { color: #06070A !important; }
+.pd-act.saved { border-color: rgba(124,224,176,0.4) !important; color: #7CE0B0 !important; background: transparent !important; }
+/* Lokasyon/rol pill mono caps */
+.pd-role, .pd-loc, .pd-city { font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.1em; border-radius: 999px !important; }
+/* Haritada Göster butonu → hairline */
+.pd-map {
+  border: 1px solid var(--border) !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  border-radius: var(--radius) !important;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px !important;
+}
+.pd-map:hover { border-color: var(--border-strong) !important; }
+.pd-map ion-icon { color: var(--text-secondary) !important; }
+/* Genre tag'leri (pd-tag/vio) + genre pill → hairline mono caps */
+.pd-tag, .pd-tag.vio, .pd-genrepill {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  border: 1px solid var(--border) !important;
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border-radius: 999px !important;
+}
+
 /* ---------- Chip satırları / segment (tür filtresi, rol seçici) ---------- */
 .chip-row .chip, .seg {
   font-family: var(--font-mono) !important;
@@ -400,6 +475,51 @@ input:focus, textarea:focus, select:focus {
   border-radius: var(--radius) !important;
   background: transparent !important;
   border: 1px solid rgba(255,90,110,0.4) !important;
+}
+
+/* ---------- Akış (timeline): magenta dolgu tab/paylaş → Aether ---------- */
+.tl-sharebtn {
+  background: var(--text) !important;
+  color: #06070A !important;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px !important;
+  border-radius: var(--radius) !important;
+}
+.tl-sharebtn ion-icon { color: #06070A !important; }
+.tl-srctab {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  border-radius: var(--radius) !important;
+}
+.tl-srctab.on { background: var(--text) !important; border-color: var(--text) !important; color: #06070A !important; }
+.tl-srctab.on ion-icon { color: #06070A !important; }
+
+/* ---------- Mesajlar: magenta yuvarlak compose butonu → Aether ink ---------- */
+.ms-compose {
+  background: var(--text) !important;
+  border: 1px solid var(--text) !important;
+  border-radius: var(--radius) !important;
+}
+.ms-compose ion-icon { color: #06070A !important; }
+/* Mesaj input satırı (varsa) — bare */
+.ms-inputrow input, .chat-input { font-family: var(--font-sans) !important; }
+
+/* ---------- Kaçan aktif-durum dolguları (gradient/primary → Aether ink) ---------- */
+.fav-tab {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  border-radius: var(--radius) !important;
+}
+.fav-tab.on, .ax-visrow.on, .ax-cal-day.sel {
+  background: var(--text) !important;
+  background-image: none !important;
+  border-color: var(--text) !important;
+  color: #06070A !important;
+}
+.hs-city-item.on {
+  background: rgba(242,241,238,0.06) !important;
+  background-image: none !important;
+  color: var(--text) !important;
 }
 
 /* Bildirim/aktif rol vurgusu: --role artık prizma (müşteri cyan #4ED8FF) */
