@@ -310,6 +310,23 @@ input:focus, textarea:focus, select:focus {
 .ox-banner, .ox-clearbtn { background: transparent !important; border-color: var(--border) !important; }
 .ox-metag, .ox-rp-owner, .ox-pickav { background: var(--surface-2) !important; }
 .ox-metag, .ox-rp-owner { font-family: var(--font-mono) !important; text-transform: uppercase; letter-spacing: 0.08em; }
+/* Etkinlik Oluştur CTA (var(--rose) dolgu) → ink + prizma kenar */
+.ox-cta {
+  background: var(--text) !important;
+  color: #06070A !important;
+  border-radius: var(--radius) !important;
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px !important;
+  position: relative; overflow: hidden;
+}
+.ox-cta::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--grad-prism); }
+/* Etkinlikler Aktif/Geçmiş tab'ı (var(--rose) dolgu) → ink aktif */
+.ox-tab {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  border-radius: var(--radius) !important;
+}
+.ox-tab.on { background: var(--text) !important; border-color: var(--text) !important; color: #06070A !important; }
 
 /* ---------- Landing (karşılama) giriş butonu → Aether primary ---------- */
 .wl-login {
