@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
   GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification,
   sendPasswordResetMail,
+  EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail,
 } from "../firebase.js";
 
 // Şifre sıfırlama: önce özel HTML e-posta (Cloud Function: sendPasswordReset),
@@ -79,6 +80,8 @@ function trError(code) {
     "auth/weak-password": "Şifre en az 6 karakter olmalı.",
     "auth/invalid-credential": "E-posta ya da şifre hatalı.",
     "auth/wrong-password": "Şifre hatalı.",
+    "auth/requires-recent-login": "Güvenlik için tekrar giriş yapman gerekiyor. Çıkış yapıp yeniden giriş yap.",
+    "auth/operation-not-allowed": "E-posta değiştirme için yeni adresini doğrulaman gerekiyor.",
     "auth/user-not-found": "Böyle bir hesap yok.",
     "auth/too-many-requests": "Çok fazla deneme. Biraz sonra tekrar dene.",
     "auth/network-request-failed": "İnternet bağlantı hatası.",
@@ -294,10 +297,11 @@ export function register() {
       e.preventDefault();
       msg.textContent = ""; msg.className = "msg";
       const name = q("#rname").value.trim(); const email = q("#remail").value.trim();
-      const pass = q("#rpass").value; const city = (q("#rcity")?.value || "").trim();
+      const pass = q("#rpass").value; const pass2 = q("#rpass2").value; const city = (q("#rcity")?.value || "").trim();
       if (!name) return fail(msg, labelFor(role).replace(" Adı", "") + " adını gir.");
       if (!email) return fail(msg, "E-posta gir.");
       if (pass.length < 6) return fail(msg, "Şifre en az 6 karakter olmalı.");
+      if (pass !== pass2) return fail(msg, "Şifreler uyuşmuyor.");
       const b = q("#rbtn"); b.disabled = true; b.querySelector("span").textContent = "Gönderiliyor…";
       try {
         const { user } = await createUserWithEmailAndPassword(auth, email, pass);
@@ -324,6 +328,7 @@ export function register() {
         dl,
         ac(field({ label: "E-posta", id: "remail", type: "email", placeholder: "ornek@email.com" }), "email"),
         ac(field({ label: "Şifre", id: "rpass", type: "password", placeholder: "En az 6 karakter", hint: "Uygulamadan giriş yaparken de bu şifreyi kullanacaksın." }), "new-password"),
+        ac(field({ label: "Şifre Tekrar", id: "rpass2", type: "password", placeholder: "Şifreni tekrar gir" }), "new-password"),
         (role === "venue" || role === "artist") ? field({ label: "Şehir", id: "rcity", placeholder: "Örn. İstanbul", list: "cityList" }) : null,
         (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Kayıt Ol")); x.id = "rbtn"; return x; })(),
         orSep(),
@@ -366,10 +371,11 @@ export function registerModal() {
       e.preventDefault();
       msg.textContent = ""; msg.className = "msg";
       const name = q("#rmname").value.trim(); const email = q("#rmemail").value.trim();
-      const pass = q("#rmpass").value; const city = (q("#rmcity") ? q("#rmcity").value : "").trim();
+      const pass = q("#rmpass").value; const pass2 = q("#rmpass2").value; const city = (q("#rmcity") ? q("#rmcity").value : "").trim();
       if (!name) return fail(msg, labelFor(role).replace(" Adı", "") + " adını gir.");
       if (!email) return fail(msg, "E-posta gir.");
       if (pass.length < 6) return fail(msg, "Şifre en az 6 karakter olmalı.");
+      if (pass !== pass2) return fail(msg, "Şifreler uyuşmuyor.");
       const b = q("#rmbtn"); b.disabled = true; b.querySelector("span").textContent = "Gönderiliyor…";
       try {
         const { user } = await createUserWithEmailAndPassword(auth, email, pass);
@@ -394,6 +400,7 @@ export function registerModal() {
         dl,
         ac(field({ label: "E-posta", id: "rmemail", type: "email", placeholder: "ornek@email.com" }), "email"),
         ac(field({ label: "Şifre", id: "rmpass", type: "password", placeholder: "En az 6 karakter" }), "new-password"),
+        ac(field({ label: "Şifre Tekrar", id: "rmpass2", type: "password", placeholder: "Şifreni tekrar gir" }), "new-password"),
         (role === "venue" || role === "artist") ? field({ label: "Şehir", id: "rmcity", placeholder: "Örn. İstanbul", list: "cityListM" }) : null,
         (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Kayıt Ol")); x.id = "rmbtn"; return x; })(),
         orSep(),
@@ -404,6 +411,52 @@ export function registerModal() {
 
   m = modal({ title: "Hesap Tipini Seç", body, actions: [] });
   draw();
+}
+
+// ── E-posta Değiştir modalı — profil ayarlarından açılır (tüm roller ortak) ──
+// Güvenlik: önce mevcut şifreyle yeniden kimlik doğrulama, sonra YENİ e-postaya
+// doğrulama bağlantısı (verifyBeforeUpdateEmail). E-posta ancak kullanıcı yeni
+// adresteki bağlantıya tıklayınca değişir → yanlış/çalıntı adrese geçiş olmaz.
+export function changeEmailModal() {
+  const user = auth.currentUser;
+  // Google ile giren hesaplarda parola yok → e-posta Google'a bağlıdır, buradan değişmez.
+  const isGoogle = !!(user && user.providerData && user.providerData.some((p) => p.providerId === "google.com"))
+    && !(user.providerData || []).some((p) => p.providerId === "password");
+  const msg = h("p", { class: "msg" });
+  const submit = async (e) => {
+    e.preventDefault();
+    msg.textContent = ""; msg.className = "msg";
+    const cur = q("#cepass").value; const nw = q("#cemail").value.trim();
+    if (!cur) return fail(msg, "Mevcut şifreni gir.");
+    if (!nw) return fail(msg, "Yeni e-posta gir.");
+    if (nw.toLowerCase() === (user.email || "").toLowerCase()) return fail(msg, "Yeni e-posta mevcut adresinle aynı.");
+    const b = q("#cebtn"); b.disabled = true; b.querySelector("span").textContent = "Gönderiliyor…";
+    try {
+      const cred = EmailAuthProvider.credential(user.email, cur);
+      await reauthenticateWithCredential(user, cred);
+      await verifyBeforeUpdateEmail(user, nw);
+      msg.className = "msg ok";
+      msg.textContent = "Doğrulama bağlantısı yeni e-postana gönderildi. Bağlantıya tıklayıp onayladıktan sonra yeni e-postanla giriş yapabilirsin.";
+      b.querySelector("span").textContent = "Gönderildi ✓";
+    } catch (err) {
+      fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = "Bağlantı Gönder";
+    }
+  };
+  const body = h("div", { class: "login-modal" });
+  if (isGoogle) {
+    body.append(h("p", { class: "au-sub", style: { margin: "4px 0 0" } },
+      "Google ile giriş yaptığın için e-posta adresin Google hesabına bağlıdır ve buradan değiştirilemez. E-postanı Google hesap ayarlarından güncelleyebilirsin."));
+  } else {
+    body.append(
+      h("p", { class: "au-sub", style: { margin: "0 0 14px" } },
+        "Güvenlik için mevcut şifreni iste. Yeni adresine bir doğrulama bağlantısı göndereceğiz."),
+      h("form", { onsubmit: submit },
+        ac(field({ label: "Mevcut Şifre", id: "cepass", type: "password", placeholder: "Şifreni gir" }), "current-password"),
+        ac(field({ label: "Yeni E-posta", id: "cemail", type: "email", placeholder: "yeni@email.com" }), "email"),
+        (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Bağlantı Gönder")); x.id = "cebtn"; return x; })(),
+        msg));
+  }
+  modal({ title: "E-posta Değiştir", body, actions: [] });
 }
 
 // ── Hesabı tamamla (Google ile yeni giriş → profil yok) ──

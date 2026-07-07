@@ -261,11 +261,15 @@ input:focus, textarea:focus, select:focus {
   letter-spacing: -0.02em;
 }
 .sect-lbl, .dsh-sub, .ed-secttitle, .pd-sect-title, .vx-sect-lbl, .caption,
-.stat-lbl, .ed-stat-lbl, .pd-stat-lbl, .cp-stat-lbl, .vx-pstat-lbl, .count-pill {
+.stat-lbl, .ed-stat-lbl, .pd-stat-lbl, .cp-stat-lbl, .vx-pstat-lbl, .count-pill,
+.ed-price-lbl {
   font-family: var(--font-mono) !important;
   text-transform: uppercase;
   letter-spacing: 0.14em;
 }
+
+/* Etkinlik detay: DEĞERLENDİR butonu mekan/sanatçı kartına yapışmasın (üstünde nefes payı) */
+.ed-infocard + .btn { margin-top: 12px; }
 
 /* ---------- Modallar / overlay: hairline (gölge sadece overlay'de kalabilir) ---------- */
 .modal, .hs-filterdrop { border: 1px solid var(--border) !important; }
@@ -357,9 +361,11 @@ input:focus, textarea:focus, select:focus {
 .register-modal { min-width: 340px; max-height: 68vh; overflow-y: auto; }
 .register-modal .au-typecards { display: flex; flex-direction: column; gap: 10px; margin: 0; }
 .register-modal .au-sub { color: var(--text-secondary); font-size: 13px; }
-.au-back-inline { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--text-secondary); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; cursor: pointer; padding: 0; margin-bottom: 12px; }
+/* GERİ kendi satırında dursun: flex + fit-content → blok seviyesine iner, rozet alta geçer,
+   tık alanı yalnız butonun genişliği kadar olur (sağ boşluğa basınca geri gitmez). */
+.au-back-inline { display: flex; width: fit-content; align-items: center; gap: 4px; background: none; border: none; color: var(--text-secondary); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; cursor: pointer; padding: 4px 0; margin: 0 0 14px; }
 .au-back-inline:hover { color: var(--text); }
-.register-modal .au-rolechip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; margin-bottom: 14px; }
+.register-modal .au-rolechip { display: flex; width: fit-content; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; margin: 0 0 16px; }
 
 /* ---------- Landing (karşılama) giriş butonu → Aether primary ---------- */
 .wl-login {

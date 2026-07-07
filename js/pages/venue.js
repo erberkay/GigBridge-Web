@@ -12,6 +12,7 @@ import { venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, save
   submitVenueArtistReview } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, fmtTL, ROLE, loadLeaflet } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
+import { changeEmailModal } from "./auth.js";
 
 const AMBER = ROLE.venue; // #F59E0B — mekan vurgu rengi
 const MIN_STAGE_FEE = 3500;
@@ -533,7 +534,7 @@ async function renderProfile(root) {
     catch (e) { saveMsg.textContent = "Kaydedilemedi."; saveMsg.className = "msg err"; }
   } });
 
-  const pMenuRow = (ic, label, hash) => h("div", { class: "menu-row", onclick: () => { location.hash = hash; } },
+  const pMenuRow = (ic, label, hashOrFn) => h("div", { class: "menu-row", onclick: () => { if (typeof hashOrFn === "function") hashOrFn(); else location.hash = hashOrFn; } },
     icon(ic, { size: 18, color: AMBER }), h("span", { class: "menu-label" }, label), icon("chevron-forward", { size: 15, color: "var(--text-muted)" }));
 
   root.append(
@@ -549,6 +550,9 @@ async function renderProfile(root) {
       h("div", { class: "menu-card" },
         pMenuRow("eye-outline", "Takip Ettiğim Sanatçılar", "#/venue/takip"),
         pMenuRow("star-outline", "Sanatçı Değerlendir", "#/venue/degerlendir"))),
+    sect("Hesap", "settings-outline", 0,
+      h("div", { class: "menu-card" },
+        pMenuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal()))),
     sect("Destek", "help-buoy-outline", 0,
       h("p", { class: "muted small mb6" }, "Bir sorunun ya da talebin mi var? Yöneticiye ilet."),
       btn("Sorun Bildir", { variant: "ghost", ic: "flag-outline", full: true, onClick: reportModal })));

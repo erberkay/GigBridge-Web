@@ -12,6 +12,7 @@ import {
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, modal, lightbox, fmtDate, ROLE } from "../ui.js";
 import { messagesView } from "./messages.js";
+import { changeEmailModal } from "./auth.js";
 
 const A = ROLE.artist; // #A855F7
 const MIN_STAGE_FEE = 3500;        // iş kuralı: altında sahne alınamaz
@@ -1050,10 +1051,11 @@ async function renderProfile(root) {
       h("div", { class: "ax-notice-title" }, "Mekan Değerlendirmeleri"),
       h("div", { class: "ax-notice-text" }, "Çalıştığın mekanları sadece sanatçılar görebilir. Mekanları gizlilik içinde puanlayabilirsin.")));
 
-  // Menü: Aldığım Yorumlar / Bildirimler / Sorun Bildir
+  // Menü: Aldığım Yorumlar / Bildirimler / E-posta Değiştir / Sorun Bildir
   const menu = h("div", { class: "menu-card" },
     menuRow("star-outline", "Aldığım Yorumlar", () => go("#/artist/yorumlar")),
     menuRow("notifications-outline", "Bildirimler", () => go("#/artist/bildirimler")),
+    menuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal()),
     menuRow("alert-circle-outline", "Sorun Bildir", reportModal));
 
   root.append(
