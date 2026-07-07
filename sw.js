@@ -4,7 +4,7 @@
    - Görsel/font: cache'ten anında (hızlı) + arka planda tazele.
    - Yalnız KENDİ origin GET; Firebase/Google/CDN (cross-origin) dokunulmaz.
 */
-const CACHE = "gb-runtime-v19";
+const CACHE = "gb-runtime-v20";
 
 self.addEventListener("install", () => self.skipWaiting());
 

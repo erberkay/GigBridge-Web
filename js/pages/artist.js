@@ -16,7 +16,12 @@ import { messagesView } from "./messages.js";
 const A = ROLE.artist; // #A855F7
 const MIN_STAGE_FEE = 3500;        // iş kuralı: altında sahne alınamaz
 const MAX_ARTIST_PRICE = 1000000;  // sanatçı ücreti üst sınırı
-const GENRES = ["Electronic", "House", "Techno", "Jazz", "Pop", "Rock", "Akustik", "Hip-Hop", "R&B", "Klasik"];
+// Kapsamlı tür listesi — elektronik + TÜRKÇE (arabesk/fasıl/THM…) + genel (venue.js ile aynı).
+const GENRES = [
+  "House", "Tech House", "Deep House", "Techno", "Melodic Techno", "Minimal", "Afro House", "Organic House", "Trance", "Electronic", "Disco",
+  "Türkçe Pop", "Türkçe Rock", "Türkçe Rap", "Arabesk", "Fasıl", "Türk Halk Müziği", "Türk Sanat Müziği", "Türkü", "Oyun Havası", "Roman Havası", "Anadolu Rock", "Özgün Müzik", "Slow", "Damar",
+  "Pop", "Rock", "Jazz", "Blues", "Klasik", "Hip-Hop", "Rap", "R&B", "Reggae", "Funk", "Soul", "Latin", "Akustik", "Alternatif", "Metal",
+];
 
 // 81 il — şehir alanında aranabilir öneri listesi (app SearchablePickerModal karşılığı)
 const PROVINCES = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara", "Antalya", "Ardahan", "Artvin", "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane", "Hakkari", "Hatay", "Iğdır", "Isparta", "İstanbul", "İzmir", "Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri", "Kilis", "Kırıkkale", "Kırklareli", "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya", "Manisa", "Mardin", "Mersin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu", "Osmaniye", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas", "Şanlıurfa", "Şırnak", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak", "Van", "Yalova", "Yozgat", "Zonguldak"];

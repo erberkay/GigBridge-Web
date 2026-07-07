@@ -15,7 +15,16 @@ import { messagesView, requestChat } from "./messages.js";
 
 const AMBER = ROLE.venue; // #F59E0B — mekan vurgu rengi
 const MIN_STAGE_FEE = 3500;
-const GENRES = ["Electronic", "House", "Techno", "Jazz", "Pop", "Rock", "Akustik", "Hip-Hop", "R&B", "Klasik", "Diğer"];
+// Kapsamlı tür listesi — elektronik + TÜRKÇE (arabesk/fasıl/THM…) + genel. Etkinlik
+// oluştururken ve sanatçı profilinde seçilir; ayrıca "Diğer/özel tür ekle" ile genişletilebilir.
+const GENRES = [
+  // Elektronik / DJ
+  "House", "Tech House", "Deep House", "Techno", "Melodic Techno", "Minimal", "Afro House", "Organic House", "Trance", "Electronic", "Disco",
+  // Türkçe
+  "Türkçe Pop", "Türkçe Rock", "Türkçe Rap", "Arabesk", "Fasıl", "Türk Halk Müziği", "Türk Sanat Müziği", "Türkü", "Oyun Havası", "Roman Havası", "Anadolu Rock", "Özgün Müzik", "Slow", "Damar",
+  // Genel
+  "Pop", "Rock", "Jazz", "Blues", "Klasik", "Hip-Hop", "Rap", "R&B", "Reggae", "Funk", "Soul", "Latin", "Akustik", "Alternatif", "Metal", "Diğer",
+];
 
 // Mekan özellikleri (app AMENITY_OPTIONS ile birebir). İlk 6 varsayılan.
 const AMENITY_OPTIONS = ["Profesyonel Ses Sistemi", "Işık Sistemi", "DJ Booth", "Soyunma Odası", "Parking", "VIP Alan", "Sahne", "Bar", "Klima", "Wi-Fi", "Engelli Erişimi", "Sigara Alanı"];

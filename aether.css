@@ -872,6 +872,12 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 20px 50px rgba(0,0,0,0.55);
 }
 .hs-citywrap > .hs-citydrop .hs-citylist { max-height: 300px; overflow-y: auto; }
+/* Mobil: çip ekran kenarında olmadığı için sağa-hizalı popover sola taşıyordu →
+   tam genişlik, başlığın hemen altında (fixed). */
+@media (max-width: 560px) {
+  .hs-citywrap > .hs-citydrop { position: fixed; top: 70px; left: 12px; right: 12px; width: auto; max-height: 64vh; }
+  .hs-citywrap > .hs-citydrop .hs-citylist { max-height: 44vh; }
+}
 
 /* ══════════ Fotoğraf büyüteci (lightbox) — profil/kapak fotoğrafı tam ekran ══════════ */
 .zoomable { cursor: zoom-in; }
