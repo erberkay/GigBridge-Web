@@ -499,7 +499,22 @@ export function changePasswordModal() {
         ac(field({ label: "Yeni Şifre", id: "cpnew", type: "password", placeholder: "En az 6 karakter" }), "new-password"),
         ac(field({ label: "Yeni Şifre (Tekrar)", id: "cpnew2", type: "password", placeholder: "Yeni şifreni tekrar gir" }), "new-password"),
         (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Şifreyi Güncelle")); x.id = "cpbtn"; return x; })(),
-        msg));
+        msg),
+      // Mevcut şifreni bilmiyorsan: e-posta ile sıfırlama bağlantısı (markalı reset e-postası).
+      h("p", { class: "foot-note", style: { textAlign: "center", marginTop: "12px" } },
+        "Mevcut şifreni bilmiyor musun? ",
+        h("a", { href: "#", onclick: async (e) => {
+          e.preventDefault();
+          const link = e.currentTarget; const old = link.textContent;
+          link.style.pointerEvents = "none"; link.textContent = "Gönderiliyor…";
+          msg.textContent = ""; msg.className = "msg";
+          try {
+            const rc = await recaptchaToken("password_reset");
+            await requestPasswordReset(user.email, rc);
+            msg.className = "msg ok"; msg.textContent = "Sıfırlama bağlantısı e-postana gönderildi. E-postandaki bağlantıdan yeni şifre belirle.";
+          } catch (err) { fail(msg, trError(err && err.code)); }
+          finally { link.style.pointerEvents = ""; link.textContent = old; }
+        } }, "E-posta ile sıfırla")));
   }
   modal({ title: "Şifre Değiştir", body, actions: [] });
 }
