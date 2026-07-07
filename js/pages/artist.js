@@ -900,8 +900,9 @@ async function renderProfile(root) {
   const name = p.displayName || "Sanatçı";
   const badge = memberBadgeFor(p.createdAt);
 
-  // Kapak + avatar + tip rozeti + üyelik kıdemi
-  const cover = h("div", { class: "ax-cover" },
+  // Kapak + avatar + tip rozeti + üyelik kıdemi (banner varsa en üstte geniş görsel)
+  const cover = h("div", { class: "ax-cover" + (p.bannerUrl ? " has-banner" : "") },
+    p.bannerUrl ? h("div", { class: "ax-banner", style: { backgroundImage: `url(${p.bannerUrl})` } }) : null,
     h("div", { class: "ax-bigavatar" },
       p.photoURL ? h("div", { class: "img", style: { backgroundImage: `url(${p.photoURL})` } }) : h("div", { class: "ph" }, name.trim().charAt(0).toUpperCase() || "?")),
     h("div", { class: "ax-pname" }, name),
@@ -933,6 +934,8 @@ async function renderProfile(root) {
   })();
 
   const pic = photoPicker("Profil fotoğrafı (opsiyonel)", p.photoURL);
+  // Kapak/banner görseli — mekanlar sanatçı profilini açınca en üstte geniş görür (vitrin etkisi).
+  const bannerPic = photoPicker("Kapak / banner görseli (opsiyonel) — mekanlar profilinde en üstte görür", p.bannerUrl);
   const cityList = h("datalist", { id: "ax-citylist" }, ...PROVINCES.map((c) => h("option", { value: c })));
 
   // Müzik türleri — çoklu seçim (öneri çipleri + özel tür ekleme)
@@ -968,7 +971,8 @@ async function renderProfile(root) {
       field({ label: "İlçe", id: "adistrict", value: p.district || "", placeholder: "Örn. Kadıköy" })),
     field({ label: "Deneyim (yıl)", id: "aexp", type: "number", value: p.experienceYears != null ? String(p.experienceYears) : "", placeholder: "0" }),
     field({ label: "Hakkında", id: "abio", value: p.bio || "", placeholder: "Kendini tanıt…", multiline: true }),
-    pic.node);
+    pic.node,
+    bannerPic.node);
 
   // Performans ücreti (min 3.500 iş kuralı)
   const priceForm = h("div", { class: "form-card" },
@@ -1026,6 +1030,7 @@ async function renderProfile(root) {
     if (nameChanged) patch.displayNameChangedAt = serverTimestamp();
     try {
       if (pic.getFile()) { saveMsg.textContent = "Fotoğraf yükleniyor…"; saveMsg.className = "msg"; patch.photoURL = await uploadImage(pic.getFile(), uid); }
+      if (bannerPic.getFile()) { saveMsg.textContent = "Kapak yükleniyor…"; saveMsg.className = "msg"; patch.bannerUrl = await uploadImage(bannerPic.getFile(), uid); }
       await saveProfile(uid, patch);
       await refreshProfile();
       toast("Profilin güncellendi");

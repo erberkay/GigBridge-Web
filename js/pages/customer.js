@@ -146,7 +146,7 @@ export function kesfetPage() {
     ? h("button", { class: "icon-btn login-chip", onclick: () => loginModal() }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
     : h("button", { class: "hs-bell", onclick: () => go("#/bildirimler"), title: "Bildirimler" }, icon("notifications-outline", { size: 20 }));
   const header = h("header", { class: "topbar hs-topbar", style: { "--role": C } },
-    h("div", { class: "hs-logo" }, "GigBridge"), cityChip, bell);
+    h("div", { class: "hs-logo" }, h("img", { class: "hs-logo-img", src: "assets/logo-icon.svg", alt: "", width: 24, height: 24 }), h("span", {}, "GigBridge")), cityChip, bell);
   const content = h("div", { class: "content hs-content" }, h("div", { class: "loading" }, spinner()));
   const page = h("div", { class: "page has-nav", style: { "--role": C } }, header, content, bottomnav(NAV, "kesfet", C));
   renderKesfet(content, { cityDrop, cityLabel, closeDrop: () => setDrop(false) });
@@ -744,7 +744,8 @@ async function artistDetail(id, root) {
   };
 
   root.append(
-    h("div", { class: "pd-hero pd-artist" },
+    h("div", { class: "pd-hero pd-artist" + (a.bannerUrl ? " has-banner" : "") },
+      a.bannerUrl ? h("div", { class: "pd-banner", style: { backgroundImage: `url(${a.bannerUrl})` } }) : null,
       h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "pd-center" },
         a.photoURL ? h("div", { class: "pd-av round", style: { backgroundImage: `url(${a.photoURL})` } }) : h("div", { class: "pd-av round" }, name.charAt(0).toLocaleUpperCase("tr-TR")),

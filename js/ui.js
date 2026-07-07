@@ -149,6 +149,10 @@ export function topbar(title, { subtitle, right, color = ROLE.venue } = {}) {
 // Alt sekme çubuğu (app gibi)
 export function bottomnav(items, active, color = ROLE.venue) {
   return h("nav", { class: "bottomnav", style: { "--role": color } },
+    // Masaüstü kenar çubuğu markası: logo ikonu + "GigBridge" (mobil alt-barda gizli).
+    h("div", { class: "bn-brand" },
+      h("img", { class: "bn-logo", src: "assets/logo-icon.svg", alt: "GigBridge", width: 30, height: 30 }),
+      h("span", {}, "GigBridge")),
     ...items.map((it) => h("a", { class: "bn-item" + (it.key === active ? " active" : ""), href: it.href },
       icon(it.key === active ? it.icon.replace("-outline", "") : it.icon, { size: 22 }),
       h("span", {}, it.label))));

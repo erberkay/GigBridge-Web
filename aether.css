@@ -827,3 +827,39 @@ input:focus, textarea:focus, select:focus {
     max-width: none !important; margin-left: 0 !important; margin-right: 0 !important;
   }
 }
+
+/* ══════════ Kenar çubuğu markası: LOGO ikonu + GigBridge ══════════ */
+.bn-brand { display: none; }                 /* mobil alt-bar: marka yok */
+@media (min-width: 900px) {
+  .bottomnav::before { display: none !important; }  /* eski salt-yazı marka → logo+yazı */
+  .bn-brand { display: flex; align-items: center; gap: 9px; padding: 4px 12px 24px; }
+  .bn-logo { width: 30px; height: 30px; flex: 0 0 auto; }
+  .bn-brand span {
+    font-size: 21px; font-weight: 800; letter-spacing: -0.4px;
+    background: linear-gradient(135deg, #fff, #d8b4fe);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+}
+/* Keşfet başlığındaki "GigBridge" yanına da logo (misafir marka) */
+.hs-logo { display: flex; align-items: center; gap: 8px; }
+.hs-logo-img { width: 24px; height: 24px; flex: 0 0 auto; }
+
+/* ══════════ Sanatçı KAPAK/BANNER (kendi profil cover + public detay hero) ══════════ */
+/* Mekanlar sanatçı profilini açınca en üstte geniş banner görür → vitrin/çekim etkisi. */
+.ax-cover.has-banner { padding-top: 0 !important; }
+.ax-banner { height: 150px; margin: 0 -18px 16px; background-size: cover; background-position: center; border-bottom: 1px solid var(--border); }
+.pd-hero.pd-artist.has-banner { padding-top: 0; }
+.pd-banner { position: relative; height: 150px; margin: 0 0 14px; background-size: cover; background-position: center; }
+.pd-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,7,10,0) 45%, var(--bg)); pointer-events: none; }
+@media (min-width: 900px) {
+  .ax-banner { margin: 0 -36px 20px; height: 200px; }
+  .pd-banner { height: 210px; }
+}
+
+/* ══════════ Aether kit uyum cilası (düşük riskli — denetim raporu) ══════════ */
+:root { --warning: #FFB347; }   /* kit signal-warning — yalnız durum bildirimi (eksikti) */
+/* Sabit gömülü eski amber (#F59E0B) → prizma-amber tutarlılığı (canlı render eden öğeler) */
+.mr-type.ven { color: var(--amber) !important; background: rgba(255,138,42,0.13) !important; }
+.cp-toggle.on, .cp-menulbl.hl { color: var(--amber) !important; }
+/* Mono-caps etiket harf aralığı kit ölçeğine (0.16em) */
+.badge, .pill, .chip, .caption, .flabel { letter-spacing: 0.16em; }
