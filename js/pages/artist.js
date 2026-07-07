@@ -12,7 +12,7 @@ import {
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, modal, lightbox, fmtDate, ROLE } from "../ui.js";
 import { messagesView } from "./messages.js";
-import { changeEmailModal, deleteAccountModal } from "./auth.js";
+import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
 
 const A = ROLE.artist; // #A855F7
 const MIN_STAGE_FEE = 3500;        // iş kuralı: altında sahne alınamaz
@@ -1056,6 +1056,7 @@ async function renderProfile(root) {
     menuRow("star-outline", "Aldığım Yorumlar", () => go("#/artist/yorumlar")),
     menuRow("notifications-outline", "Bildirimler", () => go("#/artist/bildirimler")),
     menuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal()),
+    menuRow("key-outline", "Şifre Değiştir", () => changePasswordModal()),
     menuRow("alert-circle-outline", "Sorun Bildir", reportModal));
 
   root.append(

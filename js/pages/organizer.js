@@ -9,7 +9,7 @@ import {
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, ROLE } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
-import { changeEmailModal, deleteAccountModal } from "./auth.js";
+import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
 
 const C = ROLE.organizer; // #F43F5E
 const NAV = [
@@ -747,6 +747,7 @@ async function renderProfile(root) {
     profMenuRow("people-outline", "Ekip", () => { location.hash = "#/organizer/ekip"; }),
     profMenuRow("notifications-outline", "Bildirimler", () => { location.hash = "#/organizer/bildirim"; }),
     profMenuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal()),
+    profMenuRow("key-outline", "Şifre Değiştir", () => changePasswordModal()),
     profMenuRow("trash-outline", "Hesabımı Sil", () => deleteAccountModal(), true),
     profMenuRow("log-out-outline", "Çıkış Yap", confirmLogout, true));
 

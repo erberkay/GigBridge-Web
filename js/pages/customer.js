@@ -12,7 +12,7 @@ import {
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
-import { loginModal, changeEmailModal } from "./auth.js";
+import { loginModal, changeEmailModal, changePasswordModal } from "./auth.js";
 
 const C = ROLE.customer;
 const NAV = [
@@ -1065,6 +1065,7 @@ async function renderProfil(root) {
       menuRow("location-outline", "Şehrim", cityPicker, h("span", { class: "cp-cityval" }, p.city || "Seç")),
       menuRow("create-outline", "Adımı Değiştir", () => nameChangeModal(root, p)),
       menuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal()),
+      menuRow("key-outline", "Şifre Değiştir", () => changePasswordModal()),
       menuRow("ticket-outline", "Biletlerim", () => go("#/biletlerim"), null, false, true),
       menuRow("heart-outline", "Takip Ettiklerim", () => go("#/takip"), badges.takip),
       menuRow("checkmark-done-outline", "Katıldığım Etkinlikler", () => go("#/katildiklarim"), badges.kat),

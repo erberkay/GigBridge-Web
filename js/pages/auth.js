@@ -4,7 +4,7 @@ import {
   signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
   GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification,
   sendPasswordResetMail,
-  EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail,
+  EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword,
 } from "../firebase.js";
 
 // Şifre sıfırlama: önce özel HTML e-posta (Cloud Function: sendPasswordReset),
@@ -457,6 +457,51 @@ export function changeEmailModal() {
         msg));
   }
   modal({ title: "E-posta Değiştir", body, actions: [] });
+}
+
+// ── Şifre Değiştir modalı — profil ayarlarından açılır (tüm roller ortak) ──
+// Güvenlik: mevcut şifreyle yeniden kimlik doğrulama → updatePassword. Google-only
+// hesaplarda parola yoktur (şifre Google'a bağlı) → uyarı gösterir.
+export function changePasswordModal() {
+  const user = auth.currentUser;
+  const isGoogle = !!(user && user.providerData && user.providerData.some((p) => p.providerId === "google.com"))
+    && !(user.providerData || []).some((p) => p.providerId === "password");
+  const msg = h("p", { class: "msg" });
+  const submit = async (e) => {
+    e.preventDefault();
+    msg.textContent = ""; msg.className = "msg";
+    const cur = q("#cpcur").value; const nw = q("#cpnew").value; const nw2 = q("#cpnew2").value;
+    if (!cur) return fail(msg, "Mevcut şifreni gir.");
+    if (nw.length < 6) return fail(msg, "Yeni şifre en az 6 karakter olmalı.");
+    if (nw !== nw2) return fail(msg, "Yeni şifreler uyuşmuyor.");
+    const b = q("#cpbtn"); b.disabled = true; b.querySelector("span").textContent = "Güncelleniyor…";
+    try {
+      const cred = EmailAuthProvider.credential(user.email, cur);
+      await reauthenticateWithCredential(user, cred);
+      await updatePassword(user, nw);
+      msg.className = "msg ok";
+      msg.textContent = "Şifren güncellendi. Bir dahaki girişte yeni şifreni kullan.";
+      b.querySelector("span").textContent = "Güncellendi ✓";
+    } catch (err) {
+      fail(msg, trError(err && err.code)); b.disabled = false; b.querySelector("span").textContent = "Şifreyi Güncelle";
+    }
+  };
+  const body = h("div", { class: "login-modal" });
+  if (isGoogle) {
+    body.append(h("p", { class: "au-sub", style: { margin: "4px 0 0" } },
+      "Google ile giriş yaptığın için hesabında parola yok; şifren Google hesabına bağlıdır ve buradan değiştirilemez. Şifreni Google hesap ayarlarından güncelleyebilirsin."));
+  } else {
+    body.append(
+      h("p", { class: "au-sub", style: { margin: "0 0 14px" } },
+        "Güvenlik için önce mevcut şifreni gir, sonra yeni şifreni belirle."),
+      h("form", { onsubmit: submit },
+        ac(field({ label: "Mevcut Şifre", id: "cpcur", type: "password", placeholder: "Şu anki şifren" }), "current-password"),
+        ac(field({ label: "Yeni Şifre", id: "cpnew", type: "password", placeholder: "En az 6 karakter" }), "new-password"),
+        ac(field({ label: "Yeni Şifre (Tekrar)", id: "cpnew2", type: "password", placeholder: "Yeni şifreni tekrar gir" }), "new-password"),
+        (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Şifreyi Güncelle")); x.id = "cpbtn"; return x; })(),
+        msg));
+  }
+  modal({ title: "Şifre Değiştir", body, actions: [] });
 }
 
 // ── Hesabımı Sil modalı — 3 ay yumuşak silme (sanatçı/organizatör; müşteri app'ten) ──

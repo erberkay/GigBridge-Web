@@ -12,7 +12,7 @@ import { venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, save
   submitVenueArtistReview } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, fmtTL, ROLE, loadLeaflet } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
-import { changeEmailModal } from "./auth.js";
+import { changeEmailModal, changePasswordModal } from "./auth.js";
 
 const AMBER = ROLE.venue; // #F59E0B — mekan vurgu rengi
 const MIN_STAGE_FEE = 3500;
@@ -552,7 +552,8 @@ async function renderProfile(root) {
         pMenuRow("star-outline", "Sanatçı Değerlendir", "#/venue/degerlendir"))),
     sect("Hesap", "settings-outline", 0,
       h("div", { class: "menu-card" },
-        pMenuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal())),
+        pMenuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal()),
+        pMenuRow("key-outline", "Şifre Değiştir", () => changePasswordModal())),
       h("p", { class: "muted small", style: { margin: "10px 2px 0" } },
         "Mekan hesabını yalnızca GigBridge uygulamasından silebilirsin.")),
     sect("Destek", "help-buoy-outline", 0,

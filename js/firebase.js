@@ -38,7 +38,7 @@ export {
   signOut, onAuthStateChanged, updateProfile, deleteUser,
   GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
   sendPasswordResetEmail, sendEmailVerification,
-  EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail,
+  EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword,
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 export {
