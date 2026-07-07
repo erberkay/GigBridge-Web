@@ -139,7 +139,7 @@ export function kesfetPage() {
   const chev = icon("chevron-down", { size: 11, color: "#9090B0" });
   const cityDrop = h("div", { class: "hs-citydrop", style: { display: "none" } });
   let dropOpen = false;
-  const setDrop = (v) => { dropOpen = v; cityDrop.style.display = v ? "" : "none"; chev.setAttribute("name", v ? "chevron-up" : "chevron-down"); chev.style.color = v ? "#A855F7" : "#9090B0"; };
+  const setDrop = (v) => { dropOpen = v; cityDrop.style.display = v ? "" : "none"; chev.setAttribute("name", v ? "chevron-up" : "chevron-down"); chev.style.color = v ? "#FF4FA3" : "#8A8E97"; };
   const cityChip = h("button", { class: "hs-citychip", onclick: () => setDrop(!dropOpen) },
     icon("location-sharp", { size: 11, color: "var(--primary)" }), cityLabel, chev);
   const bell = guest
@@ -335,7 +335,7 @@ function statusBadge(ev) {
   if (ev.vipStatus === "approved") return h("span", { class: "sbadge sb-vip" }, icon("sparkles", { size: 9, color: "#F59E0B" }), "VIP DENEYİM");
   if (ev.isExclusive) return h("span", { class: "sbadge sb-excl" }, icon("star", { size: 9, color: "#F59E0B" }), "SADECE GİGBRİDGE'DE");
   if (att > 400) return h("span", { class: "sbadge sb-hot" }, "YOĞUN İLGİ");
-  if (att > 200) return h("span", { class: "sbadge sb-trend" }, icon("trending-up", { size: 9, color: "#A855F7" }), "ŞİMDİ POPÜLER");
+  if (att > 200) return h("span", { class: "sbadge sb-trend" }, icon("trending-up", { size: 9, color: "#FF4FA3" }), "ŞİMDİ POPÜLER");
   if (ev.isNew) return h("span", { class: "sbadge sb-new" }, "YENİ");
   return null;
 }
