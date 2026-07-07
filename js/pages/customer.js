@@ -10,7 +10,7 @@ import {
   listenTimeline, createPost, isLiked, toggleLike, listenComments, addComment,
   listenNotifications, markNotifRead, deleteNotif, deleteMyAccount, serverTimestamp,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, fmtDate, fmtTL, ROLE } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { loginModal } from "./auth.js";
 
@@ -146,7 +146,9 @@ export function kesfetPage() {
     ? h("button", { class: "icon-btn login-chip", onclick: () => loginModal() }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
     : h("button", { class: "hs-bell", onclick: () => go("#/bildirimler"), title: "Bildirimler" }, icon("notifications-outline", { size: 20 }));
   const header = h("header", { class: "topbar hs-topbar", style: { "--role": C } },
-    h("div", { class: "hs-logo" }, h("img", { class: "hs-logo-img", src: "assets/logo-icon.svg", alt: "", width: 24, height: 24 }), h("span", {}, "GigBridge")), cityChip, bell);
+    h("div", { class: "hs-logo" }, h("img", { class: "hs-logo-img", src: "assets/logo-icon.svg", alt: "", width: 24, height: 24 }), h("span", {}, "GigBridge")),
+    // Şehir açılır listesi çipin hemen altına açılır (popover) — masaüstünde sola kaymaz.
+    h("div", { class: "hs-citywrap" }, cityChip, cityDrop), bell);
   const content = h("div", { class: "content hs-content" }, h("div", { class: "loading" }, spinner()));
   const page = h("div", { class: "page has-nav", style: { "--role": C } }, header, content, bottomnav(NAV, "kesfet", C));
   renderKesfet(content, { cityDrop, cityLabel, closeDrop: () => setDrop(false) });
@@ -229,7 +231,7 @@ async function renderKesfet(root, hdr) {
   const body = h("div", { class: "hs-body" });
   // Kategori değişince içerik SOLA KAYARAK gelsin (ayrı sayfaya gitmeden — app'teki tab davranışı)
   const slideBody = () => { body.style.animation = "none"; void body.offsetWidth; body.style.animation = "kes-tab-slide 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both"; };
-  root.append(hdr.cityDrop, searchBar, tabsRow, body);
+  root.append(searchBar, tabsRow, body); // cityDrop artık başlıktaki çipin altında (popover)
 
   // ── Filtre paneli (#filter-icon tıklayınca açılır) ──
   const filterDrop = h("div", { class: "hs-filterdrop", style: { display: "none" } });
@@ -748,7 +750,7 @@ async function artistDetail(id, root) {
       a.bannerUrl ? h("div", { class: "pd-banner", style: { backgroundImage: `url(${a.bannerUrl})` } }) : null,
       h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "pd-center" },
-        a.photoURL ? h("div", { class: "pd-av round", style: { backgroundImage: `url(${a.photoURL})` } }) : h("div", { class: "pd-av round" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
+        a.photoURL ? h("div", { class: "pd-av round zoomable", style: { backgroundImage: `url(${a.photoURL})` }, title: "Büyüt", onclick: () => lightbox(a.photoURL) }) : h("div", { class: "pd-av round" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
         h("h1", { class: "pd-name" }, name),
         genres[0] ? h("span", { class: "pd-genrepill" }, genres[0]) : null,
         memberChip(a), membershipText(a),
@@ -817,7 +819,7 @@ async function venueDetail(id, root) {
     h("div", { class: "pd-hero pd-venue" },
       h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "pd-center" },
-        v.photoURL ? h("div", { class: "pd-av sq", style: { backgroundImage: `url(${v.photoURL})` } }) : h("div", { class: "pd-av sq" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
+        v.photoURL ? h("div", { class: "pd-av sq zoomable", style: { backgroundImage: `url(${v.photoURL})` }, title: "Büyüt", onclick: () => lightbox(v.photoURL) }) : h("div", { class: "pd-av sq" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
         h("h1", { class: "pd-name" }, name),
         h("span", { class: "pd-citypill" }, icon("location-outline", { size: 13, color: "#A78BFA" }), h("span", {}, [v.city, v.district].filter(Boolean).join(" · ") || "Şehir belirtilmemiş")),
         v.address ? h("div", { class: "pd-address" }, icon("navigate-outline", { size: 12, color: "var(--text-muted)" }), h("span", {}, v.address)) : null,

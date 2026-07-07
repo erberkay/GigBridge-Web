@@ -10,7 +10,7 @@ import {
   artistVenueReviewsGiven, submitArtistVenueReview, fetchArtistRatings, listGroups,
   serverTimestamp,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, modal, fmtDate, ROLE } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, modal, lightbox, fmtDate, ROLE } from "../ui.js";
 import { messagesView } from "./messages.js";
 
 const A = ROLE.artist; // #A855F7
@@ -904,7 +904,7 @@ async function renderProfile(root) {
   const cover = h("div", { class: "ax-cover" + (p.bannerUrl ? " has-banner" : "") },
     p.bannerUrl ? h("div", { class: "ax-banner", style: { backgroundImage: `url(${p.bannerUrl})` } }) : null,
     h("div", { class: "ax-bigavatar" },
-      p.photoURL ? h("div", { class: "img", style: { backgroundImage: `url(${p.photoURL})` } }) : h("div", { class: "ph" }, name.trim().charAt(0).toUpperCase() || "?")),
+      p.photoURL ? h("div", { class: "img zoomable", style: { backgroundImage: `url(${p.photoURL})` }, title: "Büyüt", onclick: () => lightbox(p.photoURL) }) : h("div", { class: "ph" }, name.trim().charAt(0).toUpperCase() || "?")),
     h("div", { class: "ax-pname" }, name),
     h("div", { class: "ax-pmail" }, p.email || ""),
     h("div", {}, h("span", { class: "ax-typebadge" }, icon("mic-outline", { size: 13, color: A }), h("span", {}, "Sanatçı"))),

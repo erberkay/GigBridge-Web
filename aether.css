@@ -863,3 +863,24 @@ input:focus, textarea:focus, select:focus {
 .cp-toggle.on, .cp-menulbl.hl { color: var(--amber) !important; }
 /* Mono-caps etiket harf aralığı kit ölçeğine (0.16em) */
 .badge, .pill, .chip, .caption, .flabel { letter-spacing: 0.16em; }
+
+/* ══════════ Keşfet şehir açılır listesi → çipin altında popover (sola kayma düzeltmesi) ══════════ */
+.hs-citywrap { position: relative; flex: 0 0 auto; display: flex; }
+.hs-citywrap > .hs-citydrop {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  width: min(340px, 86vw); margin: 0; z-index: 60;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+}
+.hs-citywrap > .hs-citydrop .hs-citylist { max-height: 300px; overflow-y: auto; }
+
+/* ══════════ Fotoğraf büyüteci (lightbox) — profil/kapak fotoğrafı tam ekran ══════════ */
+.zoomable { cursor: zoom-in; }
+.lb-overlay {
+  position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: rgba(3,4,7,0.92); backdrop-filter: blur(4px);
+  opacity: 0; transition: opacity .18s ease; cursor: zoom-out;
+}
+.lb-overlay.show { opacity: 1; }
+.lb-img { max-width: 92vw; max-height: 88vh; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,0.7); cursor: default; }
+.lb-close { position: fixed; top: 20px; right: 20px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+.lb-close:hover { background: var(--surface-2); }

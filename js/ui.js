@@ -184,6 +184,17 @@ export function modal({ title, body, actions = [], onClose }) {
   return { close };
 }
 
+// Fotoğraf büyüteci — profil/kapak fotoğrafını tam ekran gösterir (tıkla-kapat).
+export function lightbox(url) {
+  if (!url) return;
+  const overlay = h("div", { class: "lb-overlay", onclick: () => close() },
+    h("img", { class: "lb-img", src: url, alt: "", onclick: (e) => e.stopPropagation() }),
+    h("button", { class: "lb-close", "aria-label": "Kapat", onclick: () => close() }, icon("close", { size: 22 })));
+  const close = () => { overlay.classList.remove("show"); setTimeout(() => overlay.remove(), 180); };
+  document.body.append(overlay);
+  requestAnimationFrame(() => overlay.classList.add("show"));
+}
+
 function shade(hex) {
   try { const n = parseInt(hex.slice(1), 16); const r = Math.max(0, (n >> 16) - 40), g = Math.max(0, ((n >> 8) & 255) - 40), b = Math.max(0, (n & 255) - 40);
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); } catch { return hex; }
