@@ -898,3 +898,9 @@ button, input, select, textarea { font-family: inherit; }
 .hs-city-item, .hs-locate, .hs-citysearch input, .hs-fdrop-artists, .hs-city-empty { font-size: 13px !important; }
 .hs-city-item { padding: 9px 14px !important; }
 .hs-locate { padding: 10px 0 !important; }
+
+/* Filtre dropdown (TÜRE GÖRE FİLTRELE) daha kompakt — çip/panel küçültüldü */
+.hs-filterdrop { max-width: 380px !important; padding: 12px !important; }
+.hs-fdrop-chips { gap: 6px !important; }
+.hs-fdrop-chips .chip { font-size: 11px !important; padding: 5px 11px !important; font-weight: 600 !important; }
+.hs-fdrop-artists { font-size: 12px !important; padding: 6px 12px !important; }
