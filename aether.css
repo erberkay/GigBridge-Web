@@ -753,3 +753,77 @@ input:focus, textarea:focus, select:focus {
 .vx-revitem-stars { flex: 0 0 auto; display: inline-flex; gap: 1px; }
 .vx-revitem-text { font-size: 12.5px; line-height: 1.5; color: var(--text-secondary); word-break: break-word; }
 .vx-revitem-ev { display: flex; align-items: center; gap: 3px; margin-top: 5px; font-size: 10.5px; color: var(--text-muted); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEK STANDART — panel tipografi + buton boyut + bölüm boşluğu birliği
+   (denetim workflow'u + elle düzeltmeler; hepsi .page.has-nav'a scope'lu →
+    Keşfet .hs-* ve detay sayfaları [ed-/pd-/at-] içerik dışında bozulmaz.
+    ZATEN YAPILANLARI tekrar etmez: mat-siyah renk, un-cap, header max-width,
+    stat auto-fit, auth 52px. Accept/Reject semantik yeşil/kırmızı KORUNUR.)
+   ═══════════════════════════════════════════════════════════════════ */
+/* 1) İçerik büyük başlık → tek 28px/800 (artist/organizer/customer 22 → 28) */
+.page.has-nav .ax-name, .page.has-nav .ox-hname, .page.has-nav .ox-pname, .page.has-nav .cp-name {
+  font-size: 28px !important; font-weight: 800 !important;
+}
+/* 2) Bölüm başlığı → tek 18px/700 */
+.page.has-nav .sect-title, .page.has-nav .vx-secttitle, .page.has-nav .ox-secttitle, .page.has-nav .vx-crtitle {
+  font-size: 18px !important; font-weight: 700 !important; letter-spacing: -0.3px !important;
+}
+/* 3) Çakışan amber eyebrow gizli (bölüm başlığı tek dil) */
+.page.has-nav .vx-eyebrow { display: none !important; }
+/* 4) See-all / link → tek magenta mono-caps (amber/rose/magenta karışıktı) */
+.page.has-nav .vx-seeall, .page.has-nav .hs-seeall, .page.has-nav .ox-link, .page.has-nav .ax-callink {
+  color: var(--primary) !important; font-size: 11px !important; font-weight: 600 !important;
+  letter-spacing: 0.08em !important; text-transform: uppercase !important; font-family: var(--font-mono) !important;
+}
+/* 5) Stat değeri → tek 22px/800 */
+.page.has-nav .stat-val, .page.has-nav .ox-statv, .page.has-nav .ax-stat-val, .page.has-nav .ax-overall-val, .page.has-nav .vx-scoreval {
+  font-size: 22px !important; font-weight: 800 !important;
+}
+/* 6) Stat etiketi → tek 11px */
+.page.has-nav .stat-label, .page.has-nav .ox-statl, .page.has-nav .ax-stat-sub, .page.has-nav .vx-pstat-lbl, .page.has-nav .vx-scorelbl {
+  font-size: 11px !important;
+}
+/* 7) Form alan etiketi → tek 11px mono-caps */
+.page.has-nav .vx-lbl, .page.has-nav .ax-vislabel, .page.has-nav .vx-ratelbl, .page.has-nav .vx-sortlbl {
+  font-size: 11px !important; font-family: var(--font-mono) !important; text-transform: uppercase !important; letter-spacing: 0.16em !important;
+}
+/* 8) Buton boyut birliği → tek 44px / 0 20px / 13px mono (accept/reject + detay HARİÇ) */
+.page.has-nav .btn, .page.has-nav .ox-cta, .page.has-nav .ox-teamfab, .page.has-nav .vx-submit, .page.has-nav .tl-sharebtn {
+  min-height: 44px !important; height: 44px !important; padding: 0 20px !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important;
+  font-family: var(--font-mono) !important; font-weight: 600 !important; font-size: 13px !important;
+  letter-spacing: 0.14em !important; text-transform: uppercase !important; border-radius: var(--radius) !important;
+}
+.page.has-nav .vx-submit { padding: 0 !important; width: 100% !important; }
+/* 9) vx-submit → mat-siyah renk (accept/reject semantik yeşil/kırmızı KORUNUR) */
+.page.has-nav .vx-submit {
+  background: #16181D !important; color: var(--text) !important; border: 1px solid #2C303A !important; background-image: none !important;
+}
+.page.has-nav .vx-submit:hover { background: #1E2129 !important; border-color: #3A3F4B !important; }
+/* 10) Kart köşe yarıçapı → eksikler var(--radius)'a */
+.page.has-nav .ax-review, .page.has-nav .ox-quick, .page.has-nav .ox-evrow,
+.page.has-nav .vx-reqcard, .page.has-nav .vx-rescard, .page.has-nav .vx-evrow, .page.has-nav .vx-sacard {
+  border-radius: var(--radius) !important;
+}
+/* 11) Kart iç padding → tek 16px */
+.page.has-nav .ax-review { padding: 16px !important; }
+/* 12) Liste kartı alt boşluk → tek 12px */
+.page.has-nav .vx-reqcard, .page.has-nav .vx-rescard, .page.has-nav .vx-evrow,
+.page.has-nav .vx-sacard, .page.has-nav .ox-evrow, .page.has-nav .rv-card {
+  margin-bottom: 12px !important;
+}
+/* 13) Bölüm dikey boşluk → tek 28px üst / 14px başlık-altı */
+.page.has-nav .hs-secthead, .page.has-nav .vx-secthead, .page.has-nav .ax-sect { margin: 28px 0 14px !important; }
+.page.has-nav .ox-sect { margin-top: 28px !important; }
+.page.has-nav .ox-secthead { margin-bottom: 14px !important; }
+.page.has-nav .sect { margin-bottom: 28px !important; }
+.page.has-nav .sect-head { margin-bottom: 14px !important; }
+/* 14) Organizer + customer profil un-cap (hiza denetimi bunları atlamıştı) */
+@media (min-width: 900px) {
+  .page.has-nav .ox-pwrap,
+  .page.has-nav .cp-hero, .page.has-nav .cp-stats, .page.has-nav .cp-menu,
+  .page.has-nav .cp-logout, .page.has-nav .cp-delete {
+    max-width: none !important; margin-left: 0 !important; margin-right: 0 !important;
+  }
+}
