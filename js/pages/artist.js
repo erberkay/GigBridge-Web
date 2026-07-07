@@ -12,7 +12,7 @@ import {
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, modal, lightbox, fmtDate, ROLE } from "../ui.js";
 import { messagesView } from "./messages.js";
-import { changeEmailModal } from "./auth.js";
+import { changeEmailModal, deleteAccountModal } from "./auth.js";
 
 const A = ROLE.artist; // #A855F7
 const MIN_STAGE_FEE = 3500;        // iş kuralı: altında sahne alınamaz
@@ -1073,7 +1073,8 @@ async function renderProfile(root) {
         { label: "İptal", variant: "ghost", onClick: () => {} },
         { label: "Çıkış Yap", variant: "danger", onClick: () => logout() },
       ] });
-    } }));
+    } }),
+    btn("Hesabımı Sil", { variant: "ghost", ic: "trash-outline", full: true, onClick: () => deleteAccountModal() }));
 }
 
 function statCard(ic, val, label) {

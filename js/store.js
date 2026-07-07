@@ -1,5 +1,6 @@
 // Oturum durumu — Auth kullanıcısı + Firestore profil dokümanı (users/{uid}).
-import { auth, db, doc, getDoc, onAuthStateChanged, signOut, signInAnonymously, getRedirectResult } from "./firebase.js";
+import { auth, db, doc, getDoc, updateDoc, serverTimestamp, onAuthStateChanged, signOut, signInAnonymously, getRedirectResult } from "./firebase.js";
+import { toast } from "./ui.js";
 
 export const OWNER_EMAIL = "berkayer032@gmail.com";
 
@@ -51,6 +52,20 @@ export function initAuth() {
         const snap = await getDoc(doc(db, "users", user.uid));
         session.profile = snap.exists() ? { id: user.uid, ...snap.data() } : null;
       } catch (_) { session.profile = null; }
+      // Silme talebi varken giriş yapıldı → talebi İPTAL ET (3 ay içinde giriş = geri getir).
+      // İptal yazımı BAŞARISIZ olursa yanlış "iptal edildi" deme (sunucuda pendingDeletion:true
+      // kalır, CF yine siler) → çıkış yaptır, kullanıcı tekrar denesin.
+      if (session.profile && session.profile.pendingDeletion) {
+        try {
+          await updateDoc(doc(db, "users", user.uid), { pendingDeletion: false, deletionRequestedAt: null });
+          session.profile.pendingDeletion = false; session.profile.deletionRequestedAt = null;
+          try { toast("Hesabın yeniden aktif — silme talebin iptal edildi."); } catch (_) {}
+        } catch (_) {
+          try { toast("Silme talebin iptal edilemedi. İnternetini kontrol edip tekrar giriş yap."); } catch (_) {}
+          await signOut(auth); // yanlış güven verme — oturumu kapat, tekrar denesin
+          return; // profil aktif edilmesin
+        }
+      }
       session.isAdmin = await computeIsAdmin(user);
     }
     session.ready = true;
@@ -63,6 +78,19 @@ export async function refreshProfile() {
   const snap = await getDoc(doc(db, "users", session.user.uid));
   session.profile = snap.exists() ? { id: session.user.uid, ...snap.data() } : null;
   emit();
+}
+
+// Hesap silme — 3 ay yumuşak silme. Hemen silmez: users/{uid}'e pendingDeletion işaretler.
+// 3 ay boyunca profil/içerik görünür kalır; kullanıcı bu sürede giriş yaparsa initAuth
+// talebi iptal eder. 3 ay giriş olmazsa Cloud Function (purgeScheduledDeletions) kalıcı siler.
+export async function scheduleAccountDeletion() {
+  const user = auth.currentUser;
+  if (!user) throw new Error("no-user");
+  await updateDoc(doc(db, "users", user.uid), {
+    pendingDeletion: true,
+    deletionRequestedAt: serverTimestamp(),
+  });
+  await signOut(auth); // oturumu kapat → misafir moduna düşer
 }
 
 // E-posta doğrulama durumunu SUNUCUDAN tazele (kullanıcı bağlantıya tıkladıktan sonra).

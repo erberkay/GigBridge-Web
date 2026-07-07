@@ -552,7 +552,9 @@ async function renderProfile(root) {
         pMenuRow("star-outline", "Sanatçı Değerlendir", "#/venue/degerlendir"))),
     sect("Hesap", "settings-outline", 0,
       h("div", { class: "menu-card" },
-        pMenuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal()))),
+        pMenuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal())),
+      h("p", { class: "muted small", style: { margin: "10px 2px 0" } },
+        "Mekan hesabını yalnızca GigBridge uygulamasından silebilirsin.")),
     sect("Destek", "help-buoy-outline", 0,
       h("p", { class: "muted small mb6" }, "Bir sorunun ya da talebin mi var? Yöneticiye ilet."),
       btn("Sorun Bildir", { variant: "ghost", ic: "flag-outline", full: true, onClick: reportModal })));

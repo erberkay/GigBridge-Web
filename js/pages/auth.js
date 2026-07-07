@@ -56,7 +56,7 @@ function recaptchaNote() {
     h("a", { href: "https://policies.google.com/terms", target: "_blank", rel: "noopener" }, "Şartlar"),
     " geçerlidir.");
 }
-import { session, logout, computeIsAdmin, refreshProfile, recheckEmailVerified } from "../store.js";
+import { session, logout, computeIsAdmin, refreshProfile, recheckEmailVerified, scheduleAccountDeletion } from "../store.js";
 import { h, clear, icon, btn, field, card, toast, modal, ROLE } from "../ui.js";
 
 const PROVINCES = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkâri","Hatay","Iğdır","Isparta","İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars","Kastamonu","Kayseri","Kilis","Kırıkkale","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu","Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli","Uşak","Van","Yalova","Yozgat","Zonguldak"];
@@ -457,6 +457,35 @@ export function changeEmailModal() {
         msg));
   }
   modal({ title: "E-posta Değiştir", body, actions: [] });
+}
+
+// ── Hesabımı Sil modalı — 3 ay yumuşak silme (sanatçı/organizatör; müşteri app'ten) ──
+// Hemen silmez: 3 ay boyunca her şey görünür kalır, kullanıcı giriş yaparsa iptal olur,
+// 3 ay giriş olmazsa Cloud Function kalıcı siler.
+export function deleteAccountModal() {
+  const msg = h("p", { class: "msg" });
+  const body = h("div", {},
+    h("p", { class: "muted", style: { lineHeight: "1.5", margin: "0 0 10px" } },
+      "Hesabın silinmek üzere işaretlenecek. 3 ay boyunca profilin ve içeriklerin görünür kalır."),
+    h("p", { class: "muted", style: { lineHeight: "1.5", margin: "0 0 10px" } },
+      "Bu süre içinde tekrar giriş yaparsan silme talebin otomatik iptal edilir. 3 ay boyunca hiç giriş yapmazsan hesabın ve tüm verilerin kalıcı olarak silinir."),
+    msg);
+  modal({
+    title: "Hesabımı Sil",
+    body,
+    actions: [
+      { label: "Vazgeç", variant: "ghost", onClick: () => {} },
+      { label: "Hesabımı Sil", variant: "danger", ic: "trash-outline", onClick: async () => {
+        try {
+          await scheduleAccountDeletion();
+          location.hash = "#/";
+          toast("Hesabın silinmek üzere işaretlendi. 3 ay içinde giriş yaparsan geri alınır.");
+        } catch (_) {
+          toast("İşlem başarısız. İnternetini kontrol edip tekrar dene.");
+        }
+      } },
+    ],
+  });
 }
 
 // ── Hesabı tamamla (Google ile yeni giriş → profil yok) ──
