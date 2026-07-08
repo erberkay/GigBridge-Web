@@ -855,7 +855,7 @@ input:focus, textarea:focus, select:focus {
    spill/kare köşe yapıyordu. overflow:hidden banner'ı cover sınırına kırpar; border-radius
    ile TÜM köşeler yuvarlak (kare "komik" köşe gider); margin-top ile başlıktan hafif ayrılıp
    yuvarlak üst köşeler görünür kalır. */
-.ax-cover.has-banner { padding-top: 0 !important; overflow: hidden; border-radius: 18px !important; }
+.ax-cover.has-banner { padding-top: 0 !important; overflow: hidden; border-radius: 18px !important; margin-top: 0 !important; }
 .ax-banner { position: relative; height: 150px; margin: 0 -18px 16px; background-size: cover; background-position: center; border-bottom: 1px solid var(--border); }
 /* Alta doğru karartma (scrim) — ham/çizgili görsel bile sayfaya yumuşak geçen, tasarımlı bir hero gibi durur (pd-banner ile aynı) */
 .ax-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,7,10,0) 40%, var(--bg)); pointer-events: none; }
