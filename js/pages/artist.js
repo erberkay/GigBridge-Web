@@ -731,11 +731,16 @@ function artistInfoModal(it) {
 async function renderDiscover(root) {
   clear(root);
   const myUid = session.user?.uid;
-  const searchIn = h("input", { placeholder: "Sanatçı, tür veya şehir ara…", oninput: () => draw() });
+  const searchIn = h("input", { placeholder: "Sanatçı veya tür ara…", oninput: () => draw() });
+  const cityDl = h("datalist", { id: "kx-cities" }, ...PROVINCES.map((c) => h("option", { value: c })));
+  const cityIn = h("input", { placeholder: "Tüm Şehirler", list: "kx-cities", oninput: () => draw() });   // boş = Tümü
   const listBox = h("div", { class: "kx-list" }, h("div", { class: "loading" }, spinner()));
   root.append(
     h("p", { class: "muted small mb6" }, "Diğer sanatçıları keşfet ve takip et"),
-    h("label", { class: "field" }, searchIn),
+    cityDl,
+    h("div", { class: "kx-filters" },
+      h("label", { class: "field" }, h("span", { class: "flabel" }, "Ara"), searchIn),
+      h("label", { class: "field" }, h("span", { class: "flabel" }, "Şehir"), cityIn)),
     listBox);
 
   let artists = [], ratings = new Map();
@@ -748,7 +753,10 @@ async function renderDiscover(root) {
   function draw() {
     clear(listBox);
     const q = (searchIn.value || "").trim().toLocaleLowerCase("tr-TR");
-    const list = artists.filter((a) => !q || `${a.displayName || ""} ${genreOf(a)} ${a.city || ""}`.toLocaleLowerCase("tr-TR").includes(q));
+    const cityVal = (cityIn.value || "").trim();
+    const list = artists.filter((a) =>
+      (!cityVal || (a.city || "") === cityVal) &&
+      (!q || `${a.displayName || ""} ${genreOf(a)}`.toLocaleLowerCase("tr-TR").includes(q)));
     if (!list.length) { listBox.append(empty("people-outline", "Sanatçı bulunamadı", q ? "Aramanı değiştirmeyi dene." : "Yakında keşfedilecek sanatçılar burada.")); return; }
     list.forEach((a) => {
       const agg = ratings.get(a.id);
