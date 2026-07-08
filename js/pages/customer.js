@@ -451,33 +451,61 @@ function artistRowHome(a, followSet) {
 }
 
 // ── Etkinlikler listesi (app EventsScreen) — tarih filtreli tam liste ──
+// Tarih süzgeci — app EventsScreen birebir: hızlı aralık çipleri (Tümü/Bu Hafta/Bu Ay)
+// + 14 günlük TAKVİM şeridi (BUGÜN/YARIN/gün-adı + tarih). Aktif çip: ink hairline + prizma alt-şerit.
+const _startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
+const TR_MONTH_SHORT = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+const TR_DAY_SHORT   = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cte"];
+function buildDateFilters() {
+  const t0 = _startOfDay(Date.now());
+  const list = [
+    { key: "all",   label: "Tümü",     sub: "", kind: "all",   dayMs: 0 },
+    { key: "week",  label: "Bu Hafta", sub: "", kind: "week",  dayMs: 0 },
+    { key: "month", label: "Bu Ay",    sub: "", kind: "month", dayMs: 0 },
+  ];
+  for (let i = 0; i < 14; i++) {
+    const dayMs = t0 + i * 86400e3, d = new Date(dayMs);
+    const label = i === 0 ? "BUGÜN" : i === 1 ? "YARIN" : TR_DAY_SHORT[d.getDay()].toLocaleUpperCase("tr-TR");
+    list.push({ key: "d" + dayMs, label, sub: `${d.getDate()} ${TR_MONTH_SHORT[d.getMonth()]}`, kind: "day", dayMs });
+  }
+  return list;
+}
+function dateMatches(ms, f, now) {
+  if (f.kind === "all") return true;
+  if (ms == null) return false;               // yılsız/ms'siz kayıt yalnız "Tümü"de görünür
+  const today0 = _startOfDay(now);
+  if (f.kind === "week")  return ms >= today0 && ms <= now + 7 * 86400e3;
+  if (f.kind === "month") return ms >= today0 && ms <= now + 30 * 86400e3;
+  return _startOfDay(ms) === f.dayMs;         // kind === "day"
+}
+
 async function eventsListView(_id, root) {
   let events = [];
   try { events = await discoverEvents(); } catch (_) { clear(root); root.append(errBox()); return; }
   clear(root);
-  const FILTERS = ["Tümü", "Bugün", "Yarın", "Bu Hafta", "Bu Ay"];
-  let df = "Tümü";
-  const chipRow = h("div", { class: "chip-row" });
+  const FILTERS = buildDateFilters();
+  let df = "all";
+  const cal = h("div", { class: "ev-cal" });
   const listBox = h("div", { class: "ev-grid" });
-  const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
   const draw = () => {
-    clear(chipRow); clear(listBox);
-    FILTERS.forEach((f) => chipRow.append(h("button", { class: "chip" + (f === df ? " on" : ""), onclick: () => { df = f; draw(); } }, f)));
-    const now = Date.now(), today0 = startOfDay(now);
+    clear(cal); clear(listBox);
+    FILTERS.forEach((f) => {
+      const on = f.key === df, isDay = f.kind === "day";
+      cal.append(h("button", { class: "ev-cal-cell" + (isDay ? " day" : "") + (on ? " on" : ""), onclick: () => { df = f.key; draw(); } },
+        h("span", { class: "ev-cal-lbl" }, f.label),
+        isDay ? h("span", { class: "ev-cal-sub" }, f.sub) : null,
+        on ? h("span", { class: "ev-cal-prism" }) : null));
+    });
+    const now = Date.now(), activeF = FILTERS.find((f) => f.key === df);
     const list = events.filter((e) => {
       if (activeCity !== "TÜMÜ" && fold((e.city || e.location?.city || "").trim()) !== fold(activeCity)) return false;
-      const ms = msOf(e); if (ms == null) return df === "Tümü";
-      if (df === "Bugün") return startOfDay(ms) === today0;
-      if (df === "Yarın") return startOfDay(ms) === today0 + 86400e3;
-      if (df === "Bu Hafta") return ms <= now + 7 * 86400e3;
-      if (df === "Bu Ay") return ms <= now + 30 * 86400e3;
-      return true;
+      return dateMatches(msOf(e), activeF, now);
     });
-    if (!list.length) { listBox.append(hsEmpty("calendar-outline", "Etkinlik yok", "Bu filtrede etkinlik bulunamadı.")); return; }
+    if (!list.length) { listBox.append(hsEmpty("calendar-outline", "Etkinlik yok", "Bu tarihte etkinlik bulunamadı.")); return; }
     list.forEach((e) => listBox.append(ecard2(e, true)));
   };
   draw();
-  root.append(chipRow, listBox);
+  root.append(cal, listBox);
 }
 
 // ══════════ ETKİNLİK DETAY — app EventDetailScreen birebir ══════════

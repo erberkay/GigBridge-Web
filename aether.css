@@ -915,3 +915,26 @@ button, input, select, textarea { font-family: inherit; }
 .hs-fdrop-chips { gap: 6px !important; }
 .hs-fdrop-chips .chip { font-size: 11px !important; padding: 5px 11px !important; font-weight: 600 !important; }
 .hs-fdrop-artists { font-size: 12px !important; padding: 6px 12px !important; }
+
+/* ══════════ Etkinlikler takvim şeridi — app EventsScreen birebir ══════════ */
+/* Hızlı aralık çipleri (Tümü/Bu Hafta/Bu Ay) + 14 günlük takvim kartı (BUGÜN/YARIN/gün-adı + tarih). */
+.ev-cal {
+  display: flex; gap: 8px; overflow-x: auto; margin: 10px 0 18px; padding-bottom: 6px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.ev-cal::-webkit-scrollbar { display: none; }
+.ev-cal-cell {
+  position: relative; overflow: hidden; flex: 0 0 auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-width: 54px; padding: 8px 12px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text-secondary); font-family: var(--font-mono); cursor: pointer;
+  transition: border-color .15s, color .15s, transform .08s;
+}
+.ev-cal-cell.day { min-width: 60px; }
+.ev-cal-cell:hover { border-color: var(--border-strong); }
+.ev-cal-cell:active { transform: scale(.97); }
+.ev-cal-cell.on { border-color: var(--text); background: transparent; color: var(--text); }
+.ev-cal-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.ev-cal-sub { font-size: 13px; font-weight: 700; color: var(--text); }
+.ev-cal-prism { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, #4ED8FF, #FF4FA3, #FF8A2A); }
