@@ -939,9 +939,9 @@ async function renderProfile(root) {
     }
   })();
 
-  const pic = photoPicker("Profil fotoğrafı (opsiyonel)", p.photoURL);
+  const pic = photoPicker("Profil fotoğrafı (opsiyonel)", p.photoURL, { aspect: 1, round: true });
   // Kapak/banner görseli — mekanlar sanatçı profilini açınca en üstte geniş görür (vitrin etkisi).
-  const bannerPic = photoPicker("Kapak / banner görseli (opsiyonel) — mekanlar profilinde en üstte görür", p.bannerUrl);
+  const bannerPic = photoPicker("Kapak / banner görseli (opsiyonel) — mekanlar profilinde en üstte görür", p.bannerUrl, { aspect: 16 / 9 });
   const cityList = h("datalist", { id: "ax-citylist" }, ...PROVINCES.map((c) => h("option", { value: c })));
 
   // Müzik türleri — çoklu seçim (öneri çipleri + özel tür ekleme)

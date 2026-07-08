@@ -2092,3 +2092,19 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 /* UI fix 2 (Claude): bos kapak gradienti + mobil arama-filtre boslugu */
 .hero-slide,.t10,.ecard2{background-image:radial-gradient(130% 125% at 0% 0%,rgba(168,85,247,.5),transparent 55%),radial-gradient(130% 125% at 100% 100%,rgba(6,182,212,.3),transparent 55%)}
 @media (max-width:600px){.hs-tabs{margin-top:28px}}
+
+/* ══════════ Görsel kırpma/konumlandırma modalı (photoPicker) ══════════ */
+.cr-overlay { position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,0.74); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.cr-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; width: min(400px, 94vw); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.cr-title { font-size: 16px; font-weight: 800; color: var(--text); align-self: flex-start; }
+.cr-hint { font-size: 12.5px; color: var(--text-muted); align-self: flex-start; margin-top: -8px; }
+.cr-stage { position: relative; overflow: hidden; border-radius: 12px; background: #000; touch-action: none; cursor: grab; }
+.cr-stage:active { cursor: grabbing; }
+.cr-stage.round { border-radius: 50%; }
+.cr-img { position: absolute; top: 0; left: 0; user-select: none; -webkit-user-drag: none; max-width: none; }
+.cr-frame { position: absolute; inset: 0; pointer-events: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.28) inset; }
+.cr-frame.round { border-radius: 50%; }
+.cr-zoomrow { display: flex; align-items: center; gap: 10px; width: 100%; }
+.cr-zoom { flex: 1; accent-color: var(--primary); cursor: pointer; }
+.cr-actions { display: flex; gap: 10px; width: 100%; margin-top: 4px; }
+.cr-actions .btn { flex: 1; }

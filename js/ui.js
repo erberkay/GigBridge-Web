@@ -94,23 +94,92 @@ export function field({ label, id, type = "text", placeholder, value = "", hint,
   );
 }
 
-// Fotoğraf seçici — { node, getFile }. Seçilen dosya submit'te uploadImage ile yüklenir.
-// currentUrl verilirse mevcut fotoğraf önizleme olarak gösterilir (profil fotoğrafı düzenleme).
-export function photoPicker(label = "Fotoğraf ekle (opsiyonel)", currentUrl) {
+// Görsel kırpma/konumlandırma modalı (app allowsEditing muadili): kullanıcı fotoğrafı
+// sürükleyip yakınlaştırarak çerçeveye göre konumlandırır. Promise<Blob|null> döndürür
+// (İptal → null). aspect = genişlik/yükseklik (avatar 1, banner 16/9). round → yuvarlak çerçeve.
+export function openImageCropper(file, { aspect = 1, round = false } = {}) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.onload = () => {
+      const SW = Math.min(340, (window.innerWidth || 360) - 72);
+      const SH = Math.round(SW / aspect);
+      const cover = Math.max(SW / img.naturalWidth, SH / img.naturalHeight);
+      let z = 1, ox = 0, oy = 0;                       // zoom çarpanı + görüntü konumu
+      const dw = () => img.naturalWidth * cover * z;
+      const dh = () => img.naturalHeight * cover * z;
+      ox = (SW - dw()) / 2; oy = (SH - dh()) / 2;
+
+      const imgEl = h("img", { src: url, class: "cr-img", draggable: false });
+      const stage = h("div", { class: "cr-stage" + (round ? " round" : "") }, imgEl, h("div", { class: "cr-frame" + (round ? " round" : "") }));
+      const zoom = h("input", { type: "range", min: "1", max: "3", step: "0.01", value: "1", class: "cr-zoom" });
+      stage.style.width = SW + "px"; stage.style.height = SH + "px";
+
+      const clamp = () => { ox = Math.min(0, Math.max(SW - dw(), ox)); oy = Math.min(0, Math.max(SH - dh(), oy)); };
+      const apply = () => { clamp(); imgEl.style.width = dw() + "px"; imgEl.style.height = dh() + "px"; imgEl.style.transform = `translate(${ox}px, ${oy}px)`; };
+      apply();
+
+      let drag = null;
+      stage.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY, ox, oy }; try { stage.setPointerCapture(e.pointerId); } catch (_) {} });
+      stage.addEventListener("pointermove", (e) => { if (!drag) return; ox = drag.ox + (e.clientX - drag.x); oy = drag.oy + (e.clientY - drag.y); apply(); });
+      const endDrag = () => { drag = null; };
+      stage.addEventListener("pointerup", endDrag);
+      stage.addEventListener("pointercancel", endDrag);
+      zoom.addEventListener("input", () => {
+        const nz = parseFloat(zoom.value), cx = SW / 2, cy = SH / 2;
+        const pre = cover * z, post = cover * nz;
+        const nx = (cx - ox) / pre, ny = (cy - oy) / pre;   // merkezdeki natural nokta sabit
+        z = nz; ox = cx - nx * post; oy = cy - ny * post; apply();
+      });
+
+      const cleanup = () => { overlay.remove(); URL.revokeObjectURL(url); };
+      const cancel = () => { cleanup(); resolve(null); };
+      const done = () => {
+        const s = cover * z;
+        const tW = (aspect === 1) ? 640 : 1280, tH = Math.round(tW / aspect);
+        const cv = document.createElement("canvas"); cv.width = tW; cv.height = tH;
+        cv.getContext("2d").drawImage(img, -ox / s, -oy / s, SW / s, SH / s, 0, 0, tW, tH);
+        cv.toBlob((blob) => { cleanup(); resolve(blob); }, "image/jpeg", 0.9);
+      };
+
+      const overlay = h("div", { class: "cr-overlay", onclick: (e) => { if (e.target === overlay) cancel(); } },
+        h("div", { class: "cr-panel" },
+          h("div", { class: "cr-title" }, "Fotoğrafı Konumlandır"),
+          h("div", { class: "cr-hint" }, "Sürükle ve yakınlaştırarak çerçeveyi doldur."),
+          stage,
+          h("div", { class: "cr-zoomrow" }, icon("remove-outline", { size: 16, color: "#8A8E97" }), zoom, icon("add-outline", { size: 16, color: "#8A8E97" })),
+          h("div", { class: "cr-actions" },
+            h("button", { class: "btn btn-ghost", type: "button", onclick: cancel }, "İptal"),
+            h("button", { class: "btn", type: "button", onclick: done }, "Uygula"),
+          ),
+        ),
+      );
+      (document.getElementById("modal-root") || document.body).append(overlay);
+    };
+    img.src = url;
+  });
+}
+
+// Fotoğraf seçici — { node, getFile }. Seçilen dosya KIRPMA modalından geçer (sürükle+zoom),
+// getFile() kırpılmış Blob döndürür. opts: { aspect (gen/yük), round }. currentUrl → mevcut önizleme.
+export function photoPicker(label = "Fotoğraf ekle (opsiyonel)", currentUrl, opts = {}) {
   let file = null;
-  const box = h("div", { class: "photo-box" }, icon("image-outline", { size: 26, color: "#6b6b82" }), h("span", { class: "photo-hint" }, label));
-  if (currentUrl) {
-    box.style.backgroundImage = `url(${currentUrl})`;
+  const setPreview = (bg) => {
+    box.style.backgroundImage = `url(${bg})`;
     box.classList.add("has-img"); clear(box);
     box.append(h("span", { class: "photo-edit" }, icon("camera", { size: 13, color: "#fff" }), " Değiştir"));
-  }
-  const input = h("input", { type: "file", accept: "image/*", class: "photo-input", onchange: (e) => {
-    file = (e.target.files || [])[0] || null;
-    if (file) {
-      box.style.backgroundImage = `url(${URL.createObjectURL(file)})`;
-      box.classList.add("has-img"); clear(box);
-      box.append(h("span", { class: "photo-edit" }, icon("camera", { size: 13, color: "#fff" }), " Değiştir"));
-    }
+  };
+  const box = h("div", { class: "photo-box" }, icon("image-outline", { size: 26, color: "#6b6b82" }), h("span", { class: "photo-hint" }, label));
+  if (currentUrl) setPreview(currentUrl);
+  const input = h("input", { type: "file", accept: "image/*", class: "photo-input", onchange: async (e) => {
+    const picked = (e.target.files || [])[0] || null;
+    e.target.value = "";                              // aynı dosya tekrar seçilebilsin
+    if (!picked) return;
+    const cropped = await openImageCropper(picked, { aspect: opts.aspect || 1, round: !!opts.round });
+    if (!cropped) return;                             // kullanıcı iptal etti
+    file = cropped;
+    setPreview(URL.createObjectURL(cropped));
   } });
   return { node: h("label", { class: "photo-wrap" }, box, input), getFile: () => file };
 }

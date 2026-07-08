@@ -271,7 +271,7 @@ function evCard(ev, refresh) {
 function openCreateEvent(onDone) {
   const p = session.profile || { id: session.user?.uid };
   let venueSel = null, artistSel = null, busy = false;
-  const pic = photoPicker("Kapak fotoğrafı ekle (16:9, opsiyonel)");
+  const pic = photoPicker("Kapak fotoğrafı ekle (16:9, opsiyonel)", undefined, { aspect: 16 / 9 });
 
   const venueLbl = h("span", { class: "grow" }, "Mekan Seç * (istek gönderilir)");
   const venueBtn = h("button", { type: "button", class: "ox-selbtn", onclick: openVenuePick },
@@ -691,7 +691,7 @@ function venueRow(vn) {
       h("button", { class: "act ok", onclick: () => requestModal(vn) }, icon("paper-plane-outline", { size: 15 }), h("span", {}, "İstek"))));
 }
 function requestModal(vn) {
-  const pic = photoPicker("Etkinlik fotoğrafı (opsiyonel)");
+  const pic = photoPicker("Etkinlik fotoğrafı (opsiyonel)", undefined, { aspect: 16 / 9 });
   const body = h("div", {}, pic.node,
     field({ label: "Etkinlik Adı", id: "rqtitle", placeholder: "Örn. Yaz Festivali" }),
     h("div", { class: "frow" }, field({ label: "Tarih", id: "rqdate", type: "date" }), field({ label: "Saat", id: "rqtime", type: "time" })),
@@ -727,7 +727,7 @@ async function renderProfile(root) {
         isOwner ? "Sahip" : "Personel")));
 
   // Mevcut profil kayıt formu (orgName/city/phone/bio + foto) — korunuyor
-  const pic = photoPicker("Organizasyon / profil fotoğrafı (opsiyonel)", p.photoURL);
+  const pic = photoPicker("Organizasyon / profil fotoğrafı (opsiyonel)", p.photoURL, { aspect: 1, round: true });
   const form = h("form", { class: "form-card", onsubmit: (e) => e.preventDefault() },
     pic.node,
     field({ label: "Organizasyon Adı", id: "porg", value: p.orgName || p.displayName || "", placeholder: "Organizasyon adı" }),

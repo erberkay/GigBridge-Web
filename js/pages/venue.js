@@ -447,7 +447,7 @@ async function renderProfile(root) {
   let ncPending = p.nameChangeStatus === "pending";
   if (ncPending && p.nameChangeRequested && (p.displayName || "") === p.nameChangeRequested) { ncPending = false; clearNameChangeFlag(uid); }
 
-  const pic = photoPicker("Mekan / profil fotoğrafı (opsiyonel)", p.photoURL);
+  const pic = photoPicker("Mekan / profil fotoğrafı (opsiyonel)", p.photoURL, { aspect: 1, round: true });
 
   // Profil özeti (app profileStats: etkinlik / puan / katılım / sanatçı)
   const statsBox = h("div", { class: "stat-grid" }, h("div", { class: "loading" }, spinner()));
@@ -618,7 +618,7 @@ async function renderCreate(root) {
   let artistSel = null, artistKind = null, vip = false, genreSel = "";
 
   // Kapak fotoğrafı (16:9)
-  const pic = photoPicker("Fotoğraf seç ve kaydırarak konumlandır (16:9)");
+  const pic = photoPicker("Fotoğraf seç ve kaydırarak konumlandır (16:9)", undefined, { aspect: 16 / 9 });
   const cover = h("div", { class: "vx-cover" },
     h("span", { class: "vx-lbl" }, "Kapak Fotoğrafı"), pic.node);
 
@@ -1104,7 +1104,7 @@ function inviteModal(x, opts = {}) {
   const name = nameOf(x);
   let mode = opts.mode || "single";
   let months = 3; const days = new Set();
-  const pic = photoPicker("Etkinlik fotoğrafı (opsiyonel)");
+  const pic = photoPicker("Etkinlik fotoğrafı (opsiyonel)", undefined, { aspect: 16 / 9 });
 
   const singleBox = h("div", {}, pic.node,
     h("div", { class: "frow" }, field({ label: "Tarih", id: "idate", type: "date" }), field({ label: "Saat", id: "itime", type: "time" })),
