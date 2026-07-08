@@ -754,7 +754,10 @@ async function artistDetail(id, root) {
   if (!a) { root.append(empty("alert-circle-outline", "Sanatçı bulunamadı")); return; }
   const name = a.displayName || a.name || "Sanatçı";
   const genres = [...new Set((Array.isArray(a.genres) ? a.genres : a.genre ? [a.genre] : []).filter(Boolean))];
-  const avg = revs.length ? (revs.reduce((s, r) => s + (r.rating || 0), 0) / revs.length).toFixed(1) : "—";
+  // Ortalama YALNIZ puanlı (rating>0) yorumlardan — Top10/fetchArtistRatings ile TUTARLI.
+  // (Eskiden rating=0 kriter-yorumları da bölene giriyordu → detayda 5.0, Top10'da farklı çıkıyordu.)
+  const rated = revs.filter((r) => (r.rating || 0) > 0);
+  const avg = rated.length ? (rated.reduce((s, r) => s + r.rating, 0) / rated.length).toFixed(1) : "—";
   const custRevs = revs.filter((r) => (r.authorType ?? "customer") === "customer");
   let foll = following;
 

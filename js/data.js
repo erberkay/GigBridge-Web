@@ -903,6 +903,12 @@ export async function fetchArtistRatings() {
   return out;
 }
 
+// Bayesian (ağırlıklı) puan — app ratings.ts ile birebir. Az yorumlu 5.0'lar tepeye
+// zıplamaz; çok yorumlu yüksek puanlar hak ettiği yeri alır.
+export const BAYES_C = 8;
+export function bayesianScore(avg, count, mean, C = BAYES_C) { return (C * mean + avg * count) / (C + count); }
+export function ratingsGlobalMean(map) { let sum = 0, n = 0; map.forEach((v) => { sum += v.avg * v.count; n += v.count; }); return n > 0 ? sum / n : 4; }
+
 // ── Top 10: gruplar (şehir filtresi opsiyonel) ──
 export async function listGroups(city) {
   const base = collection(db, "groups");

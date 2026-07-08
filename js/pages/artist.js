@@ -9,6 +9,7 @@ import {
   setResidencyStatus, pushAppNotification, artistAcceptedInvitations,
   artistVenueReviewsGiven, submitArtistVenueReview, fetchArtistRatings, listGroups,
   followArtist, unfollowArtist, isFollowing,
+  bayesianScore, ratingsGlobalMean,
   serverTimestamp,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, modal, lightbox, fmtDate, ROLE } from "../ui.js";
@@ -597,7 +598,7 @@ async function renderStages(root) {
 // ══════════════ TOP 10 (app Top10Screen birebir) ══════════════
 const MEDAL_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
 const MEDAL_ICONS = ["trophy", "medal", "medal"];
-const rankSort = (a, b) => (b.rating !== a.rating ? b.rating - a.rating : b.reviewCount - a.reviewCount);
+const rankSort = (a, b) => { const sa = a.score ?? a.rating, sb = b.score ?? b.rating; return sb !== sa ? sb - sa : b.reviewCount - a.reviewCount; };
 
 async function renderTop10(root) {
   clear(root);
@@ -629,32 +630,38 @@ async function renderTop10(root) {
     try {
       // Puanlar CANLI reviews'tan; sanatçı okuyamazsa boş harita ile devam (app birebir)
       const ratings = await fetchArtistRatings().catch(() => new Map());
+      const gm = ratingsGlobalMean(ratings);   // Bayesian prior (küresel ortalama)
       let items = [];
       if (tab === "artists") {
         const artists = await listRealArtists();
         items = artists
-          .filter((a) => (!city || a.city === city) && (!city || !district || a.district === district))
+          // İlçe filtresi YALNIZ sanatçının ilçesi VARSA uygulanır (çoğu kayıtta boş → aksi halde herkes elenir)
+          .filter((a) => (!city || a.city === city) && (!city || !district || !a.district || a.district === district))
           .map((a) => {
             const agg = ratings.get(a.id);
+            const avg = agg?.avg ?? 0, count = agg?.count ?? 0;
             return {
               id: a.id, name: a.displayName ?? "Sanatçı",
               sub: Array.isArray(a.genres) ? (a.genres[0] ?? "Müzik") : (a.genre ?? "Müzik"),
-              rating: agg?.avg ?? 0, reviewCount: agg?.count ?? 0, isGroup: false,
+              rating: avg, reviewCount: count, score: bayesianScore(avg, count, gm), isGroup: false,
             };
           })
+          .filter((x) => x.reviewCount >= 1)   // "Top" listesi en az 1 yorumlu
           .sort(rankSort).slice(0, 10);
       } else {
         const groups = await listGroups(city || null);
         items = groups.map((g) => {
           const memberIds = (g.memberIds ?? []).slice(0, 6);
           const aggs = memberIds.map((id) => ratings.get(id)).filter(Boolean);
+          const totalCount = aggs.reduce((s, a) => s + a.count, 0);
+          const wAvg = totalCount ? aggs.reduce((s, a) => s + a.avg * a.count, 0) / totalCount : 0;
           return {
             id: g.id, name: g.name ?? "Grup",
             sub: `${(g.memberIds ?? []).length} üye${g.genre ? ` · ${g.genre}` : ""}`,
-            rating: aggs.length ? aggs.reduce((s, a) => s + a.avg, 0) / aggs.length : 0,
-            reviewCount: aggs.reduce((s, a) => s + a.count, 0), isGroup: true,
+            rating: Math.round(wAvg * 10) / 10, reviewCount: totalCount,
+            score: bayesianScore(wAvg, totalCount, gm), isGroup: true,
           };
-        }).sort(rankSort).slice(0, 10);
+        }).filter((x) => x.reviewCount >= 1).sort(rankSort).slice(0, 10);
       }
       clear(listBox);
       if (!items.length) {
