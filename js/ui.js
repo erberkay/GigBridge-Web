@@ -184,6 +184,34 @@ export function photoPicker(label = "Fotoğraf ekle (opsiyonel)", currentUrl, op
   return { node: h("label", { class: "photo-wrap" }, box, input), getFile: () => file };
 }
 
+// Hazır KAPAK (banner) seçici — sanatçı kendi görselini YÜKLEMEZ; bizim statik olarak
+// barındırdığımız hazır banner'lardan seçer (GitHub Pages, ücretsiz → yükleme/fatura yok).
+// getUrl() seçili banner URL'ini (ya da null) döndürür; kaydederken bannerUrl'e yazılır.
+const BANNER_BASE = "https://gigbridges.com/assets/banners/";
+export const BANNER_PRESETS = [
+  { url: BANNER_BASE + "banner1.jpg", label: "Mor Işık" },
+  { url: BANNER_BASE + "banner4.jpg", label: "Galaksi" },
+  { url: BANNER_BASE + "banner3.jpg", label: "CD" },
+  { url: BANNER_BASE + "banner2.jpg", label: "Neon" },
+];
+export function bannerPresetPicker(currentUrl) {
+  let sel = currentUrl || null;
+  const grid = h("div", { class: "bnp-grid" });
+  const render = () => {
+    clear(grid);
+    grid.append(h("button", { type: "button", class: "bnp-cell bnp-none" + (!sel ? " on" : ""), onclick: () => { sel = null; render(); } },
+      icon("close-outline", { size: 16 }), h("span", {}, "Yok")));
+    BANNER_PRESETS.forEach((b) => {
+      const on = sel === b.url;
+      grid.append(h("button", { type: "button", class: "bnp-cell" + (on ? " on" : ""), title: b.label,
+        style: { backgroundImage: `url(${b.url})` }, onclick: () => { sel = b.url; render(); } },
+        on ? icon("checkmark-circle", { size: 22, color: "#fff" }) : null));
+    });
+  };
+  render();
+  return { node: h("div", { class: "bnp-wrap" }, grid), getUrl: () => sel };
+}
+
 export function card(...kids) { return h("div", { class: "card" }, ...kids); }
 
 export function section(title, subtitle, ...kids) {

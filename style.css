@@ -2108,3 +2108,13 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .cr-zoom { flex: 1; accent-color: var(--primary); cursor: pointer; }
 .cr-actions { display: flex; gap: 10px; width: 100%; margin-top: 4px; }
 .cr-actions .btn { flex: 1; }
+
+/* ══════════ Hazır kapak (banner) seçici ══════════ */
+.bnp-wrap { margin-bottom: 13px; }
+.bnp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.bnp-cell { height: 62px; border-radius: 10px; border: 1px solid var(--border); background-size: cover; background-position: center;
+  background-color: var(--surface-2); cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 0; }
+.bnp-cell.on { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary) inset; }
+.bnp-cell.on svg { filter: drop-shadow(0 1px 4px rgba(0,0,0,0.85)); }
+.bnp-cell.bnp-none { flex-direction: column; gap: 3px; color: var(--text-secondary); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; font-family: var(--font-mono, monospace); }

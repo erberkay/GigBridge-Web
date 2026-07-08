@@ -12,7 +12,7 @@ import {
   bayesianScore, ratingsGlobalMean,
   serverTimestamp,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, modal, lightbox, fmtDate, ROLE } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE } from "../ui.js";
 import { messagesView } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
 
@@ -966,8 +966,8 @@ async function renderProfile(root) {
   })();
 
   const pic = photoPicker("Profil fotoğrafı (opsiyonel)", p.photoURL, { aspect: 1, round: true });
-  // Kapak/banner görseli — mekanlar sanatçı profilini açınca en üstte geniş görür (vitrin etkisi).
-  const bannerPic = photoPicker("Kapak / banner görseli (opsiyonel) — mekanlar profilinde en üstte görür", p.bannerUrl, { aspect: 16 / 9 });
+  // Kapak/banner — kullanıcı YÜKLEMEZ; hazır (bizim barındırdığımız) banner'lardan seçer.
+  const bannerPic = bannerPresetPicker(p.bannerUrl);
   const cityList = h("datalist", { id: "ax-citylist" }, ...PROVINCES.map((c) => h("option", { value: c })));
 
   // Müzik türleri — çoklu seçim (öneri çipleri + özel tür ekleme)
@@ -1004,6 +1004,7 @@ async function renderProfile(root) {
     field({ label: "Deneyim (yıl)", id: "aexp", type: "number", value: p.experienceYears != null ? String(p.experienceYears) : "", placeholder: "0" }),
     field({ label: "Hakkında", id: "abio", value: p.bio || "", placeholder: "Kendini tanıt…", multiline: true }),
     pic.node,
+    h("span", { class: "flabel", style: { display: "block", marginTop: "4px", marginBottom: "6px" } }, "Kapak (banner) — hazır seç"),
     bannerPic.node);
 
   // Performans ücreti (min 3.500 iş kuralı)
@@ -1062,7 +1063,7 @@ async function renderProfile(root) {
     if (nameChanged) patch.displayNameChangedAt = serverTimestamp();
     try {
       if (pic.getFile()) { saveMsg.textContent = "Fotoğraf yükleniyor…"; saveMsg.className = "msg"; patch.photoURL = await uploadImage(pic.getFile(), uid); }
-      if (bannerPic.getFile()) { saveMsg.textContent = "Kapak yükleniyor…"; saveMsg.className = "msg"; patch.bannerUrl = await uploadImage(bannerPic.getFile(), uid); }
+      patch.bannerUrl = bannerPic.getUrl() || null;   // hazır banner URL'i (yükleme yok → fatura yok)
       await saveProfile(uid, patch);
       await refreshProfile();
       toast("Profilin güncellendi");
