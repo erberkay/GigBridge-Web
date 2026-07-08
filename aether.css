@@ -852,7 +852,19 @@ input:focus, textarea:focus, select:focus {
 /* ══════════ Sanatçı KAPAK/BANNER (kendi profil cover + public detay hero) ══════════ */
 /* Mekanlar sanatçı profilini açınca en üstte geniş banner görür → vitrin/çekim etkisi. */
 .ax-cover.has-banner { padding-top: 0 !important; }
-.ax-banner { height: 150px; margin: 0 -18px 16px; background-size: cover; background-position: center; border-bottom: 1px solid var(--border); }
+.ax-banner { position: relative; height: 150px; margin: 0 -18px 16px; background-size: cover; background-position: center; border-bottom: 1px solid var(--border); }
+/* Alta doğru karartma (scrim) — ham/çizgili görsel bile sayfaya yumuşak geçen, tasarımlı bir hero gibi durur (pd-banner ile aynı) */
+.ax-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,7,10,0) 40%, var(--bg)); pointer-events: none; }
+/* Banner varken profil fotoğrafı banner'ın ÜSTÜNE biner (kapak-foto düzeni): büyür,
+   çevresinde zeminle aynı renkte halka + gölge → banner arkada, avatar önde durur. */
+.ax-cover.has-banner .ax-bigavatar { margin-top: -74px; width: 116px; height: 116px; z-index: 2; }
+.ax-cover.has-banner .ax-bigavatar .img,
+.ax-cover.has-banner .ax-bigavatar .ph {
+  width: 116px; height: 116px; border-radius: 58px;
+  border: 4px solid var(--bg); box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+}
+.ax-bigavatar .img.zoomable { cursor: pointer; }
+@media (min-width: 900px) { .ax-cover.has-banner .ax-bigavatar { margin-top: -86px; } }
 .pd-hero.pd-artist.has-banner { padding-top: 0; }
 .pd-banner { position: relative; height: 150px; margin: 0 0 14px; background-size: cover; background-position: center; }
 .pd-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,7,10,0) 45%, var(--bg)); pointer-events: none; }
