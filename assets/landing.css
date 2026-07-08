@@ -1,0 +1,87 @@
+/* GigBridge — paylaşımlı statik SEO sayfa stili (şehir + semt + rehber)
+   Aether marka sistemi: void dark + prizma (cyan-magenta-amber). */
+:root{
+  --bg:#06070A; --surface:#0E0F1A; --border:#20223A;
+  --text:#EDEDF5; --sec:#B7B7CE; --muted:#7A7C99;
+  --cyan:#22D3EE; --magenta:#E23FA9; --amber:#F5B301;
+  --prism:linear-gradient(90deg,#22D3EE 0%,#E23FA9 52%,#F5B301 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:"Space Grotesk",system-ui,-apple-system,sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:940px;margin:0 auto;padding:0 20px}
+.prism-top{height:3px;background:var(--prism)}
+header{padding:20px 0;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(6,7,10,.82);backdrop-filter:blur(12px);z-index:10}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-weight:700;font-size:20px;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+.brand .dot{width:11px;height:11px;border-radius:50%;background:var(--prism)}
+.nav-cta{font-size:14px;font-weight:600;padding:9px 16px;border-radius:999px;background:var(--prism);color:#08080d}
+nav.crumb{font-size:13px;color:var(--muted);padding:16px 0}
+nav.crumb a:hover{color:var(--cyan)}
+.hero{padding:26px 0 40px}
+.eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-weight:600;margin-bottom:14px}
+h1{font-size:clamp(34px,6vw,58px);line-height:1.04;letter-spacing:-.03em;font-weight:700;margin-bottom:18px}
+h1 em{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400;background:var(--prism);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.lead{font-size:19px;color:var(--sec);max-width:680px}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:15px;padding:13px 22px;border-radius:14px;transition:transform .15s ease}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:var(--prism);color:#08080d}
+.btn-ghost{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+.store-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.store{display:inline-flex;align-items:center;gap:11px;padding:11px 18px;border-radius:13px;background:#0b0c15;border:1px solid var(--border)}
+.store:hover{border-color:var(--magenta)}
+.store svg{width:24px;height:24px;flex:none}
+.store .s1{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;line-height:1.1}
+.store .s2{font-size:16px;font-weight:600;line-height:1.15}
+section{padding:34px 0;border-top:1px solid var(--border)}
+h2{font-size:clamp(24px,4vw,34px);letter-spacing:-.02em;margin-bottom:8px}
+h2 .em{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400}
+.sub{color:var(--sec);margin-bottom:22px;max-width:640px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;display:block}
+a.card{transition:transform .15s ease,border-color .15s ease}
+a.card:hover{transform:translateY(-2px);border-color:var(--magenta)}
+.card h3{font-size:18px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.card p{font-size:14.5px;color:var(--sec)}
+.card .pin{width:8px;height:8px;border-radius:50%;background:var(--magenta);flex:none}
+.card .go{color:var(--cyan);font-size:14px;font-weight:600;margin-top:10px;display:inline-block}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.role{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.role .n{font-family:"Instrument Serif",serif;font-size:30px;background:var(--prism);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.role h3{font-size:17px;margin:10px 0 6px}
+.role p{font-size:14px;color:var(--sec)}
+details{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:4px 18px;margin-bottom:11px}
+details summary{cursor:pointer;font-weight:600;font-size:16px;padding:14px 0;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:14px}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";color:var(--cyan);font-size:22px;font-weight:400;flex:none}
+details[open] summary::after{content:"–"}
+details p{color:var(--sec);font-size:15px;padding:0 0 16px}
+.band{background:linear-gradient(180deg,#0b0c16,#08090f);border:1px solid var(--border);border-radius:22px;padding:36px 28px;text-align:center;margin-top:10px}
+.band h2{margin-bottom:10px;border:0}
+.band .sub{margin:0 auto 22px}
+footer{border-top:1px solid var(--border);padding:32px 0 48px;color:var(--muted);font-size:14px}
+footer .links{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:16px}
+footer a:hover{color:var(--cyan)}
+.chip-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px;align-items:center}
+.chip{font-size:13px;padding:7px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--sec)}
+a.chip:hover{border-color:var(--cyan);color:var(--text)}
+
+/* ---- Rehber (guide) sayfaları: uzun metin / prose ---- */
+.prose{max-width:720px}
+.prose p{color:var(--sec);font-size:16.5px;margin-bottom:16px}
+.prose h3{font-size:20px;color:var(--text);margin:26px 0 10px;letter-spacing:-.01em}
+.prose strong{color:var(--text);font-weight:600}
+.prose a{color:var(--cyan);font-weight:500}
+.prose a:hover{text-decoration:underline}
+.prose ul,.prose ol{color:var(--sec);font-size:16.5px;margin:0 0 16px 22px}
+.prose li{margin-bottom:8px}
+.prose ol{list-style:none;counter-reset:step;margin-left:0}
+.prose ol>li{counter-increment:step;position:relative;padding-left:44px;margin-bottom:14px}
+.prose ol>li::before{content:counter(step);position:absolute;left:0;top:-2px;width:28px;height:28px;border-radius:8px;background:var(--prism);color:#08080d;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+.tbl-wrap{overflow-x:auto;margin:6px 0 8px}
+table.cmp{border-collapse:collapse;width:100%;min-width:460px;font-size:14.5px}
+table.cmp th,table.cmp td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);color:var(--sec);vertical-align:top}
+table.cmp th{color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:12px}
+table.cmp td strong{color:var(--text)}
