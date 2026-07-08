@@ -986,7 +986,10 @@ async function renderProfil(root) {
 
   // Avatar (gradyan halka + kamera düzenleme)
   const avInner = p.photoURL
-    ? h("div", { class: "cp-av", style: { backgroundImage: `url(${p.photoURL})` } })
+    // Fotoğrafa tıkla → BÜYÜT (düzenleme kamera rozetinde). preventDefault: label'ın
+    // dosya seçiciyi tetiklemesini engeller; sadece kamera rozeti düzenleme açar.
+    ? h("div", { class: "cp-av zoomable", title: "Büyüt", style: { backgroundImage: `url(${p.photoURL})` },
+        onclick: (e) => { e.preventDefault(); lightbox(p.photoURL); } })
     : h("div", { class: "cp-av grad" }, name.charAt(0).toLocaleUpperCase("tr-TR"));
   const fileInp = h("input", { type: "file", accept: "image/*", style: { display: "none" }, onchange: async (e) => {
     const f = (e.target.files || [])[0]; if (!f) return;
