@@ -1,0 +1,9 @@
+# GigBridge — gigbridges.com
+# Canlı müzik ekosistemi: sanatçı/DJ · mekan · organizatör · dinleyici
+User-agent: *
+Allow: /
+
+# Panel hash rotaları (#/venue, #/organizer, #/admin) zaten JS-render;
+# arama motoru fragment'i ayrı URL saymaz, engellenecek statik path yok.
+
+Sitemap: https://gigbridges.com/sitemap.xml

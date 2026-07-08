@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>İstanbul Canlı Müzik Etkinlikleri — Bu Akşam & Bu Hafta | GigBridge</title>
+  <meta name="description" content="İstanbul'da bu akşam ve bu hafta canlı müzik: Kadıköy, Beyoğlu, Beşiktaş ve Şişli'de konser, DJ ve akustik etkinlikler. GigBridge ile keşfet, sanatçı ve mekan bul." />
+  <link rel="canonical" href="https://gigbridges.com/canli-muzik/istanbul/" />
+  <meta name="robots" content="index,follow" />
+  <link rel="alternate" hreflang="tr" href="https://gigbridges.com/canli-muzik/istanbul/" />
+  <link rel="alternate" hreflang="x-default" href="https://gigbridges.com/canli-muzik/istanbul/" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/icon.png" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="GigBridge" />
+  <meta property="og:locale" content="tr_TR" />
+  <meta property="og:title" content="İstanbul Canlı Müzik Etkinlikleri — Bu Akşam & Bu Hafta" />
+  <meta property="og:description" content="Kadıköy, Beyoğlu, Beşiktaş ve Şişli'de bu akşam kim çalıyor? GigBridge ile İstanbul'daki canlı müzik etkinliklerini keşfet." />
+  <meta property="og:url" content="https://gigbridges.com/canli-muzik/istanbul/" />
+  <meta property="og:image" content="https://gigbridges.com/assets/og-cover.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="İstanbul Canlı Müzik Etkinlikleri — GigBridge" />
+  <meta name="twitter:description" content="Bu akşam İstanbul'da nerede konser, DJ, akustik var? Keşfet." />
+  <meta name="twitter:image" content="https://gigbridges.com/assets/og-cover.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+  <style>
+    :root{
+      --bg:#06070A; --surface:#0E0F1A; --surface2:#14162400; --border:#20223A;
+      --text:#EDEDF5; --sec:#B7B7CE; --muted:#7A7C99;
+      --cyan:#22D3EE; --magenta:#E23FA9; --amber:#F5B301;
+      --prism:linear-gradient(90deg,#22D3EE 0%,#E23FA9 52%,#F5B301 100%);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:"Space Grotesk",system-ui,-apple-system,sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:940px;margin:0 auto;padding:0 20px}
+    .prism-top{height:3px;background:var(--prism)}
+    header{padding:20px 0;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(6,7,10,.82);backdrop-filter:blur(12px);z-index:10}
+    header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{font-weight:700;font-size:20px;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+    .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--prism)}
+    .nav-cta{font-size:14px;font-weight:600;padding:9px 16px;border-radius:999px;background:var(--prism);color:#08080d}
+    nav.crumb{font-size:13px;color:var(--muted);padding:16px 0}
+    nav.crumb a:hover{color:var(--cyan)}
+    .hero{padding:26px 0 40px}
+    .eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-weight:600;margin-bottom:14px}
+    h1{font-size:clamp(34px,6vw,58px);line-height:1.04;letter-spacing:-.03em;font-weight:700;margin-bottom:18px}
+    h1 em{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400;background:var(--prism);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .lead{font-size:19px;color:var(--sec);max-width:680px}
+    .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+    .btn{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:15px;padding:13px 22px;border-radius:14px;transition:transform .15s ease}
+    .btn:hover{transform:translateY(-2px)}
+    .btn-primary{background:var(--prism);color:#08080d}
+    .btn-ghost{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+    .store-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+    .store{display:inline-flex;align-items:center;gap:11px;padding:11px 18px;border-radius:13px;background:#0b0c15;border:1px solid var(--border)}
+    .store:hover{border-color:var(--magenta)}
+    .store svg{width:24px;height:24px;flex:none}
+    .store .s1{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;line-height:1.1}
+    .store .s2{font-size:16px;font-weight:600;line-height:1.15}
+    section{padding:34px 0;border-top:1px solid var(--border)}
+    h2{font-size:clamp(24px,4vw,34px);letter-spacing:-.02em;margin-bottom:8px}
+    h2 .em{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400}
+    .sub{color:var(--sec);margin-bottom:22px;max-width:640px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px}
+    .card h3{font-size:18px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+    .card p{font-size:14.5px;color:var(--sec)}
+    .card .pin{width:8px;height:8px;border-radius:50%;background:var(--magenta);flex:none}
+    .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+    .role{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+    .role .n{font-family:"Instrument Serif",serif;font-size:30px;background:var(--prism);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+    .role h3{font-size:17px;margin:10px 0 6px}
+    .role p{font-size:14px;color:var(--sec)}
+    details{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:4px 18px;margin-bottom:11px}
+    details summary{cursor:pointer;font-weight:600;font-size:16px;padding:14px 0;list-style:none;display:flex;justify-content:space-between;align-items:center}
+    details summary::-webkit-details-marker{display:none}
+    details summary::after{content:"+";color:var(--cyan);font-size:22px;font-weight:400}
+    details[open] summary::after{content:"–"}
+    details p{color:var(--sec);font-size:15px;padding:0 0 16px}
+    .band{background:linear-gradient(180deg,#0b0c16,#08090f);border:1px solid var(--border);border-radius:22px;padding:36px 28px;text-align:center;margin-top:10px}
+    .band h2{margin-bottom:10px}
+    .band .sub{margin:0 auto 22px}
+    footer{border-top:1px solid var(--border);padding:32px 0 48px;color:var(--muted);font-size:14px}
+    footer .links{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:16px}
+    footer a:hover{color:var(--cyan)}
+    .chip-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+    .chip{font-size:13px;padding:7px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--sec)}
+    .chip:hover{border-color:var(--cyan);color:var(--text)}
+  </style>
+</head>
+<body>
+  <div class="prism-top"></div>
+  <header>
+    <div class="wrap">
+      <a class="brand" href="/"><span class="dot"></span> GigBridge</a>
+      <a class="nav-cta" href="/indir/">Uygulamayı İndir</a>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <nav class="crumb" aria-label="breadcrumb">
+      <a href="/">Ana Sayfa</a> &nbsp;›&nbsp; <a href="/">Canlı Müzik</a> &nbsp;›&nbsp; <span>İstanbul</span>
+    </nav>
+
+    <div class="hero">
+      <div class="eyebrow">İstanbul · Canlı Müzik</div>
+      <h1>İstanbul'da bu akşam <em>kim çalıyor?</em></h1>
+      <p class="lead">Kadıköy'den Beyoğlu'na, Beşiktaş'tan Nişantaşı'na — İstanbul'daki canlı müzik etkinliklerini, konserleri ve DJ setlerini tek yerde keşfet. Statik "en iyi mekanlar" listeleri değil; <strong>bu akşam ve bu hafta</strong> gerçekten ne var, GigBridge'de.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://gigbridges.com/#/kesfet">Etkinlikleri Keşfet →</a>
+        <a class="btn btn-ghost" href="/indir/">Uygulamayı İndir</a>
+      </div>
+      <div class="store-row">
+        <a class="store" href="/indir/" aria-label="App Store'dan indir">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>
+          <span><span class="s1">App Store</span><br><span class="s2">iPhone için</span></span>
+        </a>
+        <a class="store" href="/indir/" aria-label="Google Play'den indir">
+          <svg viewBox="0 0 24 24"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#22D3EE"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#E23FA9"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#F5B301"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#22D3EE"/></svg>
+          <span><span class="s1">Google Play</span><br><span class="s2">Android için</span></span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <section id="semtler">
+      <h2>İstanbul'da <span class="em">semt semt</span> canlı müzik</h2>
+      <p class="sub">Her semtin kendi sahnesi var. GigBridge'de konumuna göre filtrele, bu akşam yakınında çalan sanatçıları ve mekanları gör.</p>
+      <div class="grid">
+        <div class="card"><h3><span class="pin"></span>Kadıköy</h3><p>Moda ve Bahariye çevresinde bağımsız sahneler, akustik geceler ve indie konserler. Genç ve alternatif sahnenin kalbi.</p></div>
+        <div class="card"><h3><span class="pin"></span>Beyoğlu / Taksim</h3><p>İstiklal ve çevresinde jazz barları, rock sahneleri ve gece boyu DJ setleri. İstanbul gece hayatının klasik merkezi.</p></div>
+        <div class="card"><h3><span class="pin"></span>Beşiktaş</h3><p>Öğrenci enerjisiyle canlı barlar, cover grupları ve hafta içi bile dolu sahneler.</p></div>
+        <div class="card"><h3><span class="pin"></span>Şişli / Nişantaşı</h3><p>Şık mekanlar, elektronik geceler ve lounge performansları. Daha sofistike bir gece için.</p></div>
+      </div>
+    </section>
+
+    <section id="nasil">
+      <h2>GigBridge <span class="em">nasıl çalışır?</span></h2>
+      <p class="sub">GigBridge sadece bir etkinlik listesi değil — sanatçıları, mekanları ve dinleyicileri buluşturan iki taraflı bir sahne.</p>
+      <div class="roles">
+        <div class="role"><div class="n">01</div><h3>Dinleyiciysen</h3><p>Yakınındaki canlı müzik etkinliklerini keşfet, bu akşam nereye gideceğine haritadan karar ver.</p></div>
+        <div class="role"><div class="n">02</div><h3>Sanatçı / DJ isen</h3><p>Profilini oluştur, İstanbul'daki mekanlarda sahne bul, teklif al ve takvimini yönet.</p></div>
+        <div class="role"><div class="n">03</div><h3>Mekan / Organizatörsen</h3><p>Sanatçı bul, etkinlik oluştur ve dinleyicilere ulaş — hepsi tek panelden.</p></div>
+      </div>
+    </section>
+
+    <section id="sss">
+      <h2>Sık sorulan <span class="em">sorular</span></h2>
+      <div class="sub">İstanbul canlı müzik etkinlikleri hakkında en çok merak edilenler.</div>
+      <details open><summary>İstanbul'da bu akşam nerede canlı müzik var?</summary><p>GigBridge uygulamasında konumuna göre filtreleyerek Kadıköy, Beyoğlu, Beşiktaş ve Şişli başta olmak üzere bu akşam çalan sanatçıları ve mekanları gerçek zamanlı görebilirsin. Statik listeler yerine güncel program sunar.</p></details>
+      <details><summary>GigBridge ücretsiz mi?</summary><p>Evet, uygulamayı indirip etkinlikleri keşfetmek ücretsizdir. Sanatçılar profil oluşturup sahne bulabilir; mekan ve organizatörler üyelikle sanatçı bulup etkinlik oluşturabilir.</p></details>
+      <details><summary>Sanatçıysam İstanbul'da nasıl sahne bulurum?</summary><p>GigBridge'e sanatçı olarak kaydol, profilini ve müzik türünü ekle. İstanbul'daki mekanlar seni keşfeder, sana teklif gönderir; sen de açık etkinliklere başvurabilirsin.</p></details>
+      <details><summary>Mekanım için nasıl sanatçı/DJ bulurum?</summary><p>Mekan veya organizatör olarak üye ol, GigBridge web panelinden veya uygulamadan sanatçı ara, davet gönder ya da etkinliğini yayınla. Düğün değil, düzenli canlı müzik ve gece programı için tasarlandı.</p></details>
+      <details><summary>Hangi tür etkinlikler var?</summary><p>Konser, DJ seti, akustik gece, jazz, rock, elektronik, cover grupları ve açık mikrofon geceleri dahil geniş bir canlı müzik yelpazesi.</p></details>
+    </section>
+
+    <div class="band">
+      <h2>İstanbul'un sahnesi <span class="em">cebinde</span></h2>
+      <p class="sub">Uygulamayı indir, bu akşam yakınındaki canlı müziği keşfet.</p>
+      <div class="cta-row" style="justify-content:center">
+        <a class="btn btn-primary" href="/indir/">Uygulamayı İndir</a>
+        <a class="btn btn-ghost" href="https://gigbridges.com/#/kesfet">Web'de Keşfet</a>
+      </div>
+    </div>
+
+    <div class="chip-row" style="margin-top:26px">
+      <span class="chip" style="color:var(--muted)">Diğer şehirler yakında:</span>
+      <span class="chip">İzmir</span>
+      <span class="chip">Ankara</span>
+      <span class="chip">Antalya</span>
+      <span class="chip">Bodrum</span>
+      <span class="chip">Kuşadası</span>
+    </div>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <div class="links">
+        <a href="/">Ana Sayfa</a>
+        <a href="/indir/">Uygulamayı İndir</a>
+        <a href="/kullanim-kosullari.html">Kullanım Koşulları</a>
+        <a href="/gizlilik.html">Gizlilik</a>
+      </div>
+      <div>© 2026 GigBridge — Canlı müzik etkinlikleri, sanatçılar ve mekanlar.</div>
+    </div>
+  </footer>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Ana Sayfa", "item": "https://gigbridges.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Canlı Müzik", "item": "https://gigbridges.com/" },
+          { "@type": "ListItem", "position": 3, "name": "İstanbul", "item": "https://gigbridges.com/canli-muzik/istanbul/" }
+        ]
+      },
+      {
+        "@type": "CollectionPage",
+        "name": "İstanbul Canlı Müzik Etkinlikleri",
+        "url": "https://gigbridges.com/canli-muzik/istanbul/",
+        "inLanguage": "tr-TR",
+        "about": "İstanbul'daki canlı müzik etkinlikleri, konserler ve DJ setleri",
+        "isPartOf": { "@type": "WebSite", "name": "GigBridge", "url": "https://gigbridges.com/" }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          { "@type": "Question", "name": "İstanbul'da bu akşam nerede canlı müzik var?", "acceptedAnswer": { "@type": "Answer", "text": "GigBridge uygulamasında konumuna göre filtreleyerek Kadıköy, Beyoğlu, Beşiktaş ve Şişli başta olmak üzere bu akşam çalan sanatçıları ve mekanları gerçek zamanlı görebilirsin." } },
+          { "@type": "Question", "name": "GigBridge ücretsiz mi?", "acceptedAnswer": { "@type": "Answer", "text": "Evet, uygulamayı indirip etkinlikleri keşfetmek ücretsizdir. Mekan ve organizatörler üyelikle sanatçı bulup etkinlik oluşturabilir." } },
+          { "@type": "Question", "name": "Sanatçıysam İstanbul'da nasıl sahne bulurum?", "acceptedAnswer": { "@type": "Answer", "text": "GigBridge'e sanatçı olarak kaydol, profilini ve müzik türünü ekle. İstanbul'daki mekanlar seni keşfeder ve teklif gönderir; açık etkinliklere de başvurabilirsin." } },
+          { "@type": "Question", "name": "Mekanım için nasıl sanatçı bulurum?", "acceptedAnswer": { "@type": "Answer", "text": "Mekan veya organizatör olarak üye ol, GigBridge panelinden sanatçı ara, davet gönder ya da etkinliğini yayınla." } },
+          { "@type": "Question", "name": "Hangi tür etkinlikler var?", "acceptedAnswer": { "@type": "Answer", "text": "Konser, DJ seti, akustik gece, jazz, rock, elektronik, cover grupları ve açık mikrofon geceleri dahil geniş bir canlı müzik yelpazesi." } }
+        ]
+      }
+    ]
+  }
+  </script>
+</body>
+</html>

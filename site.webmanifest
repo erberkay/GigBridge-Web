@@ -1,0 +1,17 @@
+{
+  "name": "GigBridge — Canlı Müzik Etkinlikleri",
+  "short_name": "GigBridge",
+  "description": "Yakınındaki canlı müzik etkinliklerini keşfet; sanatçı, DJ ve mekanları bul.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#06070A",
+  "theme_color": "#0a0a0f",
+  "lang": "tr",
+  "dir": "ltr",
+  "categories": ["music", "entertainment", "events", "lifestyle"],
+  "icons": [
+    { "src": "/favicon.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
+    { "src": "/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

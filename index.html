@@ -3,8 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>GigBridge · Panel</title>
-  <meta name="description" content="GigBridge web paneli — mekan, organizatör ve yönetici girişi." />
+  <title>GigBridge — Canlı Müzik Etkinlikleri, Sanatçılar ve Mekanlar</title>
+  <meta name="description" content="Yakınındaki canlı müzik etkinliklerini keşfet; sanatçı ve DJ'leri, mekanları ve organizatörleri buluştur. Uygulamayı indir, mekan/organizatör üyeliğiyle web panelini kullan." />
+  <link rel="canonical" href="https://gigbridges.com/" />
+  <meta name="robots" content="index,follow" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <!-- Open Graph (WhatsApp/Instagram/Facebook link önizlemesi) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="GigBridge" />
+  <meta property="og:locale" content="tr_TR" />
+  <meta property="og:title" content="GigBridge — Canlı Müzik Etkinlikleri, Sanatçılar ve Mekanlar" />
+  <meta property="og:description" content="Yakınındaki canlı müzik etkinliklerini keşfet; sanatçı, DJ ve mekanları bul. İstanbul, İzmir, Ankara, Antalya, Bodrum ve daha fazlası." />
+  <meta property="og:url" content="https://gigbridges.com/" />
+  <meta property="og:image" content="https://gigbridges.com/assets/og-cover.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="GigBridge — canlı müzik etkinlikleri, sanatçılar ve mekanlar" />
+  <!-- Twitter/X kartı -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="GigBridge — Canlı Müzik Etkinlikleri, Sanatçılar ve Mekanlar" />
+  <meta name="twitter:description" content="Yakınındaki canlı müzik etkinliklerini keşfet; sanatçı, DJ ve mekanları bul." />
+  <meta name="twitter:image" content="https://gigbridges.com/assets/og-cover.png" />
   <!-- Uygulama logosu — tarayıcı sekmesi (favicon) + Apple dokunma ikonu -->
   <link rel="icon" type="image/png" sizes="256x256" href="favicon.png" />
   <link rel="shortcut icon" type="image/png" href="favicon.png" />
@@ -20,6 +39,9 @@
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Fontlar: tek birleşik istek + non-blocking (aether.css'teki @import zinciri yerine) -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" /></noscript>
   <link rel="stylesheet" href="style.css?v=20260707m" />
   <!-- Aether editorial dark overlay (style.css'ten SONRA) -->
   <link rel="stylesheet" href="aether.css?v=20260707m" />
@@ -35,11 +57,56 @@
   <!-- App ile aynı ikon seti (Ionicons) — jsdelivr daha hızlı + iyi önbellek -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <!-- Yapısal veri: Googlebot statik HEAD'de görür (JS render beklemez) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://gigbridges.com/#org",
+        "name": "GigBridge",
+        "url": "https://gigbridges.com/",
+        "logo": "https://gigbridges.com/icon.png",
+        "description": "Canlı müzik ekosistemi: sanatçı ve DJ'leri, mekanları, organizatörleri ve dinleyicileri buluşturur.",
+        "sameAs": []
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://gigbridges.com/#website",
+        "url": "https://gigbridges.com/",
+        "name": "GigBridge",
+        "inLanguage": "tr-TR",
+        "publisher": { "@id": "https://gigbridges.com/#org" }
+      },
+      {
+        "@type": "MobileApplication",
+        "name": "GigBridge",
+        "operatingSystem": "iOS, Android",
+        "applicationCategory": "MusicApplication",
+        "inLanguage": "tr-TR",
+        "publisher": { "@id": "https://gigbridges.com/#org" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "TRY" }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <div id="app">
     <div class="boot"><div class="spinner"></div></div>
   </div>
+  <noscript>
+    <div style="max-width:720px;margin:0 auto;padding:32px 20px;color:#e8e8ef;font-family:system-ui,sans-serif;line-height:1.6">
+      <h1>GigBridge — Canlı Müzik Etkinlikleri, Sanatçılar ve Mekanlar</h1>
+      <p>GigBridge, yakınındaki canlı müzik etkinliklerini tek yerde toplar. Bu akşam nerede konser, DJ ya da akustik var keşfet; sanatçıysan sahne bul, mekansan sanatçı bul ve etkinlik oluştur.</p>
+      <ul>
+        <li><a href="https://gigbridges.com/canli-muzik/istanbul/">İstanbul canlı müzik etkinlikleri</a></li>
+        <li><a href="https://gigbridges.com/indir/">Uygulamayı indir</a></li>
+      </ul>
+      <p>Uygulamayı görüntülemek için lütfen JavaScript'i etkinleştirin.</p>
+    </div>
+  </noscript>
   <div id="toasts"></div>
   <div id="modal-root"></div>
   <script type="module" src="js/app.js"></script>

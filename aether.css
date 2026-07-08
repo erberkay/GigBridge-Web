@@ -5,9 +5,8 @@
    + JetBrains Mono, prizma gradyani (cyan-magenta-amber) SADECE kenarda.
    KORUNANLAR: #poda arama input'u + .tkx holografik bilet (hedeflenmez).
    ============================================================ */
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
+/* Fontlar index.html <head>'inde tek birleşik <link rel=preload> ile yükleniyor
+   (render-blocking @import zinciri kaldırıldı — LCP/FCP iyileştirmesi). */
 
 /* ---------- Token remap: GigBridge degiskenleri -> Aether paleti ---------- */
 :root {
