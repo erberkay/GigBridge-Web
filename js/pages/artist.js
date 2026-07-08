@@ -31,13 +31,14 @@ const PROVINCES = ["Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", 
 
 const NAV = [
   { key: "home",     label: "Ana Sayfa", icon: "home-outline",          href: "#/artist" },
+  { key: "kesfet",   label: "Keşfet",    icon: "compass-outline",       href: "#/artist/kesfet" },
   { key: "top10",    label: "Top 10",    icon: "trophy-outline",        href: "#/artist/top10" },
   { key: "mekanlar", label: "Mekanlar",  icon: "star-outline",          href: "#/artist/mekanlar" },
   { key: "mesaj",    label: "Mesajlar",  icon: "chatbubbles-outline",   href: "#/artist/mesaj" },
   { key: "profil",   label: "Profilim",  icon: "person-circle-outline", href: "#/artist/profil" },
 ];
 const TITLES = {
-  home: "Sanatçı Paneli", top10: "Top 10", mekanlar: "Mekan Değerlendir", mesaj: "Mesajlar",
+  home: "Sanatçı Paneli", kesfet: "Keşfet", top10: "Top 10", mekanlar: "Mekan Değerlendir", mesaj: "Mesajlar",
   profil: "Profilim", sahnelerim: "Sahnelerim", yorumlar: "Aldığım Yorumlar", bildirimler: "Bildirimler",
 };
 
@@ -201,6 +202,7 @@ export function artistPage() {
 }
 
 async function renderTab(tab, root) {
+  if (tab === "kesfet") return renderDiscover(root);
   if (tab === "top10") return renderTop10(root);
   if (tab === "mekanlar") return renderVenueReview(root);
   if (tab === "mesaj") { clear(root); return messagesView(root, A); }
@@ -643,10 +645,10 @@ async function renderTop10(root) {
             return {
               id: a.id, name: a.displayName ?? "Sanatçı",
               sub: Array.isArray(a.genres) ? (a.genres[0] ?? "Müzik") : (a.genre ?? "Müzik"),
-              rating: avg, reviewCount: count, score: bayesianScore(avg, count, gm), isGroup: false,
+              // Yorumsuz sanatçı en sonda (score 0) ama LİSTEDE kalır — liste boşalmaz.
+              rating: avg, reviewCount: count, score: count > 0 ? bayesianScore(avg, count, gm) : 0, isGroup: false,
             };
           })
-          .filter((x) => x.reviewCount >= 1)   // "Top" listesi en az 1 yorumlu
           .sort(rankSort).slice(0, 10);
       } else {
         const groups = await listGroups(city || null);
@@ -659,9 +661,9 @@ async function renderTop10(root) {
             id: g.id, name: g.name ?? "Grup",
             sub: `${(g.memberIds ?? []).length} üye${g.genre ? ` · ${g.genre}` : ""}`,
             rating: Math.round(wAvg * 10) / 10, reviewCount: totalCount,
-            score: bayesianScore(wAvg, totalCount, gm), isGroup: true,
+            score: totalCount > 0 ? bayesianScore(wAvg, totalCount, gm) : 0, isGroup: true,
           };
-        }).filter((x) => x.reviewCount >= 1).sort(rankSort).slice(0, 10);
+        }).sort(rankSort).slice(0, 10);
       }
       clear(listBox);
       if (!items.length) {
@@ -723,6 +725,62 @@ function artistInfoModal(it) {
         h("div", { class: "ax-msglabel" }, "Hakkında"),
         h("div", { class: "ax-msgbody" }, u.bio))) : null);
   }).catch(() => { clear(body); body.append(errBox()); });
+}
+
+// ══════════════ KEŞFET — diğer sanatçıları ara/gör ve TAKİP ET (app DiscoverScreen birebir) ══════════════
+async function renderDiscover(root) {
+  clear(root);
+  const myUid = session.user?.uid;
+  const searchIn = h("input", { placeholder: "Sanatçı, tür veya şehir ara…", oninput: () => draw() });
+  const listBox = h("div", { class: "kx-list" }, h("div", { class: "loading" }, spinner()));
+  root.append(
+    h("p", { class: "muted small mb6" }, "Diğer sanatçıları keşfet ve takip et"),
+    h("label", { class: "field" }, searchIn),
+    listBox);
+
+  let artists = [], ratings = new Map();
+  try {
+    [artists, ratings] = await Promise.all([listRealArtists(), fetchArtistRatings().catch(() => new Map())]);
+  } catch (_) { clear(listBox); listBox.append(errBox()); return; }
+  artists = artists.filter((a) => a.id !== myUid);   // kendini gösterme
+  const genreOf = (a) => (Array.isArray(a.genres) ? (a.genres[0] || "") : (a.genre || ""));
+
+  function draw() {
+    clear(listBox);
+    const q = (searchIn.value || "").trim().toLocaleLowerCase("tr-TR");
+    const list = artists.filter((a) => !q || `${a.displayName || ""} ${genreOf(a)} ${a.city || ""}`.toLocaleLowerCase("tr-TR").includes(q));
+    if (!list.length) { listBox.append(empty("people-outline", "Sanatçı bulunamadı", q ? "Aramanı değiştirmeyi dene." : "Yakında keşfedilecek sanatçılar burada.")); return; }
+    list.forEach((a) => {
+      const agg = ratings.get(a.id);
+      const genre = genreOf(a);
+      const it = { id: a.id, name: a.displayName || "Sanatçı", sub: genre, rating: agg?.avg ?? 0, reviewCount: agg?.count ?? 0 };
+      const fbtn = h("button", { class: "btn btn-ghost kx-fbtn", type: "button" }, "…");
+      let fol = false, busy = false;
+      const paint = () => { clear(fbtn); fbtn.append(h("span", {}, fol ? "Takipte" : "Takip Et")); fbtn.classList.toggle("on", fol); };
+      if (myUid) isFollowing(myUid, a.id).then((v) => { fol = v; paint(); }).catch(() => paint()); else paint();
+      fbtn.onclick = async (e) => {
+        e.stopPropagation();
+        if (busy || !myUid) return; busy = true;
+        try {
+          if (fol) { await unfollowArtist(myUid, a.id); fol = false; }
+          else { await followArtist(myUid, { id: a.id, name: it.name, genre }); fol = true; }
+          toast(fol ? "Takip edildi" : "Takipten çıkıldı");
+        } catch (_) { toast("İşlem başarısız", "err"); }
+        finally { busy = false; paint(); }
+      };
+      const av = a.photoURL
+        ? h("div", { class: "kx-av", style: { backgroundImage: `url(${a.photoURL})` } })
+        : h("div", { class: "kx-av ph" }, it.name.charAt(0).toLocaleUpperCase("tr-TR"));
+      listBox.append(h("div", { class: "kx-row", onclick: () => artistInfoModal(it) },
+        av,
+        h("div", { class: "kx-info" },
+          h("div", { class: "kx-name" }, it.name),
+          h("div", { class: "kx-meta" }, [genre, a.city].filter(Boolean).join(" · ") || "Sanatçı"),
+          h("div", { class: "kx-rate" }, it.reviewCount > 0 ? `★ ${it.rating.toFixed(1)} · ${it.reviewCount} yorum` : "Yeni")),
+        fbtn));
+    });
+  }
+  draw();
 }
 
 // ══════════════ MEKANLAR — Mekan Değerlendir (app VenueReviewScreen birebir) ══════════════
