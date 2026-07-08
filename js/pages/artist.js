@@ -8,6 +8,7 @@ import {
   listenArtistOffers, listenArtistAccepted, listenArtistResidencies, respondToOffer,
   setResidencyStatus, pushAppNotification, artistAcceptedInvitations,
   artistVenueReviewsGiven, submitArtistVenueReview, fetchArtistRatings, listGroups,
+  followArtist, unfollowArtist, isFollowing,
   serverTimestamp,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, modal, lightbox, fmtDate, ROLE } from "../ui.js";
@@ -685,8 +686,26 @@ function rankCard(it, i) {
 function artistInfoModal(it) {
   const body = h("div", {}, h("div", { class: "loading" }, spinner()));
   modal({ title: it.name, body, actions: [] });
+  const myUid = session.user?.uid;
   userById(it.id).then((u) => {
     clear(body);
+    // Takip butonu — sanatçı başka bir sanatçıyı takip edebilir (app ArtistDetail paritesi)
+    if (myUid && myUid !== it.id) {
+      const fbtn = h("button", { class: "btn btn-full", style: { marginBottom: "12px" } }, "…");
+      let fol = false, busy = false;
+      const paint = () => { clear(fbtn); fbtn.append(icon(fol ? "checkmark-circle" : "person-add-outline", { size: 15 }), h("span", {}, fol ? "Takipte" : "Takip Et")); };
+      isFollowing(myUid, it.id).then((v) => { fol = v; paint(); }).catch(() => paint());
+      fbtn.onclick = async () => {
+        if (busy) return; busy = true;
+        try {
+          if (fol) { await unfollowArtist(myUid, it.id); fol = false; }
+          else { await followArtist(myUid, { id: it.id, name: it.name, genre: it.sub }); fol = true; }
+          toast(fol ? "Takip edildi" : "Takipten çıkıldı");
+        } catch (_) { toast("İşlem başarısız", "err"); }
+        finally { busy = false; paint(); }
+      };
+      body.append(fbtn);
+    }
     body.append(
       h("div", { class: "ax-drows" },
         drow("mic-outline", "Tür", Array.isArray(u?.genres) ? (u.genres.join(", ") || it.sub) : (u?.genre || it.sub)),
