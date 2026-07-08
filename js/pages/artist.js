@@ -8,12 +8,12 @@ import {
   listenArtistOffers, listenArtistAccepted, listenArtistResidencies, respondToOffer,
   setResidencyStatus, pushAppNotification, artistAcceptedInvitations,
   artistVenueReviewsGiven, submitArtistVenueReview, fetchArtistRatings, listGroups,
-  followArtist, unfollowArtist, isFollowing,
+  followArtist, unfollowArtist, isFollowing, artistFollowerCount,
   bayesianScore, ratingsGlobalMean,
   serverTimestamp,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE } from "../ui.js";
-import { messagesView } from "./messages.js";
+import { messagesView, requestChat } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
 
 const A = ROLE.artist; // #A855F7
@@ -185,12 +185,14 @@ function emptyRow(ic, text) {
 function errBox() { return empty("cloud-offline-outline", "Yüklenemedi", "Bağlantıyı kontrol edip yenile."); }
 
 function tabFromHash() { const p = (location.hash || "").split("?")[0].split("/"); return p[2] || "home"; }
-const navKeyFor = (t) => (["sahnelerim", "yorumlar", "bildirimler"].includes(t) ? "home" : t);
+function hashSeg(i) { const p = (location.hash || "").split("?")[0].split("/"); return p[i] || ""; }
+const navKeyFor = (t) => (["sahnelerim", "yorumlar", "bildirimler"].includes(t) ? "home" : t === "sanatci" ? "kesfet" : t);
 
 // ══════════════ SAYFA ══════════════
 export function artistPage() {
   const tab = tabFromHash();
   if (tab === "home") return homePage();
+  if (tab === "sanatci") return artistDetailPage(hashSeg(3));   // diğer sanatçının tam profili
   const content = h("div", { class: "content" }, h("div", { class: "loading" }, spinner()));
   const page = h("div", { class: "page has-nav", style: { "--role": A } },
     topbar(TITLES[tab] || "Sanatçı Paneli", { subtitle: session.profile?.displayName || "", color: A,
@@ -678,7 +680,7 @@ async function renderTop10(root) {
 }
 
 function rankCard(it, i) {
-  return h("div", { class: "ax-rank" + (i < 3 ? " top" : ""), onclick: () => { if (!it.isGroup) artistInfoModal(it); } },
+  return h("div", { class: "ax-rank" + (i < 3 ? " top" : ""), onclick: () => { if (!it.isGroup) go("#/artist/sanatci/" + it.id); } },
     i < 3
       ? h("div", { class: "ax-rankmedal" }, icon(MEDAL_ICONS[i], { size: 22, color: MEDAL_COLORS[i] }))
       : h("div", { class: "ax-rankno" }, String(i + 1)),
@@ -691,40 +693,119 @@ function rankCard(it, i) {
       h("div", { class: "ax-scorecnt" }, `${it.reviewCount} yorum`)));
 }
 
-// Sıralamadaki sanatçının kısa profili (app ArtistDetail'in web karşılığı — özet modal)
-function artistInfoModal(it) {
-  const body = h("div", {}, h("div", { class: "loading" }, spinner()));
-  modal({ title: it.name, body, actions: [] });
+// ── DJ TAM PROFİL (app ArtistDetail birebir) — sanatçı, başka sanatçının profiline GİRER ──
+// Müşteri #/sanatci sayfasıyla aynı görsel yapı; #/artist/sanatci/{id} rotasında açılır.
+function yearsSince(v) { try { const d = typeof v?.toDate === "function" ? v.toDate() : new Date(v); if (isNaN(d)) return null; return (Date.now() - d.getTime()) / (365.25 * 86400e3); } catch { return null; } }
+function memberChip(u) {
+  const y = yearsSince(u.createdAt); if (y == null) return null;
+  const badge = y >= 10 ? ["trophy", "#F59E0B", "10 Yıllık Üye"] : y >= 5 ? ["medal", "#C0C0C8", "5 Yıllık Üye"] : y >= 1 ? ["ribbon", "#CD7F32", "1 Yıllık Üye"] : null;
+  if (!badge) return null;
+  return h("span", { class: "pd-member" }, icon(badge[0], { size: 12, color: badge[1] }), h("span", { style: { color: badge[1] } }, badge[2]));
+}
+function membershipText(u) {
+  const y = yearsSince(u.createdAt); if (y == null) return null;
+  const label = y >= 1 ? Math.floor(y) + " yıldır" : Math.max(1, Math.floor(y * 12)) + " aydır";
+  return h("div", { class: "pd-membertext" }, "GigBridge üyesi · " + label);
+}
+const pdStat = (val, label, star) => h("div", { class: "pd-stat" },
+  h("div", { class: "pd-stat-val" }, star ? icon("star", { size: 14, color: "#F59E0B" }) : null, String(val)),
+  h("div", { class: "pd-stat-lbl" }, label));
+const pdDivider = () => h("div", { class: "pd-div" });
+const pdTitle = (t) => h("h2", { class: "ed-secttitle" }, t);
+const shortNum = (n) => (n >= 1000 ? (n / 1000).toFixed(1) + "K" : String(n));
+function rvCard(name, rating, comment, createdAt, opts = {}) {
+  return h("div", { class: "rv-card" },
+    h("div", { class: "rv-top" },
+      h("div", { class: "rv-who" },
+        h("div", { class: "rv-av" }, opts.anon ? icon("eye-off", { size: 15, color: "#A78BFA" }) : (name || "K").charAt(0).toLocaleUpperCase("tr-TR")),
+        h("div", {}, h("div", { class: "rv-name" }, name || "Kullanıcı"), h("div", { class: "rv-date" }, fmtDate(createdAt)))),
+      h("span", { class: "stars" }, ...[1, 2, 3, 4, 5].map((i) => icon(i <= (rating || 0) ? "star" : "star-outline", { size: 12, color: "#F59E0B" })))),
+    comment ? h("p", { class: "rv-comment" }, comment) : null);
+}
+const rvEmpty = (text) => h("div", { class: "rv-empty" }, icon("star-outline", { size: 32, color: "var(--text-muted)" }), h("div", {}, text));
+function socialUrl(key, val) {
+  const s = String(val || "").trim(); if (!s) return null;
+  if (/^https?:\/\//i.test(s)) return s;
+  const hn = s.replace(/^@/, "");
+  if (key === "instagram") return "https://instagram.com/" + hn;
+  if (key === "soundcloud") return "https://soundcloud.com/" + hn;
+  if (key === "youtube") return "https://www.youtube.com/results?search_query=" + encodeURIComponent(s);
+  return "https://open.spotify.com/search/" + encodeURIComponent(s);
+}
+function socialBlock(social) {
+  if (!social) return null;
+  const META = [["instagram", "logo-instagram"], ["soundcloud", "logo-soundcloud"], ["spotify", "musical-notes"], ["youtube", "logo-youtube"]];
+  const links = META.map(([k, ic]) => { const u = socialUrl(k, social[k]); return u ? h("a", { class: "pd-social", href: u, target: "_blank", rel: "noopener" }, icon(ic, { size: 20, color: "var(--primary)" })) : null; }).filter(Boolean);
+  if (!links.length) return null;
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Sosyal"), h("div", { class: "pd-socials" }, ...links));
+}
+
+function artistDetailPage(id) {
+  const content = h("div", { class: "content" }, h("div", { class: "loading" }, spinner()));
+  const page = h("div", { class: "page has-nav dtl", style: { "--role": A } }, content, bottomnav(NAV, "kesfet", A));
+  renderArtistDetail(id, content);
+  return page;
+}
+async function renderArtistDetail(id, root) {
   const myUid = session.user?.uid;
-  userById(it.id).then((u) => {
-    clear(body);
-    // Takip butonu — sanatçı başka bir sanatçıyı takip edebilir (app ArtistDetail paritesi)
-    if (myUid && myUid !== it.id) {
-      const fbtn = h("button", { class: "btn btn-full", style: { marginBottom: "12px" } }, "…");
-      let fol = false, busy = false;
-      const paint = () => { clear(fbtn); fbtn.append(icon(fol ? "checkmark-circle" : "person-add-outline", { size: 15 }), h("span", {}, fol ? "Takipte" : "Takip Et")); };
-      isFollowing(myUid, it.id).then((v) => { fol = v; paint(); }).catch(() => paint());
-      fbtn.onclick = async () => {
-        if (busy) return; busy = true;
-        try {
-          if (fol) { await unfollowArtist(myUid, it.id); fol = false; }
-          else { await followArtist(myUid, { id: it.id, name: it.name, genre: it.sub }); fol = true; }
-          toast(fol ? "Takip edildi" : "Takipten çıkıldı");
-        } catch (_) { toast("İşlem başarısız", "err"); }
-        finally { busy = false; paint(); }
-      };
-      body.append(fbtn);
-    }
-    body.append(
-      h("div", { class: "ax-drows" },
-        drow("mic-outline", "Tür", Array.isArray(u?.genres) ? (u.genres.join(", ") || it.sub) : (u?.genre || it.sub)),
-        drow("location-outline", "Konum", u?.city ? `${u.city}${u.district ? ` / ${u.district}` : ""}` : "—"),
-        drow("star-outline", "Puan", it.rating > 0 ? `${it.rating.toFixed(1)} · ${it.reviewCount} yorum` : "Henüz puan yok"),
-        u?.experienceYears ? drow("time-outline", "Deneyim", `${u.experienceYears} yıl`) : null),
-      u?.bio ? h("div", { class: "ax-drows" }, h("div", {},
-        h("div", { class: "ax-msglabel" }, "Hakkında"),
-        h("div", { class: "ax-msgbody" }, u.bio))) : null);
-  }).catch(() => { clear(body); body.append(errBox()); });
+  const [a, revs, following, follCount] = await Promise.all([
+    userById(id), artistReviews(id).catch(() => []),
+    myUid ? isFollowing(myUid, id).catch(() => false) : false,
+    artistFollowerCount(id).catch(() => 0),
+  ]);
+  clear(root);
+  if (!a) { root.append(empty("alert-circle-outline", "Sanatçı bulunamadı", "Bu sanatçı kaldırılmış olabilir.")); return; }
+  const name = a.displayName || a.name || "Sanatçı";
+  const genres = [...new Set((Array.isArray(a.genres) ? a.genres : a.genre ? [a.genre] : []).filter(Boolean))];
+  const rated = revs.filter((r) => (r.rating || 0) > 0);
+  const avg = rated.length ? (rated.reduce((s, r) => s + r.rating, 0) / rated.length).toFixed(1) : "—";
+  const custRevs = revs.filter((r) => (r.authorType ?? "customer") === "customer");
+  let foll = following;
+
+  const fIc = () => icon(foll ? "checkmark-circle" : "person-add-outline", { size: 18, color: foll ? "#C084FC" : "#A78BFA" });
+  const fTx = h("span", {}, foll ? "Takipte" : "Takip Et");
+  const followBtn = h("button", { class: "pd-act" + (foll ? " on" : "") }, fIc(), fTx);
+  const canFollow = myUid && myUid !== id;
+  followBtn.onclick = async () => {
+    if (!canFollow) return;
+    followBtn.disabled = true;
+    try {
+      if (foll) { await unfollowArtist(myUid, id); foll = false; } else { await followArtist(myUid, a); foll = true; }
+      followBtn.classList.toggle("on", foll); fTx.textContent = foll ? "Takipte" : "Takip Et";
+      followBtn.replaceChild(fIc(), followBtn.firstChild);
+      toast(foll ? "Takip ediliyor" : "Takipten çıkıldı");
+    } catch (_) { toast("İşlem başarısız", "err"); }
+    followBtn.disabled = false;
+  };
+
+  const acts = h("div", { class: "pd-acts" });
+  if (canFollow) acts.append(followBtn,
+    h("button", { class: "pd-act", onclick: () => { requestChat({ otherId: id, otherName: name }); go("#/artist/mesaj"); } },
+      icon("chatbubble-ellipses-outline", { size: 18, color: "#A78BFA" }), h("span", {}, "Mesaj")));
+
+  root.append(
+    h("div", { class: "pd-hero pd-artist" + (a.bannerUrl ? " has-banner" : "") },
+      a.bannerUrl ? h("div", { class: "pd-banner", style: { backgroundImage: `url(${a.bannerUrl})` } }) : null,
+      h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/artist/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
+      h("div", { class: "pd-center" },
+        a.photoURL ? h("div", { class: "pd-av round zoomable", style: { backgroundImage: `url(${a.photoURL})` }, title: "Büyüt", onclick: () => lightbox(a.photoURL) }) : h("div", { class: "pd-av round" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
+        h("h1", { class: "pd-name" }, name),
+        genres[0] ? h("span", { class: "pd-genrepill" }, genres[0]) : null,
+        memberChip(a), membershipText(a),
+        h("div", { class: "pd-stats" },
+          pdStat(avg, "Puan", true), pdDivider(),
+          pdStat(follCount ?? shortNum(a.followerCount ?? 0), "Takipçi"), pdDivider(),
+          pdStat(revs.length, "Yorum")))),
+    canFollow ? acts : null,
+    h("div", { class: "ed-sect" }, pdTitle("Hakkında"),
+      h("p", { class: "ed-desc" + (a.bio ? "" : " dim") }, a.bio || "Sanatçı henüz biyografi eklememiş."),
+      a.experienceYears ? h("div", { class: "pd-exp" }, icon("time-outline", { size: 14, color: "var(--text-secondary)" }), h("span", {}, a.experienceYears + " yıl deneyim")) : null),
+    genres.length ? h("div", { class: "ed-sect" }, pdTitle("Müzik Tarzları"),
+      h("div", { class: "pd-tags" }, ...genres.map((g) => h("span", { class: "pd-tag" }, g)))) : null,
+    socialBlock(a.social),
+    h("div", { class: "ed-sect" }, pdTitle("Yorumlar"),
+      custRevs.length ? h("div", {}, ...custRevs.map((r) => rvCard(r.authorName, r.rating, r.comment, r.createdAt))) : rvEmpty("Henüz yorum yok.")),
+  );
 }
 
 // ══════════════ KEŞFET — diğer sanatçıları ara/gör ve TAKİP ET (app DiscoverScreen birebir) ══════════════
@@ -779,7 +860,7 @@ async function renderDiscover(root) {
       const av = a.photoURL
         ? h("div", { class: "kx-av", style: { backgroundImage: `url(${a.photoURL})` } })
         : h("div", { class: "kx-av ph" }, it.name.charAt(0).toLocaleUpperCase("tr-TR"));
-      listBox.append(h("div", { class: "kx-row", onclick: () => artistInfoModal(it) },
+      listBox.append(h("div", { class: "kx-row", onclick: () => go("#/artist/sanatci/" + a.id) },
         av,
         h("div", { class: "kx-info" },
           h("div", { class: "kx-name" }, it.name),
