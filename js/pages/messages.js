@@ -210,6 +210,6 @@ function timeShort(v) {
     if (isNaN(d)) return "";
     const now = new Date();
     if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
-    return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short" });
+    return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" });
   } catch { return ""; }
 }
