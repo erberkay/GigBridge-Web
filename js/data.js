@@ -760,6 +760,32 @@ export async function setResidencyStatus(id, status, byUid) {
   });
 }
 
+// Aktif rezidansı (mekanla anlaşma) sanatçının user dokümanına DENORMALİZE et.
+// Kurallar başkasının residencies'ini okutmaz → kamusal profil için band burada saklanır.
+// Sanatçı KENDİ profilini açınca / rezidans kabul-iptal edince çağrılır (owner yazar).
+const _RES_DAY_TR = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+function _fmtResDays(days) {
+  return Array.isArray(days)
+    ? [...days].sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7)).map((d) => _RES_DAY_TR[d]).filter(Boolean).join(", ")
+    : "";
+}
+export async function syncResidentDenorm(uid, current) {
+  let residentVenue = "", residentDays = "";
+  try {
+    const snap = await getDocs(query(collection(db, "residencies"), where("artistId", "==", uid), where("status", "==", "active")));
+    if (!snap.empty) {
+      const r = snap.docs.map((d) => d.data())
+        .sort((a, b) => ((b.updatedAt?.toMillis?.() ?? b.createdAt?.toMillis?.() ?? 0) - (a.updatedAt?.toMillis?.() ?? a.createdAt?.toMillis?.() ?? 0)))[0];
+      residentVenue = r.venueName || "";
+      residentDays = _fmtResDays(r.daysOfWeek);
+    }
+    if (!current || current.residentVenue !== residentVenue || current.residentDays !== residentDays) {
+      await updateDoc(doc(db, "users", uid), { residentVenue, residentDays });
+    }
+  } catch (_) { /* best-effort */ }
+  return { residentVenue, residentDays };
+}
+
 // Uygulama içi bildirim (notifications) — app pushAppNotification birebir
 export async function pushAppNotification(opts) {
   if (!opts.toUserId || opts.toUserId === opts.fromUserId) return; // kendine bildirim yok

@@ -6,7 +6,7 @@ import {
   getUser, userById, saveProfile, uploadImage, submitReport,
   artistReviews, listRealArtists, listenNotifications, markNotifRead, deleteNotif,
   listenArtistOffers, listenArtistAccepted, listenArtistResidencies, respondToOffer,
-  setResidencyStatus, pushAppNotification, artistAcceptedInvitations,
+  setResidencyStatus, syncResidentDenorm, pushAppNotification, artistAcceptedInvitations,
   artistVenueReviewsGiven, submitArtistVenueReview, fetchArtistRatings, listGroups,
   followArtist, unfollowArtist, isFollowing, artistFollowerCount,
   bayesianScore, ratingsGlobalMean,
@@ -552,6 +552,7 @@ async function renderStages(root) {
     processing = true; drawLists();
     try {
       await setResidencyStatus(r.id, action, uid);
+      syncResidentDenorm(uid).catch(() => {});   // "Resident" bandını anında güncelle (kabul/ret sonrası)
       pushAppNotification({
         toUserId: r.venueId, fromUserId: uid, fromName: name, type: "residency_update",
         title: action === "active" ? "Anlaşma Kabul Edildi 🎉" : "Anlaşma Reddedildi",
@@ -1092,6 +1093,8 @@ async function renderProfile(root) {
   const uid = session.user.uid;
   const name = p.displayName || "Sanatçı";
   const badge = memberBadgeFor(p.createdAt);
+  // Mekanla AKTİF anlaşmayı "Resident" olarak profile denormalize et (kamusal profil de görsün)
+  try { const rr = await syncResidentDenorm(uid, p); p.residentVenue = rr.residentVenue; p.residentDays = rr.residentDays; } catch (_) {}
 
   // Kapak + avatar + tip rozeti + üyelik kıdemi (banner varsa en üstte geniş görsel)
   // Kimlik paketi: aksan renk (--accent), slogan, rezidans bandı
@@ -1199,9 +1202,9 @@ async function renderProfile(root) {
   const identityForm = h("div", { class: "form-card" },
     field({ label: "Slogan (opsiyonel)", id: "atagline", value: p.tagline || "", placeholder: "örn. İstanbul gecelerinin melodic techno sesi", hint: "Adının altında görünür — kısa tut (en çok 60 karakter)." }),
     h("div", { class: "frow" },
-      field({ label: "Rezidans Günü", id: "aresday", value: p.residencyDay || "", options: [{ value: "", label: "— Yok —" }].concat(RES_DAYS.map((d) => ({ value: d, label: d }))) }),
-      field({ label: "Rezidans Mekanı", id: "aresvenue", value: p.residencyVenue || "", placeholder: "örn. Klein, İstanbul" })),
-    h("p", { class: "fhint" }, "Rezidansın varsa profilinin en üstünde “REZİDANS · Her Cuma — Mekan” olarak öne çıkar."),
+      field({ label: "Resident Günü", id: "aresday", value: p.residencyDay || "", options: [{ value: "", label: "— Yok —" }].concat(RES_DAYS.map((d) => ({ value: d, label: d }))) }),
+      field({ label: "Resident Mekanı", id: "aresvenue", value: p.residencyVenue || "", placeholder: "örn. Klein, İstanbul" })),
+    h("p", { class: "fhint" }, "Bir mekanla anlaştığında profilinde otomatik “RESIDENT · Mekan” çıkar. Elle de girebilirsin (mekanla anlaşman sistemde yoksa)."),
     h("span", { class: "flabel", style: { display: "block", marginTop: "12px", marginBottom: "8px" } }, "Aksan Rengi"),
     accentPick.node);
 

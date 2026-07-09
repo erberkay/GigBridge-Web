@@ -222,13 +222,22 @@ export const ACCENTS = [["#FF4FA3", "Pembe"], ["#FF8A2A", "Amber"], ["#4ED8FF", 
 export const RES_DAYS = ["Her gün", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 export function accentOf(p) { return (p && p.accentColor) || "var(--primary)"; }
 export function profileTagline(p) { return (p && p.tagline) ? h("div", { class: "pf-tagline" }, p.tagline) : null; }
+// "Resident" bandı — ÖNCE mekanla aktif anlaşma (residentVenue/residentDays denorm),
+// yoksa elle girilen residencyVenue/residencyDay (yedek). Etiket: "Resident" (gerçek terim).
 export function profileResidency(p) {
-  if (!(p && p.residencyVenue)) return null;
-  const d = p.residencyDay || "";
-  const when = d ? (d === "Her gün" ? "Her gün" : "Her " + d) : "";
+  if (!p) return null;
+  const rv = String(p.residentVenue || "").trim();
+  let when, venue;
+  if (rv) { venue = rv; when = String(p.residentDays || "").trim(); }
+  else {
+    venue = String(p.residencyVenue || "").trim();
+    if (!venue) return null;
+    const d = p.residencyDay || "";
+    when = d ? (d === "Her gün" ? "Her gün" : "Her " + d) : "";
+  }
   return h("div", { class: "pf-residency" },
-    h("span", { class: "pf-reslabel" }, "REZİDANS"),
-    h("span", { class: "pf-restext" }, [when, p.residencyVenue].filter(Boolean).join(" — ")));
+    h("span", { class: "pf-reslabel" }, "RESIDENT"),
+    h("span", { class: "pf-restext" }, [when, venue].filter(Boolean).join(" — ")));
 }
 // Aksan renk seçici — { node, getColor }. SABİT palet (serbest color-picker değil = marka disiplini).
 export function accentPicker(current) {
