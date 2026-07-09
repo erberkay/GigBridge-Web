@@ -12,7 +12,7 @@ import {
   bayesianScore, ratingsGlobalMean,
   serverTimestamp,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE, cityPickerField, profileTagline, profileResidency, accentOf, accentPicker, RES_DAYS, featuredSet, venueChips, featuredReview, availabilityBadge, AVAIL_OPTS, rowsEditor, chipMulti, rateCardBlock, suitabilityBlock, serviceAreaBlock, techRiderBlock, videoReel, EVENT_TYPES, SET_FORMATS, EQUIP_OPTS } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE, cityPickerField, profileTagline, profileResidency, accentOf, accentPicker, RES_DAYS, featuredSet, venueChips, featuredReview, availabilityBadge, AVAIL_OPTS, rowsEditor, chipMulti, rateCardBlock, suitabilityBlock, serviceAreaBlock, techRiderBlock, videoReel, EVENT_TYPES, SET_FORMATS, EQUIP_OPTS, LANGUAGES, PRICE_TYPE_OPTS, CANCELLATION_OPTS, languagesBlock, priceBadge, addOnsBlock, termsBlock, packagesEditorWithTypes, profileCompletionBar, trustedBadge } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
 
@@ -790,6 +790,7 @@ async function renderArtistDetail(id, root) {
       h("div", { class: "pd-center" },
         a.photoURL ? h("div", { class: "pd-av round zoomable", style: { backgroundImage: `url(${a.photoURL})` }, title: "Büyüt", onclick: () => lightbox(a.photoURL) }) : h("div", { class: "pd-av round" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
         h("h1", { class: "pd-name" }, name),
+        (() => { const tb = trustedBadge(avg, rated.length); const pb = priceBadge(a); return (tb || pb) ? h("div", { class: "badge-row", style: { justifyContent: "center" } }, tb, pb) : null; })(),
         genres[0] ? h("span", { class: "pd-genrepill" }, genres[0]) : null,
         profileTagline(a),
         memberChip(a), membershipText(a),
@@ -805,10 +806,13 @@ async function renderArtistDetail(id, root) {
     h("div", { class: "ed-sect" }, pdTitle("Hakkında"),
       h("p", { class: "ed-desc" + (a.bio ? "" : " dim") }, a.bio || "Sanatçı henüz biyografi eklememiş."),
       a.experienceYears ? h("div", { class: "pd-exp" }, icon("time-outline", { size: 14, color: "var(--text-secondary)" }), h("span", {}, a.experienceYears + " yıl deneyim")) : null),
-    rateCardBlock(a.packages),                                           // paketler & fiyat
+    rateCardBlock(a.packages),                                           // paketler & fiyat (Faz 3: etkinlik-türü segmenti)
+    addOnsBlock(a),                                                      // Faz 3: ek hizmetler
+    termsBlock(a),                                                       // Faz 3: kapora + iptal politikası
     suitabilityBlock(a),                                                 // ne için uygun
     serviceAreaBlock(a),                                                 // hizmet bölgesi
     techRiderBlock(a),                                                   // kurulum & detaylar
+    languagesBlock(a),                                                   // Faz 3: diller + MC
     venueChips(revs),                                                    // ③ çaldığı mekanlar
     videoReel(a.videoUrls),                                              // performans reel
     genres.length ? h("div", { class: "ed-sect" }, pdTitle("Müzik Tarzları"),
@@ -1168,12 +1172,15 @@ async function renderProfile(root) {
     h("span", { class: "flabel", style: { display: "block", marginTop: "4px", marginBottom: "6px" } }, "Kapak (banner) — hazır seç"),
     bannerPic.node);
 
-  // Performans ücreti (min 3.500 iş kuralı)
+  // Performans ücreti (min 3.500 iş kuralı) — FAZ 3: fiyat tipi + şartlar (kapora/iptal)
   const priceForm = h("div", { class: "form-card" },
     h("div", { class: "frow" },
       field({ label: "Minimum Ücret (₺)", id: "apmin", type: "number", value: p.priceMin || "", placeholder: "En az 3.500" }),
       field({ label: "Maksimum Ücret (₺)", id: "apmax", type: "number", value: p.priceMax || "", placeholder: "Örn. 10.000" })),
-    h("p", { class: "fhint" }, `Sanatçılar en az ${tl(MIN_STAGE_FEE)} ücretle sahne alabilir.`));
+    field({ label: "Fiyat Tipi", id: "apricetype", value: p.priceType || "", options: PRICE_TYPE_OPTS, hint: "Profilinde 'Başlangıç ₺…' veya 'Sabit ₺…' rozeti olarak gösterilir." }),
+    h("p", { class: "fhint" }, `Sanatçılar en az ${tl(MIN_STAGE_FEE)} ücretle sahne alabilir.`),
+    field({ label: "Kapora Notu (opsiyonel)", id: "adeposit", value: p.depositNote || "", placeholder: "örn. %30 kapora rezervasyonu kesinleştirir", hint: "En çok 160 karakter." }),
+    field({ label: "İptal Politikası", id: "acancel", value: p.cancellationPolicy || "", options: CANCELLATION_OPTS }));
 
   // Sosyal medya
   const SOCIAL_META = [
@@ -1203,21 +1210,29 @@ async function renderProfile(root) {
     field({ label: "Öne Çıkan Set (link)", id: "aset", value: p.featuredSetUrl || "", placeholder: "SoundCloud / YouTube / Mixcloud / Spotify bağlantısı", hint: "Profilinde gömülü oynatıcı olur — dosya yükleme yok, sadece linki yapıştır." }),
     field({ label: "Müsaitlik Durumu", id: "aavail", value: p.availabilityStatus || "", options: AVAIL_OPTS }));
 
-  // FAZ 2 — Booking vitrini editörleri
-  const pkgEditor = rowsEditor({ rows: Array.isArray(p.packages) ? p.packages : [], fields: [
-    { key: "name", placeholder: "Paket adı (örn. Standart Set)" },
-    { key: "price", placeholder: "Fiyat (örn. 8.000)" },
-    { key: "includes", placeholder: "Kapsam: 3 saat, ekipman, MC", wide: true },
-  ], addLabel: "+ Paket Ekle", max: 4 });
+  // FAZ 2 — Booking vitrini editörleri (FAZ 3: paket editörü artık etkinlik-türü çipleri içeriyor)
+  const pkgEditor = packagesEditorWithTypes({ rows: Array.isArray(p.packages) ? p.packages : [], max: 4 });
   const eventTypesPick = chipMulti({ options: EVENT_TYPES, selected: Array.isArray(p.eventTypes) ? p.eventTypes : [] });
   const setFormatsPick = chipMulti({ options: SET_FORMATS, selected: Array.isArray(p.setFormats) ? p.setFormats : [] });
   const serviceCitiesPick = chipMulti({ options: [], selected: Array.isArray(p.serviceCities) ? p.serviceCities : [], allowCustom: true, placeholder: "Ek şehir ekle" });
   const videoEditor = rowsEditor({ rows: (Array.isArray(p.videoUrls) ? p.videoUrls : []).map((u) => ({ url: u })), fields: [{ key: "url", placeholder: "YouTube / Vimeo bağlantısı", wide: true }], addLabel: "+ Video Ekle", max: 6 });
+  // FAZ 3 — diller + MC editörleri
+  const langPick = chipMulti({ options: LANGUAGES, selected: Array.isArray(p.languages) ? p.languages : [], allowCustom: true, placeholder: "Dil ekle" });
+  // FAZ 3 — ek hizmetler editörü ({name, price} max 6)
+  const addOnsEditor = rowsEditor({ rows: Array.isArray(p.addOns) ? p.addOns : [], fields: [
+    { key: "name", placeholder: "Ek hizmet (ör. +1 saat)", wide: true },
+    { key: "price", placeholder: "Fiyat" },
+  ], addLabel: "+ Ek Hizmet", max: 6 });
   const flabelBlk = (t, mt) => h("span", { class: "flabel", style: { display: "block", marginTop: mt || "0", marginBottom: "8px" } }, t);
   const bookingForm = h("div", { class: "form-card" },
     flabelBlk("Paketler & Fiyat"), pkgEditor.node,
     flabelBlk("Etkinlik Türleri", "16px"), eventTypesPick.node,
     flabelBlk("Set Formatı", "16px"), setFormatsPick.node,
+    flabelBlk("Diller", "16px"), langPick.node,
+    field({ label: "MC / mikrofon sunumu yapabilir misin?", id: "amc", value: p.mcAbility ? "1" : "", options: [{ value: "", label: "Hayır" }, { value: "1", label: "Evet" }] }),
+    flabelBlk("Ek Hizmetler", "16px"),
+    h("p", { class: "fhint", style: { marginTop: "-2px", marginBottom: "8px" } }, "Ek saat, MC, ışık/efekt gibi ekstralar (en çok 6)."),
+    addOnsEditor.node,
     flabelBlk("Performans Reel (video)", "16px"),
     h("p", { class: "fhint", style: { marginTop: "-2px", marginBottom: "8px" } }, "YouTube/Vimeo bağlantısı — video bizde barınmaz, sadece link."),
     videoEditor.node);
@@ -1269,8 +1284,8 @@ async function renderProfile(root) {
       // Vitrin & Uygunluk
       featuredSetUrl: (v("#aset") || "").trim().slice(0, 400),
       availabilityStatus: v("#aavail") || "",
-      // Faz 2 — Booking vitrini
-      packages: pkgEditor.get().slice(0, 4).map((r) => ({ name: (r.name || "").slice(0, 40), price: (r.price || "").slice(0, 20), includes: (r.includes || "").slice(0, 120) })),
+      // Faz 2 — Booking vitrini (Faz 3: packages[].eventTypes)
+      packages: pkgEditor.get().slice(0, 4).map((r) => ({ name: (r.name || "").slice(0, 40), price: (r.price || "").slice(0, 20), includes: (r.includes || "").slice(0, 120), eventTypes: (r.eventTypes || []).filter(Boolean) })),
       eventTypes: eventTypesPick.get(),
       setFormats: setFormatsPick.get(),
       serviceCities: serviceCitiesPick.get().slice(0, 15),
@@ -1279,6 +1294,13 @@ async function renderProfile(root) {
       minDuration: (v("#amindur") || "").trim().slice(0, 40),
       setupTime: (v("#asetup") || "").trim().slice(0, 40),
       videoUrls: videoEditor.get().map((r) => (r.url || "").trim()).filter(Boolean).slice(0, 6),
+      // Faz 3 — diller + MC + şeffaf fiyat + ek hizmet + şartlar
+      languages: langPick.get().map((l) => String(l).trim()).filter(Boolean).slice(0, 8),
+      mcAbility: v("#amc") === "1",
+      priceType: v("#apricetype") || "",
+      addOns: addOnsEditor.get().slice(0, 6).map((a) => ({ name: (a.name || "").slice(0, 40), price: (a.price || "").slice(0, 20) })),
+      depositNote: (v("#adeposit") || "").trim().slice(0, 160),
+      cancellationPolicy: v("#acancel") || "",
     };
     // Ad gerçekten değiştiyse cooldown damgasını yaz (yalnız o zaman).
     if (nameChanged) patch.displayNameChangedAt = serverTimestamp();
@@ -1307,23 +1329,31 @@ async function renderProfile(root) {
     menuRow("key-outline", "Şifre Değiştir", () => changePasswordModal()),
     menuRow("alert-circle-outline", "Sorun Bildir", reportModal));
 
+  // FAZ 3 — profil tamamlama çubuğu (YALNIZ kendi düzenleme ekranında). Eksik çipe tıklayınca ilgili bölüme kaydırır.
+  const anchorEl = (id, node) => { node.id = "pf-anc-" + id; return node; };
+  const jumpTo = (anchor) => { const t = document.getElementById("pf-anc-" + anchor); if (t) t.scrollIntoView({ behavior: (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth", block: "start" }); };
+  const completionBar = profileCompletionBar(p, jumpTo);
+
   root.append(
     cover,
-    sect("Profil Özeti", "stats-chart-outline", statsBox),
+    sect("Profil Özeti", "stats-chart-outline", completionBar, statsBox),
     featuredSet(p.featuredSetUrl),
     rateCardBlock(p.packages),
+    addOnsBlock(p),
+    termsBlock(p),
     suitabilityBlock(p),
     serviceAreaBlock(p),
     techRiderBlock(p),
+    languagesBlock(p),
     videoReel(p.videoUrls),
-    sect("Sanatçı Bilgileri", "person-outline", form),
-    sect("Kimlik & Vitrin", "color-palette-outline", identityForm),
-    sect("Vitrin & Uygunluk", "sparkles-outline", showcaseForm),
-    sect("Paketler & Booking", "pricetags-outline", bookingForm),
+    anchorEl("bilgiler", sect("Sanatçı Bilgileri", "person-outline", form)),
+    anchorEl("kimlik", sect("Kimlik & Vitrin", "color-palette-outline", identityForm)),
+    anchorEl("vitrin", sect("Vitrin & Uygunluk", "sparkles-outline", showcaseForm)),
+    anchorEl("booking", sect("Paketler & Booking", "pricetags-outline", bookingForm)),
     sect("Bölge & Kurulum", "map-outline", areaForm),
-    sect("Müzik Türleri", "musical-notes-outline",
-      h("p", { class: "muted small mb6" }, "Çaldığın türleri seç; istersen kendi türünü ekle."), genreRow, genreAdd),
-    sect("Performans Ücreti", "cash-outline", priceForm),
+    anchorEl("turler", sect("Müzik Türleri", "musical-notes-outline",
+      h("p", { class: "muted small mb6" }, "Çaldığın türleri seç; istersen kendi türünü ekle."), genreRow, genreAdd)),
+    anchorEl("ucret", sect("Performans Ücreti", "cash-outline", priceForm)),
     sect("Sosyal Medya", "share-social-outline", socialForm),
     save, saveMsg,
     notice, menu,

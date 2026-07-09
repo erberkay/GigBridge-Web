@@ -379,17 +379,7 @@ export function chipMulti({ options = [], selected = [], allowCustom = false, pl
   return { node: h("div", {}, row, extra), get: () => [...sel] };
 }
 
-// Rate-Card — adlandırılmış paketler
-export function rateCardBlock(packages) {
-  const list = (packages || []).filter((p) => p && (p.name || p.price));
-  if (!list.length) return null;
-  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Paketler & Fiyat"),
-    h("div", { class: "pf-pkgs" }, ...list.map((p) => h("div", { class: "pf-pkg" },
-      h("div", { class: "pf-pkg-top" }, h("span", { class: "pf-pkg-name" }, p.name || "Paket"),
-        p.price ? h("span", { class: "pf-pkg-price" }, /^[\d.]/.test(String(p.price).trim()) ? "₺" + p.price : p.price) : null),
-      p.includes ? h("div", { class: "pf-pkg-inc" }, ...String(p.includes).split(/[,;]/).map((t) => t.trim()).filter(Boolean).map((t) => h("span", { class: "pf-pkg-tag" }, t))) : null,
-      p.desc ? h("p", { class: "pf-pkg-desc" }, p.desc) : null))));
-}
+// Rate-Card — adlandırılmış paketler → FAZ 3'te aşağıda etkinlik-türü segmentiyle GENİŞLETİLDİ (tek tanım)
 
 // Ne için uygun — etkinlik türü (amber) + set formatı (cyan)
 export function suitabilityBlock(p) {
@@ -454,6 +444,186 @@ export function videoReel(urls) {
 export const EVENT_TYPES = ["Düğün", "Kurumsal", "Kulüp / Gece", "Özel Parti", "Festival", "Bar / Lounge", "After Party"];
 export const SET_FORMATS = ["Warm-up", "Peak-time", "Headliner", "After / Closing", "All-night"];
 export const EQUIP_OPTS = [{ value: "", label: "— Belirtilmemiş —" }, { value: "yes", label: "Ekipmanı ben getiriyorum" }, { value: "no", label: "Ekipman mekandan" }, { value: "partial", label: "Kısmen getiriyorum" }];
+
+// ══════════════ FAZ 3 — Güven & şeffaflık paketi (diller, fiyat, ek hizmet, şartlar, paket segmenti, tamamlama, güvenilir rozeti) ══════════════
+// Hepsi mevcut/yeni DÜZ Firestore alanı (users/{uid}); kural değişikliği yok, boşsa yazılmaz.
+
+// ── Sabitler ──
+export const LANGUAGES = ["Türkçe", "İngilizce", "Almanca", "Rusça", "Arapça"];
+export const PRICE_TYPE_OPTS = [{ value: "", label: "—" }, { value: "start", label: "Başlangıç fiyatı" }, { value: "fixed", label: "Sabit fiyat" }];
+export const CANCELLATION_OPTS = [{ value: "", label: "— Belirtilmemiş —" }, { value: "flexible", label: "Esnek" }, { value: "moderate", label: "Orta" }, { value: "strict", label: "Katı" }];
+
+// ① DİLLER + MC — 'Diller' çip şeridi (cyan) + MC yapabilir rozeti (amber)
+export function languagesBlock(p) {
+  const langs = (p && Array.isArray(p.languages) ? p.languages : []).filter(Boolean);
+  const mc = !!(p && p.mcAbility);
+  if (!langs.length && !mc) return null;
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Diller"),
+    langs.length ? h("div", { class: "pf-tags" }, ...langs.map((l) => h("span", { class: "pf-tag2 cyan" }, l))) : null,
+    mc ? h("div", { class: "badge-row", style: { marginTop: langs.length ? "10px" : "0" } }, badge("MC yapabilir", "var(--amber)", "mic-outline")) : null);
+}
+
+// ② FİYAT ROZETİ — priceType + priceMin/priceMax (yeni fiyat alanı YOK, sadece etiket)
+export function priceBadge(p) {
+  if (!p || !p.priceType) return null;
+  const min = p.priceMin, max = p.priceMax;
+  if (!min && !max) return null;
+  const val = min || max;
+  const label = (p.priceType === "start" ? "Başlangıç " : p.priceType === "fixed" ? "Sabit " : "") + fmtTL(val);
+  if (!label.trim()) return null;
+  return badge(label, "var(--amber)", "pricetag-outline");
+}
+
+// EK HİZMETLER — {name, price}[] → pf-kv satırları
+export function addOnsBlock(p) {
+  const list = (p && Array.isArray(p.addOns) ? p.addOns : []).filter((a) => a && (a.name || a.price));
+  if (!list.length) return null;
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Ek Hizmetler"),
+    h("div", { class: "pf-kv" }, ...list.map((a) => h("div", { class: "pf-kv-row" },
+      h("span", { class: "pf-kv-k" }, a.name || "Ek hizmet"),
+      a.price ? h("span", { class: "pf-kv-v" }, /^[\d.]/.test(String(a.price).trim()) ? "₺" + a.price : a.price) : null))));
+}
+
+// ŞARTLAR — kapora notu + iptal politikası rozeti (flexible=yeşil / moderate=amber / strict=kırmızı)
+const _CANCEL = { flexible: ["Esnek İptal", "var(--success)"], moderate: ["Orta İptal", "var(--amber)"], strict: ["Katı İptal", "var(--error)"] };
+export function termsBlock(p) {
+  const dep = String((p && p.depositNote) || "").trim();
+  const cp = p && p.cancellationPolicy;
+  const cancel = cp && _CANCEL[cp];
+  if (!dep && !cancel) return null;
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Şartlar"),
+    dep ? h("div", { class: "pf-kv" }, h("div", { class: "pf-kv-row" },
+      h("span", { class: "pf-kv-k" }, "Kapora"), h("span", { class: "pf-kv-v" }, dep))) : null,
+    cancel ? h("div", { class: "badge-row", style: { marginTop: dep ? "10px" : "0" } }, badge(cancel[0], cancel[1], "shield-outline")) : null);
+}
+
+// ③ ETKİNLİK-TÜRÜ PAKET SEGMENTİ — rateCardBlock'un genişletilmiş sürümü.
+// Üstte 'Tümü' + paketlerde geçen tüm eventTypes birleşimi çip-sekmeleri; seçilen türü
+// içermeyen paketler .dim (soluk) olur. Tek/sıfır tür varsa sekme şeridi render edilmez.
+export function rateCardBlock(packages) {
+  const list = (packages || []).filter((p) => p && (p.name || p.price));
+  if (!list.length) return null;
+  const pkgTypes = list.map((p) => (Array.isArray(p.eventTypes) ? p.eventTypes.filter(Boolean) : []));
+  const union = [...new Set(pkgTypes.flat())];
+  const pkgEl = (p, i) => h("div", { class: "pf-pkg", dataset: { pkgi: String(i) } },
+    h("div", { class: "pf-pkg-top" }, h("span", { class: "pf-pkg-name" }, p.name || "Paket"),
+      p.price ? h("span", { class: "pf-pkg-price" }, /^[\d.]/.test(String(p.price).trim()) ? "₺" + p.price : p.price) : null),
+    p.includes ? h("div", { class: "pf-pkg-inc" }, ...String(p.includes).split(/[,;]/).map((t) => t.trim()).filter(Boolean).map((t) => h("span", { class: "pf-pkg-tag" }, t))) : null,
+    pkgTypes[i].length ? h("div", { class: "pf-pkg-inc" }, ...pkgTypes[i].map((t) => h("span", { class: "pf-pkg-tag amber" }, t))) : null,
+    p.desc ? h("p", { class: "pf-pkg-desc" }, p.desc) : null);
+  const grid = h("div", { class: "pf-pkgs" }, ...list.map(pkgEl));
+  // Tek tür ya da hiç tür yoksa segment göstermeye gerek yok — sade paket listesi
+  if (union.length < 2) return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Paketler & Fiyat"), grid);
+  let active = "";  // "" = Tümü
+  const tabsRow = h("div", { class: "pf-seg-tabs" });
+  const drawTabs = () => {
+    clear(tabsRow);
+    const mk = (val, label) => {
+      const t = h("button", { type: "button", class: "pf-seg-tab" + (val === active ? " on" : ""), onclick: () => { active = val; drawTabs(); applyDim(); } }, label);
+      return t;
+    };
+    tabsRow.append(mk("", "Tümü"), ...union.map((et) => mk(et, et)));
+  };
+  const applyDim = () => {
+    grid.querySelectorAll(".pf-pkg").forEach((el, i) => {
+      const dim = active && !pkgTypes[i].includes(active);
+      el.classList.toggle("dim", !!dim);
+    });
+  };
+  drawTabs(); applyDim();
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Paketler & Fiyat"), tabsRow, grid);
+}
+
+// Paket editörü + paket-başı etkinlik türü çipleri — rowsEditor'a EVENT_TYPES chipMulti gömer. { node, get() }
+// get() → [{name, price, includes, eventTypes[]}] (boş satır elenir).
+export function packagesEditorWithTypes({ rows = [], max = 4 }) {
+  const list = h("div", { class: "re-list" });
+  const data = (rows || []).map((r) => ({
+    name: r.name || "", price: r.price || "", includes: r.includes || "",
+    eventTypes: Array.isArray(r.eventTypes) ? [...r.eventTypes] : [],
+  }));
+  const draw = () => {
+    clear(list);
+    data.forEach((row, i) => {
+      const nameIn = h("input", { value: row.name, placeholder: "Paket adı (örn. Standart Set)", oninput: (e) => { row.name = e.target.value; } });
+      const priceIn = h("input", { value: row.price, placeholder: "Fiyat (örn. 8.000)", oninput: (e) => { row.price = e.target.value; } });
+      const incIn = h("input", { value: row.includes, placeholder: "Kapsam: 3 saat, ekipman, MC", oninput: (e) => { row.includes = e.target.value; } });
+      const typeSel = new Set(row.eventTypes);
+      const chipRow = h("div", { class: "chip-row wrap" });
+      const drawChips = () => {
+        clear(chipRow);
+        EVENT_TYPES.forEach((et) => chipRow.append(h("button", { type: "button", class: "chip" + (typeSel.has(et) ? " on" : ""),
+          onclick: () => { typeSel.has(et) ? typeSel.delete(et) : typeSel.add(et); row.eventTypes = [...typeSel]; drawChips(); } }, et)));
+      };
+      drawChips();
+      const del = h("button", { class: "re-del", type: "button", title: "Sil", onclick: () => { data.splice(i, 1); draw(); } }, icon("close", { size: 15 }));
+      list.append(h("div", { class: "pf-pkgedit" },
+        h("div", { class: "re-row" },
+          h("div", { class: "re-cell" }, nameIn),
+          h("div", { class: "re-cell" }, priceIn),
+          del),
+        h("div", { class: "re-row" }, h("div", { class: "re-cell wide" }, incIn)),
+        h("span", { class: "pf-pkgedit-lbl" }, "Bu paket hangi etkinliklere uygun?"),
+        chipRow));
+    });
+  };
+  const add = h("button", { class: "re-add", type: "button", onclick: () => { if (data.length >= max) { toast("En fazla " + max + " paket ekleyebilirsin.", "err"); return; } data.push({ name: "", price: "", includes: "", eventTypes: [] }); draw(); } }, "+ Paket Ekle");
+  draw();
+  return {
+    node: h("div", {}, list, add),
+    get: () => data
+      .filter((r) => String(r.name || "").trim() || String(r.price || "").trim() || String(r.includes || "").trim())
+      .map((r) => ({ name: r.name || "", price: r.price || "", includes: r.includes || "", eventTypes: (r.eventTypes || []).filter(Boolean) })),
+  };
+}
+
+// ④ PROFİL TAMAMLAMA % — client-side, ~10 eşit ağırlıklı madde. { pct, missing:[{label, anchor}] }
+// anchor = ilgili sect başlığındaki data-anchor (renderProfile smooth-scroll için).
+export function profileCompletion(p) {
+  p = p || {};
+  const has = (x) => Array.isArray(x) ? x.length > 0 : String(x == null ? "" : x).trim().length > 0;
+  const pkgs = Array.isArray(p.packages) ? p.packages : [];
+  const pkgEventTypes = pkgs.some((k) => Array.isArray(k.eventTypes) && k.eventTypes.filter(Boolean).length);
+  const checks = [
+    { ok: has(p.bio), label: "Biyografi ekle", anchor: "bilgiler" },
+    { ok: (p.priceType && (has(p.priceMin) || has(p.priceMax))) || has(p.priceMin), label: "Fiyat belirt", anchor: "ucret" },
+    { ok: has(p.genres), label: "Müzik türü seç", anchor: "turler" },
+    { ok: has(p.photoURL), label: "Profil fotoğrafı ekle", anchor: "bilgiler" },
+    { ok: has(p.featuredSetUrl), label: "Öne çıkan set ekle", anchor: "vitrin" },
+    { ok: pkgs.length > 0, label: "Paket ekle", anchor: "booking" },
+    { ok: pkgEventTypes, label: "Pakete etkinlik türü ata", anchor: "booking" },
+    { ok: has(p.city), label: "Şehir belirt", anchor: "bilgiler" },
+    { ok: has(p.tagline), label: "Slogan ekle", anchor: "kimlik" },
+    { ok: has(p.languages), label: "Dil ekle", anchor: "booking" },
+  ];
+  const done = checks.filter((c) => c.ok).length;
+  const pct = Math.round((done / checks.length) * 100);
+  const missing = checks.filter((c) => !c.ok).map((c) => ({ label: c.label, anchor: c.anchor }));
+  return { pct, missing };
+}
+// Profil tamamlama çubuğu bileşeni — YALNIZ kendi düzenleme ekranında (renderProfile). onJump(anchor) opsiyonel.
+export function profileCompletionBar(p, onJump) {
+  const { pct, missing } = profileCompletion(p);
+  const done = pct >= 100;
+  const fill = h("div", { class: "pf-progress-fill", style: { width: pct + "%", background: done ? "var(--success)" : null } });
+  const wrap = h("div", { class: "pf-progress" + (done ? " done" : "") },
+    h("div", { class: "pf-progress-head" },
+      h("span", { class: "pf-progress-label" }, "Profil Tamamlama"),
+      h("span", { class: "pf-progress-pct" }, pct + "%")),
+    h("div", { class: "pf-progress-track" }, fill),
+    done
+      ? h("div", { class: "badge-row", style: { marginTop: "12px" } }, badge("Profil eksiksiz", "var(--success)", "checkmark-circle"))
+      : h("div", { class: "pf-progress-missing" }, ...missing.map((m) => h("button", { type: "button", class: "pf-miss-chip", onclick: () => onJump && onJump(m.anchor) },
+          icon("add-circle-outline", { size: 13, color: "var(--amber)" }), h("span", {}, m.label)))));
+  return wrap;
+}
+
+// ⑤ GÜVENİLİR SANATÇI ROZETİ — client-side: avg>=4.5 && count>=5 (CANLI reviews'tan). Kriter altı → null.
+export function trustedBadge(avg, count) {
+  const a = Number(avg), c = Number(count);
+  if (!(isFinite(a) && a >= 4.5 && c >= 5)) return null;
+  return badge("Güvenilir Sanatçı", "var(--success)", "shield-checkmark");
+}
 
 // Fotoğraf seçici — { node, getFile }. Seçilen dosya KIRPMA modalından geçer (sürükle+zoom),
 // getFile() kırpılmış Blob döndürür. opts: { aspect (gen/yük), round }. currentUrl → mevcut önizleme.

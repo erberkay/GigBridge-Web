@@ -893,6 +893,36 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .pf-kv-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 14px; background: var(--surface-2); }
 .pf-kv-k { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
 .pf-kv-v { font-size: 13.5px; font-weight: 600; color: var(--text); text-align: right; }
+
+/* ══════════ FAZ 3 — Güven & şeffaflık ══════════ */
+/* Profil tamamlama çubuğu (yalnız kendi düzenleme ekranı) */
+.pf-progress { margin: 0 0 20px; }
+.pf-progress-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.pf-progress-label { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.pf-progress-pct { font-size: 15px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.pf-progress-track { height: 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.pf-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--primary), var(--amber), var(--cyan)); transition: width 0.5s ease; }
+.pf-progress.done .pf-progress-fill { background: var(--success); }
+.pf-progress-missing { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.pf-miss-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--text-secondary); border: 1px dashed var(--border); background: var(--surface-2); border-radius: 999px; padding: 5px 11px; cursor: pointer; }
+.pf-miss-chip:hover { color: var(--primary); border-color: var(--primary); }
+.pf-miss-chip ion-icon { color: var(--amber); }
+/* Etkinlik-türü paket segment sekmeleri */
+.pf-seg-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.pf-seg-tab { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); border: 1px solid var(--border); background: var(--surface-2); border-radius: 999px; padding: 6px 13px; cursor: pointer; }
+.pf-seg-tab.on { color: #fff; border-color: var(--primary); background: color-mix(in srgb, var(--primary) 16%, transparent); }
+.pf-pkg { transition: opacity 0.2s ease; }
+.pf-pkg.dim { opacity: 0.42; }
+/* Paket-başı etkinlik türü etiketi (amber varyant) */
+.pf-pkg-tag.amber { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 40%, transparent); }
+/* Paket editörü (etkinlik türü çipleri gömülü) */
+.pf-pkgedit { border: 1px solid var(--border); border-radius: 14px; padding: 12px 13px 14px; background: var(--surface-2); display: flex; flex-direction: column; gap: 8px; }
+.pf-pkgedit .re-row { margin: 0; }
+.pf-pkgedit-lbl { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-top: 4px; }
+.pf-pkgedit .chip-row { margin: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .pf-progress-fill, .pf-pkg { transition: none; }
+}
 /* Video reel */
 .pf-reel { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x mandatory; }
 .pf-reelcard { flex: 0 0 auto; width: 168px; height: 100px; border-radius: 12px; border: 1px solid var(--border); background: #0b0d12 center/cover no-repeat; cursor: pointer; position: relative; scroll-snap-align: start; }

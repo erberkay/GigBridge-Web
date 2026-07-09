@@ -11,7 +11,7 @@ import {
   listenNotifications, markNotifRead, deleteNotif, deleteMyAccount, serverTimestamp,
   sendMessage, convIdFor,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE, profileTagline, profileResidency, featuredSet, venueChips, featuredReview, availabilityBadge, bookingRequestModal, rateCardBlock, suitabilityBlock, serviceAreaBlock, techRiderBlock, videoReel } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE, profileTagline, profileResidency, featuredSet, venueChips, featuredReview, availabilityBadge, bookingRequestModal, rateCardBlock, suitabilityBlock, serviceAreaBlock, techRiderBlock, videoReel, languagesBlock, priceBadge, addOnsBlock, termsBlock, trustedBadge } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { loginModal, changeEmailModal, changePasswordModal } from "./auth.js";
 
@@ -785,6 +785,7 @@ async function artistDetail(id, root) {
       h("div", { class: "pd-center" },
         a.photoURL ? h("div", { class: "pd-av round zoomable", style: { backgroundImage: `url(${a.photoURL})` }, title: "Büyüt", onclick: () => lightbox(a.photoURL) }) : h("div", { class: "pd-av round" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
         h("h1", { class: "pd-name" }, name),
+        (() => { const tb = trustedBadge(avg, rated.length); const pb = priceBadge(a); return (tb || pb) ? h("div", { class: "badge-row", style: { justifyContent: "center" } }, tb, pb) : null; })(),
         genres[0] ? h("span", { class: "pd-genrepill" }, genres[0]) : null,
         profileTagline(a),
         memberChip(a), membershipText(a),
@@ -813,10 +814,13 @@ async function artistDetail(id, root) {
     h("div", { class: "ed-sect" }, pdTitle("Hakkında"),
       h("p", { class: "ed-desc" + (a.bio ? "" : " dim") }, a.bio || "Sanatçı henüz biyografi eklememiş."),
       a.experienceYears ? h("div", { class: "pd-exp" }, icon("time-outline", { size: 14, color: "var(--text-secondary)" }), h("span", {}, a.experienceYears + " yıl deneyim")) : null),
-    rateCardBlock(a.packages),                                           // paketler & fiyat
+    rateCardBlock(a.packages),                                           // paketler & fiyat (Faz 3: etkinlik-türü segmenti)
+    addOnsBlock(a),                                                      // Faz 3: ek hizmetler
+    termsBlock(a),                                                       // Faz 3: kapora + iptal politikası
     suitabilityBlock(a),                                                 // ne için uygun
     serviceAreaBlock(a),                                                 // hizmet bölgesi
     techRiderBlock(a),                                                   // kurulum & detaylar
+    languagesBlock(a),                                                   // Faz 3: diller + MC
     venueChips(revs),                                                    // ③ çaldığı mekanlar
     videoReel(a.videoUrls),                                              // performans reel
     genres.length ? h("div", { class: "ed-sect" }, pdTitle("Müzik Tarzları"),
