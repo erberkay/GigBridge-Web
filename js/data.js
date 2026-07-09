@@ -439,6 +439,8 @@ export async function followArtist(uid, artist) {
   const genre = (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "";
   await setDoc(doc(db, "users", uid, "following", artist.id), { artistId: artist.id, artistName: name, genre, followedAt: serverTimestamp() });
   try { await setDoc(doc(db, "users", artist.id, "followers", uid), { followedAt: serverTimestamp() }); } catch (_) {}
+  // Faz 2 — 'Beni Takip Et' halkası: sanatçıya yeni takipçi bildirimi (best-effort)
+  try { await sendNotification(artist.id, { type: "new_follower", title: "Yeni takipçi", body: "Bir dinleyici seni takibe aldı.", extra: { followerId: uid } }); } catch (_) {}
 }
 export async function unfollowArtist(uid, artistId) {
   await deleteDoc(doc(db, "users", uid, "following", artistId));

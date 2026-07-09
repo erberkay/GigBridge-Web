@@ -334,6 +334,127 @@ export function bookingRequestModal({ artistName, onSubmit }) {
   });
 }
 
+// ══════════ FAZ 2 — Booking vitrini (paket/etkinlik/hizmet/tech-rider/video; hepsi mevcut veri/link) ══════════
+
+// Genel tekrarlı satır editörü — paketler & video listeleri için. { node, get() }
+export function rowsEditor({ rows = [], fields, addLabel = "+ Ekle", max = 6 }) {
+  const list = h("div", { class: "re-list" });
+  const data = (rows || []).map((r) => ({ ...r }));
+  const draw = () => {
+    clear(list);
+    data.forEach((row, i) => {
+      const rowEl = h("div", { class: "re-row" });
+      fields.forEach((f) => {
+        const inp = f.type === "select"
+          ? h("select", { oninput: (e) => { row[f.key] = e.target.value; } }, ...f.options.map((o) => h("option", { value: o, selected: o === row[f.key] ? true : null }, o)))
+          : h("input", { value: row[f.key] || "", placeholder: f.placeholder || "", oninput: (e) => { row[f.key] = e.target.value; } });
+        rowEl.append(h("div", { class: "re-cell" + (f.wide ? " wide" : "") }, inp));
+      });
+      rowEl.append(h("button", { class: "re-del", type: "button", title: "Sil", onclick: () => { data.splice(i, 1); draw(); } }, icon("close", { size: 15 })));
+      list.append(rowEl);
+    });
+  };
+  const add = h("button", { class: "re-add", type: "button", onclick: () => { if (data.length >= max) { toast("En fazla " + max + " ekleyebilirsin.", "err"); return; } data.push({}); draw(); } }, addLabel);
+  draw();
+  return { node: h("div", {}, list, add), get: () => data.map((r) => ({ ...r })).filter((r) => Object.values(r).some((x) => String(x || "").trim())) };
+}
+
+// Çoklu çip seçici (etkinlik türü / set formatı / hizmet şehirleri). { node, get() }
+export function chipMulti({ options = [], selected = [], allowCustom = false, placeholder = "Ekle…" }) {
+  const sel = new Set(selected || []);
+  const row = h("div", { class: "chip-row wrap" });
+  const draw = () => {
+    clear(row);
+    const all = allowCustom ? [...new Set([...options, ...sel])] : options;
+    all.forEach((o) => row.append(h("button", { type: "button", class: "chip" + (sel.has(o) ? " on" : ""), onclick: () => { sel.has(o) ? sel.delete(o) : sel.add(o); draw(); } }, o)));
+  };
+  draw();
+  let extra = null;
+  if (allowCustom) {
+    const inp = h("input", { placeholder });
+    const addC = () => { const val = inp.value.trim(); inp.value = ""; if (val && !sel.has(val)) { sel.add(val); draw(); } };
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addC(); } });
+    extra = h("div", { class: "ax-genre-add" }, inp, h("button", { type: "button", onclick: addC }, "+ Ekle"));
+  }
+  return { node: h("div", {}, row, extra), get: () => [...sel] };
+}
+
+// Rate-Card — adlandırılmış paketler
+export function rateCardBlock(packages) {
+  const list = (packages || []).filter((p) => p && (p.name || p.price));
+  if (!list.length) return null;
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Paketler & Fiyat"),
+    h("div", { class: "pf-pkgs" }, ...list.map((p) => h("div", { class: "pf-pkg" },
+      h("div", { class: "pf-pkg-top" }, h("span", { class: "pf-pkg-name" }, p.name || "Paket"),
+        p.price ? h("span", { class: "pf-pkg-price" }, /^[\d.]/.test(String(p.price).trim()) ? "₺" + p.price : p.price) : null),
+      p.includes ? h("div", { class: "pf-pkg-inc" }, ...String(p.includes).split(/[,;]/).map((t) => t.trim()).filter(Boolean).map((t) => h("span", { class: "pf-pkg-tag" }, t))) : null,
+      p.desc ? h("p", { class: "pf-pkg-desc" }, p.desc) : null))));
+}
+
+// Ne için uygun — etkinlik türü (amber) + set formatı (cyan)
+export function suitabilityBlock(p) {
+  const et = (p.eventTypes || []).filter(Boolean), sf = (p.setFormats || []).filter(Boolean);
+  if (!et.length && !sf.length) return null;
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Ne İçin Uygun"),
+    et.length ? h("div", { class: "pf-tags" }, ...et.map((t) => h("span", { class: "pf-tag2 amber" }, t))) : null,
+    sf.length ? h("div", { class: "pf-tags", style: { marginTop: et.length ? "8px" : "0" } }, ...sf.map((t) => h("span", { class: "pf-tag2 cyan" }, t))) : null);
+}
+
+// Hizmet bölgesi — ana şehir + ek şehirler + şehir-dışı ücret
+export function serviceAreaBlock(p) {
+  const cities = (p.serviceCities || []).filter(Boolean);
+  const travel = String(p.travelFee || "").trim();
+  if (!cities.length && !travel) return null;
+  const all = [...new Set([p.city, ...cities].filter(Boolean))];
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Hizmet Bölgesi"),
+    all.length ? h("div", { class: "pf-tags" }, ...all.map((c) => h("span", { class: "pf-tag2 cyan" }, c))) : null,
+    travel ? h("div", { class: "pf-travel" }, icon("car-outline", { size: 14, color: "var(--text-secondary)" }), h("span", {}, travel)) : null);
+}
+
+// Tech rider / mini-SSS — kurulum & detaylar
+export function techRiderBlock(p) {
+  const EQ = { yes: "Ekipmanı getiriyor", no: "Ekipman mekandan", partial: "Kısmen getiriyor" };
+  const rows = [];
+  if (p.equipmentBrings && EQ[p.equipmentBrings]) rows.push(["Ekipman", EQ[p.equipmentBrings]]);
+  if (String(p.minDuration || "").trim()) rows.push(["Min. Süre", p.minDuration]);
+  if (String(p.setupTime || "").trim()) rows.push(["Kurulum Süresi", p.setupTime]);
+  if (!rows.length) return null;
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Kurulum & Detaylar"),
+    h("div", { class: "pf-kv" }, ...rows.map((r) => h("div", { class: "pf-kv-row" }, h("span", { class: "pf-kv-k" }, r[0]), h("span", { class: "pf-kv-v" }, r[1])))));
+}
+
+// Video Reel — YouTube/Vimeo linkleri (thumbnail → lightbox iframe; barındırma yok)
+function videoInfo(url) {
+  const u = String(url || "").trim(); if (!u) return null; let m;
+  if ((m = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/))) return { embed: "https://www.youtube.com/embed/" + m[1] + "?autoplay=1", thumb: "https://img.youtube.com/vi/" + m[1] + "/hqdefault.jpg" };
+  if ((m = u.match(/vimeo\.com\/(\d+)/))) return { embed: "https://player.vimeo.com/video/" + m[1] + "?autoplay=1", thumb: null };
+  return null;
+}
+function lightboxIframe(src) {
+  const overlay = h("div", { class: "lb-overlay" },
+    h("div", { class: "lb-video" }, h("iframe", { src, allow: "autoplay; fullscreen; encrypted-media", allowfullscreen: true, frameborder: "0", title: "Video", style: { width: "100%", height: "100%", border: "0" } })),
+    h("button", { class: "lb-close", "aria-label": "Kapat", onclick: () => overlay.remove() }, icon("close", { size: 22 })));
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  document.body.append(overlay);
+  requestAnimationFrame(() => overlay.classList.add("show"));
+}
+export function videoReel(urls) {
+  const list = (urls || []).map(videoInfo).filter(Boolean).slice(0, 6);
+  if (!list.length) return null;
+  const holder = h("div", { class: "pf-reel" });
+  list.forEach((v) => {
+    const card = h("button", { class: "pf-reelcard", type: "button", style: v.thumb ? { backgroundImage: `url(${v.thumb})` } : null, "aria-label": "Video oynat" },
+      h("span", { class: "pf-reelplay" }, icon("play", { size: 22, color: "#fff" })));
+    card.onclick = () => lightboxIframe(v.embed);
+    holder.append(card);
+  });
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Performans Reel"), holder);
+}
+
+export const EVENT_TYPES = ["Düğün", "Kurumsal", "Kulüp / Gece", "Özel Parti", "Festival", "Bar / Lounge", "After Party"];
+export const SET_FORMATS = ["Warm-up", "Peak-time", "Headliner", "After / Closing", "All-night"];
+export const EQUIP_OPTS = [{ value: "", label: "— Belirtilmemiş —" }, { value: "yes", label: "Ekipmanı ben getiriyorum" }, { value: "no", label: "Ekipman mekandan" }, { value: "partial", label: "Kısmen getiriyorum" }];
+
 // Fotoğraf seçici — { node, getFile }. Seçilen dosya KIRPMA modalından geçer (sürükle+zoom),
 // getFile() kırpılmış Blob döndürür. opts: { aspect (gen/yük), round }. currentUrl → mevcut önizleme.
 export function photoPicker(label = "Fotoğraf ekle (opsiyonel)", currentUrl, opts = {}) {

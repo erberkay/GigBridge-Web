@@ -863,6 +863,43 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .pf-featrev-who { font-size: 12px; color: var(--text-muted); font-weight: 600; }
 /* ④ Müsaitlik rozeti */
 .pf-avail { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; border: 1px solid transparent; font-size: 12px; font-weight: 700; }
+
+/* ── FAZ 2: Booking vitrini ── */
+/* Tekrarlı satır editörü */
+.re-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.re-row { display: flex; align-items: center; gap: 8px; }
+.re-cell { flex: 1; min-width: 0; } .re-cell.wide { flex: 2; }
+.re-del { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.re-del:hover { color: #FF6B6B; border-color: #FF6B6B55; }
+.re-add { border: 1px dashed var(--border-strong, var(--border)); background: transparent; color: var(--text-secondary); border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.re-add:hover { color: var(--primary); border-color: var(--primary); }
+/* Rate-Card */
+.pf-pkgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.pf-pkg { border: 1px solid var(--border); border-radius: 14px; padding: 14px 15px; background: var(--surface-2); }
+.pf-pkg-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.pf-pkg-name { font-size: 15px; font-weight: 700; color: var(--text); }
+.pf-pkg-price { font-size: 15px; font-weight: 800; color: var(--accent, var(--primary)); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pf-pkg-inc { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.pf-pkg-tag { font-size: 11px; font-weight: 600; color: var(--cyan); border: 1px solid color-mix(in srgb, var(--cyan) 40%, transparent); border-radius: 6px; padding: 3px 8px; }
+.pf-pkg-desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+/* Etiket şeritleri */
+.pf-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.pf-tag2 { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); border: 1px solid var(--border); background: var(--surface-2); border-radius: 999px; padding: 6px 12px; }
+.pf-tag2.amber { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, transparent); }
+.pf-tag2.cyan { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 40%, transparent); }
+.pf-travel { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--text-secondary); }
+/* Tech rider */
+.pf-kv { display: flex; flex-direction: column; gap: 1px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.pf-kv-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 14px; background: var(--surface-2); }
+.pf-kv-k { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.pf-kv-v { font-size: 13.5px; font-weight: 600; color: var(--text); text-align: right; }
+/* Video reel */
+.pf-reel { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x mandatory; }
+.pf-reelcard { flex: 0 0 auto; width: 168px; height: 100px; border-radius: 12px; border: 1px solid var(--border); background: #0b0d12 center/cover no-repeat; cursor: pointer; position: relative; scroll-snap-align: start; }
+.pf-reelplay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.pf-reelplay > * { width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; }
+/* Video lightbox */
+.lb-video { width: min(880px, 92vw); aspect-ratio: 16/9; border-radius: 14px; overflow: hidden; background: #000; border: 1px solid var(--border-strong, var(--border)); }
 .ms-row:hover { background: var(--surface); }
 .ms-av { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; flex: 0 0 auto; }
 .ms-row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

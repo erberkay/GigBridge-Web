@@ -11,7 +11,7 @@ import {
   listenNotifications, markNotifRead, deleteNotif, deleteMyAccount, serverTimestamp,
   sendMessage, convIdFor,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE, profileTagline, profileResidency, featuredSet, venueChips, featuredReview, availabilityBadge, bookingRequestModal } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE, profileTagline, profileResidency, featuredSet, venueChips, featuredReview, availabilityBadge, bookingRequestModal, rateCardBlock, suitabilityBlock, serviceAreaBlock, techRiderBlock, videoReel } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { loginModal, changeEmailModal, changePasswordModal } from "./auth.js";
 
@@ -813,7 +813,12 @@ async function artistDetail(id, root) {
     h("div", { class: "ed-sect" }, pdTitle("Hakkında"),
       h("p", { class: "ed-desc" + (a.bio ? "" : " dim") }, a.bio || "Sanatçı henüz biyografi eklememiş."),
       a.experienceYears ? h("div", { class: "pd-exp" }, icon("time-outline", { size: 14, color: "var(--text-secondary)" }), h("span", {}, a.experienceYears + " yıl deneyim")) : null),
+    rateCardBlock(a.packages),                                           // paketler & fiyat
+    suitabilityBlock(a),                                                 // ne için uygun
+    serviceAreaBlock(a),                                                 // hizmet bölgesi
+    techRiderBlock(a),                                                   // kurulum & detaylar
     venueChips(revs),                                                    // ③ çaldığı mekanlar
+    videoReel(a.videoUrls),                                              // performans reel
     genres.length ? h("div", { class: "ed-sect" }, pdTitle("Müzik Tarzları"),
       h("div", { class: "pd-tags" }, ...genres.map((g) => h("span", { class: "pd-tag" }, g)))) : null,
     socialBlock(a.social),
