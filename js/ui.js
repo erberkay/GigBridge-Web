@@ -242,6 +242,98 @@ export function accentPicker(current) {
   return { node: row, getColor: function () { return val; } };
 }
 
+// ── ② Öne Çıkan Set — dış platform embed (dosya barındırma YOK; statik embed URL, regex ile tespit) ──
+export function soundEmbedInfo(url) {
+  const u = String(url || "").trim();
+  if (!u) return null;
+  let m;
+  if ((m = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/))) return { kind: "YouTube", src: "https://www.youtube.com/embed/" + m[1], h: 200 };
+  if ((m = u.match(/open\.spotify\.com\/(track|album|playlist|artist|episode|show)\/([A-Za-z0-9]+)/))) return { kind: "Spotify", src: "https://open.spotify.com/embed/" + m[1] + "/" + m[2], h: 200 };
+  if (/soundcloud\.com\//i.test(u)) return { kind: "SoundCloud", src: "https://w.soundcloud.com/player/?url=" + encodeURIComponent(u) + "&color=%23FF4FA3&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&visual=false", h: 166 };
+  if (/mixcloud\.com\//i.test(u)) return { kind: "Mixcloud", src: "https://www.mixcloud.com/widget/iframe/?feed=" + encodeURIComponent(u) + "&hide_cover=1&light=0", h: 120 };
+  return null;
+}
+export function featuredSet(url) {
+  const info = soundEmbedInfo(url);
+  if (!info) return null;
+  const holder = h("div", { class: "pf-set-holder", style: { height: info.h + "px" } });
+  const poster = h("button", { class: "pf-set-poster", type: "button", "aria-label": info.kind + " oynat" },
+    icon("play-circle", { size: 46, color: "#fff" }), h("span", {}, info.kind + " — dinlemek için dokun"));
+  poster.onclick = () => {
+    const f = h("iframe", { src: info.src, loading: "lazy", allow: "autoplay; encrypted-media; fullscreen", allowfullscreen: true, frameborder: "0", title: "Öne çıkan set", style: { width: "100%", height: "100%", border: "0", display: "block" } });
+    clear(holder); holder.append(f);
+  };
+  holder.append(poster);
+  return h("div", { class: "ed-sect pf-set" },
+    h("h2", { class: "ed-secttitle pf-set-head" }, h("span", {}, "Öne Çıkan Set"), h("span", { class: "pf-set-kind" }, info.kind)),
+    holder);
+}
+
+// ── ③ Kanıt vitrini — çaldığı mekanlar (mekan yorumlarından türetilir) + öne çıkan yorum ──
+export function venueChips(reviews) {
+  const seen = new Set(), out = [];
+  (reviews || []).forEach((r) => {
+    if (r.authorType === "venue") { const n = r.authorName || r.venueName; if (n && !seen.has(n)) { seen.add(n); out.push(n); } }
+  });
+  if (!out.length) return null;
+  return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Çaldığı Mekanlar"),
+    h("div", { class: "pf-venues" }, ...out.slice(0, 10).map((n) => h("span", { class: "pf-venuechip" }, icon("business-outline", { size: 12, color: "var(--text-secondary)" }), h("span", {}, n)))));
+}
+export function featuredReview(reviews) {
+  const rated = (reviews || []).filter((r) => (r.rating || 0) > 0 && String(r.comment || "").trim().length > 0);
+  if (!rated.length) return null;
+  rated.sort((a, b) => (b.rating - a.rating) || ((b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
+  const r = rated[0];
+  const c = String(r.comment).trim();
+  return h("div", { class: "pf-featrev" },
+    h("div", { class: "pf-featrev-stars" }, ...[1, 2, 3, 4, 5].map((i) => icon(i <= r.rating ? "star" : "star-outline", { size: 15, color: "var(--amber)" }))),
+    h("p", { class: "pf-featrev-quote" }, "“" + (c.length > 200 ? c.slice(0, 198) + "…" : c) + "”"),
+    h("div", { class: "pf-featrev-who" }, r.authorName || "Değerlendiren"));
+}
+
+// ── ④ Müsaitlik rozeti + Teklif İste formu ──
+const _AVAIL = { open: ["Rezervasyona açık", "#7CE0B0", "checkmark-circle"], limited: ["Sınırlı müsaitlik", "#FF8A2A", "time"], busy: ["Şu an dolu", "#8A8E97", "lock-closed"] };
+export const AVAIL_OPTS = [{ value: "", label: "— Belirtilmemiş —" }, { value: "open", label: "Rezervasyona açık" }, { value: "limited", label: "Sınırlı müsaitlik" }, { value: "busy", label: "Şu an dolu" }];
+export function availabilityBadge(p) {
+  const s = p && p.availabilityStatus;
+  if (!s || !_AVAIL[s]) return null;
+  const a = _AVAIL[s];
+  return h("span", { class: "pf-avail", style: { color: a[1], borderColor: a[1] + "66", background: a[1] + "1f" } }, icon(a[2], { size: 12, color: a[1] }), h("span", {}, a[0]));
+}
+// Teklif İste — yapılandırılmış talep formu. onSubmit(text) çağrılır (çağıran sendMessage yapar).
+export function bookingRequestModal({ artistName, onSubmit }) {
+  const fld = (label, input) => h("label", { class: "field" }, h("span", { class: "flabel" }, label), input);
+  const date = h("input", { type: "date" });
+  const type = h("select", {}, ...["Düğün", "Kurumsal Etkinlik", "Kulüp / Gece", "Özel Parti", "Festival", "Diğer"].map((t) => h("option", { value: t }, t)));
+  const city = h("input", { placeholder: "Şehir / mekan" });
+  const dur = h("input", { placeholder: "örn. 3 saat" });
+  const budget = h("input", { placeholder: "örn. 8.000 ₺ (opsiyonel)" });
+  const note = h("textarea", { rows: 3, placeholder: "Ek not (opsiyonel)" });
+  const body = h("div", {},
+    h("p", { class: "muted small mb6" }, (artistName || "Sanatçı") + " için teklif isteğin mesaj olarak iletilir; iletişim GigBridge içinde kalır."),
+    h("div", { class: "frow" }, fld("Tarih", date), fld("Etkinlik Türü", type)),
+    h("div", { class: "frow" }, fld("Şehir / Mekan", city), fld("Süre", dur)),
+    fld("Bütçe", budget), fld("Not", note));
+  modal({
+    title: "Teklif İste", body,
+    actions: [
+      { label: "İptal", variant: "ghost", onClick: () => {} },
+      { label: "Gönder", variant: "primary", ic: "send-outline", keepOpen: true, onClick: (close) => {
+        if (!date.value && !city.value.trim() && !note.value.trim()) { toast("En az tarih ya da not gir.", "err"); return; }
+        const lines = ["🎫 Teklif İsteği"];
+        if (date.value) lines.push("• Tarih: " + date.value);
+        lines.push("• Etkinlik: " + type.value);
+        if (city.value.trim()) lines.push("• Yer: " + city.value.trim());
+        if (dur.value.trim()) lines.push("• Süre: " + dur.value.trim());
+        if (budget.value.trim()) lines.push("• Bütçe: " + budget.value.trim());
+        if (note.value.trim()) lines.push("• Not: " + note.value.trim());
+        onSubmit(lines.join("\n"));
+        close();
+      } },
+    ],
+  });
+}
+
 // Fotoğraf seçici — { node, getFile }. Seçilen dosya KIRPMA modalından geçer (sürükle+zoom),
 // getFile() kırpılmış Blob döndürür. opts: { aspect (gen/yük), round }. currentUrl → mevcut önizleme.
 export function photoPicker(label = "Fotoğraf ekle (opsiyonel)", currentUrl, opts = {}) {

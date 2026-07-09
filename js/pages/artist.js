@@ -12,7 +12,7 @@ import {
   bayesianScore, ratingsGlobalMean,
   serverTimestamp,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE, cityPickerField, profileTagline, profileResidency, accentOf, accentPicker, RES_DAYS } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE, cityPickerField, profileTagline, profileResidency, accentOf, accentPicker, RES_DAYS, featuredSet, venueChips, featuredReview, availabilityBadge, AVAIL_OPTS } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
 
@@ -781,6 +781,7 @@ async function renderArtistDetail(id, root) {
   if (canFollow) acts.append(followBtn,
     h("button", { class: "pd-act", onclick: () => { requestChat({ otherId: id, otherName: name }); go("#/artist/mesaj"); } },
       icon("chatbubble-ellipses-outline", { size: 18, color: "#A78BFA" }), h("span", {}, "Mesaj")));
+  const frev = featuredReview(revs);   // ③ öne çıkan yorum (varsa)
 
   root.append(
     h("div", { class: "pd-hero pd-artist" + (a.bannerUrl ? " has-banner" : ""), style: a.accentColor ? { "--accent": a.accentColor } : null },
@@ -793,14 +794,18 @@ async function renderArtistDetail(id, root) {
         profileTagline(a),
         memberChip(a), membershipText(a),
         profileResidency(a),
+        availabilityBadge(a),
         h("div", { class: "pd-stats" },
           pdStat(avg, "Puan", true), pdDivider(),
           pdStat(follCount ?? shortNum(a.followerCount ?? 0), "Takipçi"), pdDivider(),
           pdStat(revs.length, "Yorum")))),
     canFollow ? acts : null,
+    featuredSet(a.featuredSetUrl),                                        // ② Öne Çıkan Set
+    frev ? h("div", { class: "ed-sect" }, pdTitle("Öne Çıkan Yorum"), frev) : null,   // ③ öne çıkan yorum
     h("div", { class: "ed-sect" }, pdTitle("Hakkında"),
       h("p", { class: "ed-desc" + (a.bio ? "" : " dim") }, a.bio || "Sanatçı henüz biyografi eklememiş."),
       a.experienceYears ? h("div", { class: "pd-exp" }, icon("time-outline", { size: 14, color: "var(--text-secondary)" }), h("span", {}, a.experienceYears + " yıl deneyim")) : null),
+    venueChips(revs),                                                    // ③ çaldığı mekanlar
     genres.length ? h("div", { class: "ed-sect" }, pdTitle("Müzik Tarzları"),
       h("div", { class: "pd-tags" }, ...genres.map((g) => h("span", { class: "pd-tag" }, g)))) : null,
     socialBlock(a.social),
@@ -1092,7 +1097,8 @@ async function renderProfile(root) {
     badge ? h("div", {}, h("span", { class: "ax-memberchip", style: { color: badge.color, borderColor: badge.color + "55", background: badge.color + "18" } },
       icon(badge.icon, { size: 13, color: badge.color }), h("span", {}, badge.label))) : null,
     h("div", { class: "ax-membertext" }, membershipLabel(p.createdAt)),
-    profileResidency(p));
+    profileResidency(p),
+    availabilityBadge(p));
 
   // İstatistikler: Performans / Puan / Yorum / Takipçi
   const statsBox = h("div", { class: "stat-grid" }, h("div", { class: "loading" }, spinner()));
@@ -1187,6 +1193,11 @@ async function renderProfile(root) {
     h("span", { class: "flabel", style: { display: "block", marginTop: "12px", marginBottom: "8px" } }, "Aksan Rengi"),
     accentPick.node);
 
+  // Vitrin & Uygunluk — Öne Çıkan Set (embed) + müsaitlik durumu (② + ④)
+  const showcaseForm = h("div", { class: "form-card" },
+    field({ label: "Öne Çıkan Set (link)", id: "aset", value: p.featuredSetUrl || "", placeholder: "SoundCloud / YouTube / Mixcloud / Spotify bağlantısı", hint: "Profilinde gömülü oynatıcı olur — dosya yükleme yok, sadece linki yapıştır." }),
+    field({ label: "Müsaitlik Durumu", id: "aavail", value: p.availabilityStatus || "", options: AVAIL_OPTS }));
+
   const saveMsg = h("p", { class: "msg" });
   const save = btn("Kaydet", { ic: "save-outline", full: true, onClick: async () => {
     const dn = v("#aname");
@@ -1224,6 +1235,9 @@ async function renderProfile(root) {
       residencyDay: v("#aresday") || "",
       residencyVenue: (v("#aresvenue") || "").trim().slice(0, 60),
       accentColor: accentPick.getColor(),
+      // Vitrin & Uygunluk
+      featuredSetUrl: (v("#aset") || "").trim().slice(0, 400),
+      availabilityStatus: v("#aavail") || "",
     };
     // Ad gerçekten değiştiyse cooldown damgasını yaz (yalnız o zaman).
     if (nameChanged) patch.displayNameChangedAt = serverTimestamp();
@@ -1255,8 +1269,10 @@ async function renderProfile(root) {
   root.append(
     cover,
     sect("Profil Özeti", "stats-chart-outline", statsBox),
+    featuredSet(p.featuredSetUrl),
     sect("Sanatçı Bilgileri", "person-outline", form),
     sect("Kimlik & Vitrin", "color-palette-outline", identityForm),
+    sect("Vitrin & Uygunluk", "sparkles-outline", showcaseForm),
     sect("Müzik Türleri", "musical-notes-outline",
       h("p", { class: "muted small mb6" }, "Çaldığın türleri seç; istersen kendi türünü ekle."), genreRow, genreAdd),
     sect("Performans Ücreti", "cash-outline", priceForm),

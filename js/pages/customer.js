@@ -9,8 +9,9 @@ import {
   artistReviews, submitArtistReview, getVenueReviews, submitVenueReview, myReviews, updateMyReview, deleteMyReview,
   listenTimeline, createPost, isLiked, toggleLike, listenComments, addComment,
   listenNotifications, markNotifRead, deleteNotif, deleteMyAccount, serverTimestamp,
+  sendMessage, convIdFor,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE, profileTagline, profileResidency } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE, profileTagline, profileResidency, featuredSet, venueChips, featuredReview, availabilityBadge, bookingRequestModal } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { loginModal, changeEmailModal, changePasswordModal } from "./auth.js";
 
@@ -775,6 +776,7 @@ async function artistDetail(id, root) {
     } catch (_) { toast("İşlem başarısız", "err"); }
     followBtn.disabled = false;
   };
+  const frev = featuredReview(revs);   // ③ öne çıkan yorum (varsa)
 
   root.append(
     h("div", { class: "pd-hero pd-artist" + (a.bannerUrl ? " has-banner" : ""), style: a.accentColor ? { "--accent": a.accentColor } : null },
@@ -787,6 +789,7 @@ async function artistDetail(id, root) {
         profileTagline(a),
         memberChip(a), membershipText(a),
         profileResidency(a),
+        availabilityBadge(a),
         h("div", { class: "pd-stats" },
           pdStat(avg, "Puan", true), pdDivider(),
           pdStat(follCount ?? shortNum(a.followerCount ?? 0), "Takipçi"), pdDivider(),
@@ -794,10 +797,23 @@ async function artistDetail(id, root) {
     h("div", { class: "pd-acts" },
       followBtn,
       h("button", { class: "pd-act", onclick: () => { if (loginGate("Mesaj göndermek")) return; requestChat({ otherId: id, otherName: name }); go("#/mesajlar"); } }, icon("chatbubble-ellipses-outline", { size: 18, color: "#A78BFA" }), h("span", {}, "Mesaj")),
-      h("button", { class: "pd-act solid", onclick: () => { if (loginGate("Puan vermek")) return; reviewModal("artist", a, () => artistDetail(id, root)); } }, icon("star", { size: 18, color: "#fff" }), h("span", { style: { color: "#fff" } }, "Puan Ver"))),
+      h("button", { class: "pd-act solid", onclick: () => {
+        if (loginGate("Teklif göndermek")) return;
+        bookingRequestModal({ artistName: name, onSubmit: async (text) => {
+          try {
+            const me = uid();
+            await sendMessage({ fromId: me, fromName: session.profile?.displayName || "Ben", fromType: session.profile?.userType, toId: id, toName: name, text, convId: convIdFor(me, id), isGroup: false });
+            toast("Teklif isteğin gönderildi");
+            requestChat({ otherId: id, otherName: name }); go("#/mesajlar");
+          } catch (_) { toast("Gönderilemedi", "err"); }
+        } });
+      } }, icon("send", { size: 17, color: "#fff" }), h("span", { style: { color: "#fff" } }, "Teklif İste"))),
+    featuredSet(a.featuredSetUrl),                                        // ② Öne Çıkan Set
+    frev ? h("div", { class: "ed-sect" }, pdTitle("Öne Çıkan Yorum"), frev) : null,   // ③ öne çıkan yorum
     h("div", { class: "ed-sect" }, pdTitle("Hakkında"),
       h("p", { class: "ed-desc" + (a.bio ? "" : " dim") }, a.bio || "Sanatçı henüz biyografi eklememiş."),
       a.experienceYears ? h("div", { class: "pd-exp" }, icon("time-outline", { size: 14, color: "var(--text-secondary)" }), h("span", {}, a.experienceYears + " yıl deneyim")) : null),
+    venueChips(revs),                                                    // ③ çaldığı mekanlar
     genres.length ? h("div", { class: "ed-sect" }, pdTitle("Müzik Tarzları"),
       h("div", { class: "pd-tags" }, ...genres.map((g) => h("span", { class: "pd-tag" }, g)))) : null,
     socialBlock(a.social),
