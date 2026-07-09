@@ -10,7 +10,7 @@ import {
   listenTimeline, createPost, isLiked, toggleLike, listenComments, addComment,
   listenNotifications, markNotifRead, deleteNotif, deleteMyAccount, serverTimestamp,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE, profileTagline, profileResidency } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { loginModal, changeEmailModal, changePasswordModal } from "./auth.js";
 
@@ -777,14 +777,16 @@ async function artistDetail(id, root) {
   };
 
   root.append(
-    h("div", { class: "pd-hero pd-artist" + (a.bannerUrl ? " has-banner" : "") },
+    h("div", { class: "pd-hero pd-artist" + (a.bannerUrl ? " has-banner" : ""), style: a.accentColor ? { "--accent": a.accentColor } : null },
       a.bannerUrl ? h("div", { class: "pd-banner", style: { backgroundImage: `url(${a.bannerUrl})` } }) : null,
       h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "pd-center" },
         a.photoURL ? h("div", { class: "pd-av round zoomable", style: { backgroundImage: `url(${a.photoURL})` }, title: "Büyüt", onclick: () => lightbox(a.photoURL) }) : h("div", { class: "pd-av round" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
         h("h1", { class: "pd-name" }, name),
         genres[0] ? h("span", { class: "pd-genrepill" }, genres[0]) : null,
+        profileTagline(a),
         memberChip(a), membershipText(a),
+        profileResidency(a),
         h("div", { class: "pd-stats" },
           pdStat(avg, "Puan", true), pdDivider(),
           pdStat(follCount ?? shortNum(a.followerCount ?? 0), "Takipçi"), pdDivider(),

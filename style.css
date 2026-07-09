@@ -834,6 +834,18 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 .ms-list { display: flex; flex-direction: column; }
 .ms-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
 .ms-time { padding-left: 10px; }
+
+/* ── Kimlik paketi (Faz 1): slogan + rezidans bandı + aksan renk. --accent seçilmezse mora düşer (geriye uyumlu) ── */
+.pf-tagline { color: var(--accent, var(--primary)); font-size: 14px; font-weight: 600; line-height: 1.45; margin-top: 5px; }
+.pf-residency { display: inline-flex; align-items: center; gap: 10px; margin: 12px 0 2px; padding: 8px 14px; border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent, var(--primary)) 50%, transparent); border-left: 3px solid var(--accent, var(--primary));
+  background: color-mix(in srgb, var(--accent, var(--primary)) 10%, transparent); max-width: 100%; }
+.pf-reslabel { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; color: var(--accent, var(--primary)); flex: 0 0 auto; }
+.pf-restext { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pf-accentrow { display: flex; gap: 12px; flex-wrap: wrap; }
+.pf-swatch { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--surface); cursor: pointer; padding: 0; transition: transform .12s; }
+.pf-swatch:hover { transform: scale(1.08); }
+.pf-swatch.on { outline: 2px solid var(--text); outline-offset: 2px; }
 .ms-row:hover { background: var(--surface); }
 .ms-av { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; flex: 0 0 auto; }
 .ms-row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

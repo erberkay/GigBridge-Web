@@ -12,7 +12,7 @@ import {
   bayesianScore, ratingsGlobalMean,
   serverTimestamp,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE, cityPickerField } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE, cityPickerField, profileTagline, profileResidency, accentOf, accentPicker, RES_DAYS } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
 
@@ -783,14 +783,16 @@ async function renderArtistDetail(id, root) {
       icon("chatbubble-ellipses-outline", { size: 18, color: "#A78BFA" }), h("span", {}, "Mesaj")));
 
   root.append(
-    h("div", { class: "pd-hero pd-artist" + (a.bannerUrl ? " has-banner" : "") },
+    h("div", { class: "pd-hero pd-artist" + (a.bannerUrl ? " has-banner" : ""), style: a.accentColor ? { "--accent": a.accentColor } : null },
       a.bannerUrl ? h("div", { class: "pd-banner", style: { backgroundImage: `url(${a.bannerUrl})` } }) : null,
       h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/artist/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "pd-center" },
         a.photoURL ? h("div", { class: "pd-av round zoomable", style: { backgroundImage: `url(${a.photoURL})` }, title: "Büyüt", onclick: () => lightbox(a.photoURL) }) : h("div", { class: "pd-av round" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
         h("h1", { class: "pd-name" }, name),
         genres[0] ? h("span", { class: "pd-genrepill" }, genres[0]) : null,
+        profileTagline(a),
         memberChip(a), membershipText(a),
+        profileResidency(a),
         h("div", { class: "pd-stats" },
           pdStat(avg, "Puan", true), pdDivider(),
           pdStat(follCount ?? shortNum(a.followerCount ?? 0), "Takipçi"), pdDivider(),
@@ -1078,16 +1080,19 @@ async function renderProfile(root) {
   const badge = memberBadgeFor(p.createdAt);
 
   // Kapak + avatar + tip rozeti + üyelik kıdemi (banner varsa en üstte geniş görsel)
-  const cover = h("div", { class: "ax-cover" + (p.bannerUrl ? " has-banner" : "") },
+  // Kimlik paketi: aksan renk (--accent), slogan, rezidans bandı
+  const cover = h("div", { class: "ax-cover" + (p.bannerUrl ? " has-banner" : ""), style: p.accentColor ? { "--accent": p.accentColor } : null },
     p.bannerUrl ? h("div", { class: "ax-banner", style: { backgroundImage: `url(${p.bannerUrl})` } }) : null,
     h("div", { class: "ax-bigavatar" },
       p.photoURL ? h("div", { class: "img zoomable", style: { backgroundImage: `url(${p.photoURL})` }, title: "Büyüt", onclick: () => lightbox(p.photoURL) }) : h("div", { class: "ph" }, name.trim().charAt(0).toUpperCase() || "?")),
     h("div", { class: "ax-pname" }, name),
+    profileTagline(p),
     h("div", { class: "ax-pmail" }, p.email || ""),
     h("div", {}, h("span", { class: "ax-typebadge" }, icon("mic-outline", { size: 13, color: A }), h("span", {}, "Sanatçı"))),
     badge ? h("div", {}, h("span", { class: "ax-memberchip", style: { color: badge.color, borderColor: badge.color + "55", background: badge.color + "18" } },
       icon(badge.icon, { size: 13, color: badge.color }), h("span", {}, badge.label))) : null,
-    h("div", { class: "ax-membertext" }, membershipLabel(p.createdAt)));
+    h("div", { class: "ax-membertext" }, membershipLabel(p.createdAt)),
+    profileResidency(p));
 
   // İstatistikler: Performans / Puan / Yorum / Takipçi
   const statsBox = h("div", { class: "stat-grid" }, h("div", { class: "loading" }, spinner()));
@@ -1171,6 +1176,17 @@ async function renderProfile(root) {
       icon(m.ic, { size: 20, color: A }),
       field({ label: m.label, id: "asoc_" + m.key, value: p.social?.[m.key] || "", placeholder: m.ph }))));
 
+  // Kimlik & Vitrin — slogan + rezidans + aksan renk (Kimlik paketi)
+  const accentPick = accentPicker(p.accentColor);
+  const identityForm = h("div", { class: "form-card" },
+    field({ label: "Slogan (opsiyonel)", id: "atagline", value: p.tagline || "", placeholder: "örn. İstanbul gecelerinin melodic techno sesi", hint: "Adının altında görünür — kısa tut (en çok 60 karakter)." }),
+    h("div", { class: "frow" },
+      field({ label: "Rezidans Günü", id: "aresday", value: p.residencyDay || "", options: [{ value: "", label: "— Yok —" }].concat(RES_DAYS.map((d) => ({ value: d, label: d }))) }),
+      field({ label: "Rezidans Mekanı", id: "aresvenue", value: p.residencyVenue || "", placeholder: "örn. Klein, İstanbul" })),
+    h("p", { class: "fhint" }, "Rezidansın varsa profilinin en üstünde “REZİDANS · Her Cuma — Mekan” olarak öne çıkar."),
+    h("span", { class: "flabel", style: { display: "block", marginTop: "12px", marginBottom: "8px" } }, "Aksan Rengi"),
+    accentPick.node);
+
   const saveMsg = h("p", { class: "msg" });
   const save = btn("Kaydet", { ic: "save-outline", full: true, onClick: async () => {
     const dn = v("#aname");
@@ -1203,6 +1219,11 @@ async function renderProfile(root) {
       social: { instagram: v("#asoc_instagram"), soundcloud: v("#asoc_soundcloud"), spotify: v("#asoc_spotify"), youtube: v("#asoc_youtube") },
       city: v("#acity"), district: v("#adistrict"),
       experienceYears: v("#aexp") ? Number(v("#aexp").replace(/[^0-9]/g, "")) : null,
+      // Kimlik paketi
+      tagline: (v("#atagline") || "").trim().slice(0, 80),
+      residencyDay: v("#aresday") || "",
+      residencyVenue: (v("#aresvenue") || "").trim().slice(0, 60),
+      accentColor: accentPick.getColor(),
     };
     // Ad gerçekten değiştiyse cooldown damgasını yaz (yalnız o zaman).
     if (nameChanged) patch.displayNameChangedAt = serverTimestamp();
@@ -1235,6 +1256,7 @@ async function renderProfile(root) {
     cover,
     sect("Profil Özeti", "stats-chart-outline", statsBox),
     sect("Sanatçı Bilgileri", "person-outline", form),
+    sect("Kimlik & Vitrin", "color-palette-outline", identityForm),
     sect("Müzik Türleri", "musical-notes-outline",
       h("p", { class: "muted small mb6" }, "Çaldığın türleri seç; istersen kendi türünü ekle."), genreRow, genreAdd),
     sect("Performans Ücreti", "cash-outline", priceForm),

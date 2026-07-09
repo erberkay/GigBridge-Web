@@ -217,6 +217,31 @@ export function openImageCropper(file, { aspect = 1, round = false } = {}) {
   });
 }
 
+// ── Profil kimliği (Kimlik paketi) — slogan + rezidans bandı + aksan renk; sanatçı & müşteri tarafı ortak ──
+export const ACCENTS = [["#FF4FA3", "Pembe"], ["#FF8A2A", "Amber"], ["#4ED8FF", "Camgöbeği"], ["#7CE0B0", "Yeşil"], ["#A855F7", "Mor"]];
+export const RES_DAYS = ["Her gün", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+export function accentOf(p) { return (p && p.accentColor) || "var(--primary)"; }
+export function profileTagline(p) { return (p && p.tagline) ? h("div", { class: "pf-tagline" }, p.tagline) : null; }
+export function profileResidency(p) {
+  if (!(p && p.residencyVenue)) return null;
+  const d = p.residencyDay || "";
+  const when = d ? (d === "Her gün" ? "Her gün" : "Her " + d) : "";
+  return h("div", { class: "pf-residency" },
+    h("span", { class: "pf-reslabel" }, "REZİDANS"),
+    h("span", { class: "pf-restext" }, [when, p.residencyVenue].filter(Boolean).join(" — ")));
+}
+// Aksan renk seçici — { node, getColor }. SABİT palet (serbest color-picker değil = marka disiplini).
+export function accentPicker(current) {
+  let val = current || "#FF4FA3";
+  const row = h("div", { class: "pf-accentrow" });
+  ACCENTS.forEach(function (a) {
+    const sw = h("button", { type: "button", class: "pf-swatch" + (a[0] === val ? " on" : ""), style: { background: a[0] }, title: a[1] });
+    sw.onclick = function () { val = a[0]; row.querySelectorAll(".pf-swatch").forEach(function (x) { x.classList.remove("on"); }); sw.classList.add("on"); };
+    row.append(sw);
+  });
+  return { node: row, getColor: function () { return val; } };
+}
+
 // Fotoğraf seçici — { node, getFile }. Seçilen dosya KIRPMA modalından geçer (sürükle+zoom),
 // getFile() kırpılmış Blob döndürür. opts: { aspect (gen/yük), round }. currentUrl → mevcut önizleme.
 export function photoPicker(label = "Fotoğraf ekle (opsiyonel)", currentUrl, opts = {}) {
