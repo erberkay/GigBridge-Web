@@ -12,7 +12,7 @@ import {
   bayesianScore, ratingsGlobalMean,
   serverTimestamp,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE } from "../ui.js";
+import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE, cityPickerField } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
 
@@ -608,9 +608,9 @@ async function renderTop10(root) {
   clear(root);
   let tab = "artists", city = "", district = "";
 
-  const dl = h("datalist", { id: "ax-t10-cities" }, ...PROVINCES.map((c) => h("option", { value: c })));
-  const cityIn = h("input", { placeholder: "Tüm Şehirler", list: "ax-t10-cities", onchange: () => { city = cityIn.value.trim(); district = ""; distIn.value = ""; distIn.disabled = !city; load(); } });
   const distIn = h("input", { placeholder: "Tüm İlçeler", disabled: true, onchange: () => { district = distIn.value.trim(); load(); } });
+  // Özel şehir seçici (native datalist yerine — Keşfet ile birebir). Şehir seçilince ilçe sıfırlanır.
+  const cityPicker = cityPickerField({ cities: PROVINCES, value: "Tümü", allLabel: "Tümü", onPick: (v) => { city = v; district = ""; distIn.value = ""; distIn.disabled = !city; load(); } });
 
   const tabsRow = h("div", { class: "chip-row", style: { marginTop: "0", marginBottom: "12px" } });
   const drawTabs = () => {
@@ -623,9 +623,8 @@ async function renderTop10(root) {
   const listBox = h("div", {}, h("div", { class: "loading" }, spinner()));
   root.append(
     h("p", { class: "muted small mb6" }, "Bölgendeki en çok puan ve yorum alanlar"),
-    dl,
     h("div", { class: "ax-filterrow" },
-      h("label", { class: "field" }, h("span", { class: "flabel" }, "Şehir"), cityIn),
+      h("div", { class: "field" }, h("span", { class: "flabel" }, "Şehir"), cityPicker.el),
       h("label", { class: "field" }, h("span", { class: "flabel" }, "İlçe"), distIn)),
     tabsRow, listBox);
 
@@ -813,15 +812,14 @@ async function renderDiscover(root) {
   clear(root);
   const myUid = session.user?.uid;
   const searchIn = h("input", { placeholder: "Sanatçı veya tür ara…", oninput: () => draw() });
-  const cityDl = h("datalist", { id: "kx-cities" }, ...PROVINCES.map((c) => h("option", { value: c })));
-  const cityIn = h("input", { placeholder: "Tüm Şehirler", list: "kx-cities", oninput: () => draw() });   // boş = Tümü
+  // Özel şehir seçici (native datalist yerine — müşteri Keşfet popover'ıyla birebir). Boş = Tümü.
+  const cityPicker = cityPickerField({ cities: PROVINCES, value: "Tümü", allLabel: "Tümü", onPick: () => draw() });
   const listBox = h("div", { class: "kx-list" }, h("div", { class: "loading" }, spinner()));
   root.append(
     h("p", { class: "muted small mb6" }, "Diğer sanatçıları keşfet ve takip et"),
-    cityDl,
     h("div", { class: "kx-filters" },
       h("label", { class: "field" }, h("span", { class: "flabel" }, "Ara"), searchIn),
-      h("label", { class: "field" }, h("span", { class: "flabel" }, "Şehir"), cityIn)),
+      h("div", { class: "field" }, h("span", { class: "flabel" }, "Şehir"), cityPicker.el)),
     listBox);
 
   let artists = [], ratings = new Map();
@@ -834,7 +832,7 @@ async function renderDiscover(root) {
   function draw() {
     clear(listBox);
     const q = (searchIn.value || "").trim().toLocaleLowerCase("tr-TR");
-    const cityVal = (cityIn.value || "").trim();
+    const cityVal = cityPicker.value;   // "" = tüm şehirler
     const list = artists.filter((a) =>
       (!cityVal || (a.city || "") === cityVal) &&
       (!q || `${a.displayName || ""} ${genreOf(a)}`.toLocaleLowerCase("tr-TR").includes(q)));

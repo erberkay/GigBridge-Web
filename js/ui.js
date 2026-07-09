@@ -94,6 +94,62 @@ export function field({ label, id, type = "text", placeholder, value = "", hint,
   );
 }
 
+// Türkçe-duyarlı arama katlaması (customer.js fold ile aynı: "sisli" → "Şişli" bulur)
+const _CITY_TRX = { "ı": "i", "İ": "i", "ş": "s", "Ş": "s", "ç": "c", "Ç": "c", "ğ": "g", "Ğ": "g", "ö": "o", "Ö": "o", "ü": "u", "Ü": "u", "â": "a", "î": "i", "û": "u" };
+export const foldTR = (s) => String(s || "").replace(/[ıİşŞçÇğĞöÖüÜâîû]/g, (c) => _CITY_TRX[c] || c).toLowerCase();
+
+// Özel şehir seçici — native <datalist> yerine Keşfet popover'ıyla birebir (global .hs-city-* CSS,
+// müşteri tarafıyla aynı görünüm + app SearchablePickerModal paritesi). Dışarı tıklayınca kapanır.
+//  cities   : "Tümü" HARİÇ il listesi
+//  allLabel : ilk (varsayılan) satır = tüm şehirler; seçilirse onPick("") çağrılır
+//  onPick(v): v = seçilen il ("" = tümü). Döner: { el, value (getter, "" = tümü), close }
+export function cityPickerField({ cities, value = "Tümü", allLabel = "Tümü", placeholder = "Şehir ara...", onPick } = {}) {
+  let current = value || allLabel;
+  const names = [allLabel, ...cities];
+  const nameEl = h("span", { class: "kx-cityname" }, current);
+  const chev = icon("chevron-down", { size: 15, color: "var(--text-muted)" });
+  const trigger = h("button", { type: "button", class: "kx-cityfield" + (current === allLabel ? " placeholder" : "") }, nameEl, chev);
+  const search = h("input", { placeholder, oninput: () => drawList() });
+  const listBox = h("div", { class: "hs-citylist" });
+  const drop = h("div", { class: "hs-citydrop", style: { display: "none" } },
+    h("div", { class: "hs-citysearch" }, icon("search-outline", { size: 14, color: "var(--text-muted)" }), search),
+    listBox);
+  const wrap = h("div", { class: "hs-citywrap kx-citywrap" }, trigger, drop);
+  let open = false;
+  const setOpen = (v) => {
+    open = v;
+    drop.style.display = v ? "" : "none";
+    trigger.classList.toggle("open", v);
+    chev.setAttribute("name", v ? "chevron-up" : "chevron-down");
+    chev.style.color = v ? "#FF4FA3" : "var(--text-muted)";
+    if (v) { search.value = ""; drawList(); setTimeout(() => search.focus(), 0); }
+  };
+  const pick = (c) => {
+    current = c; nameEl.textContent = c;
+    trigger.classList.toggle("placeholder", c === allLabel);
+    setOpen(false);
+    if (onPick) onPick(c === allLabel ? "" : c);
+  };
+  const drawList = () => {
+    clear(listBox);
+    const q = foldTR(search.value.trim());
+    const list = names.filter((c) => !q || foldTR(c).includes(q));
+    if (!list.length) { listBox.append(h("div", { class: "hs-city-empty" }, "Şehir bulunamadı")); return; }
+    list.forEach((c) => listBox.append(
+      h("button", { type: "button", class: "hs-city-item" + (c === current ? " on" : ""), onclick: (e) => { e.stopPropagation(); pick(c); } }, c)));
+  };
+  trigger.onclick = (e) => { e.stopPropagation(); setOpen(!open); };
+  const onDoc = (e) => {
+    if (!open) return;
+    if (wrap.contains(e.target)) return;
+    if (!wrap.isConnected) { document.removeEventListener("click", onDoc); return; }
+    setOpen(false);
+  };
+  document.addEventListener("click", onDoc);
+  drawList();
+  return { el: wrap, get value() { return current === allLabel ? "" : current; }, close: () => setOpen(false) };
+}
+
 // Görsel kırpma/konumlandırma modalı (app allowsEditing muadili): kullanıcı fotoğrafı
 // sürükleyip yakınlaştırarak çerçeveye göre konumlandırır. Promise<Blob|null> döndürür
 // (İptal → null). aspect = genişlik/yükseklik (avatar 1, banner 16/9). round → yuvarlak çerçeve.

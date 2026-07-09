@@ -2121,6 +2121,19 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 
 /* ══════════ Sanatçı Keşfet (diğer sanatçıları ara/takip et) ══════════ */
 .kx-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* Şehir seçici trigger — yandaki "Ara" input'uyla aynı underline görünüm; tıklayınca .hs-citydrop popover açılır */
+.kx-citywrap { display: block; width: 100%; }
+/* Popover: alanın TAM ALTINDA, alan genişliğinde (native select gibi) — her ekran boyutunda ekrandan taşmaz.
+   Yüksek özgüllük (.hs-citywrap.kx-citywrap) ile aether.css'teki right:0 / mobil-fixed kuralını YALNIZ bu seçici için ezer;
+   müşteri çipi (sade .hs-citywrap) etkilenmez. z-index:60 + gölge aether.css'ten miras kalır. */
+.hs-citywrap.kx-citywrap > .hs-citydrop { position: absolute; top: calc(100% + 6px); left: 0; right: 0; width: auto; max-height: none; }
+.hs-citywrap.kx-citywrap > .hs-citydrop .hs-citylist { max-height: 46vh; overflow-y: auto; }
+.kx-cityfield { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; padding: 11px 0; color: var(--text); font-family: inherit; font-size: 15px; text-align: left; cursor: pointer; }
+.kx-cityfield.open { border-bottom: 2px solid #FF4FA3; }
+.kx-cityfield.placeholder .kx-cityname { color: var(--text-muted); }
+.kx-cityname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Mobilde filtreler dikey yığılır → şehir seçici tam genişlikte, dar kalmaz */
+@media (max-width: 560px) { .kx-filters { grid-template-columns: 1fr; } .ax-filterrow { flex-direction: column; } }
 .kx-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
 .kx-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; }
 .kx-row:hover { border-color: var(--border-strong); }
