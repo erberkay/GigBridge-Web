@@ -551,31 +551,42 @@ export function deleteAccountModal() {
 // ── Hesabı tamamla (Google ile yeni giriş → profil yok) ──
 export function setup() {
   const u = session.user;
-  let role = "venue";
+  let role = "customer";
   const msg = h("p", { class: "msg" });
+  const nameLabel = (k) => k === "venue" ? "Mekan Adı" : k === "organizer" ? "Organizasyon Adı" : k === "artist" ? "Sanatçı Adı" : "Ad Soyad";
+  const showCity = (k) => k === "venue" || k === "artist";
   const cityWrap = field({ label: "Şehir", id: "scity", placeholder: "Örn. İstanbul", list: "cityList" });
   const dl = h("datalist", { id: "cityList" }, ...PROVINCES.map((p) => h("option", { value: p })));
-  const nameField = field({ label: "Mekan Adı", id: "sname", value: u?.displayName || "", placeholder: "Örn. Babylon Club" });
+  const nameField = field({ label: nameLabel(role), id: "sname", value: u?.displayName || "", placeholder: "Adın" });
   const roleBtn = (key, label, ic) => h("button", { type: "button", class: "seg" + (role === key ? " on" : ""), dataset: { role: key },
     onclick: () => { role = key; [...seg.children].forEach((c) => c.classList.toggle("on", c.dataset.role === key));
-      nameField.querySelector(".flabel").textContent = key === "venue" ? "Mekan Adı" : "Organizasyon Adı";
-      cityWrap.style.display = key === "venue" ? "" : "none"; } }, icon(ic, { size: 15 }), h("span", {}, label));
-  const seg = h("div", { class: "segrow" }, roleBtn("venue", "Mekan", "business-outline"), roleBtn("organizer", "Organizatör", "megaphone-outline"));
+      nameField.querySelector(".flabel").textContent = nameLabel(key);
+      cityWrap.style.display = showCity(key) ? "" : "none"; } }, icon(ic, { size: 15 }), h("span", {}, label));
+  // Google yeni kullanıcı TÜM rolleri seçebilmeli (önceden yalnız mekan/organizatör vardı
+  // → sanatçı ve müşteri Google ile açılamıyordu). App AccountTypeScreen ile parite.
+  const seg = h("div", { class: "segrow wrap4" },
+    roleBtn("customer", "Müşteri", "headset-outline"),
+    roleBtn("artist", "Sanatçı", "mic-outline"),
+    roleBtn("venue", "Mekan", "business-outline"),
+    roleBtn("organizer", "Organizatör", "megaphone-outline"));
+  cityWrap.style.display = showCity(role) ? "" : "none";
   const submit = async (e) => {
     e && e.preventDefault();
     msg.textContent = ""; msg.className = "msg";
     if (!u) return fail(msg, "Oturum bulunamadı, tekrar giriş yap.");
     const name = q("#sname").value.trim(); const city = q("#scity").value.trim();
-    if (!name) return fail(msg, (role === "venue" ? "Mekan" : "Organizasyon") + " adını gir.");
+    if (!name) return fail(msg, nameLabel(role).replace(" Adı", "") + " adını gir.");
+    const needsApproval = role === "venue" || role === "organizer";
     const b = q("#sbtn"); b.disabled = true; b.querySelector("span").textContent = "Kaydediliyor…";
     try {
       await setDoc(doc(db, "users", u.uid), {
         displayName: name, email: u.email, userType: role, photoURL: u.photoURL ?? null,
-        createdAt: serverTimestamp(), approved: false,
+        createdAt: serverTimestamp(),
+        ...(needsApproval ? { approved: false } : {}), // müşteri/sanatçı onay gerektirmez
         ...(role === "organizer" ? { orgName: name } : {}),
-        ...(role === "venue" && city ? { city } : {}),
+        ...(showCity(role) && city ? { city } : {}),
       });
-      await refreshProfile(); // → router #/pending'e götürür
+      await refreshProfile(); // homeRouteFor: müşteri→#/kesfet, sanatçı→#/artist, mekan/org→#/pending
     } catch (err) { fail(msg, "Kaydedilemedi. Tekrar dene."); b.disabled = false; b.querySelector("span").textContent = "Hesabı Tamamla"; }
   };
   const form = h("form", { onsubmit: submit }, seg, nameField, dl, cityWrap,
