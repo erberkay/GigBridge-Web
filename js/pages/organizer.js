@@ -2,7 +2,7 @@
 // Ekip (üyeler + e-posta daveti), Mekan Seç (istek gönder), Mesajlar, Profil. Accent: #F43F5E.
 import { session, logout, refreshProfile } from "../store.js";
 import {
-  organizerEvents, organizerRequests, saveProfile, listVenues, listArtists, createVenueRequest, uploadImage,
+  organizerEvents, organizerRequests, saveOrganizerProfile, listVenues, listArtists, createVenueRequest, uploadImage,
   eventById, listenNotifications, markNotifRead, deleteNotif,
   orgMembers, removeOrgMember, orgInvites, createOrgInvite,
   updateEventFields, deleteEventById, sendNotification, createOrgVenueRequest, approveEventEdit, eventStartMs,
@@ -422,7 +422,8 @@ function openEditEvent(ev, opts = {}) {
         try {
           await approveEventEdit(ev.id, opts.approveStaffId);
           try { await sendNotification(opts.approveStaffId, { type: "edit_approved", title: "Düzenleme İzni Verildi",
-            body: `"${ev.title || "Etkinlik"}" etkinliğini artık düzenleyebilirsin.`, extra: { eventId: ev.id } }); } catch (_) {}
+            body: `"${ev.title || "Etkinlik"}" etkinliğini artık düzenleyebilirsin.`,
+            fromName: p.orgName || "Organizasyon", extra: { eventId: ev.id } }); } catch (_) {}
           toast("İzin verildi"); banner.remove();
         } catch (_) { toast("İzin verilemedi", "err"); }
       } }, "İzin Ver"));
@@ -482,7 +483,8 @@ function openEditEvent(ev, opts = {}) {
           try {
             if (ev.venueId) {
               try { await sendNotification(ev.venueId, { type: "event_deleted", title: "Etkinlik İptal Edildi",
-                body: `${p.orgName || p.displayName || "Organizatör"}, "${ev.title || "Etkinlik"}" etkinliğini sildi.` }); } catch (_) {}
+                body: `${p.orgName || p.displayName || "Organizatör"}, "${ev.title || "Etkinlik"}" etkinliğini sildi.`,
+                fromName: p.orgName || p.displayName || "Organizatör" }); } catch (_) {}
             }
             await deleteEventById(ev.id);
             toast("Etkinlik silindi"); close(); m.close(); onDone();
@@ -514,9 +516,11 @@ function openEditEvent(ev, opts = {}) {
       const owner = members.find((mm) => mm.role === "owner");
       const ownerId = owner?.userId || owner?.id;
       if (!ownerId) return toast("Organizasyon sahibi bulunamadı", "err");
+      // relatedUserId + fromName: app NotificationsFeed onay ekranına bunlarla gider (staffId/staffName eski web alanı)
       await sendNotification(ownerId, { type: "edit_request", title: "Düzenleme İzni İstendi",
         body: `${p.displayName || p.orgName || "Personel"}, "${ev.title || "Etkinlik"}" etkinliğini düzenlemek istiyor.`,
-        extra: { eventId: ev.id, staffId: uid, staffName: p.displayName || "" } });
+        fromName: p.displayName || "Üye",
+        extra: { eventId: ev.id, relatedUserId: uid, staffId: uid, staffName: p.displayName || "" } });
       toast("Düzenleme izni isteğin organizasyon sahibine iletildi");
     } catch (_) { toast("İstek gönderilemedi", "err"); }
   }
@@ -657,7 +661,9 @@ function notifRow(n) {
       try {
         const ev = await eventById(n.eventId);
         if (!ev) return toast("Etkinlik bulunamadı", "err");
-        openEditEvent(ev, n.type === "edit_request" ? { approveStaffId: n.staffId, approveStaffName: n.staffName } : {});
+        // app'ten gelen istek relatedUserId/fromName taşır; eski web isteği staffId/staffName
+        openEditEvent(ev, n.type === "edit_request"
+          ? { approveStaffId: n.staffId || n.relatedUserId, approveStaffName: n.staffName || n.fromName } : {});
       } catch (_) { toast("Etkinlik açılamadı", "err"); }
     }
   } },
@@ -735,10 +741,17 @@ async function renderProfile(root) {
     field({ label: "Telefon", id: "pphone", type: "tel", value: p.phone || "", placeholder: "05xx xxx xx xx" }),
     field({ label: "Hakkında", id: "pbio", value: p.bio || "", placeholder: "Kısa tanıtım", multiline: true }),
   );
+  // Org adını yalnız sahip değiştirir (personel org dokümanına yazamaz)
+  if (!isOwner) { const inp = form.querySelector("#porg"); if (inp) inp.disabled = true; }
   const saveMsg = h("p", { class: "msg" });
   const save = btn("Kaydet", { ic: "save-outline", full: true, onClick: async () => {
-    const patch = { orgName: v("#porg"), displayName: v("#porg"), city: v("#pcity"), phone: v("#pphone"), bio: v("#pbio") };
-    try { if (pic.getFile()) patch.photoURL = await uploadImage(pic.getFile(), session.user.uid); await saveProfile(session.user.uid, patch); await refreshProfile(); toast("Profil kaydedildi"); }
+    // displayName YAZILMAZ: app'te kayıtlı organizatörde displayName kişinin adıdır; orgName'den
+    // yazmak her kayıtta ad değişikliği sayılıp nameChangeOk (90 gün kilit) tarafından reddediliyordu.
+    const orgName = v("#porg");
+    if (isOwner && !orgName) return toast("Organizasyon adı gir", "err");
+    const patch = { city: v("#pcity"), phone: v("#pphone"), bio: v("#pbio"), ...(isOwner ? { orgName } : {}) };
+    const org = isOwner && p.orgId && orgName !== p.orgName ? { orgId: p.orgId, name: orgName } : null;
+    try { if (pic.getFile()) patch.photoURL = await uploadImage(pic.getFile(), session.user.uid); await saveOrganizerProfile(session.user.uid, patch, org); await refreshProfile(); toast("Profil kaydedildi"); }
     catch (e) { saveMsg.textContent = "Kaydedilemedi."; saveMsg.className = "msg err"; }
   } });
 

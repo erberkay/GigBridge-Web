@@ -44,5 +44,5 @@ export {
 export {
   collection, collectionGroup, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
   query, where, orderBy, limit, onSnapshot, serverTimestamp,
-  arrayUnion, arrayRemove, increment, Timestamp,
+  arrayUnion, arrayRemove, increment, Timestamp, writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";

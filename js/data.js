@@ -1,7 +1,7 @@
 // Veri katmanı — app'in Firestore şemasıyla birebir sorgular.
 import {
   db, collection, collectionGroup, doc, getDoc, getDocs, updateDoc, addDoc, setDoc, deleteDoc,
-  query, where, orderBy, limit, onSnapshot, serverTimestamp, arrayRemove, increment,
+  query, where, orderBy, limit, onSnapshot, serverTimestamp, arrayRemove, increment, writeBatch,
   storage, ref, uploadBytes, getDownloadURL, deleteObject, auth, deleteUser,
 } from "./firebase.js";
 // Sayfaların data.js üzerinden alabilmesi için yeniden dışa aktar (artist.js isim cooldown damgası).
@@ -120,6 +120,15 @@ export async function organizerRequests(uid) {
 // ── Profil ──
 export async function getUser(uid) { const s = await getDoc(doc(db, "users", uid)); return s.exists() ? { id: uid, ...s.data() } : null; }
 export async function saveProfile(uid, patch) { await updateDoc(doc(db, "users", uid), patch); }
+// Organizatör profili: users/{uid} + (sahipse) organizations/{orgId}.name TEK batch'te.
+// Org adı users.displayName'e YAZILMAZ — app'te kayıt olan organizatörde displayName kişinin
+// ad-soyadıdır; orgName'den yazmak her kayıtta ad değişikliği sayılıp nameChangeOk'a takılıyordu.
+export async function saveOrganizerProfile(uid, patch, org) {
+  const b = writeBatch(db);
+  b.update(doc(db, "users", uid), patch);
+  if (org?.orgId && org.name) b.update(doc(db, "organizations", org.orgId), { name: org.name });
+  await b.commit();
+}
 
 // Mekan listesi (organizatörün istek göndereceği mekanlar)
 export async function listVenues() {
@@ -588,11 +597,15 @@ export async function approveEventEdit(eventId, staffId) {
 }
 
 // Bildirim yaz — app notifications şemasıyla birebir (listenNotifications toUserId+createdAt okur;
-// extra düz alan olarak yayılır: edit_request → {eventId, staffId, staffName})
-export async function sendNotification(toUserId, { type, title, body, extra = {} }) {
+// extra düz alan olarak yayılır: edit_request → {eventId, relatedUserId, staffId, staffName}).
+// fromUserId = oturumdaki uid: kural (notifications create) fromUserId == auth.uid ister; extra ezemez.
+export async function sendNotification(toUserId, { type, title, body, fromName, extra = {} }) {
+  const fromUserId = auth.currentUser?.uid ?? null;
+  if (!toUserId || toUserId === fromUserId) return; // kendine bildirim yok (app pushAppNotification gibi)
   await addDoc(collection(db, "notifications"), {
     toUserId, type: type ?? "info", title: title ?? "", body: body ?? "",
     read: false, createdAt: serverTimestamp(), ...extra,
+    fromUserId, fromName: fromName ?? "",
   });
 }
 
