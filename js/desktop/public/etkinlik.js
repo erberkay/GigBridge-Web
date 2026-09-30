@@ -20,10 +20,13 @@
 //   → düğme "Giriş yapıldı" (pasif) + doğrulama kartı "Girişin onaylandı" (app EventDetailScreen ile aynı davranış).
 // Panel rolleri (sanatçı/mekan/organizatör/yönetici; masaüstünde herkese açık sayfaları SALT-OKUMA görür): katıl/favori/değerlendir yok
 //   (submitArtistReview authorType "customer" yazar → panel hesabı dinleyici yorumu gibi görünmesin).
+// İptal edilmiş etkinlik (status "cancelled" — legacy/app'te özel durum YOK; kurallar da engellemiyor): hero "İPTAL EDİLDİ" çipi,
+//   "BU GECE" yok, DURUM "İptal", Katıl pasif "Etkinlik iptal edildi", doğrulama kartı yok; mevcut katılımcı (bileti okutulmamışsa)
+//   katılımını geri çekebilir. Sekme başlığı "{etkinlik} · GigBridge" (destroy'da geri alınır).
 //
 // Veri (okuma): eventById · attendees/{uid} getDoc (katılım + bilet durumu; isAttending ile aynı okuma) · isFavEvent
 //   · userById(venueId) (mekan alt satırı) · attendees orderBy(joinedAt desc) limit 20 (yığın; tek-alan indeksi)
-//   · artistReviews + getVenueReviews (legacy venueDetail görünürlük kuralları) · discoverEvents (Benzer; 5 dk modül önbelleği).
+//   · artistReviews + getVenueReviews (legacy venueDetail görünürlük kuralları) · discoverEvents (Benzer; 60 sn modül önbelleği).
 //   Tarih/saat her zaman İstanbul saatiyle gösterilir (evWhen).
 // Yazım: yalnız data.js'in mevcut fonksiyonları (legacy/app ile aynı şekil). Bileşik indeks YOK.
 import { h, loadLeaflet } from "../../ui.js";
@@ -105,11 +108,11 @@ const dayMonYearP = (p) => `${p.d} ${MONTHS_TR_SHORT[p.m - 1]} ${p.y}`;
 const weekdayLongP = (p) => `${DAYS_TR_SHORT[new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay()]}, ${dayMonYearP(p)}`;
 const dayMonYear = (ms) => dayMonYearP(istParts(ms));
 
-// ── Benzer etkinlikler: discoverEvents 5 dk modül önbelleği (her görüntülemede tüm "upcoming" taramasını tekrarlamasın) ──
+// ── Benzer etkinlikler: discoverEvents 60 sn modül önbelleği (spec §9) (her görüntülemede tüm "upcoming" taramasını tekrarlamasın) ──
 // SHARED-CANDIDATE: Keşfet/Landing/Akış aynı discoverEvents okumasını ayrı ayrı yapıyor → ortak önbellek live.js'te olmalı.
 let _upcoming = null, _upcomingAt = 0;
 function upcomingEvents() {
-  if (_upcoming && Date.now() - _upcomingAt < 300000) return _upcoming;
+  if (_upcoming && Date.now() - _upcomingAt < 60000) return _upcoming;
   _upcomingAt = Date.now();
   _upcoming = discoverEvents().catch((e) => { _upcoming = null; throw e; });
   return _upcoming;
@@ -156,6 +159,9 @@ export function etkinlikView(ctx) {
   let alive = true;
   const cleanups = [];
   let openModal = null;
+  // Sekme başlığı "{etkinlik} · GigBridge" (render'da; WCAG 2.4.2) → destroy'da önceki başlık geri gelir (sanatci.js ile aynı)
+  const prevTitle = document.title;
+  cleanups.push(() => { document.title = prevTitle; });
   const later = (fn, ms) => { const t = setTimeout(fn, ms); cleanups.push(() => clearTimeout(t)); return t; };
 
   // ── yükleniyor iskeleti (".loading" işareti: legacy mount/araç sözleşmesi) ──
@@ -219,7 +225,9 @@ export function etkinlikView(ctx) {
     const g = primaryGenre(ev);
     const when = evWhen(ev);                        // İstanbul duvar saati (tarayıcı saat diliminden bağımsız)
     const over = isEventOver(ev);
-    const tonight = !over && (isLive(ev) || (!!when && dayKey(when) === dayKey(istParts(Date.now()))));
+    // İptal edilmiş etkinlik (status "cancelled"; sanatci.js/mekan.js ile aynı tespit): katılım kapalı, mevcut katılımcı çıkabilir
+    const cancelled = /^cancel/.test(String(ev.status || "").toLowerCase()) || ev.cancelled === true;
+    const tonight = !over && !cancelled && (isLive(ev) || (!!when && dayKey(when) === dayKey(istParts(Date.now()))));
     const venueName = ev.venueName || "Mekan";
     const city = (ev.city || ev.location?.city || "").trim();
     const ll = latLngOf(ev);
@@ -240,6 +248,7 @@ export function etkinlikView(ctx) {
     const ph = () => h("span", { class: "dk-etkinlik-hero-ph", style: { background: `linear-gradient(135deg, ${fam.color}55, ${fam.dark}22), #0E1014` }, "aria-hidden": "true" });
     if (media) media.addEventListener("error", () => media.replaceWith(ph()), { once: true });
     const chips = h("div", { class: "dk-etkinlik-chips" },
+      cancelled ? h("span", { class: "dk-etkinlik-cxl" }, "İPTAL EDİLDİ") : null,
       tonight ? h("span", { class: "dk-etkinlik-live" },
         h("span", { class: "dk-etkinlik-live-dot", "aria-hidden": "true" }, h("span", { class: "dk-ping" }), h("span", {})), "BU GECE") : null,
       g ? dkGenreTag(g, { variant: "hero" }) : h("span", { class: "dk-etkinlik-chip-muted" }, "TÜR BELİRTİLMEMİŞ"),
@@ -251,17 +260,21 @@ export function etkinlikView(ctx) {
       metaItem(ic("pin", 16, "1.9", "#FF8A2A"), [venueName, city].filter(Boolean).join(", ")),
       whenTxt ? metaItem(ic("clock", 16, "1.9", "#4ED8FF"), whenTxt) : null,
       ev.organizerName ? metaItem(svgIcon("building", { size: 16, sw: "1.9", color: "#A78BFA" }), ev.organizerName) : null);
+    // Başlık: görünen metin (3 satıra sığmazsa kelime sınırında "…" ile kısaltılır → fitTitle) + tam başlık ekran okuyucuya (dk-sr)
+    const h1Vis = h("span", {}, title);
+    const h1Sr = h("span", { class: "dk-sr" });
+    const h1 = h("h1", { id: "dk-etk-h1", class: cx("dk-etkinlik-title", title.length > 56 && "is-long") }, h1Vis, h1Sr);
     const hero = h("section", { class: "dk-etkinlik-hero dk-rise", "aria-labelledby": "dk-etk-h1" },
       media || ph(),
       h("span", { class: "dk-etkinlik-hero-scrim", "aria-hidden": "true" }),
       h("div", { class: "dk-etkinlik-hero-acts" }, canAct || st.variant === "guest" ? heroFav : null, heroShare),
-      h("div", { class: "dk-etkinlik-hero-body" }, chips,
-        h("h1", { id: "dk-etk-h1", class: cx("dk-etkinlik-title", title.length > 56 && "is-long") }, title), meta));
+      h("div", { class: "dk-etkinlik-hero-body" }, chips, h1, meta));
 
     // ── KPI ──
     const kpiCount = dkKpi({ label: "KATILIMCI", value: fmtInt(count), variant: "card" });
     const kpiPrice = dkKpi({ label: "BİLET", value: fmtPrice(ev.ticketPrice), variant: "card" });
     const statusKpi = () => {
+      if (cancelled) return dkKpi({ label: "DURUM", value: "İptal", variant: "card", valueColor: "#FF5A6E" });
       if (isFullNow() && !att && !over) return dkKpi({ label: "DURUM", value: "Dolu", variant: "card", valueColor: "#FF5A6E" });
       return count >= 10
         ? dkKpi({ label: "DURUM", value: "Sıcak", variant: "card", valueColor: "#7CE0B0", valueIcon: ic("flame", 22, "1.9") })
@@ -277,8 +290,11 @@ export function etkinlikView(ctx) {
       ...(paras.length ? paras.map((p) => h("p", {}, p)) : [h("p", { class: "is-dim" }, "Açıklama eklenmemiş.")]));
 
     // ── Sanatçı + mekan + harita ──
-    const rateBtn = (kind) => h("button", { type: "button", class: "dk-etkinlik-rate dk-press", onclick: () => openReview(kind) },
-      ic("star", 15, "1.9", "#FFD700"), "Değerlendir");
+    // İki "Değerlendir" düğmesi aynı bölümde → erişilebilir ad hedefi içerir (görünen metin başta: WCAG 2.5.3)
+    const rateBtn = (kind) => h("button", {
+      type: "button", class: "dk-etkinlik-rate dk-press", onclick: () => openReview(kind),
+      "aria-label": kind === "artist" ? `Değerlendir: ${ev.artistName || "Sanatçı"} (sanatçı)` : `Değerlendir: ${ev.venueName || "Mekan"} (mekan)`,
+    }, ic("star", 15, "1.9", "#FFD700"), "Değerlendir");
     const entCard = ({ href, av, name, sub }) => {
       const inner = [av, h("span", { class: "dk-etkinlik-ent-t" }, h("span", { class: "dk-etkinlik-ent-n" }, name), h("span", { class: "dk-etkinlik-ent-s" }, sub)),
         href ? ic("chevron", 18, "2", "#8A8E97", { cls: "dk-etkinlik-ent-chev" }) : null];
@@ -311,7 +327,7 @@ export function etkinlikView(ctx) {
     const verSlot = h("div", { class: "dk-etkinlik-verslot" });
     const drawVer = () => {
       verSlot.replaceChildren();
-      const show = canAct && att && !over;
+      const show = canAct && att && !over && !cancelled;
       verSlot.hidden = !show;
       if (show) verSlot.append(verifyCard());
     };
@@ -467,6 +483,7 @@ export function etkinlikView(ctx) {
       let label, ariaOff = false;
       if (busyJoin) { label = "Yükleniyor..."; ariaOff = true; if (att) joinBtn.classList.add("is-on"); }
       else if (!st.canAct && st.variant === "panel") { label = "Katıl"; joinBtn.disabled = true; joinBtn.classList.add("is-off"); }
+      else if (cancelled && !att) { label = "Etkinlik iptal edildi"; joinBtn.disabled = true; joinBtn.classList.add("is-off"); }
       else if (over) { label = "Etkinlik sona erdi"; joinBtn.disabled = true; joinBtn.classList.add("is-off"); }
       else if (att && ticketUsed) { label = "Giriş yapıldı"; ariaOff = true; joinBtn.classList.add("is-on"); joinBtn.append(svgIcon("checkDouble", { size: 18, sw: "2.4" })); }
       else if (att) { label = "Katılıyorum"; joinBtn.classList.add("is-on"); joinBtn.append(ic("check", 18, "2.4")); }
@@ -478,6 +495,7 @@ export function etkinlikView(ctx) {
       tixLink.hidden = !(canAct && att);
       let help = "";
       if (st.variant === "panel") help = "Etkinliğe katılım dinleyici hesabıyla yapılır.";
+      else if (cancelled) help = att && !over && !ticketUsed ? "Bu etkinlik iptal edildi; katılımını geri çekebilirsin." : "";
       else if (!att && !over && !isFullNow()) help = "Katıldığında biletin QR kod olarak Biletlerim'de oluşur.";
       helpEl.textContent = help;
       helpEl.hidden = !help;
@@ -511,7 +529,7 @@ export function etkinlikView(ctx) {
 
     // ── eylemler ──
     async function toggleJoin() {
-      if (busyJoin || over) return;
+      if (busyJoin || over || (cancelled && !att)) return;
       if (dkLoginGate("Etkinliğe katılmak")) return;
       if (!canAct) return;
       if (att && ticketUsed) { dkToast("Bu etkinliğe girişin onaylandı; katılım artık iptal edilemez.", { type: "info" }); return; }
@@ -626,10 +644,12 @@ export function etkinlikView(ctx) {
         b.addEventListener("click", () => { rating = i; dirty = true; paint(); });
         starBtns.push(b); stars.append(b);
       }
+      // WAI-ARIA radio grubu: Sağ/Aşağı → sonraki (bir yıldız fazla), Sol/Yukarı → önceki; Home/End → 1/5 (uçlarda sarmaz)
       stars.addEventListener("keydown", (e) => {
-        if (!["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(e.key)) return;
+        if (!["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
         e.preventDefault();
-        const next = Math.min(5, Math.max(1, (rating || 0) + (e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : -1)));
+        const next = e.key === "Home" ? 1 : e.key === "End" ? 5
+          : Math.min(5, Math.max(1, (rating || 0) + (e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1)));
         rating = next; dirty = true; paint(); starBtns[next - 1].focus();
       });
       const len = () => ta.value.trim().length;
@@ -764,6 +784,41 @@ export function etkinlikView(ctx) {
     ro?.observe(aside);
     fitAside();
     cleanups.push(() => { mqOne.removeEventListener("change", onMq); window.removeEventListener("resize", fitAside); ro?.disconnect(); });
+    // Başlık 3 satırı aşarsa: CSS line-clamp 4. satırı taşma alanında yine boyar → alt uzantı payında (padding) üst kısmı
+    // görünüyordu. Metin kelime (tek dev kelimede karakter) sınırında "…" ile 3 satıra kısaltılır; tam başlık dk-sr'de.
+    // Genişlik/yazı boyutu (kırılım) ya da web fontu yüklenince yeniden hesaplanır. line-clamp yalnız JS öncesi yedek.
+    let fitKey = "";
+    const fitTitle = (force) => {
+      if (!alive || !h1.isConnected) return;
+      const key = `${h1.clientWidth}|${getComputedStyle(h1).fontSize}`;
+      if (!force && key === fitKey) return;
+      fitKey = key;
+      const fits = () => h1.scrollHeight <= h1.clientHeight + 1;
+      h1Vis.textContent = title; h1Vis.removeAttribute("aria-hidden"); h1Sr.textContent = "";
+      if (fits()) return;
+      const cut = (units, sep) => {   // sığan en uzun önek (ikili arama)
+        let lo = 0, hi = units.length - 1;
+        while (lo < hi) {
+          const mid = (lo + hi + 1) >> 1;
+          h1Vis.textContent = units.slice(0, mid).join(sep) + "…";
+          if (fits()) lo = mid; else hi = mid - 1;
+        }
+        return lo;
+      };
+      const words = title.split(/\s+/).filter(Boolean);
+      let n = cut(words, " "), txt;
+      if (n > 0) txt = words.slice(0, n).join(" ");
+      else { const chars = [...title]; n = cut(chars, ""); txt = chars.slice(0, Math.max(1, n)).join(""); }
+      h1Vis.textContent = txt.replace(/[\s,.;:·–—-]+$/u, "") + "…";
+      h1Vis.setAttribute("aria-hidden", "true");
+      h1Sr.textContent = title;
+    };
+    const roTitle = typeof ResizeObserver === "function" ? new ResizeObserver(() => fitTitle(false)) : null;
+    roTitle?.observe(h1);
+    fitTitle(true);
+    try { document.fonts?.ready.then(() => fitTitle(true)); } catch (_) {}
+    cleanups.push(() => roTitle?.disconnect());
+    document.title = `${title} · GigBridge`;
     paintJoin(); paintFav(); paintShare(); paintCounts(); drawVer(); if (revSec) drawRevs();
   }
 

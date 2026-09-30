@@ -87,6 +87,12 @@
 .mk .mk-login { height: 44px; box-sizing: border-box; padding: 0 15px 0 12px; border-radius: 22px; border: 1px solid rgba(78, 216, 255, .4);
   background: rgba(78, 216, 255, .08); color: #4ED8FF; display: flex; align-items: center; gap: 6px; font: 600 14px/normal var(--mk-sans); white-space: nowrap; }
 .mk .mk-login > svg { flex-shrink: 0; }
+/* <360: hap 44px daireye iner (metin ekran okuyucuya kalır), satır aralığı 8 → "Tüm Şehirler" 320px'te de kesilmez */
+@media (max-width: 359px) {
+  .mk .mk-top { gap: 8px; }
+  .mk .mk-login { width: 44px; padding: 0; justify-content: center; border-radius: 50%; }
+  .mk .mk-login > span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 
 /* Arama çubuğu */
 .mk .mk-search { position: relative; z-index: 2; margin-top: 16px; }
@@ -137,11 +143,12 @@
   color: #F2F1EE; font: 400 14px/normal var(--mk-sans); display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; }
 .mk .mk-city-opt:hover { background: #14171D; }
 .mk .mk-city-opt[aria-selected="true"] { background: rgba(78, 216, 255, .08); color: #4ED8FF; }
+.mk .mk-city-opt:focus-visible { outline-offset: -2px; }
 .mk .mk-city-opt-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mk .mk-city-n { font: 400 10.5px/normal var(--mk-mono); color: #8A8E97; flex-shrink: 0; }
 .mk .mk-city-empty { padding: 16px 12px; font-size: 13.5px; color: #8A8E97; }
 .mk .mk-pop-title { font: 700 10px/normal var(--mk-mono-b); letter-spacing: .14em; color: #8A8E97; }
-.mk .mk-gchips { display: flex; flex-wrap: wrap; gap: 8px; max-height: min(232px, 40vh); overflow-y: auto; }
+.mk .mk-gchips { display: flex; flex-wrap: wrap; gap: 8px; max-height: min(240px, 41vh); overflow-y: auto; padding: 4px; margin: -4px; }
 .mk .mk-gchip { height: 32px; box-sizing: border-box; padding: 0 12px; border-radius: 16px; border: 1px solid #1F232B; background: transparent;
   color: #A3A7AF; font: 500 13px/normal var(--mk-sans); display: inline-flex; align-items: center; gap: 7px;
   transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease; }
@@ -162,19 +169,28 @@
   font: 700 10px/normal var(--mk-mono-b); letter-spacing: .12em; color: #FF4FA3; transition: color 200ms ease; }
 .mk .mk-more:hover { color: #FF8AC4; }
 .mk .mk-sec-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-.mk .mk-sec-date { flex-shrink: 0; white-space: nowrap; font: 600 10px/normal var(--mk-mono); letter-spacing: .14em; color: #8A8E97; }
+/* TOP 10 çipinin hedefi (programla odaklanan bölüm başlığı) */
+.mk .mk-h2[tabindex]:focus { outline: none; }
+.mk .mk-h2[tabindex]:focus-visible { outline: 2px solid #4ED8FF; outline-offset: 4px; border-radius: 2px; }
 .mk .mk-t10chip { height: 28px; box-sizing: border-box; padding: 0 9px; display: flex; align-items: center; gap: 5px; border-radius: 4px;
   border: 1px solid rgba(255, 215, 0, .4); background: rgba(255, 215, 0, .08); color: #FFD700;
   font: 700 10px/normal var(--mk-mono-b); letter-spacing: .12em; }
+/* <375: "Popüler Sanatçılar" + TOP 10 + TÜMÜNÜ GÖR tek satıra sığmaz → çip yalnız kupa (28×28; metin ekran okuyucuya kalır) */
+@media (max-width: 374px) {
+  .mk .mk-t10chip { width: 28px; padding: 0; justify-content: center; font-size: 0; letter-spacing: 0; }
+  .mk .mk-t10chip > svg { width: 14px; height: 14px; }
+  .mk .mk-sec-right { gap: 12px; }
+}
 .mk .mk-pad { padding: 18px 20px 0; }
 .mk .mk-pad0 { padding: 0 20px; }
 
 /* Yatay kaydırmalı kart listeleri */
-.mk .mk-hscroll { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px; overscroll-behavior-x: contain; }
+/* padding-block 4 + eşit negatif margin: yerleşim aynı, 2px+2px odak halkası kaydırıcının taşma kırpmasına takılmaz */
+.mk .mk-hscroll { display: flex; gap: 12px; overflow-x: auto; padding: 4px 20px; margin-block: -4px; overscroll-behavior-x: contain; }
 .mk .mk-hscroll-a { gap: 10px; }
 
 /* Öne Çıkanlar (tasarım "Bu Gece" kartı) — kaydırmalı karusel */
-.mk .mk-hero-track { display: flex; gap: 20px; overflow-x: auto; padding: 0 20px; scroll-snap-type: x mandatory; scroll-padding: 0 20px; overscroll-behavior-x: contain; }
+.mk .mk-hero-track { display: flex; gap: 20px; overflow-x: auto; padding: 4px 20px; margin-block: -4px; scroll-snap-type: x mandatory; scroll-padding: 0 20px; overscroll-behavior-x: contain; }
 .mk .mk-hero-card { position: relative; display: block; flex: 0 0 100%; height: 218px; box-sizing: border-box; border-radius: 8px; overflow: hidden;
   border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; scroll-snap-align: start; }
 .mk .mk-hero-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -201,11 +217,18 @@
 .mk .mk-hero-att { display: flex; align-items: center; gap: 5px; flex-shrink: 0; font: 600 11px/normal var(--mk-mono); color: #F2F1EE; }
 .mk .mk-hero-att > svg { color: #C9CACD; }
 .mk .mk-dist { margin-left: 8px; font: 600 10px/normal var(--mk-mono); letter-spacing: .08em; color: #4ED8FF; }
-/* Karusel noktaları — kartın altında, yalnız gösterge (legacy .hero-dots gibi; dokunma hedefi değil) */
-.mk .mk-dots { margin-top: -2px; display: flex; justify-content: center; align-items: center; gap: 4px; }
-.mk .mk-dot { display: block; width: 8px; height: 6px; border-radius: 3px; background: rgba(242, 241, 238, .3);
+/* Karusel denetimleri — kartın altında (legacy .hero-dots yeri): noktalar düğme (24px dokunma hedefi, görsel 8×6 / etkin 24×6),
+   sağda durdur/oynat. Satır 28px; negatif margin → görsel noktalar kartın ~11px altında, sonraki bölüm aralığı değişmez. */
+.mk .mk-hero-ctl { position: relative; height: 28px; margin: -12px 0 -12px; padding: 0 20px; display: flex; justify-content: center; align-items: center; }
+.mk .mk-dots { display: flex; align-items: center; }
+.mk .mk-dot { height: 28px; padding: 0 8px; border: 0; border-radius: 4px; background: none; display: flex; align-items: center; }
+.mk .mk-dot:focus-visible { outline-offset: -2px; }
+.mk .mk-dot-v { display: block; width: 8px; height: 6px; border-radius: 3px; background: rgba(242, 241, 238, .3);
   transition: width 300ms ease, background-color 300ms ease; }
-.mk .mk-dot.on { width: 24px; background: #F2F1EE; }
+.mk .mk-dot.on .mk-dot-v { width: 24px; background: #F2F1EE; }
+.mk .mk-hero-pause { position: absolute; top: 0; right: 20px; width: 28px; height: 28px; box-sizing: border-box; padding: 0; border: 0; border-radius: 4px;
+  background: none; color: #8A8E97; display: flex; align-items: center; justify-content: center; }
+.mk .mk-hero-pause:focus-visible { outline-offset: -2px; }
 
 /* Etkinlik kartı (tasarım "Yaklaşan Etkinlikler": 232px + 1px kenar) */
 .mk .mk-ecard { flex-shrink: 0; width: 234px; box-sizing: border-box; display: flex; flex-direction: column; border: 1px solid #1F232B; border-radius: 8px;
@@ -285,7 +308,7 @@
 
 /* ETKİNLİKLER sekmesi — tarih şeridi + satırlar */
 .mk .mk-evtab { padding-top: 16px; display: flex; flex-direction: column; gap: 14px; }
-.mk .mk-dates { display: flex; gap: 8px; overflow-x: auto; padding: 0 20px; overscroll-behavior-x: contain; }
+.mk .mk-dates { display: flex; gap: 8px; overflow-x: auto; padding: 4px 20px; margin-block: -4px; overscroll-behavior-x: contain; }
 .mk .mk-date { flex-shrink: 0; min-width: 52px; height: 54px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 1px solid #1F232B;
   background: #0E1014; color: #8A8E97; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
 .mk .mk-date[aria-pressed="true"] { background: rgba(255, 79, 163, .10); border-color: rgba(255, 79, 163, .55); color: #F2F1EE; }
@@ -314,6 +337,9 @@
 .mk .mk-erow-title { font: 600 15px/1.25 var(--mk-sans); letter-spacing: -.01em;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .mk .mk-erow-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 400 12.5px/normal var(--mk-sans); color: #8A8E97; }
+/* durum rozeti (legacy ecard2 statusBadge) — kartlardaki düz renkli rozetin küçük hâli */
+.mk .mk-erow-tag { align-self: flex-start; max-width: 100%; height: 18px; box-sizing: border-box; margin-top: 2px; padding: 0 6px; border-radius: 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #06070A; font: 700 9px/18px var(--mk-mono-b); letter-spacing: .1em; }
 .mk .mk-erow-side { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .mk .mk-erow-price { font: 600 12.5px/normal var(--mk-mono); color: #F2F1EE; }
 .mk .mk-erow-att { display: flex; align-items: center; gap: 4px; font: 400 10px/normal var(--mk-mono); color: #8A8E97; }

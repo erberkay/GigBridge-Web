@@ -47,6 +47,8 @@
    Artboard: grid-column 8 / span 5 (1440'ta 519.33). Hücre 7…12'ye açılır ve kolaj sağa yaslanır; genişlik = span 5
    (6 kolonluk hücrenin 5/6'sı − 4px), en az 519 → 1280–1439'da da ana kart hücreden taşmaz, çipler görselin sol kenarını keser. */
 .dk-landing-hc { grid-column: 7 / -1; justify-self: end; width: max(519px, calc(500% / 6 - 4px)); position: relative; height: 580px; min-width: 0; }
+/* DOM sırası (odak) mekan çipi → ana kart → sanatçı çipi; çipler görselin üstünde (artboard'daki üst üste binme) */
+.dk-landing-hc > .dk-landing-hc-venue, .dk-landing-hc > .dk-landing-hc-artist { z-index: 1; }
 .dk-landing-hc-main {
   position: absolute; top: 0; right: 0; width: 460px; height: 520px;
   border-radius: 12px; overflow: hidden; border: 1px solid #1F232B; background: #0E1014;
@@ -111,7 +113,9 @@ a.dk-landing-hc-artist:hover, a.dk-landing-hc-venue:hover { border-color: #2C303
 
 /* ════════════════════ 3. ROLES ════════════════════ */
 .dk-landing-roles { padding: 88px 0; background: #0A0B0F; border-top: 1px solid #14171D; border-bottom: 1px solid #14171D; }
-.dk-landing-rgrid { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 40px; align-items: stretch; }
+/* Rol ızgarası akışkan (sıçrama yok): 1440+ → artboard (sekmeler 360 · boşluk 40 · görsel 340 · metin 44/44/40);
+   1280'e doğru doğrusal küçülür (300 · 32 · 280 · 40/36/36) ve ≤1279'da bu değerlerde kalır (spec §2.10: 300 + 280). */
+.dk-landing-rgrid { display: grid; grid-template-columns: clamp(300px, 37.5vw - 180px, 360px) minmax(0, 1fr); gap: clamp(32px, 5vw - 32px, 40px); align-items: stretch; }
 .dk-landing-tabs { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .dk-landing-tab {
   position: relative; overflow: hidden; width: 100%; box-sizing: border-box; padding: 20px 22px;
@@ -131,11 +135,14 @@ a.dk-landing-hc-artist:hover, a.dk-landing-hc-venue:hover { border-color: #2C303
 .dk-landing-panel {
   position: relative; overflow: hidden; min-height: 460px; min-width: 0; border-radius: 14px;
   border: 1px solid #1F232B; background: #0E1014;
-  display: grid; grid-template-columns: minmax(0, 1fr) 340px;
+  display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 37.5vw - 200px, 340px);
 }
 .dk-landing-panel:focus-visible { outline-offset: 2px; }
 .dk-landing-panel-bar { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--dk-landing-rc); display: block; z-index: 2; }
-.dk-landing-panel-text { box-sizing: border-box; padding: 44px 44px 40px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.dk-landing-panel-text {
+  box-sizing: border-box; padding: clamp(40px, 2.5vw + 8px, 44px) clamp(36px, 5vw - 28px, 44px) clamp(36px, 2.5vw + 4px, 40px);
+  display: flex; flex-direction: column; gap: 18px; min-width: 0;
+}
 .dk-landing-panel-eb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: var(--dk-landing-rc); }
 .dk-landing-h3 { margin: 0; font-family: var(--dk-font-serif); font-weight: 400; font-size: 40px; line-height: 1.04; letter-spacing: -0.01em; color: #F2F1EE; }
 .dk-landing-bullets { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
@@ -195,17 +202,18 @@ a.dk-landing-hc-artist:hover, a.dk-landing-hc-venue:hover { border-color: #2C303
 .dk-landing-cta-row { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
 
 /* ════════════════════ Duyarlı ════════════════════ */
-/* 1024–1439: rol paneli 1440'taki metin/görsel oranını korusun (1280'de 340 görsel kolonu metni 292 px'e sıkıştırıyordu) */
-@media (max-width: 1439px) {
-  .dk-landing-rgrid { grid-template-columns: 300px minmax(0, 1fr); gap: 32px; }
-  .dk-landing-panel { grid-template-columns: minmax(0, 1fr) 280px; }
-  .dk-landing-panel-text { padding: 40px 36px 36px; }
-}
+/* 1280–1439: rol ızgarası yukarıdaki clamp()'larla akışkan (ayrı kırılım yok). */
 /* 1024–1279 (kanvas: "hero tek kolon"; kart ızgaraları 3) — spec §2.10 */
 @media (max-width: 1279px) {
   .dk-landing-hero-grid { grid-template-columns: minmax(0, 1fr); row-gap: 64px; }
   .dk-landing-hero-l { grid-column: 1 / -1; }
-  .dk-landing-h1 { font-size: 64px; }
+  /* Tek kolonda satır boyu sınırı: iki dengeli satır (1440'taki 3 satırlık kompozisyonun karşılığı; tek satıra yayılmaz) */
+  .dk-landing-h1 { font-size: 64px; max-width: 720px; text-wrap: balance; }
+
+  /* Rol paneli: sekmeler 300 (spec); görsel kolonu 1280'de 280 → 1024'te 180'e akışkan daralır ki madde satırları
+     ≥360 px kalsın; liste ile CTA arasında en az 28 px (18 gap + 10) */
+  .dk-landing-panel { grid-template-columns: minmax(0, 1fr) clamp(180px, 39.0625vw - 220px, 280px); }
+  .dk-landing-bullets { margin-bottom: 10px; }
   .dk-landing-lead { max-width: 560px; }
   .dk-landing-hc { grid-column: 1 / -1; width: 519px; max-width: 100%; justify-self: center; }
 
@@ -241,11 +249,12 @@ a.dk-landing-hc-artist:hover, a.dk-landing-hc-venue:hover { border-color: #2C303
   .dk-landing-tab { flex: 1 1 0; padding: 14px 14px 14px 16px; gap: 10px; align-items: flex-start; }
   .dk-landing-tab-dot { margin-top: 6px; }
   .dk-landing-tab-name { font-size: 16px; }
-  .dk-landing-tab-short { font-size: 12.5px; }
+  .dk-landing-tab-short { font-size: 12.5px; text-wrap: balance; }   /* dar sekmede tek kelimelik yetim satır olmasın */
   .dk-landing-tab-arrow { display: none; }
   .dk-landing-panel { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .dk-landing-panel-media { display: none; }
   .dk-landing-panel-text { padding: 36px 32px 32px; }
+  .dk-landing-bullets { margin-bottom: 0; }
   .dk-landing-panel-cta { margin-top: 12px; }
 
   .dk-landing-evgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

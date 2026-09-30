@@ -179,20 +179,39 @@ function nextWhen(e) {
 }
 const firstGenre = (u) => artistGenres(u)[0] || "";
 
+// ══════════ profil önbelleği — modül düzeyi, 5 dk TTL (yalnız okuma) ══════════
+// Her satır için users/{otherId} okunur (tür / foto / şehir). Bağlanış başına önbellek her ziyarette N okuma demekti (üretim Firestore'u
+// uygulamayla paylaşılıyor, okuma faturalanır) → görünümler arası paylaşılan kısa ömürlü depo. Hata önbelleğe alınmaz (sonraki bağlanış
+// yeniden dener); "yok" (null) gerçek sonuçtur, TTL boyunca tutulur. Bir bağlanış içinde girdi sabitlenir (makeCaches → _prof) →
+// TTL bağlanış ortasında dolsa da satırlar "yükleniyor"a düşüp titremez.
+// SHARED-CANDIDATE: data.js listenConversations zaten aynı dokümanı okuyor (yalnız photoURL'ü tutuyor); userType/city/genres'i de
+// döndürürse bu ek okumalar tamamen kalkar.
+const PROF_TTL = 5 * 60e3;
+const PROF_MAX = 400;
+const _profStore = new Map();   // uid → { p: Promise, v: user | null (yok) | undefined (yükleniyor), t: ms }
+function sharedProfile(id) {
+  const now = Date.now();
+  let e = _profStore.get(id);
+  if (e && (e.v === undefined || now - e.t < PROF_TTL)) return e;
+  e = { p: null, v: undefined, t: now };
+  const rec = e;
+  e.p = userById(id).then((u) => { rec.v = u; rec.t = Date.now(); return u; })
+    .catch(() => { rec.v = null; if (_profStore.get(id) === rec) _profStore.delete(id); return null; });
+  _profStore.delete(id); _profStore.set(id, e);   // ekleme sırası = yaş → en eskiyi at
+  if (_profStore.size > PROF_MAX) _profStore.delete(_profStore.keys().next().value);
+  return e;
+}
+
 // ══════════ görünüm örneği ömürlü önbellekler (yalnız okuma) ══════════
-// Her createChat (rota bağlanışı) kendi önbelleğini kurar → takipçi sayısı / sıradaki etkinlik / foto sayfaya her girişte tazedir;
-// Takip anahtarı sonrası takipçi sayısı (sunucuda Cloud Function'ın güncellediği users.followerCount) kullanıcının kendi eylemiyle
-// ±1 iyimser güncellenir (bumpFollowers); sayı bilinmiyorsa girdi düşürülür ve taze profil okunur.
+// Her createChat (rota bağlanışı) kendi önbelleğini kurar → takipçi sayısı / sıradaki etkinlik sayfaya her girişte tazedir (profil:
+// yukarıdaki TTL deposu). Takip anahtarı sonrası takipçi sayısı (sunucuda Cloud Function'ın güncellediği users.followerCount) kullanıcının
+// kendi eylemiyle ±1 iyimser güncellenir (bumpFollowers); sayı bilinmiyorsa girdi düşürülür ve taze profil okunur.
 function makeCaches() {
-  const _prof = new Map();   // uid → { p: Promise, v: user | null (yok) | undefined (yükleniyor) }
+  const _prof = new Map();   // uid → paylaşılan depo girdisi (bu bağlanış boyunca sabit)
   function profile(id) {
     if (!id) return { p: Promise.resolve(null), v: null };
     let e = _prof.get(id);
-    if (!e) {
-      e = { p: null, v: undefined };
-      e.p = userById(id).then((u) => { e.v = u; return u; }).catch(() => { e.v = null; return null; });
-      _prof.set(id, e);
-    }
+    if (!e) { e = sharedProfile(id); _prof.set(id, e); }
     return e;
   }
   const _next = new Map();   // "artist:id" | "venue:id" → Promise<event|null>
@@ -234,7 +253,13 @@ function makeCaches() {
   // taze profil (takip anahtarı sonrası): önbellekteki değeri yerinde günceller (yükleniyor durumuna düşmez → satırlar titremez)
   function refreshProfile(id) {
     return userById(id).then((u) => {
-      if (u) { const e = _prof.get(id); if (e) e.v = u; else _prof.set(id, { p: Promise.resolve(u), v: u }); }
+      if (u) {
+        const t = Date.now();
+        const e = _prof.get(id);
+        if (e) { e.v = u; e.t = t; } else _prof.set(id, { p: Promise.resolve(u), v: u, t });
+        const se = _profStore.get(id);
+        if (se && se !== e) { se.v = u; se.t = t; } else if (!se) _profStore.set(id, _prof.get(id));
+      }
       return u;
     }).catch(() => null);
   }
@@ -301,8 +326,11 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
   const lhead = h("div", { class: c("lhead") }, titleWrap, tabsEl,
     h("div", { class: c("search") }, searchLabel, ico("search", 16, "2", { color: "#8A8E97", cls: c("sic") }), searchIn));
   const listUl = h("ul", { id: mkId(ns + "-list"), class: cx(c("ul"), "dk-scroll"), "aria-label": "Konuşma listesi" });
+  // panel: sekmelerin denetlediği bölge (role=tabpanel, etkin sekmeyle etiketli). <ul> liste rolünü korusun diye ayrı sarmalayıcı.
+  const tabPanel = P ? h("div", { id: mkId(ns + "-tp"), role: "tabpanel", class: c("tp") }, listUl) : null;
+  const listBox = tabPanel || listUl;   // yeni mesaj panelinde gizlenen konuşma bölgesi
   const cmpBox = h("div", { class: cx(c("cmp"), "dk-fade"), hidden: true });
-  const listPane = h(P ? "section" : "aside", { class: c("list"), "aria-label": "Konuşmalar" }, lhead, listUl, cmpBox);
+  const listPane = h(P ? "section" : "aside", { class: c("list"), "aria-label": "Konuşmalar" }, lhead, listBox, cmpBox);
 
   const chatSec = h("section", { class: c("chat"), "aria-label": "Sohbet" });
   const chead = h("div", { class: c("chead"), hidden: true });
@@ -381,18 +409,21 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     pill.textContent = `${n > 99 ? "99+" : n} YENİ`;
   }
 
-  // Sekmeler (panel): Tümü / Okunmamış / Teklifler — ←/→ klavye (sekme odak yönetimi)
+  // Sekmeler (panel): Tümü / Okunmamış / Teklifler — WAI-ARIA sekme deseni: ←/→ (döngülü) + Home/End, otomatik etkinleştirme;
+  // her sekme aria-controls → tabPanel, tabPanel aria-labelledby → etkin sekme.
   const TABS = [["all", "Tümü"], ["unread", "Okunmamış"], ...(offerRole ? [["offer", "Teklifler"]] : [])];
   const tabBtns = new Map();
   if (P) {
     TABS.forEach(([k, label]) => {
-      const b = h("button", { type: "button", role: "tab", class: cx(c("tab"), "dk-press"), "aria-selected": "false", tabindex: "-1" }, label);
+      const b = h("button", { type: "button", role: "tab", id: mkId(ns + "-tab-" + k), "aria-controls": tabPanel.id, class: cx(c("tab"), "dk-press"), "aria-selected": "false", tabindex: "-1" }, label);
       b.addEventListener("click", () => setTab(k));
       b.addEventListener("keydown", (e) => {
-        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-        e.preventDefault();
         const i = TABS.findIndex(([x]) => x === k);
-        const nk = TABS[(i + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length][0];
+        const n = TABS.length;
+        const j = e.key === "ArrowRight" ? (i + 1) % n : e.key === "ArrowLeft" ? (i + n - 1) % n : e.key === "Home" ? 0 : e.key === "End" ? n - 1 : -1;
+        if (j < 0) return;
+        e.preventDefault();
+        const nk = TABS[j][0];
         setTab(nk); tabBtns.get(nk).focus();
       });
       tabBtns.set(k, b);
@@ -404,10 +435,11 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     if (S.tab !== k) S.stickyId = null;
     S.tab = k;
     tabBtns.forEach((b, key) => { const on = key === k; b.setAttribute("aria-selected", on ? "true" : "false"); b.tabIndex = on ? 0 : -1; b.classList.toggle("is-on", on); });
+    if (tabPanel && tabBtns.get(k)) tabPanel.setAttribute("aria-labelledby", tabBtns.get(k).id);
     if (booted) renderList();
   }
 
-  searchIn.addEventListener("input", () => { S.q = searchIn.value; renderList(); });
+  searchIn.addEventListener("input", () => { S.q = searchIn.value; if (S.composing) renderCompose(); else renderList(); });
   searchIn.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown") { const f = (S.composing ? cmpBox : listUl).querySelector("button"); if (f) { e.preventDefault(); f.focus(); } }
     else if (e.key === "Escape" && S.composing) { e.preventDefault(); setComposing(false); composeBtn.focus(); }
@@ -419,7 +451,7 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     const venue = myType === "venue";
     searchIn.placeholder = on ? (venue ? "Sanatçı adı veya şehir ara..." : "Takip ettiklerinde ara...") : listPh();
     searchLabel.textContent = on ? (venue ? "Sanatçılarda ara" : "Takip ettiklerinde ara") : "Konuşmalarda ara";
-    listUl.hidden = on; cmpBox.hidden = !on;
+    listBox.hidden = on; cmpBox.hidden = !on;
     if (tabsEl) tabsEl.hidden = on;
     renderTitle();
     if (on) {
@@ -475,7 +507,9 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
 
   function renderList() {
     renderTitle();
-    if (S.composing) { renderCompose(); return; }
+    // Yeni mesaj paneli açıkken konuşma listesi gizli; panel yalnız kendi girdileriyle (kişi listesi yüklendi / arama / profil
+    // zenginleştirmesi) yeniden çizilir → canlı konuşma anlık görüntüleri kaydırılan kişi listesini başa sarmaz.
+    if (S.composing) return;
     if (!S.ready) {
       rows.clear();
       rc(listUl, skelRows(5, P ? 46 : 48));
@@ -548,7 +582,7 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     peopleLoading = false;
     if (alive && S.composing) renderCompose();
   }
-  function renderCompose() {
+  function renderCompose({ keepScroll = false } = {}) {
     const venue = myType === "venue";
     const ul = h("ul", { class: cx(c("cmp-ul"), "dk-scroll"), "aria-label": venue ? "Sanatçılar" : "Takip ettiklerin" });
     const foot = venue ? null : P
@@ -577,13 +611,19 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
           b.addEventListener("click", () => pickPerson(p));
           ul.append(h("li", { class: c("li") }, b));
         });
-        // venue listesi büyük olabilir → yalnız takip listesi için profil zenginleştirmesi
-        if (needs && !venue) Promise.all(f.map((p) => profile(p.id).p)).then(() => { if (alive && S.composing) renderCompose(); });
+        // venue listesi büyük olabilir → yalnız takip listesi için profil zenginleştirmesi (aynı sorgu için; kaydırma korunur)
+        if (needs && !venue) {
+          const q0 = S.q;
+          Promise.all(f.map((p) => profile(p.id).p)).then(() => { if (alive && S.composing && S.q === q0) renderCompose({ keepScroll: true }); });
+        }
       }
     }
+    const oldUl = cmpBox.querySelector("ul");
+    const st = keepScroll && oldUl ? oldUl.scrollTop : 0;
     const btns = [...cmpBox.querySelectorAll("button")];
     const fi = btns.indexOf(document.activeElement);
     rc(cmpBox, h("span", { class: c("cmp-eb") }, venue ? "SANATÇILAR" : "TAKİP ETTİKLERİN"), ul, foot);
+    if (st) ul.scrollTop = st;
     if (fi >= 0) cmpBox.querySelectorAll("button")[fi]?.focus({ preventScroll: true });
   }
   function pickPerson(p) {
@@ -606,7 +646,8 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
       if (menuPop) { menuPop.close(); return; }
       const cv = getConv(S.activeId); if (!cv) return;
       const del = h("button", { type: "button", role: "menuitem", class: cx(c("mitem"), "dk-row"), disabled: cv.draft ? true : null }, ico("trash", 16, "1.9"), "Sohbeti sil");
-      del.addEventListener("click", () => { menuPop?.close(); deleteConversation(cv); });
+      // odak önce tetikleyiciye: menü öğesi popover'la DOM'dan çıkar → dkModal onu "önceki odak" diye saklarsa kapanışta odak <body>'ye düşer
+      del.addEventListener("click", () => { try { moreBtn.focus({ preventScroll: true }); } catch (_) {} menuPop?.close(); deleteConversation(cv); });
       del.addEventListener("keydown", (e) => { if (e.key === "Tab") menuPop?.close(); });
       menuPop = dkPopover({ anchor: moreBtn, content: h("div", { role: "menu", class: c("menu"), "aria-label": "Sohbet seçenekleri" }, del),
         role: "presentation", anim: "pop", width: 220, offset: 8, onClose: () => { menuPop = null; } });
@@ -668,17 +709,19 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
       return h("div", { class: cx(c("cempty"), "dk-fade") }, ico("bubble", 40, "1.4"),
         h("span", { class: c("cempty-t") }, `${cv.otherName} ile sohbet`), "Sohbeti başlatmak için mesaj gönderin.");
     }
-    // konuşma seçili değil
-    const none = S.ready && !allConvs().length;
+    // konuşma seçili değil (liste hazır — hazır değilken renderLog "loading" çizer)
+    const none = !allConvs().length;
     const btn = h("button", { type: "button", class: cx(c("obtn"), "dk-press") }, ico("pen", 16, "1.9"), "Yeni mesaj");
     btn.addEventListener("click", () => setComposing(true));
     return h("div", { class: cx(c("cempty"), "dk-fade") }, ico("bubble", 40, "1.4"),
-      S.ready ? h("span", { class: c("cempty-t") }, none ? "Yeni bir sohbet başlat" : "Bir konuşma seç") : null,
-      S.ready ? btn : null);
+      h("span", { class: c("cempty-t") }, none ? "Yeni bir sohbet başlat" : "Bir konuşma seç"), btn);
   }
+  let loadNode = null;   // liste yüklenirken sohbet bölmesindeki döner gösterge (spec hesap §6 "list skeleton rows; chat spinner")
   function renderLog() {
     const cv = getConv(S.activeId);
     chatSec.classList.toggle(c("chat-none"), !cv);
+    if (!cv && !S.ready) { nodeCache.clear(); setLog([loadNode ||= placeholder("loading")]); return; }
+    loadNode = null;
     if (!cv) { nodeCache.clear(); setLog([placeholder("none")]); wakeLog(); return; }
     if (S.msgs == null) { setLog([placeholder("loading")]); return; }
     const msgs = S.msgs;
@@ -830,7 +873,7 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
   const blockedNote = h("div", { class: c("blocked"), role: "status" });
   const syncInput = () => {
     const v = input.value;
-    sendBtn.disabled = !v.trim();
+    sendBtn.disabled = !v.trim() || !!getConv(S.activeId)?.unverified;   // ?c= taslağı: karşı taraf doğrulanana dek gönderim yok
     counter.textContent = `${v.length} / ${MAXLEN}`;
     if (S.activeId) { if (v) texts.set(S.activeId, v); else texts.delete(S.activeId); }
   };
@@ -859,7 +902,7 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
   function send() {
     const cv = getConv(S.activeId);
     const text = input.value.trim();
-    if (!cv || !text || isLocked()) return;
+    if (!cv || !text || isLocked() || cv.unverified) return;
     input.value = ""; syncInput();
     const convId = cv.id;
     const wasDraft = !!cv.draft;
@@ -1043,6 +1086,17 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
       if (!alive) return;
       S.drafts.delete(cv.id);
       if (S.activeId === cv.id) select(null, { user: true, autoPick: !single, exclude: cv.id });
+      // silinen sohbetin başlığı (Diğer seçenekler) gitti ya da başka sohbete ait → odak yeni etkin satıra, yoksa aramaya.
+      // Kullanıcı bu arada başka bir yere odaklandıysa dokunma.
+      const fa = document.activeElement;
+      if (!fa || fa === document.body || fa === moreBtn || !fa.isConnected) {
+        requestAnimationFrame(() => {
+          if (!alive) return;
+          const f2 = document.activeElement;
+          if (f2 && f2 !== document.body && f2 !== moreBtn && f2.isConnected) return;
+          try { (rows.get(S.activeId)?._btn || searchIn).focus({ preventScroll: true }); } catch (_) {}
+        });
+      }
       dkToast("Sohbet silindi", { type: "ok" });
     } catch (_) {
       dkToast("Sohbet silinemedi. İnternet bağlantını kontrol edip tekrar dene.", { type: "err" });
@@ -1078,7 +1132,8 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     S.stickyId = id && S.tab === "unread" ? id : null;
     S.msgs = null; S.convDoc = null;
     seen = new Set(); firstPaint = true; nodeCache = new Map(); offerCards.clear();
-    if (user || id) writeQuery({ c: id });
+    // URL her zaman ekrandaki konuşmayı yansıtır (açılamayan ?c= bağlantısı da temizlenir) — replaceState, geçmiş kaydı eklemez
+    writeQuery({ c: id });
     input.value = id ? (texts.get(id) || "") : "";
     syncInput();
     applySingle();   // is-chat sınıfı çizimden önce (readsActive / unreadOf ona bakar)
@@ -1117,23 +1172,44 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
   }
 
   // ?c={convIdFor(me, other)} → henüz olmayan 1:1 konuşma için yerel taslak (ad/foto profilden). Geçersizse false.
+  // Karşı taraf profili doğrulanana dek (unverified) gönderim kapalı; kullanıcı yoksa (silinmiş hesap / bozuk bağlantı) taslak düşer —
+  // yoksa ilk mesaj var olmayan bir katılımcıyla konuşma dokümanı yazardı.
   function draftFromConvId(id) {
     const parts = String(id || "").split("__");
     const other = parts.length === 2 && parts.includes(me) ? parts.find((x) => x !== me) : null;
     if (!other || other === me) return false;
-    S.drafts.set(id, { id, otherId: other, otherName: "Sohbet", isGroup: false, draft: true, otherPhoto: null, lastMessage: "", lastMessageTime: null, unread: 0 });
-    profile(other).p.then((u) => {
+    const e = profile(other);
+    if (e.v === null) return false;   // bu oturumda "yok" olduğu zaten biliniyor
+    const known = e.v || null;
+    S.drafts.set(id, { id, otherId: other, otherName: known ? (known.displayName || known.orgName || "Kullanıcı") : "Sohbet", isGroup: false, draft: true,
+      otherPhoto: known?.photoURL || null, lastMessage: "", lastMessageTime: null, unread: 0, unverified: !known });
+    if (!known) e.p.then((u) => {
       const d = S.drafts.get(id);
-      if (!d || !u || !alive) return;
+      if (!d || !alive) return;
+      if (!u) {
+        S.drafts.delete(id);
+        if (S.activeId === id) {
+          const fa = document.activeElement;
+          const hadFocus = !fa || fa === document.body || host.contains(fa);
+          select(null, { autoPick: !single });
+          dkToast("Kullanıcı bulunamadı", { type: "err" });
+          if (hadFocus) requestAnimationFrame(() => { if (alive) try { (rows.get(S.activeId)?._btn || searchIn).focus({ preventScroll: true }); } catch (_) {} });
+        } else renderList();
+        return;
+      }
+      d.unverified = false;
       d.otherName = u.displayName || u.orgName || "Kullanıcı"; d.otherPhoto = u.photoURL || null;
-      headSig = ""; renderList(); if (S.activeId === id) { renderHeader(); renderPane(false); renderLog(); renderComposer(); }
+      headSig = ""; renderList(); if (S.activeId === id) { renderHeader(); renderPane(false); renderLog(); renderComposer(); syncInput(); }
     });
     return true;
   }
 
   // ilk seçim: ?c= → bekleyen requestChat hedefi → (≥1024) en son konuşma · (≤1023) liste
+  // Liste hazır olmadan gelen update(query) (geri/ileri, bağlantı) bağlanıştaki ctx.query'nin yerine geçer (lateQuery).
+  let lateQuery = null;
   function initialSelect() {
-    const q = ctx?.query || new URLSearchParams();
+    const q = lateQuery || ctx?.query || new URLSearchParams();
+    lateQuery = null;
     let id = q.get("c");
     if (pendingTarget) {
       const t = pendingTarget; pendingTarget = null;
@@ -1214,10 +1290,12 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
   return {
     destroy() { unsubs.forEach((f) => { try { f(); } catch (_) {} }); },
     update(q) {
-      if (!S.ready) return;
+      if (!alive) return;
+      if (!S.ready) { lateQuery = q || new URLSearchParams(); return; }   // liste gelince initialSelect bunu uygular
       const id = q?.get?.("c") || null;
       if (id === S.activeId) return;
-      if (id && !getConv(id) && !draftFromConvId(id)) return;
+      // açılamayan konuşma (başkasının / bozuk kimlik): ekrandaki konuşma kalır, adres çubuğu ona geri eşitlenir
+      if (id && !getConv(id) && !draftFromConvId(id)) { writeQuery({ c: S.activeId }); return; }
       select(id, { autoPick: !id && !single });
     },
     onSession(s) { return !!s?.user && s.user.uid === me; },

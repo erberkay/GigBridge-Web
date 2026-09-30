@@ -55,12 +55,10 @@
 }
 .dk-sanatci-detay .dk-sanatci-detay-act svg { flex-shrink: 0; }
 .dk-sanatci-detay .dk-sanatci-detay-act.is-pink { padding: 0 20px; border: 0; background: #FF4FA3; color: #06070A; }
-/* mekan "Davet Et" bağlantısı (<a>) düğme görünümünde kalsın */
-.dk-sanatci-detay a.dk-sanatci-detay-act, .dk-sanatci-detay a.dk-sanatci-detay-act:hover,
-.dk-sanatci-detay a.dk-sanatci-detay-cta, .dk-sanatci-detay a.dk-sanatci-detay-cta:hover { text-decoration: none; color: #06070A; }
 .dk-sanatci-detay .dk-sanatci-detay-follow.is-on { background: rgba(255,79,163,0.12); border-color: rgba(255,79,163,0.55); color: #FF4FA3; }
 .dk-sanatci-detay .dk-sanatci-detay-act.is-rv { font-size: 14px; flex-shrink: 0; }
-.dk-sanatci-detay .dk-sanatci-detay-act:disabled { cursor: progress; }
+/* yazım sürerken (takip): disabled değil aria-busy — odak düğmede kalır */
+.dk-sanatci-detay .dk-sanatci-detay-act[aria-busy="true"] { cursor: progress; }
 
 /* ═════════ 3. istatistik bandı (StatsBand) + ResidentPill ═════════ */
 .dk-sanatci-detay-stats { flex-shrink: 0; margin-top: 40px; height: 104px; box-sizing: border-box; border-top: 1px solid #14171D; border-bottom: 1px solid #14171D; display: flex; align-items: center; }
@@ -98,6 +96,7 @@
 .dk-sanatci-detay-exp { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #A3A7AF; }
 .dk-sanatci-detay-vdiv { width: 1px; height: 18px; background: #1F232B; display: block; }
 .dk-sanatci-detay-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.dk-sanatci-detay-vblock { display: flex; flex-direction: column; gap: 12px; }
 .dk-sanatci-detay-gchip { height: 30px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; border-radius: 15px; border: 1px solid #2C303A; font-size: 13px; color: #F2F1EE; white-space: nowrap; }
 /* FeaturedSetCard */
 .dk-sanatci-detay-set { position: relative; overflow: hidden; box-sizing: border-box; padding: 24px 28px; border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; display: flex; align-items: center; gap: 24px; }
@@ -137,7 +136,9 @@
 .dk-sanatci-detay-row-r { justify-self: end; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #C9CACD; }
 
 /* ── 03 Booking ── */
-.dk-sanatci-detay .dk-sanatci-detay-seg { align-self: flex-start; padding: 4px; max-width: 100%; flex-wrap: wrap; }
+/* segment tek satır (artboard tablist); dar kolonda sarmak yerine yatay kaydırılır (ok tuşları odaktaki sekmeyi görünür kılar) */
+.dk-sanatci-detay .dk-sanatci-detay-seg { align-self: flex-start; padding: 4px; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #2C303A transparent; }
+.dk-sanatci-detay .dk-sanatci-detay-seg .dk-seg-b { flex-shrink: 0; }
 .dk-sanatci-detay-pkgs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .dk-sanatci-detay-pkg { box-sizing: border-box; min-width: 0; padding: 24px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; display: flex; flex-direction: column; gap: 14px; transition: opacity 260ms ease; }
 .dk-sanatci-detay-pkg.is-dim { opacity: 0.38; }
@@ -165,6 +166,7 @@
 .dk-sanatci-detay-reel { display: flex; flex-direction: column; gap: 16px; }
 .dk-sanatci-detay-reelgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .dk-sanatci-detay .dk-sanatci-detay-reelcard { position: relative; width: 100%; height: 150px; padding: 0; margin: 0; border-radius: 10px; overflow: hidden; border: 1px solid #1F232B; background: #14171D; display: block; }
+.dk-sanatci-detay .dk-sanatci-detay-reelcard:hover { border-color: #2C303A; }   /* gb-card hover (yerel kenarlık kuralı .dk-card:hover'ı eziyordu) */
 /* YouTube hqdefault 480×360 (4:3) üst/alt %12,5 siyah şerit gömülü: kutu 150/0.75 = 200 px, top −25 → kartta yalnız 16:9 içerik görünür
    (dar kartta yatay kırpılır, geniş kartta cover dikey ortalar; hover ölçeği kart merkezinde kalır) */
 .dk-sanatci-detay-reelcard img { position: absolute; top: -25px; left: 0; width: 100%; height: 200px; object-fit: cover; display: block; }
@@ -190,10 +192,18 @@
 .dk-sanatci-detay .dk-sanatci-detay-rvempty { min-height: 88px; }
 
 /* ═════════ 6. yan kolon ═════════ */
-/* yapışkan yan kolonun TAMAMI (sahibinin "özet kartı sticky; top 96" notu): --dk-sanatci-detay-aside-top JS'te = min(96, innerHeight − yükseklik − 24).
-   Sığıyorsa özet kartı 96'da sabit; sığmıyorsa kolon son kartı görünene dek kayar, sonra alt kenarıyla sabitlenir — kartlar üst üste binmez. */
-.dk-sanatci-detay-aside { position: sticky; top: var(--dk-sanatci-detay-aside-top, 96px); align-self: start; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+/* yan kolon ızgara satırına gerilir → özet kartının yapışma aralığı sol kolonun tamamı (sahibinin notu: özet kartı sticky; top 96).
+   Mod sınıfları JS'te (sanatci.js fitAside): is-stick-all = kolonun tamamı sığıyor → kolon birlikte yapışır; is-nostick = kart tek başına
+   sığmıyor → yapışma yok; is-released = klavye odağı alttaki kartlardayken kart geçici olarak akışa döner. */
+.dk-sanatci-detay-aside { position: relative; align-self: stretch; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
 .dk-sanatci-detay-sum { position: relative; overflow: hidden; box-sizing: border-box; padding: 26px; border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; display: flex; flex-direction: column; gap: 20px; }
+@media (min-width: 1024px) {
+  .dk-sanatci-detay-sum { position: sticky; top: 96px; z-index: 2; }   /* opak zemin: alttaki sosyal / sıradaki kartları altından geçer */
+  .dk-sanatci-detay-aside.is-stick-all { position: sticky; top: 96px; align-self: start; }
+  .dk-sanatci-detay-aside.is-stick-all > .dk-sanatci-detay-sum,
+  .dk-sanatci-detay-aside.is-nostick > .dk-sanatci-detay-sum,
+  .dk-sanatci-detay-aside.is-released > .dk-sanatci-detay-sum { position: relative; top: auto; }
+}
 .dk-sanatci-detay-sum-bar { position: absolute; left: 0; right: 0; top: 0; height: 2px; display: block; }
 .dk-sanatci-detay-sum-id { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .dk-sanatci-detay-sum-av { width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; object-fit: cover; object-position: 70% 20%; display: block; }
@@ -249,6 +259,7 @@
 .dk-sanatci-detay-rvm-tawrap { display: flex; flex-direction: column; gap: 6px; }
 .dk-sanatci-detay-rvm-cnt { align-self: flex-end; font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; }
 .dk-sanatci-detay-rvm-cnt.is-warn { color: #FF5A6E; }
+.dk-sanatci-detay-mdl .dk-btn[aria-busy="true"] { cursor: progress; }
 .dk-sanatci-detay-bkm-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .dk-sanatci-detay-bkm .dk-sel-wrap { width: 100%; }
 .dk-sanatci-detay-bkm .dk-sel { height: 44px; padding: 0 36px 0 14px; font-size: 14.5px; appearance: none; }
@@ -304,9 +315,6 @@
   .dk-sanatci-detay-h2 { font-size: 44px; }
   .dk-sanatci-detay-evgrid, .dk-sanatci-detay-pkgs { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* reel 3 kolon kalır (≥225 px; yetim kart yok) */
   .dk-sanatci-detay-rvgrid { grid-template-columns: minmax(0, 1fr); }
-  .dk-sanatci-detay-row { height: auto; min-height: 64px; padding: 10px 12px; grid-template-columns: 110px minmax(0, 1fr) 80px; }
-  .dk-sanatci-detay-row-v { display: none; }
-  .dk-sanatci-detay-row-tv { display: block; }
   .dk-sanatci-detay-set { padding: 20px; gap: 18px; }
   .dk-sanatci-detay-quote { padding: 28px 28px; }
   .dk-sanatci-detay-quote-q { font-size: 28px; }
@@ -324,6 +332,13 @@
 }
 @media (max-width: 1279px) {
   .dk-sanatci-detay-pkgs > .dk-sanatci-detay-pkg:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .dk-sanatci-detay .dk-sanatci-detay-seg .dk-seg-b { padding: 0 10px; }   /* 7 segment 584 px sol kolona tek satır sığsın */
+}
+/* ≤1199: sol kolon ≤ ~760 px → ayrı mekan sütunu (160) başlığı kırpıyordu; mekan başlığın altına iner (769–1023 düzeni) */
+@media (max-width: 1199px) {
+  .dk-sanatci-detay-row { height: auto; min-height: 64px; padding: 10px 12px; grid-template-columns: 110px minmax(0, 1fr) 80px; }
+  .dk-sanatci-detay-row-v { display: none; }
+  .dk-sanatci-detay-row-tv { display: block; }
 }
 @media (max-width: 1023px) {
   .dk-sanatci-detay-aside > .dk-sanatci-detay-sum:only-child { grid-column: 1 / -1; }

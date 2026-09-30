@@ -58,7 +58,11 @@ const WHENS = [
 const DAY = 86400e3;
 const FAR_KM = 15;                  // bu mesafeden uzak pin gruplarına "{İLÇE} ↗ 24 KM" etiketi (artboard "KİLYOS ↑ 24 KM")
 const GROUP_PX = 40;                // bu piksel mesafesindeki pinler halkaya açılır
+const PIN_GAP = 34;                 // iki pin merkezi arasında en az (iç daire 30 + 4 px boşluk)
+// halka yarıçapı: en az 22 px; pin başına ~36 px çevre (tekil pin: 0)
+const ringR = (n) => (n > 1 ? Math.max(22, Math.round((36 * n) / (2 * Math.PI))) : 0);
 const DETAIL_ZOOM = 16;             // legacy: pin/seçim → max(zoom, 16)
+const OFF_PX = 20;                  // pin harita alanının bu kadar dışına çıkınca kart gizlenir
 const FIT_MAX_ZOOM = 15;
 const TR_CENTER = [39.0, 35.0];     // legacy: konumlu etkinlik yoksa Türkiye, zoom 6
 const TILE_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";   // legacy ile AYNI sağlayıcı (OSM); koyu görünüm CSS filtresi
@@ -183,10 +187,23 @@ export function haritaView(ctx) {
   searchInput.addEventListener("search", onSearch);
   unsubs.push(() => pushQ.cancel());
 
+  // Tarih: tıklama her değişimde geçmiş kaydı ekler (geri tuşu önceki filtre). Ok tuşlarıyla gezinmede yalnız İLK değişim kayıt
+  // ekler, sonrakiler aynı kaydı günceller (segmentten çıkınca sıfırlanır) → her ok basışı için ayrı "Geri" gerekmez.
+  let segKey = false, segKbPushed = false;
   const when = dkSegmented({
     items: WHENS, value: st.tarih, size: 34, stretch: true, label: "Tarih", cls: "dk-harita-when",
-    onChange: (k) => { st.tarih = k; writeQuery({ tarih: k || null }, { push: true }); refilter(); },
+    onChange: (k) => {
+      st.tarih = k;
+      const push = !segKey || !segKbPushed;
+      if (segKey) segKbPushed = true;
+      writeQuery({ tarih: k || null }, { push });
+      refilter();
+    },
   });
+  // dkSegmented onChange'i keydown dinleyicisinin içinde eşzamanlı çağırır → yakalama aşamasında bayrak kur, olay bitince indir
+  when.addEventListener("keydown", () => { segKey = true; setTimeout(() => { segKey = false; }, 0); }, true);
+  when.addEventListener("focusout", (ev) => { if (!when.contains(ev.relatedTarget)) segKbPushed = false; });
+  when.addEventListener("pointerdown", () => { segKbPushed = false; });
 
   const chips = new Map();
   const chipsWrap = h("div", { class: "dk-harita-chips", role: "group", "aria-label": "Tür filtresi" });
@@ -199,7 +216,9 @@ export function haritaView(ctx) {
   const syncChips = () => chips.forEach((b, k) => { const on = k === st.tur; b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
   syncChips();
 
-  const list = h("ul", { class: "dk-harita-list dk-scroll", "aria-label": "Etkinlikler" });
+  // tabindex -1: odağı taşıyan öğe yeniden çizimle kalkınca (uyarı ×, "Tekrar dene", "Tüm şehirleri göster") odak listeye alınır
+  const list = h("ul", { class: "dk-harita-list dk-scroll", "aria-label": "Etkinlikler", tabindex: "-1" });
+  const focusList = () => list.focus({ preventScroll: true });
   const bannerSlot = h("div", { class: "dk-harita-bannerslot" });
 
   const aside = h("aside", { class: "dk-harita-aside", "aria-label": "Etkinlik listesi" },
@@ -232,12 +251,12 @@ export function haritaView(ctx) {
     if (!st.loaded && !st.error) { count.replaceChildren(dkSkeleton({ w: 84, h: 12, r: 3 })); return; }
     count.textContent = st.error ? "" : `${st.visible.length} ETKİNLİK`;   // veri hatasında "0 ETKİNLİK" yanıltıcı → sayaç boş
   };
-  // Lejant çipi yalnız "Konumun" (ve rota çizilebiliyorsa "Rota") varken görünür; yalnız ölçek sayısı taşıyan boş çip gösterilmez
-  // (misafir / konumsuz → çip yok).
+  // Lejant çipi harita açıkken HEP görünür (artboard: sol üst "Konumun · Rota · ×1,0"): ölçek etiketi konumdan bağımsız;
+  // "Konumun" yalnız kullanıcı konumu varken, "Rota" yalnız rota çizilebiliyorsa (ROUTING="none" → gizli). Harita hatasında çip yok.
   const drawLegend = () => {
     lgMe.hidden = !userCoords;
     lgRoute.hidden = !(userCoords && ROUTING !== "none");   // ROUTING="none" → çizgi yok → "Rota" lejantı da yok
-    legendChip.hidden = !!st.mapError || (lgMe.hidden && lgRoute.hidden);
+    legendChip.hidden = !!st.mapError;
   };
   // Ölçek etiketi (Q14): son "ev" görünümüne (ilk sığdırma, şehir değişimi, Konumuma git) göre büyütme 2^(z − z0).
   // Biçim: ≥ 10 tam sayı "×16" · 1–10 tek ondalık "×2,0" · < 1 en çok iki anlamlı basamak "×0,5" / "×0,25" / "×0,063" · çok küçükte "×<0,01"
@@ -308,7 +327,7 @@ export function haritaView(ctx) {
     list.replaceChildren();
     list.removeAttribute("aria-busy");
     if (st.error) {
-      list.append(emptyLi("Etkinlikler yüklenemedi.", "Bağlantını kontrol edip tekrar dene.", "Tekrar dene", () => load()));
+      list.append(emptyLi("Etkinlikler yüklenemedi.", "Bağlantını kontrol edip tekrar dene.", "Tekrar dene", retry));
     } else if (!st.loaded) {
       list.setAttribute("aria-busy", "true");
       for (let i = 0; i < 5; i++) list.append(h("li", { class: "dk-harita-li", "aria-hidden": "true" },
@@ -316,7 +335,7 @@ export function haritaView(ctx) {
     } else if (!st.withLoc.length) {
       const c = cityLabel();
       list.append(c
-        ? emptyLi(`${c} için konumlu etkinlik yok`, "Mekanlar konum ekledikçe burada görünür.", "Tüm şehirleri göster", () => pickAllCities())
+        ? emptyLi(`${c} için konumlu etkinlik yok`, "Mekanlar konum ekledikçe burada görünür.", "Tüm şehirleri göster", () => { pickAllCities(); focusList(); })
         : emptyLi("Konumlu etkinlik yok", "Mekanlar konum ekledikçe burada görünür."));
     } else if (!st.visible.length) {
       list.append(emptyLi("Bu filtrelerle etkinlik yok", null, "Filtreleri temizle", () => resetFilters()));
@@ -340,7 +359,7 @@ export function haritaView(ctx) {
     bannerSlot.replaceChildren();
     if (!st.loaded || st.bannerClosed || st.noLoc <= 0) return;
     const close = h("button", { type: "button", class: "dk-harita-bannerx dk-press", "aria-label": "Kapat", onclick: () => {
-      st.bannerClosed = true; writeSession(BANNER_KEY, "1"); renderBanner();
+      st.bannerClosed = true; writeSession(BANNER_KEY, "1"); renderBanner(); focusList();
     } }, svgIcon("x", { size: 14, sw: "2" }));
     bannerSlot.append(h("div", { class: "dk-harita-banner", role: "status" },
       svgRaw(P.info, { size: 16, sw: "1.9", color: "#FFD700", cls: "dk-harita-bannerico" }),
@@ -350,6 +369,7 @@ export function haritaView(ctx) {
 
   // ══════════ Harita (Leaflet) ══════════
   let L = null, map = null, meMarker = null, prevView = null, interacted = false, didFit = false;
+  let ctrlCorner = null;        // Leaflet sağ-alt kontrol köşesi (Konumuma git + zoom) — kart bunu örtmez
   const pins = new Map();       // id → { marker, el, e, dx, dy, ll }
   let extras = [];              // hub + uzak etiket işaretçileri
   let routeLayers = [];
@@ -388,6 +408,8 @@ export function haritaView(ctx) {
   // Gruplama: o anki zoom'da ekranda birbirine GROUP_PX'ten yakın pinler (aynı mekan dahil) tek grupta toplanır ve grubun
   // çapası (ilk üye = listede önce gelen) etrafında sabit piksel halkasına açılır → her etkinlik ayrı, tıklanabilir pin kalır.
   // zoomend'de gruplar yeniden hesaplanır (değiştiyse pinler animasyonsuz yeniden kurulur).
+  // İkinci geçiş: çapaları GROUP_PX'ten uzak olsa da halkaları (R) + pin çapı (PIN_GAP) kesişen komşu gruplar (ya da halka + tekil pin)
+  // birleştirilir; birleşen grubun yarıçapı büyüdüğü için kararlı olana dek yinelenir → ara zoom'larda da hiçbir pin diğerini örtmez.
   let groupSig = "";
   const computeGroups = () => {
     const z = map.getZoom();
@@ -399,6 +421,18 @@ export function haritaView(ctx) {
       if (!g) { g = { p, ll, items: [] }; groups.push(g); }
       g.items.push({ e, i });
     });
+    for (let merged = true; merged;) {
+      merged = false;
+      for (let a = 0; a < groups.length && !merged; a++) {
+        for (let b = a + 1; b < groups.length; b++) {
+          const A = groups[a], B = groups[b];
+          if (A.p.distanceTo(B.p) < Math.max(GROUP_PX, ringR(A.items.length) + ringR(B.items.length) + PIN_GAP)) {
+            A.items.push(...B.items); A.items.sort((x, y) => x.i - y.i);   // çapa: listede önce gelen grubun noktası
+            groups.splice(b, 1); merged = true; break;
+          }
+        }
+      }
+    }
     return groups;
   };
   const sigOf = (groups) => groups.map((g) => g.items.map((x) => x.e.id).join(",")).join("|") + (userCoords ? "@u" : "");
@@ -416,8 +450,7 @@ export function haritaView(ctx) {
     groupSig = sigOf(groups);
     groups.forEach(({ ll, items }) => {
       const n = items.length;
-      // halka yarıçapı: en az 22 px; pin başına ~36 px çevre
-      const R = n > 1 ? Math.max(22, Math.round((36 * n) / (2 * Math.PI))) : 0;
+      const R = ringR(n);
       const offs = items.map((_, k) => (n > 1 ? { dx: Math.round(R * Math.cos(-Math.PI / 2 + (2 * Math.PI * k) / n)), dy: Math.round(R * Math.sin(-Math.PI / 2 + (2 * Math.PI * k) / n)) } : { dx: 0, dy: 0 }));
       if (n > 1) {
         const S = 2 * R + 8, c = S / 2;
@@ -545,8 +578,18 @@ export function haritaView(ctx) {
     const i = all.indexOf(src);
     return i < 0 ? null : all[i + 1] || null;
   };
+  // Karta nereden girildi? Kaynaktan (Tab / klavyeyle seçim) ya da kaynaktan sonrakinden (Shift+Tab) girildiyse kart "kaynağın
+  // arkasında" davranır. Doğal DOM sırasıyla (ör. OSM atfından Tab, sayfa dışından Shift+Tab) girildiyse tarayıcının kendi sırası
+  // geçerlidir (sondan Tab sayfadan çıkar, baştan Shift+Tab atfa döner) → sekme sırasında döngü oluşmaz.
+  let cardViaOrigin = true;
+  const onCardFocusIn = (ev) => {
+    const from = ev.relatedTarget;
+    if (!from || card?.contains(from)) return;   // programatik odak (yeniden kurulum, klavyeyle seçim) → kip korunur
+    const src = originEl();
+    cardViaOrigin = !src || from === src || from === afterOrigin(src);
+  };
   const onCardKey = (ev) => {
-    if (ev.key !== "Tab" || !card) return;
+    if (ev.key !== "Tab" || !card || !cardViaOrigin) return;
     const inCard = cardTabbables();
     const a = document.activeElement;
     const src = originEl();
@@ -557,14 +600,19 @@ export function haritaView(ctx) {
       if (next) { ev.preventDefault(); ev.stopPropagation(); next.focus(); }
     }
   };
-  // ...ve kaynaktan sonraki öğeden Shift+Tab kartın son öğesine döner
+  // Kaynaktan Tab kartın ilk öğesine; kaynaktan sonraki öğeden Shift+Tab kartın son öğesine döner
   const onRootTab = (ev) => {
-    if (ev.key !== "Tab" || !ev.shiftKey || !card || card.contains(ev.target)) return;
+    if (ev.key !== "Tab" || !card || card.contains(ev.target) || card.classList.contains("is-off")) return;
     const src = originEl();
-    if (!src || !src.isConnected || afterOrigin(src) !== ev.target) return;
+    if (!src || !src.isConnected) return;
     const inCard = cardTabbables();
-    ev.preventDefault();
-    (inCard[inCard.length - 1] || card).focus({ preventScroll: true });
+    if (!ev.shiftKey && ev.target === src) {
+      ev.preventDefault();
+      (inCard[0] || card).focus({ preventScroll: true });
+    } else if (ev.shiftKey && afterOrigin(src) === ev.target) {
+      ev.preventDefault();
+      (inCard[inCard.length - 1] || card).focus({ preventScroll: true });
+    }
   };
   root.addEventListener("keydown", onRootTab);
   const placeCard = ({ zoom, center } = {}) => {
@@ -579,12 +627,32 @@ export function haritaView(ctx) {
     } else pt = map.latLngToContainerPoint([ll.lat, ll.lng]);
     const x = pt.x + (rec?.dx || 0), y = pt.y + (rec?.dy || 0);
     const W = section.clientWidth, H = section.clientHeight, CW = card.offsetWidth, CH = card.offsetHeight;
+    // Pin görünür alanın dışına çıktıysa (sürükleme, "Konumuma git", uzak zoom) kart köşeye sıkışıp kontrolleri örtmesin →
+    // pin geri gelene dek gizlenir (seçim sürer). Odak karttaysa haritaya alınır (gizli öğede odak kalmasın).
+    const off = x < -OFF_PX || y < -OFF_PX || x > W + OFF_PX || y > H + OFF_PX;
+    if (off !== card.classList.contains("is-off")) {
+      if (off && card.contains(document.activeElement)) mapEl.focus({ preventScroll: true });
+      card.classList.toggle("is-off", off);
+      if (!off) swapAnim(card);   // pin geri gelince kart yeniden belirir (artboard gbFa/gbFb)
+    }
+    if (off) return;
     // artboard: pinin 34 px sağı; sığmazsa 34 px solu. Halkaya açılmış grupta halkanın dışına yerleşir (kardeş pinleri örtmez).
     const R = rec?.R || 0;
     let left = Math.max(x, pt.x + R) + 34;
     if (left + CW > W - 16) left = Math.min(x, pt.x - R) - 34 - CW;
     left = clamp(left, 16, Math.max(16, W - CW - 16));
-    const top = clamp(y - 120, 70, Math.max(70, H - CH - 16));
+    let top = clamp(y - 120, 70, Math.max(70, H - CH - 16));
+    // Sağ alt kontrol sütunu ("Konumuma git" + zoom) ve sol alt OSM atfı: kart bunlarla (10 px payla) kesişirse önce üstlerine
+    // kaldırılır; yer yoksa (alçak harita) kontrol sütununun soluna kaydırılır → kontroller ve atıf hep tıklanabilir kalır.
+    const sr = section.getBoundingClientRect();
+    const rel = (el) => { if (!el || el.hidden) return null; const b = el.getBoundingClientRect(); return b.width ? { l: b.left - sr.left, t: b.top - sr.top, r: b.right - sr.left, b: b.bottom - sr.top } : null; };
+    [rel(ctrlCorner), rel(attr)].forEach((o, k) => {
+      if (!o || !(left < o.r + 10 && left + CW > o.l - 10 && top < o.b + 10 && top + CH > o.t - 10)) return;
+      const up = o.t - 10 - CH;
+      if (up >= 70) top = up;
+      else if (k === 0) left = Math.max(16, o.l - 10 - CW);
+      else top = Math.max(16, up);
+    });
     card.style.left = Math.round(left) + "px";
     card.style.top = Math.round(top) + "px";
   };
@@ -635,7 +703,9 @@ export function haritaView(ctx) {
     cardSig = cardSigOf(e);
     if (!card) {
       card = h("div", { class: "dk-harita-card dk-fa is-tracking", role: "dialog", "aria-label": evTitle(e), tabindex: "-1" }, ...inner);
+      cardViaOrigin = true;
       card.addEventListener("keydown", onCardKey);
+      card.addEventListener("focusin", onCardFocusIn);
       section.append(card);
       cardFor = e.id;
       placeCard();
@@ -708,7 +778,8 @@ export function haritaView(ctx) {
     if (restore && prevView && map) map.setView(prevView.center, prevView.zoom, { animate: !rm });
     prevView = null;
     // odak: pindeyse pinde kalır (yeniden gruplanırsa renderPins aynı etkinliğin pinine taşır), değilse listedeki satıra döner
-    if ((focus || hadFocus) && was) ((fromPin ? pins.get(was)?.el : null) || rows.get(was) || pins.get(was)?.el)?.focus({ preventScroll: true });
+    // etkinlik artık listede/haritada yoksa (ör. dakikalık tazelemede bitti) odak listeye düşer (<body>'ye değil)
+    if ((focus || hadFocus) && was) (((fromPin ? pins.get(was)?.el : null) || rows.get(was) || pins.get(was)?.el) || list).focus({ preventScroll: true });
   }
 
   // ══════════ Süzgeç / şehir / sıfırlama ══════════
@@ -736,6 +807,32 @@ export function haritaView(ctx) {
     setActiveCity(ALL_CITIES);
     window.dispatchEvent(new CustomEvent(CITY_EVENT, { detail: { city: ALL_CITIES } }));   // header düğmesi etiketini günceller
     setCity(ALL_CITIES);
+  }
+  // sec= derin bağlantısı: etkinlik var (konumlu, bitmemiş) ama şehir ya da tür/tarih/arama süzgeci onu gizliyorsa sessizce
+  // düşürülmez → yalnız onu gizleyen kısıt kaldırılır (şehir → "Tüm şehirler", süzgeç → temizlenir) ve kısa bir bildirim gösterilir.
+  // Konumsuz etkinlikte bildirim verilir (haritada gösterilemez). Dönüş: etkinlik artık görünür mü.
+  function revealSel(id) {
+    if (!id || !st.loaded) return false;
+    if (st.visible.some((e) => e.id === id)) return true;
+    const e = st.all.find((x) => x.id === id);
+    if (!e || isEventOver(e)) return false;
+    if (!latLngOf(e)) { dkToast("Bu etkinlik haritada gösterilemiyor — mekanı henüz konum eklememiş."); return false; }
+    const did = [];
+    if (st.city !== ALL_CITIES && !sameCity(evCity(e), st.city)) {
+      setActiveCity(ALL_CITIES);
+      window.dispatchEvent(new CustomEvent(CITY_EVENT, { detail: { city: ALL_CITIES } }));   // header düğmesi etiketi
+      st.city = ALL_CITIES; computeScope(); renderBanner();
+      did.push("tüm şehirler gösteriliyor");
+    }
+    const patch = {};
+    if (st.tur && !matchesFamilies(eventGenres(e), [st.tur])) { st.tur = ""; patch.tur = null; syncChips(); }
+    if (st.tarih && !matchWhen(e, st.tarih)) { st.tarih = ""; patch.tarih = null; when.dk.set(""); }
+    if (st.q.trim() && !matchText(st.q.trim(), e.title, e.artistName, e.venueName)) { st.q = ""; patch.q = null; searchInput.value = ""; pushQ.cancel(); }
+    if (Object.keys(patch).length) { writeQuery(patch); did.push("filtreler temizlendi"); }
+    computeVisible(); drawHead(); renderList({ keepScroll: true }); renderPins();
+    const ok = st.visible.some((x) => x.id === id);
+    if (ok && did.length) dkToast(`Seçili etkinlik için ${did.join(", ")}.`);
+    return ok;
   }
   function resetFilters() {
     st.tur = ""; st.tarih = ""; st.q = "";
@@ -785,13 +882,36 @@ export function haritaView(ctx) {
   const onCityEvt = () => { const c = pickerCoords(); if (c && (!userCoords || c.lat !== userCoords.lat || c.lng !== userCoords.lng)) setCoords(c); };
   window.addEventListener(CITY_EVENT, onCityEvt);
   unsubs.push(() => window.removeEventListener(CITY_EVENT, onCityEvt));
+  // SHARED-CANDIDATE: locateCity() koordinatı lastCoords'a yazar ama CITY_EVENT'i yalnız il eşleşirse (Nominatim başarılı) yayar →
+  // "Şehir belirlenemedi" durumunda harita konumu hiç öğrenmezdi. Ortak bir koordinat olayı / setUserCoords olmadığı için yerel
+  // geçici çözüm: "Konumumu kullan" (.dk-cp-loc) tıklanınca lastCoords en çok 20 sn kısa aralıklarla izlenir, değişince uygulanır.
+  let coordWatch = null;
+  const stopCoordWatch = () => { if (coordWatch) { clearInterval(coordWatch); coordWatch = null; } };
+  const onDocClick = (ev) => {
+    if (!ev.target?.closest?.(".dk-cp-loc")) return;
+    stopCoordWatch();
+    const before = pickerCoords();
+    let n = 0;
+    coordWatch = setInterval(() => {
+      const c = pickerCoords();
+      if (dead || ++n > 80) { stopCoordWatch(); return; }
+      if (c && c !== before) { stopCoordWatch(); onCityEvt(); }
+    }, 250);
+  };
+  document.addEventListener("click", onDocClick, true);
+  unsubs.push(() => { document.removeEventListener("click", onDocClick, true); stopCoordWatch(); });
 
   // ══════════ Harita kurulumu ══════════
   const showMapOverlay = (node) => overlaySlot.replaceChildren(node ? h("div", { class: "dk-harita-overlay" }, node) : "");
   const drawMapEmpty = () => {
-    if (st.loaded && !st.error && map && !st.withLoc.length) {
+    if (st.mapError) return;   // "Harita yüklenemedi." katmanı kalır
+    if (st.error && map) {
+      // veri hatası: boş Türkiye görünümü "etkinlik yok" gibi okunmasın → haritada da hata + yeniden deneme
+      showMapOverlay(dkEmpty({ variant: "plain", icon: "alertCircle", title: "Etkinlikler yüklenemedi.", sub: "Bağlantını kontrol edip tekrar dene.",
+        action: dkButton("Tekrar dene", { variant: "outline", size: 40, onClick: retry }) }));
+    } else if (st.loaded && map && !st.withLoc.length) {
       showMapOverlay(dkEmpty({ variant: "plain", icon: "pin", title: "Konumlu etkinlik yok", sub: "Mekanlar konum ekledikçe burada görünür." }));
-    } else if (!st.mapError) showMapOverlay(null);
+    } else showMapOverlay(null);
   };
   const initMap = async () => {
     try {
@@ -812,6 +932,10 @@ export function haritaView(ctx) {
       // fadeAnimation kapalı: karo solması tasarımda yok (Leaflet solmayı Date ile hesaplar → sabit saatli ortamda karolar görünmez kalıyordu)
       zoomAnimation: !rm, fadeAnimation: false, markerZoomAnimation: !rm, inertia: !rm, worldCopyJump: false,
     });
+    // Leaflet kabı klavyeyle odaklanabilir (tabindex 0; ok tuşları kaydırır, +/− yakınlaştırır) → adı ve kullanımı duyurulsun
+    mapEl.setAttribute("role", "application");
+    mapEl.setAttribute("aria-roledescription", "harita");
+    mapEl.setAttribute("aria-label", "Etkinlik haritası — ok tuşlarıyla kaydır, + / − ile yakınlaştır");
     L.tileLayer(TILE_URL, { maxZoom: 19, attribution: "© OpenStreetMap katkıda bulunanlar" }).addTo(map);
     L.control.zoom({
       position: "bottomright", zoomInTitle: "Yakınlaştır", zoomOutTitle: "Uzaklaştır",
@@ -819,6 +943,7 @@ export function haritaView(ctx) {
     }).addTo(map);
     const Locate = L.Control.extend({ options: { position: "bottomright" }, onAdd: () => { L.DomEvent.disableClickPropagation(locateBtn); return locateBtn; } });
     new Locate().addTo(map);   // alt köşede sonra eklenen üstte → "Konumuma git" zoom grubunun üstünde
+    ctrlCorner = locateBtn.parentElement;
     map.setView(TR_CENTER, 6, { animate: false });
 
     map.on("click", () => closeSel({ restore: true }));
@@ -837,6 +962,7 @@ export function haritaView(ctx) {
 
     renderMe();
     if (st.loaded) afterData();
+    else drawMapEmpty();   // veri hatası harita hazır olmadan geldiyse
   };
   // veri + harita ikisi de hazır olunca
   function afterData() {
@@ -853,10 +979,12 @@ export function haritaView(ctx) {
 
   // ══════════ Veri ══════════
   let loadSeq = 0;
+  // "Tekrar dene" (liste ya da harita katmanı): düğme yeniden çizimle kalkacağı için odak önce listeye alınır
+  function retry() { focusList(); load(); }
   async function load() {
     const my = ++loadSeq;
     st.error = false; st.loaded = false;
-    drawHead(); renderList();
+    drawHead(); renderList(); drawMapEmpty();
     try {
       const events = await discoverEvents();
       if (dead || my !== loadSeq) return;
@@ -876,7 +1004,7 @@ export function haritaView(ctx) {
     drawHead();
     renderList();
     renderBanner();
-    if (st.sel && !st.visible.some((e) => e.id === st.sel)) { st.sel = null; writeQuery({ sec: null }); }
+    if (st.sel && !revealSel(st.sel)) { st.sel = null; writeQuery({ sec: null }); }
     if (map) afterData();
   }
 
@@ -929,7 +1057,7 @@ export function haritaView(ctx) {
       refilter();
       if (nextSel === st.sel) return;
       if (!st.loaded) { st.sel = nextSel; return; }                     // veri gelince load()/afterData uygular
-      if (nextSel && st.visible.some((e) => e.id === nextSel)) select(nextSel, { from: "pin" });
+      if (nextSel && revealSel(nextSel)) select(nextSel, { from: "pin" });
       else if (nextSel) { closeSel({ restore: true }); writeQuery({ sec: null }); }   // bilinmeyen/gizli etkinlik → URL ile kart uyuşsun
       else closeSel({ restore: true });
     },

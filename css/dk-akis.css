@@ -115,7 +115,6 @@
 /* Avatarlar */
 .dk-akis-av { flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #F2F1EE; line-height: 1; user-select: none; }
 .dk-akis-av-44 { width: 44px; height: 44px; font-size: 17px; }
-.dk-akis-av-40 { width: 40px; height: 40px; font-size: 16px; }
 .dk-akis-av-32 { width: 32px; height: 32px; font-size: 13px; }
 .dk-akis-ghost { flex-shrink: 0; box-sizing: border-box; border-radius: 50%; background: #14171D; border: 1px solid #2C303A; color: #8A8E97; display: flex; align-items: center; justify-content: center; }
 .dk-akis-ghost-40 { width: 40px; height: 40px; }
@@ -213,12 +212,10 @@
 .dk-akis-skrow { min-height: 60px; display: flex; align-items: center; gap: 12px; border-top: 1px solid #14171D; }
 .dk-akis-week-list .dk-akis-skrow { min-height: 64px; }
 /* BU HAFTA (artboard): başlık KIRILIR (nowrap yok) — paylaşılan eventRowMini .dk-truncate'ini yerelde ez, en çok 2 satır.
-   Alt satır: yalnız mekan adı kısalır, "· Bugün 19:15" küçülmez.  SHARED-CANDIDATE: cards.eventRowMini (başlık kırılımı + gün etiketi). */
+   Alt satır artboard'daki gibi TEK aralık "{mekan} · {gün saat}", sonda üç nokta (paylaşılan .dk-erm-s olduğu gibi).
+   SHARED-CANDIDATE: cards.eventRowMini (başlık kırılımı + gün etiketi). */
 .dk-akis-week-list .dk-erm-t { align-items: center; }
 .dk-akis-week-list .dk-erm-t .dk-truncate { white-space: normal; text-overflow: clip; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
-.dk-akis-week-list .dk-erm-s { display: flex; min-width: 0; }
-.dk-akis-wk-v { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dk-akis-wk-w { flex-shrink: 0; white-space: pre; }
 .dk-akis-skrow-c { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
 
 /* Harita tanıtımı */

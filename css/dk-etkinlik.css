@@ -31,7 +31,7 @@
 .dk-etkinlik-hero-body { position: absolute; left: 48px; right: 48px; bottom: 40px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .dk-etkinlik-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 /* LiveChip: h26 pad 0 10 gap 7 r4, kenar rgba(255,90,110,.5), mono 10.5/700/.14em #FF5A6E, 7px ping noktası */
-.dk-etkinlik-live, .dk-etkinlik-vip, .dk-etkinlik-chip-muted {
+.dk-etkinlik-live, .dk-etkinlik-vip, .dk-etkinlik-chip-muted, .dk-etkinlik-cxl {
   box-sizing: border-box; height: 26px; padding: 0 10px; display: flex; align-items: center; gap: 7px; border-radius: 4px; background: rgba(6,7,10,0.7);
   font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; white-space: nowrap;
 }
@@ -41,11 +41,15 @@
 /* legacy VIP DENEYİM rozeti (tasarımda yok; spec §8.1 önerisi: altın) */
 .dk-etkinlik-vip { gap: 6px; border: 1px solid rgba(255,215,0,0.5); color: #FFD700; }
 .dk-etkinlik-chip-muted { border: 1px solid #2C303A; color: #8A8E97; }
+/* iptal edilmiş etkinlik (tasarımda yok): LiveChip renkleri, ping noktası yok */
+.dk-etkinlik-cxl { border: 1px solid rgba(255,90,110,0.5); color: #FF5A6E; }
 .dk-etkinlik-title {
   margin: 0; font-family: var(--dk-font-serif); font-weight: 400; font-size: 96px; line-height: 0.98; letter-spacing: -0.01em; color: #F2F1EE;
   overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
-  /* satır kırpma kutusu alt uzantıları (J, g, ş) kesmesin: iç boşluk + eşit negatif dış boşluk (yerleşim değişmez) */
-  padding: 0.06em 0 0.16em; margin: -0.06em 0 -0.16em;
+  /* satır kırpma kutusu aksanları (İ Ö Ü Ğ Â: satır kutusunun ~0.12em üstüne çıkar) ve alt uzantıları (g j ş: ~0.07em altına iner)
+     kesmesin: iç boşluk + eşit negatif dış boşluk (yerleşim değişmez). 3 satırı aşan başlığı JS (fitTitle) "…" ile kısaltır →
+     4. satır hiç oluşmaz, alt boşlukta görünmez (line-clamp yalnız JS öncesi yedek). */
+  padding: 0.14em 0 0.16em; margin: -0.14em 0 -0.16em;
 }
 .dk-etkinlik-title.is-long { font-size: 72px; }
 .dk-etkinlik-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 28px; row-gap: 10px; font-size: 15px; color: #C9CACD; }
@@ -92,9 +96,11 @@
 .dk-etkinlik-map { grid-column: span 2; position: relative; height: 220px; border-radius: 10px; overflow: hidden; border: 1px solid #1F232B; background: #0C0E13; isolation: isolate; }
 .dk-etkinlik-map-canvas { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; background: #0C0E13; }
 .dk-etkinlik-map-canvas.leaflet-container { background: #0C0E13; font-family: var(--dk-font-sans); outline: none; }
-/* OSM karoları koyu tona (≈ #0C0E13) çekilir: spec değerleri (brightness .78) artboard'dan ~2× açık kalıyordu → ortalama parlaklık
-   ≈28 (artboard ≈26); karo katmanı %85 opak → #0C0E13 zeminin mavi tonu karışır. SHARED-CANDIDATE: WebMekan haritası aynı değerleri kullanmalı */
-.dk-etkinlik .dk-etkinlik-map .leaflet-tile { filter: invert(1) hue-rotate(180deg) brightness(.5) contrast(1.05) saturate(.3); }
+/* OSM karoları koyu tona (≈ #0C0E13) çekilir. Spec'in filtresi (brightness .78) artboard'un sahte haritasından çok açık kalıyordu →
+   ÖZEL değerler: brightness .4 · contrast 1.05 · saturate .3 + karo katmanı %85 opak (#0C0E13 zeminin mavi tonu karışır).
+   Ölçüm (sol üst 300×200, pin/CTA dışı): ortalama parlaklık 15.2 / L>45 piksel %0.47 (artboard 14.6 / %0.20; önceki .5 → 19.9 / %2.0).
+   contrast < 1 koyu zemini griye çeker (daha AÇIK) → kullanma. SHARED-CANDIDATE: WebMekan haritası aynı değerleri kullanmalı */
+.dk-etkinlik .dk-etkinlik-map .leaflet-tile { filter: invert(1) hue-rotate(180deg) brightness(.4) contrast(1.05) saturate(.3); }
 .dk-etkinlik .dk-etkinlik-map .leaflet-tile-pane { opacity: .85; }
 .dk-etkinlik .dk-etkinlik-map .leaflet-control-attribution { margin: 0; padding: 1px 6px; background: rgba(6,7,10,0.7); color: #5E636D; font-size: 10px; line-height: 1.4; }
 /* leaflet.css <head>'e SONRA eklenir (.leaflet-container .leaflet-control-attribution = 0,2,0) → 0,3,0 ile kazan */
@@ -178,7 +184,7 @@
 .dk-etkinlik-join { box-sizing: border-box; height: 52px; border: 0; border-radius: 6px; background: #FF4FA3; color: #06070A; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; font-weight: 600; }
 .dk-etkinlik-join.is-on { background: #7CE0B0; }
 .dk-etkinlik-join.is-off { background: #2C303A; color: #A3A7AF; }
-.dk-etkinlik-join:disabled { cursor: default; }
+.dk-etkinlik-join:disabled { cursor: not-allowed; }   /* artboard helmet: button:disabled{cursor:not-allowed} (Gönder ile aynı) */
 .dk-etkinlik-join:disabled:hover, .dk-etkinlik-join[aria-disabled="true"]:hover { filter: none; }
 .dk-etkinlik-join[aria-busy="true"], .dk-etkinlik-join:disabled:not(.is-off) { opacity: .75; }
 /* meşgul (yazım sürüyor): düğme odakta kalır (aria-disabled + aria-busy; `disabled` değil) */
@@ -238,6 +244,8 @@
 .dk-etkinlik-rvm-fld { display: flex; flex-direction: column; gap: 8px; }
 .dk-etkinlik-rvm-lbl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
 .dk-etkinlik-rvm-ta { box-sizing: border-box; width: 100%; min-height: 0; margin: 0; padding: 12px 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14.5px; line-height: 1.5; resize: none; outline: none; }
+/* artboard: satır içi outline:none → halka yok; odak göstergesi yalnız kenar (--dk-focus-border, dk-ui .dk-ta ile aynı kural) */
+.dk .dk-etkinlik-rvm-ta:focus, .dk .dk-etkinlik-rvm-ta:focus-visible { outline: none; }
 .dk-etkinlik-rvm-cnt { align-self: flex-end; font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; }
 .dk-etkinlik-rvm-cnt.is-warn { color: #FF5A6E; }
 .dk-etkinlik-rvm-acts { display: flex; justify-content: flex-end; gap: 10px; }
@@ -278,10 +286,4 @@
   .dk-etkinlik-simgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
   .dk-etkinlik-simgrid > :nth-child(n + 4) { display: flex; }
   .dk-etkinlik-sim { padding-top: 56px; padding-bottom: 72px; }
-}
-@media (max-width: 860px) {
-  .dk-etkinlik-kpis { gap: 12px; }
-  .dk-etkinlik-kpis .dk-kpi-card { padding: 16px; }
-  .dk-etkinlik-kpis .dk-kpi-card .dk-kpi-v { font-size: 26px; }
-  .dk-etkinlik-title, .dk-etkinlik-title.is-long { font-size: 48px; }
 }

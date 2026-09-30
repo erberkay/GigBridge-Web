@@ -51,6 +51,12 @@
 .dk-katildiklarim-rated { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .dk-katildiklarim-ministars { display: flex; gap: 2px; }
 .dk .dk-katildiklarim-golink, .dk .dk-katildiklarim-golink:hover { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap; }
+/* İptal edilmiş etkinlik (puanlanamaz) — tasarımda yok; hesap tip çipleriyle aynı ölçü (h22, MONO 9.5/700/0.14em), iptal tonu #FF5A6E */
+.dk-katildiklarim-cancel {
+  flex-shrink: 0; height: 22px; box-sizing: border-box; padding: 0 8px; display: inline-flex; align-items: center; border-radius: 4px;
+  border: 1px solid rgba(255,90,110,0.45); background: rgba(255,90,110,0.10); color: #FF5A6E;
+  font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; white-space: nowrap;
+}
 
 /* Puanlanmamış sekmesi boş */
 .dk-katildiklarim-alldone { margin-left: 86px; height: 160px; box-sizing: content-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px dashed #2C303A; border-radius: 12px; text-align: center; padding: 0 16px; }
@@ -117,7 +123,7 @@
   .dk-katildiklarim-thumb { width: 96px; height: 64px; }
   .dk-katildiklarim-card { flex-wrap: wrap; align-items: flex-start; row-gap: 12px; }
   .dk-katildiklarim-info { flex-basis: calc(100% - 96px - 16px); }
-  .dk-katildiklarim-rate, .dk-katildiklarim-rated { margin-left: calc(96px + 16px); }
+  .dk-katildiklarim-rate, .dk-katildiklarim-rated, .dk-katildiklarim-cancel { margin-left: calc(96px + 16px); }
   .dk-katildiklarim-rated { flex-direction: row; align-items: center; gap: 12px; }
   .dk-katildiklarim-ctl { flex-wrap: wrap; }
 }

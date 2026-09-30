@@ -9,12 +9,15 @@
 //
 // Veri (yazma YOK):
 //   discoverEvents()  → "Bu hafta sahnede." (bugün 00:00 ≤ başlangıç ≤ şimdi + 7 gün, gb_city süzgeci, başlangıca göre, ilk 4)
-//                        + kolaj etkinliği (şehirde afişli CANLI etkinlik, yoksa afişli sıradaki; şehirde yoksa genel yedek —
-//                        başka şehrin etkinliği "ŞU AN" diye gösterilmez) + header şehir sayıları (sameCity ile birleştirilir)
-//   listRealArtists() → kolaj sanatçı çipi (fotoğraflı, en çok takipçili; önce şehir, yoksa genel — sanatçı yere bağlı değil)
-//   listVenues()      → kolaj mekan çipi (Bayes puanı en yüksek onaylı mekan; yalnız seçili şehir, yoksa genel yedek)
+//                        + kolaj etkinliği (seçili şehirde afişli CANLI etkinlik, yoksa afişli sıradaki) + header şehir
+//                        sayıları (sameCity ile birleştirilir)
+//   listRealArtists() → kolaj sanatçı çipi (fotoğraflı, en çok takipçili; önce seçili şehir, yoksa tümü)
+//   listVenues()      → kolaj mekan çipi (Bayes puanı en yüksek onaylı mekan; önce seçili şehir, yoksa tümü)
+//   Kolaj TEK davranış (hep ya da hiç): seçili şehirde öne çıkarılacak etkinlik varsa üç parça da gerçek veri; yoksa
+//   (şehirde etkinlik yok / veri yok / hata / oturum yok) üç parça birlikte genel yedek — dekoratif görsel + sayısız metin.
+//   Başka şehrin etkinliği kolaja taşınmaz (header şehri ile çelişmesin).
 //   Üç okuma 60 sn modül önbelleğinde (her #/ girişinde tüm koleksiyonları yeniden okumamak için).
-//   Oturum yoksa (anonim giriş kapalı → kurallar okumaya izin vermez) sorgu atılmaz: kolaj genel görsel + sayısız metin,
+//   Oturum yoksa (anonim giriş kapalı → kurallar okumaya izin vermez) sorgu atılmaz: kolaj genel yedek,
 //   etkinlik bölümü gizli (bölüm numaraları kayar).
 // URL: #/?rol=customer|artist|venue|organizer → rol sekmesi (paylaşılabilir; replaceState). update(query) geri/ileri'de uygular.
 import { h } from "../../ui.js";
@@ -86,14 +89,15 @@ const roleFromQuery = (q) => { const v = q?.get?.("rol"); return ROLE_IDS.includ
 const WEEK_MS = 7 * 86400e3;
 const inThisWeek = (e, now = Date.now()) => { const s = eventStartMs(e); return s != null && s >= startOfDay(now) && s <= now + WEEK_MS; };
 const inCity = (x, city, get = (y) => y?.city) => city === ALL_CITIES || sameCity(get(x), city);
-// Önce seçili şehirden, yoksa tümünden — YALNIZ yere bağlı olmayan sanatçı çipi için (etkinlik/mekan şehir dışına taşmaz)
+// Önce seçili şehirden, yoksa tümünden — kolaj çipleri (sanatçı/mekan) için; yalnız şehirde öne çıkan etkinlik varken kullanılır
 const preferCity = (list, city, get) => { if (city === ALL_CITIES) return list; const c = list.filter((x) => inCity(x, city, get)); return c.length ? c : list; };
 // Gerçek başlangıç zamanına göre (discoverEvents msOf = eventAt ?? createdAt sırası eventAt'i boş kayıtlarda yanlış olabilir)
 const byStart = (a, b) => (eventStartMs(a) ?? Infinity) - (eventStartMs(b) ?? Infinity);
 
 // Giriş: sayfa değiştirmeden giriş modalı (PublicHeader "Giriş yap" ile aynı davranış; Ctrl/Cmd/Shift-tık #/login'e gider)
+// aria-haspopup="dialog": ekran okuyucu sayfa değişimi değil iletişim kutusu bekler
 function loginLink(cls, label) {
-  const a = h("a", { href: "#/login", class: cls }, label);
+  const a = h("a", { href: "#/login", class: cls, "aria-haspopup": "dialog" }, label);
   a.addEventListener("click", (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); openLogin(); });
   return a;
 }
@@ -191,8 +195,9 @@ export function landingView(ctx) {
         h("span", { class: "dk-landing-panel-grad" })));
   }
   function selectRole(id, { url = false, anim = true } = {}) {
-    const changed = id !== role;
-    role = ROLE_IDS.includes(id) ? id : "customer";
+    const next = ROLE_IDS.includes(id) ? id : "customer";   // önce normalize (geçersiz ?rol= aynı rolde paneli yeniden oynatmasın)
+    const changed = next !== role;
+    role = next;
     tabBtns.forEach((b, k) => {
       const on = k === role;
       b.setAttribute("aria-selected", on ? "true" : "false");
@@ -271,19 +276,22 @@ export function landingView(ctx) {
 
   // ════════════════════ Kolaj ════════════════════
   // Yükleniyor: çerçeve + iskelet. Veri: canlı/sıradaki etkinlik (afişli), en çok takipçili sanatçı, en iyi puanlı mekan.
-  // Veri yok/hata/oturum yok: dekoratif görsel (assets/web, yalnız ARKA PLAN) + genel metin, sayı YOK.
+  // Şehirde öne çıkan etkinlik yok / veri yok / hata / oturum yok: üç parça birlikte genel yedek (dekoratif görsel yalnız
+  // ARKA PLAN + genel metin, sayı YOK).
+  // DOM sırası = görsel okuma sırası (odak sırası; WCAG 2.4.3): mekan çipi (üst sol) → ana kart → sanatçı çipi (alt).
+  // Çipler z-index 1 ile ana kartın üstünde kalır (CSS) → görünüm artboard ile aynı.
   function collageSkeleton() {
     collage.replaceChildren(
+      h("div", { class: "dk-landing-hc-venue", "aria-hidden": "true" }, dkSkeleton({ w: "40%", h: 10 }), dkSkeleton({ w: "80%", h: 15 }), dkSkeleton({ w: "60%", h: 12 })),
       h("div", { class: "dk-landing-hc-main is-loading", "aria-hidden": "true" }, dkSkeleton({ w: "100%", h: "100%", r: 0 })),
       h("div", { class: "dk-landing-hc-artist", "aria-hidden": "true" }, dkSkeleton({ w: 48, h: 48, r: 24 }),
-        h("span", { class: "dk-landing-hc-acol" }, dkSkeleton({ w: "70%", h: 14 }), dkSkeleton({ w: "85%", h: 10 }))),
-      h("div", { class: "dk-landing-hc-venue", "aria-hidden": "true" }, dkSkeleton({ w: "40%", h: 10 }), dkSkeleton({ w: "80%", h: 15 }), dkSkeleton({ w: "60%", h: 12 })));
+        h("span", { class: "dk-landing-hc-acol" }, dkSkeleton({ w: "70%", h: 14 }), dkSkeleton({ w: "85%", h: 10 }))));
   }
   // Afişi yüklenemeyen etkinlikler bir sonraki boyamada atlanır (dekoratif görsel gerçek etkinliğin yerine KONMAZ)
   const badBanners = new Set();
   function pickEvent(list) {
     const now = Date.now();
-    // Yalnız seçili şehir (TÜMÜ → hepsi): başka şehrin etkinliği "ŞU AN" diye gösterilmez; şehirde yoksa genel yedek (spec §2.7)
+    // Yalnız seçili şehir (TÜMÜ → hepsi): başka şehrin etkinliği kolaja taşınmaz; şehirde yoksa kolaj bütünüyle genel yedek (spec §2.7)
     const pool = list.filter((e) => { const src = evImage(e); return src && !badBanners.has(src) && inCity(e, city, evCity); });
     const live = pool.filter((e) => isLive(e, now)).sort(byStart)[0];
     if (live) return { e: live, live: true };
@@ -301,7 +309,7 @@ export function landingView(ctx) {
     // Bayes ortalaması (Top 10 ile aynı formül): tek 5 yıldızlı yorum listenin başına oturmasın
     const mean = rated.length ? rated.reduce((s, v) => s + Number(v.avgRating) * Number(v.reviewCount), 0) / rated.reduce((s, v) => s + Number(v.reviewCount), 0) : 4;
     const score = (v) => (Number(v.avgRating) > 0 ? bayesianScore(Number(v.avgRating), Number(v.reviewCount) || 0, mean) : 0);
-    const pool = list.filter((v) => inCity(v, city));   // mekan yere bağlı: yalnız seçili şehir (yoksa genel çip)
+    const pool = preferCity(list, city);   // önce seçili şehrin mekanları (etkinliği olan şehirde çip genel kalmasın)
     return [...pool].sort((a, b) => score(b) - score(a) || (Number(b.capacity) || 0) - (Number(a.capacity) || 0))[0] || null;
   }
   const liveDot = (live) => h("span", { class: "dk-landing-hc-dot", "aria-hidden": "true" },
@@ -309,8 +317,9 @@ export function landingView(ctx) {
   function paintCollage() {
     const d = data && !data.error ? data : null;
     const ev = d ? pickEvent(d.events) : null;
-    const ar = d ? pickArtist(d.artists) : null;
-    const ve = d ? pickVenue(d.venues) : null;
+    // Hep ya da hiç: öne çıkan etkinlik yoksa çipler de genel (gerçek + genel karışık kolaj yok)
+    const ar = ev ? pickArtist(d.artists) : null;
+    const ve = ev ? pickVenue(d.venues) : null;
     let main;
     if (ev) {
       const e = ev.e, s = eventStartMs(e);
@@ -370,7 +379,7 @@ export function landingView(ctx) {
         h("span", { class: "dk-landing-hc-name" }, "Mekanlar"),
         h("span", { class: "dk-landing-hc-vline" }, svgRaw(P.star, { size: 13, fill: true, color: "#FFD700" }), h("span", {}, "Puanlar ve yorumlar")));
     }
-    collage.replaceChildren(main, artistEl, venueEl);
+    collage.replaceChildren(venueEl, main, artistEl);   // okuma/odak sırası: üst sol çip → ana kart → alt çip
   }
 
   // ════════════════════ Etkinlikler ════════════════════

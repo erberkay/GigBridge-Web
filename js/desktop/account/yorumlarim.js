@@ -121,7 +121,7 @@ export function yorumlarimView(ctx) {
   const head = dkPageHead({ title: "Yorum", em: "larım", lead: "Sanatçılara ve mekanlara yazdığın değerlendirmeler. Dilediğin zaman düzenleyebilir veya silebilirsin." });
   const kTotal = h("span", { class: "dk-yorumlarim-kv" }, "—");
   const kAvg = h("span", { class: "dk-yorumlarim-kvt" }, "—");
-  const kArt = h("b", {}, "0"), kVen = h("b", {}, "0");
+  const kArt = h("b", {}, "—"), kVen = h("b", {}, "—");   // yüklenene dek "—" (0 gerçek veri gibi görünmesin)
   const kpis = h("div", { class: "dk-yorumlarim-kpis dk-rise", style: { "--dk-delay": "60ms" } },
     h("div", { class: "dk-yorumlarim-kpi" }, h("span", { class: "dk-yorumlarim-kl" }, "TOPLAM YORUM"), kTotal),
     h("div", { class: "dk-yorumlarim-kpi" }, h("span", { class: "dk-yorumlarim-kl" }, "ORTALAMA PUANIN"),
@@ -137,6 +137,10 @@ export function yorumlarimView(ctx) {
   });
   seg.classList.add("dk-rise", "dk-yorumlarim-seg");
   seg.style.setProperty("--dk-delay", "100ms");
+  // Yüklenirken sekme sayaçları görünmez (yer tutar → kayma yok); hata durumunda KPI satırı ve sekmeler gizlenir (Katıldıklarım gibi).
+  const segCounts = (on) => seg.querySelectorAll(".dk-seg-n").forEach((n) => { n.style.visibility = on ? "" : "hidden"; });
+  const showControls = (on) => { kpis.hidden = !on; seg.hidden = !on; };
+  segCounts(false);
   const listEl = h("div", { class: "dk-yorumlarim-list", "aria-busy": "true" });
   const root = h("div", { class: "dk-yorumlarim" }, head, kpis, seg, listEl);
   shell.content.append(root);
@@ -157,6 +161,7 @@ export function yorumlarimView(ctx) {
     kAvg.textContent = rr.length ? (rr.reduce((a, b) => a + b, 0) / rr.length).toFixed(1) : "—";   // legacy: toFixed(1), "—"
     kArt.textContent = String(nArt); kVen.textContent = String(nVen);
     seg.dk.setCount("tumu", list.length); seg.dk.setCount("sanatci", nArt); seg.dk.setCount("mekan", nVen);
+    segCounts(true);
   }
 
   // ── kart ──
@@ -220,13 +225,16 @@ export function yorumlarimView(ctx) {
     const name = targetName(r);
     let rating = clampStars(ratingOf(r));
     let touched = false;
+    // "Yorum boş olamaz" (sahibi notu) mevcut yorumu silmeye karşı; Katıldıklarım'da yalnız yıldızla (yorumsuz) verilen puanın
+    // yıldızı burada metin yazmadan değiştirilebilsin (aksi hâlde çıkmaz). Yorum isteğe bağlılığı: açık soru (legacy/app ≥10 karakter).
+    const needText = !!String(r.comment || "").trim();
     const stars = starRating({ value: rating, label: "Puanınız", onChange: (n) => { rating = n; } });
     const ta = dkTextarea({ id: "dk-yorum-ed", rows: 4, maxlength: 500, counter: false, bg: "void", placeholder: "Yorumunuzu yazın...", value: r.comment || "" });
     const err = h("span", { class: "dk-yorumlarim-err", role: "status" });
     const cnt = h("span", { class: "dk-yorumlarim-count" });
     const sync = () => {
       const empty = !ta.value.trim();
-      const bad = touched && empty;
+      const bad = touched && empty && needText;
       err.textContent = bad ? "Yorum boş olamaz" : "";
       if (bad) { ta.setAttribute("aria-invalid", "true"); ta.setAttribute("aria-describedby", "dk-yorum-ederr"); }
       else { ta.removeAttribute("aria-invalid"); ta.removeAttribute("aria-describedby"); }
@@ -245,7 +253,7 @@ export function yorumlarimView(ctx) {
         { label: "İptal", variant: "outline" },
         { label: "Kaydet", variant: "primary", keepOpen: true, busyLabel: "Kaydediliyor…", onClick: async (close) => {
           const t = ta.value.trim();
-          if (!t) { touched = true; sync(); ta.focus(); return false; }
+          if (!t && needText) { touched = true; sync(); ta.focus(); return false; }
           const patch = isVenue(r) ? { comment: t, rating, overallRating: rating } : { comment: t, rating };
           try { await updateMyReview(r._col, r.id, patch); }
           catch (_) { dkToast("Güncellenemedi", { type: "err", duration: 3600 }); return false; }
@@ -372,14 +380,16 @@ export function yorumlarimView(ctx) {
       if (dead) return;
       list = Array.isArray(rv) ? rv : [];
       loaded = true;
+      showControls(true);
       drawList(true);
       loadPhotos();
     } catch (err) {
       if (dead) return;
       console.warn("[dk]", err);
+      showControls(false);   // "0 sanatçı 0 mekan" / "Tümü 0" gerçek veri gibi görünmesin
       listEl.removeAttribute("aria-busy");
       listEl.replaceChildren(dkEmpty({ icon: "alertCircle", title: "Yorumların yüklenemedi.", sub: "Bağlantını kontrol edip tekrar dene.", height: 320,
-        action: dkButton("Tekrar dene", { variant: "light", size: 42, onClick: () => { listEl.replaceChildren(skeleton()); load(); } }) }));
+        action: dkButton("Tekrar dene", { variant: "light", size: 42, onClick: () => { listEl.replaceChildren(skeleton()); showControls(true); load(); } }) }));
     }
   }
   load();

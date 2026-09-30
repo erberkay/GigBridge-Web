@@ -19,14 +19,14 @@
 //   bağlanmada gb_city sonradan değişse de aynı şehir döner).
 // Şehir (Q11): sayfa durumu URL'den; gb_city (tercih) YALNIZ açık seçimde yazılır — kenar çubuğu/çekmece şehir satırı ve header seçici.
 //   URL kaynaklı değişim (paylaşılan bağlantı, geri/ileri), çip kaldırma ve Temizle yalnız sayfayı süzer, gb_city'ye dokunmaz; header
-//   etiketi bu sayfadayken sayfanın şehrini gösterir (header.setCity, kalıcı değil).
+//   etiketi ve header seçicisinin işaretli satırı bu sayfadayken sayfanın şehrini gösterir (header.setCity, kalıcı değil; seçici yerel varyant).
 // Veri: yalnız discoverEvents() (okuma). Yazma YOK. Tüm süzme/sıralama istemcide (legacy gibi).
 import { h } from "../../ui.js";
 import { discoverEvents } from "../../data.js";
 import { publicShell } from "../shared/public-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
-import { cx, dkRadio, dkCheckbox, dkSegmented, dkFilterChip, dkSkeletonCard, dkBreadcrumb, dkSearchInput, dkButton, dkDrawer } from "../shared/ui.js";
-import { CITY_EVENT } from "../shared/city-picker.js";
+import { cx, dkRadio, dkCheckbox, dkSegmented, dkFilterChip, dkSkeletonCard, dkBreadcrumb, dkSearchInput, dkButton, dkDrawer, dkPopover } from "../shared/ui.js";
+import { CITY_EVENT, cityPicker } from "../shared/city-picker.js";
 import { eventCard, evCity } from "../shared/cards.js";
 import {
   ALL_CITIES, PROVINCES, getActiveCity, setActiveCity, fold, sortTR, fmtInt, isFree, eventStartMs, eventGenres,
@@ -34,9 +34,9 @@ import {
 } from "../shared/helpers.js";
 import { GENRE_FAMILIES, FILTER_FAMILIES, genreFamilyKey } from "../shared/genres.js";
 
-// artboard: 9 → "Daha fazla yükle" (+9) — 3 kolonda. 2 kolonlu yerleşimde (≤1179) 10: son satırda tek kart kalmasın.
-const PAGE3 = 9, PAGE2 = 10;
-const COL3_MIN = 800;            // sonuç kolonu ≥800 → 3 kolon (dk-etkinlikler.css @container max-width:799px ile AYNI eşik)
+// artboard + spec §3.6: sayfa boyu 9 → "Daha fazla yükle" (+9). Her genişlikte aynı (sayfa=N paylaşılan bağlantıda aynı sayıyı verir).
+// Kolon sayısı yalnız CSS'te (dk-etkinlikler.css: sonuç kolonu ≥800 px → 3, altı 2 — Q12).
+const PAGE = 9;
 const DAY = 86400e3;
 const STRIP_DAYS = 14;           // legacy buildDateFilters: 14 günlük takvim
 const QUICK = [["all", "Tümü"], ["week", "Bu Hafta"], ["month", "Bu Ay"]];
@@ -360,6 +360,8 @@ export function etkinliklerView(ctx) {
         return r;
       });
       cityList.replaceChildren(...(rows.length ? rows : [h("span", { class: "dk-etkinlikler-nocity" }, "Şehir bulunamadı")]));
+      // arama etkinken liste 81 ile uzayabilir → kenar çubuğunda yalnız o sırada ~10,5 satırla sınırlı iç kaydırma (CSS .is-q)
+      cityList.classList.toggle("is-q", !!q);
       rove(cityList);
       if (focusKey) rows.find((r) => r.dataset.city === focusKey)?.focus({ preventScroll: true });
     }
@@ -417,24 +419,38 @@ export function etkinliklerView(ctx) {
   const allShown = h("span", { class: "dk-etkinlikler-all", hidden: true }, "TÜM ETKİNLİKLER GÖSTERİLDİ");
   const res = h("div", { id: "dk-etk-res", role: "tabpanel", class: "dk-etkinlikler-res" }, bar, emptyBox, grid, more, allShown);
 
-  // Kolon sayısı (CSS ile aynı kural: ≤1023 → 2 · sonuç kolonu ≥800 → 3, altı 2) → sayfa boyu 9 (3 kolon) / 10 (2 kolon)
-  const mqNarrow = window.matchMedia("(max-width: 1023px)");
-  const mq3 = window.matchMedia("(min-width: 1180px)");        // DOM'a bağlanmadan önceki tahmin (1180 → sonuç kolonu 800)
-  const colsNow = () => { if (mqNarrow.matches) return 2; const w = res.clientWidth; return (w ? w >= COL3_MIN : mq3.matches) ? 3 : 2; };
-  let cols = colsNow();
-  const pageSize = () => (cols === 2 ? PAGE2 : PAGE3);
+  root.append(head, stripWrap, h("div", { class: "dk-etkinlikler-body" }, aside, res));
+
+  // ── FilterSidebar yapışkanlığı (spec §3.3: sticky, header 76 + 24 → top 100; artboard'daki gibi TAM BOY, iç kaydırma yok) ──
+  // Panel ekrana sığmıyorsa (1440×900'de ≈1013 > 900 − 124) "alttan yapışkan": top = innerHeight − H − 24 (negatif) → sayfa kaydıkça
+  // panel önce sonuna kadar akar, sonra alt kenarı ekranın 24 px üstünde durur; hiçbir satır erişilemez kalmaz. Yükseklik panel
+  // YAPIŞIKKEN değişirse (ör. şehir aramasında yazarken liste uzar) top hemen değişmez — panel imlecin altından kaymaz; bir sonraki
+  // sayfa kaydırmasında / pencere boyutu değişiminde uygulanır.
+  let sideTop = 100, sidePending = false;
+  function fitSide(force) {
+    if (dead) return;
+    const H = aside.offsetHeight;
+    if (!H) return;                                    // ≤1023: kenar çubuğu gizli (çekmece)
+    const t = Math.min(100, Math.floor(window.innerHeight - H - 24));
+    if (t === sideTop) { sidePending = false; return; }
+    if (!force) {
+      const body = aside.parentElement;
+      const flowTop = body.getBoundingClientRect().top + (parseFloat(getComputedStyle(body).paddingTop) || 0);
+      if (aside.getBoundingClientRect().top - flowTop > 0.5) { sidePending = true; return; }   // yapışık → kaydırmada uygula
+    }
+    sidePending = false; sideTop = t;
+    aside.style.top = t + "px";
+  }
+  const onWinResize = () => fitSide(true);
+  const onWinScroll = () => { if (sidePending) fitSide(true); };
+  window.addEventListener("resize", onWinResize);
+  window.addEventListener("scroll", onWinScroll, { passive: true });
+  unsubs.push(() => { window.removeEventListener("resize", onWinResize); window.removeEventListener("scroll", onWinScroll); });
   if (typeof ResizeObserver === "function") {
-    const ro = new ResizeObserver(() => {
-      const c = colsNow();
-      if (c === cols) return;
-      cols = c;
-      if (loadState === "ready" && !dead) renderResults(false);
-    });
-    ro.observe(res);
+    const ro = new ResizeObserver(() => fitSide(false));
+    ro.observe(aside);
     unsubs.push(() => ro.disconnect());
   }
-
-  root.append(head, stripWrap, h("div", { class: "dk-etkinlikler-body" }, aside, res));
 
   function renderToolbar() {
     const s = state;
@@ -498,14 +514,14 @@ export function etkinliklerView(ctx) {
     }
     emptyBox.hidden = true; emptyBox.replaceChildren();
     grid.hidden = false;
-    const shown = Math.min(list.length, state.page * pageSize());
+    const shown = Math.min(list.length, state.page * PAGE);
     grid.replaceChildren(...list.slice(0, shown).map((ev) => eventCard(ev.e, { city: true })));
     if (anim) swapAnim(grid);
     renderMore(list.length, shown);
   }
   function renderMore(n, shown) {
     more.hidden = !(n > shown);
-    allShown.hidden = !(n <= shown && state.page > 1 && n > pageSize());
+    allShown.hidden = !(n <= shown && state.page > 1 && n > PAGE);
     if (more.hidden) { more.replaceChildren(); return; }
     const btn = h("button", { type: "button", class: "dk-etkinlikler-morebtn dk-press" }, "Daha fazla yükle", svgRaw(P.chevronDown, { size: 15, sw: "2" }));
     btn.addEventListener("click", loadMore);
@@ -513,10 +529,10 @@ export function etkinliklerView(ctx) {
   }
   function loadMore() {
     const list = filtered();
-    const before = Math.min(list.length, state.page * pageSize());
+    const before = Math.min(list.length, state.page * PAGE);
     state = { ...state, page: state.page + 1 };
     writeUrl(false);
-    const shown = Math.min(list.length, state.page * pageSize());
+    const shown = Math.min(list.length, state.page * PAGE);
     const added = list.slice(before, shown).map((ev) => eventCard(ev.e, { city: true }));
     grid.append(...added);
     renderMore(list.length, shown);
@@ -588,6 +604,7 @@ export function etkinliklerView(ctx) {
     const counts = { [ALL_CITIES]: events.length };
     cityIndex.list.forEach((c) => { counts[c] = cityIndex.counts.get(fold(c)) || 0; });
     shell.header.setCityCounts(counts);
+    hdrCounts = counts;
     render({ anim: true });
   }
 
@@ -599,6 +616,29 @@ export function etkinliklerView(ctx) {
   };
   window.addEventListener(CITY_EVENT, onCity);
   unsubs.push(() => window.removeEventListener(CITY_EVENT, onCity));
+
+  // ── Header şehir seçicisi: işaretli satır = sayfanın şehri (yerel varyant) ──
+  // SHARED-CANDIDATE: cityButton seçiciyi daima value = getActiveCity() (gb_city) ile açıyor. Bu sayfada header ETİKETİ sayfanın şehrini
+  // gösterir (URL/çip/Temizle yalnız sayfa — Q11) → etiket "İstanbul" iken listede TÜMÜ işaretli kalıyordu (aria-selected dahil).
+  // Öneri: cityButton, setCity() ile gösterdiği şehri cityPicker'a `value` olarak versin. O zamana dek header düğmesinin tıklaması
+  // yakalama evresinde burada karşılanır ve AYNI ortak seçici (cityPicker + dkPopover, aynı ölçüler) value = sayfa şehri ile açılır;
+  // seçim davranışı değişmez (cityPicker: gb_city yazar + dk:citychange → onCity sayfayı süzer).
+  let hdrCounts = null, cityPop = null;
+  const hdrCityBtn = shell.node.querySelector(".dk-citybtn");
+  const onHdrCity = (e) => {
+    if (!hdrCityBtn || !hdrCityBtn.contains(e.target)) return;
+    e.stopPropagation();                                       // ortak cityButton.open çalışmasın
+    if (cityPop) { cityPop.close("toggle"); return; }
+    const cp = cityPicker({ value: state.city, counts: hdrCounts,
+      onPick: () => { cityPop?.close("pick"); try { hdrCityBtn.focus({ preventScroll: true }); } catch (_) {} } });
+    cityPop = dkPopover({ anchor: hdrCityBtn, content: cp.node, label: "Şehir seç", width: 320, offset: 8, cls: "dk-cp-pop",
+      onClose: () => { cityPop = null; hdrCityBtn.classList.remove("is-open"); } });
+    hdrCityBtn.classList.add("is-open");
+    requestAnimationFrame(() => { try { cp.input.focus({ preventScroll: true }); } catch (_) {} });
+  };
+  const hdrRight = hdrCityBtn?.parentElement;
+  hdrRight?.addEventListener("click", onHdrCity, true);
+  unsubs.push(() => { hdrRight?.removeEventListener("click", onHdrCity, true); cityPop?.close("destroy"); });
 
   // Header etiketi sayfanın şehrini gösterir (URL'den gelen şehir gb_city'ye YAZILMAZ); URL kanonik hâle gelir (sehir= her zaman)
   showCity(state.city);

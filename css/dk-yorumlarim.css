@@ -22,6 +22,8 @@
 
 /* ── SegmentedTabs ── */
 .dk-yorumlarim-seg { align-self: flex-start; }
+/* hata durumunda KPI satırı ve sekmeler gizlenir (grid/inline-flex [hidden]'ı ezmesin) */
+.dk-yorumlarim > .dk-yorumlarim-kpis[hidden], .dk-yorumlarim > .dk-yorumlarim-seg[hidden] { display: none; }
 
 /* ── liste + ReviewCard ── */
 .dk-yorumlarim-list { display: flex; flex-direction: column; gap: 16px; }

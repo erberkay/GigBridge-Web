@@ -294,8 +294,11 @@
 .dk-mekan-detay-msg { padding: 40px 0 104px; }
 .dk-mekan-detay-msg .dk-empty { min-height: 360px; }
 
-/* ═══════════ PORTAL: lightbox (dkModal "panel" üstünde; tam ekran, zemin rgba(6,7,10,.94)) ═══════════ */
-.dk-ovl.dk-mekan-detay-lbovl { padding: 0; overflow: hidden; }
+/* ═══════════ PORTAL: lightbox (dkModal "panel" üstünde; tam ekran, zemin rgba(6,7,10,.94)) ═══════════
+   Artboard diyaloğu başlığın ALTINDA başlar (top 76, h 860): kapat düğmesi 76 + 28, görsel ve ‹ › o alanda ortalanır. Katman tam ekranı
+   karartır (#app inert — başlık tıklanamaz, bu yüzden karartılmış kalır), ama denetimler başlık bandına (76) binmez.
+   76 = PublicHeader .dk-hd-in yüksekliği (tüm masaüstü genişliklerinde sabit; ortak jeton yok). */
+.dk-ovl.dk-mekan-detay-lbovl { --dk-mekan-lb-top: 76px; padding: 0; overflow: hidden; }
 .dk-mekan-detay-lbovl > .dk-ovl-bg { background: rgba(6,7,10,0.94); }
 .dk-mdl.dk-mekan-detay-lb {
   position: static; width: 100% !important; max-width: none; height: 100%; padding: 0; gap: 0; border: 0; border-radius: 0;
@@ -304,19 +307,23 @@
 .dk-mekan-detay-lb .dk-mdl-headrow { position: static; }
 .dk-mekan-detay-lb .dk-mdl-tcol { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .dk-mekan-detay-lb .dk-mdl-x {
-  position: absolute; z-index: 2; top: 28px; right: var(--dk-gutter, 80px); width: 44px !important; height: 44px !important;
+  position: absolute; z-index: 2; top: calc(var(--dk-mekan-lb-top, 76px) + 28px); right: var(--dk-gutter, 80px); width: 44px !important; height: 44px !important;
   border-color: #2C303A; background: #0E1014; color: #F2F1EE; pointer-events: auto;
 }
 .dk-mekan-detay-lb .dk-mdl-x svg { width: 18px; height: 18px; }
 .dk-mekan-detay-lb .dk-mdl-body { position: static; width: 100%; height: 100%; }
-.dk-mekan-detay-lbbody { position: static; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.dk-mekan-detay-lbbody {
+  position: static; width: 100%; height: 100%; box-sizing: border-box; padding-top: var(--dk-mekan-lb-top, 76px);
+  display: flex; align-items: center; justify-content: center;
+}
 .dk-mekan-detay-lbfig { margin: 0; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
 .dk-mekan-detay-lbimg {
-  display: block; max-width: min(1100px, calc(100vw - 2 * var(--dk-gutter, 80px) - 120px)); max-height: min(700px, calc(100vh - 180px));
+  display: block; max-width: min(1100px, calc(100vw - 2 * var(--dk-gutter, 80px) - 120px));
+  max-height: min(700px, calc(100vh - var(--dk-mekan-lb-top, 76px) - 160px));
   border-radius: 10px; animation: dkFade var(--dk-fade-dur, 220ms) ease both;
 }
 .dk-mekan-detay-lbnav {
-  position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; box-sizing: border-box; margin: 0; padding: 0;
+  position: absolute; top: calc(50% + var(--dk-mekan-lb-top, 76px) / 2); transform: translateY(-50%); width: 44px; height: 44px; box-sizing: border-box; margin: 0; padding: 0;
   border-radius: 6px; border: 1px solid #2C303A; background: #0E1014; color: #F2F1EE; display: flex; align-items: center; justify-content: center;
   pointer-events: auto;
 }

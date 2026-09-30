@@ -14,11 +14,12 @@
 //   Mekanlar), videoReel (YouTube/Vimeo → iframe büyüteç, en çok 6), Müzik Tarzları (→ Hakkında satırı), socialBlock (→ SOSYAL kartı),
 //   Yorumlar (yalnız dinleyici yorumları; boşsa "Henüz yorum yok.")
 //   rol davranışı: dinleyici = hepsi; sanatçı (başkası) = Takip + Mesaj (#/artist/mesaj) — legacy renderArtistDetail; kendi sayfası = aksiyon yok;
-//   mekan (masaüstü politika 3) = Mesaj + "Davet Et" (→ #/venue/sanatci?q=ad, resmi davet akışı); organizatör = Mesaj; yönetici = salt okuma.
-//   Panel rollerine müşteri "Teklif İste"si verilmez (public sayfalar panel rollerine salt-okuma — app.js). Yalnız users.userType artist
-//   (ya da boş) sanatçı sayfası olur: mekan → #/mekan/:id, diğerleri "Sanatçı bulunamadı".
+//   mekan / organizatör (masaüstü politika 3) = Mesaj + Teklif İste (spec; mesaj rotası #/venue/mesaj · #/organizer/mesaj) — takip yok (mekan
+//   kendi panelinde gizli "izle" kullanır; public takip sanatçıya "dinleyici" bildirimi yollardı); yönetici = salt okuma.
+//   Yalnız users.userType artist (ya da boş) sanatçı sayfası olur: mekan → #/mekan/:id, diğerleri "Sanatçı bulunamadı".
 // Yeni (tasarım): kapak + çakışan 200 px avatar, konum satırı, istatistik bandı, bölüm sekmeleri, yaklaşan etkinlikler ızgarası + geçmiş
-//   performans tablosu + tıklanabilir mekan çipleri (eventsByArtist — tek alanlı sorgu, yeni index yok), yan özet kartı (yan kolon yapışkan: sığarsa top 96, sığmazsa alt kenarıyla),
+//   performans tablosu + tıklanabilir mekan çipleri (eventsByArtist — tek alanlı sorgu, yeni index yok), yan özet kartı (sahibinin notu: özet kartı
+//   sticky top 96; yan kolonun tamamı sığarsa kolon birlikte yapışır),
 //   sosyal liste, sıradaki etkinlik kartı, puan özeti, "Tüm yorumları gör".
 // Yazımlar legacy ile birebir (data.js işlevleri): following/followers (+ new_follower bildirimi, fromUserId = auth uid), reviews/{uid}_{id},
 //   conversations (+ messages). Arka uç bağımlı parça yok; etkinlik sorgusu başarısızsa Etkinlikler bölümü + sıradaki kartı gizlenir.
@@ -206,7 +207,8 @@ function profileEventCard(e, { artistGenre, resident }) {
 // Gönder her zaman tıklanabilir (aria-disabled yalnız görsel/AT ipucu); eksikte legacy iletileri modalın role=alert alanında.
 function reviewModal(a, existing, onDone) {
   const editing = !!(existing && existing.id);
-  let rating = Math.max(0, Math.min(5, Math.round(Number(existing?.rating) || 0)));
+  let busy = false;
+  let rating =Math.max(0, Math.min(5, Math.round(Number(existing?.rating) || 0)));
   const stars = [];
   const group = h("div", { role: "radiogroup", "aria-label": "Puan", class: "dk-sanatci-detay-rvm-stars" });
   const paint = () => stars.forEach((b, i) => {
@@ -239,11 +241,13 @@ function reviewModal(a, existing, onDone) {
     actions: [
       { label: "İptal", variant: "outline" },
       { label: editing ? "Güncelle" : "Gönder", variant: "primary", keepOpen: true, onClick: async (close, btn) => {
+        if (busy) return false;
         const text = ta.value.trim();
         if (rating < 1) { m.setError("Puan seç"); return false; }
         if (text.length < 10) { m.setError("Yorum en az 10 karakter olmalı"); return false; }
         m.setError("");
-        btn.disabled = true;
+        // disabled YOK: odaktaki düğme devre dışı kalınca Chrome odağı <body>'ye atar (klavye kullanıcısı modalda yerini kaybeder)
+        busy = true; btn.setAttribute("aria-busy", "true"); btn.setAttribute("aria-disabled", "true");
         try {
           const me = session.user?.uid;
           if (editing) await updateMyReview("reviews", existing.id, { rating, comment: text });
@@ -256,6 +260,7 @@ function reviewModal(a, existing, onDone) {
           close("done");
           onDone?.();
         } catch (_) { dkToast(editing ? "Güncellenemedi" : "Gönderilemedi", { type: "err" }); }
+        finally { busy = false; btn.removeAttribute("aria-busy"); validate(); }
         return false;
       } },
     ],
@@ -266,7 +271,7 @@ function reviewModal(a, existing, onDone) {
     cnt.classList.toggle("is-warn", n > 0 && n < 10);
     const ok = rating >= 1 && n >= 10;
     const send = m?.buttons?.[1];
-    if (send) send.setAttribute("aria-disabled", ok ? "false" : "true");
+    if (send) send.setAttribute("aria-disabled", ok && !busy ? "false" : "true");
     if (ok) m?.setError("");
   }
   ta.addEventListener("input", validate);
@@ -284,6 +289,7 @@ function bookingModal(artistName, onSubmit) {
   const budget = dkInput({ size: 44, placeholder: "örn. 8.000 ₺ (opsiyonel)" });
   const note = h("textarea", { rows: 3, class: "dk-ta dk-in dk-inp-bg-stratum", placeholder: "Ek not (opsiyonel)" });
   const f = (label, input) => dkField({ label, input }).node;
+  let busy = false;
   const m = dkModal({
     title: "Teklif İste", variant: "panel", size: 520, serifTitle: true, cls: "dk-sanatci-detay-mdl dk-sanatci-detay-bkm",
     sub: (artistName || "Sanatçı") + " için teklif isteğin mesaj olarak iletilir; iletişim GigBridge içinde kalır.",
@@ -296,6 +302,7 @@ function bookingModal(artistName, onSubmit) {
     actions: [
       { label: "İptal", variant: "outline" },
       { label: "Gönder", variant: "primary", icon: svgRaw(P.send, { size: 16, sw: "2.1" }), keepOpen: true, onClick: async (close, btn) => {
+        if (busy) return false;
         if (!date.value && !city.value.trim() && !note.value.trim()) { m.setError("En az tarih ya da not gir."); return false; }
         m.setError("");
         const lines = ["🎫 Teklif İsteği"];
@@ -305,8 +312,11 @@ function bookingModal(artistName, onSubmit) {
         if (dur.value.trim()) lines.push("• Süre: " + dur.value.trim());
         if (budget.value.trim()) lines.push("• Bütçe: " + budget.value.trim());
         if (note.value.trim()) lines.push("• Not: " + note.value.trim());
-        btn.disabled = true;
-        const ok = await onSubmit(lines.join("\n"));
+        // disabled YOK (odak <body>'ye düşmesin); gönderim sürerken ikinci tık yok sayılır
+        busy = true; btn.setAttribute("aria-busy", "true"); btn.setAttribute("aria-disabled", "true");
+        let ok = false;
+        try { ok = await onSubmit(lines.join("\n")); }
+        finally { busy = false; btn.removeAttribute("aria-busy"); btn.setAttribute("aria-disabled", "false"); }
         if (ok) close("done");
         return false;
       } },
@@ -369,6 +379,7 @@ export function sanatciView(ctx) {
   }
 
   async function load({ refresh = false } = {}) {
+    if (!id) { paintError(true); return; }   // "#/sanatci/" (boş kimlik): userById('') geçersiz belge yolu atar
     if (!refresh) paintSkeleton();
     const real = isRealUser();
     const me = session.user?.uid;
@@ -414,11 +425,9 @@ export function sanatciView(ctx) {
     const self = real && me === id;
     const canFollow = !self && (role === "guest" || role === "customer" || role === "artist");
     const canMsg = !self && role !== "admin";
-    // Teklif İste = dinleyicinin serbest metin teklif isteği (legacy bookingRequestModal; Düğün/Özel Parti…). Panel rolleri (mekan/organizatör)
-    // public sayfada salt-okuma (app.js) — onlara bu müşteri akışı verilmez; mekan resmi davet akışına (#/venue/sanatci, "Davet Et") yönlenir.
-    const canOffer = !self && (role === "guest" || role === "customer");
-    const canInvite = !self && role === "venue";
-    const inviteHref = "#/venue/sanatci?q=" + encodeURIComponent(a.displayName || a.name || "");
+    // Teklif İste = serbest metinli teklif isteği mesajı (legacy bookingRequestModal → sendMessage). Spec + artboard: dinleyici, misafir (giriş
+    // kapısı) ve sanatçı arayan panel rolleri (mekan / organizatör); sanatçı başka sanatçıya teklif istemez (legacy renderArtistDetail).
+    const canOffer = !self && (role === "guest" || role === "customer" || role === "venue" || role === "organizer");
     const canReview = role === "guest" || role === "customer";
 
     const name = a.displayName || a.name || "Sanatçı";
@@ -474,6 +483,7 @@ export function sanatciView(ctx) {
     };
 
     let following = S.following;
+    let followBusy = false;
     const followBtns = [];
     const paintFollow = () => followBtns.forEach((b) => {
       b.classList.toggle("is-on", following);
@@ -482,10 +492,12 @@ export function sanatciView(ctx) {
     });
     const onFollow = async () => {
       if (dkLoginGate("Takip etmek")) return;
+      if (followBusy) return;   // yazım sürerken ikinci tık yok sayılır (disabled DEĞİL: odaktaki düğme devre dışı kalınca odak <body>'ye düşer)
       const next = !following;
       following = next; follCount += next ? 1 : -1; S.following = next; S.follCount = follCount;
       paintFollow(); setFollowerText();
-      followBtns.forEach((b) => { b.disabled = true; });   // kimlik satırı + yan kart düğmesi (sanatçı görünümü) birlikte
+      followBusy = true;
+      followBtns.forEach((b) => b.setAttribute("aria-busy", "true"));   // kimlik satırı + yan kart düğmesi (sanatçı görünümü) birlikte
       try {
         if (next) await followArtist(me, a); else await unfollowArtist(me, id);
         invalidateAccountCounts(me);   // hesap kabuğunun "Takip" sayacı
@@ -494,7 +506,7 @@ export function sanatciView(ctx) {
         following = !next; follCount += next ? -1 : 1; S.following = following; S.follCount = follCount;
         paintFollow(); setFollowerText();
         dkToast("İşlem başarısız", { type: "err" });
-      } finally { followBtns.forEach((b) => { b.disabled = false; }); }
+      } finally { followBusy = false; followBtns.forEach((b) => b.removeAttribute("aria-busy")); }
     };
     const followButton = () => {
       const b = h("button", { type: "button", class: "dk-sanatci-detay-act dk-sanatci-detay-follow dk-press", "aria-label": null });
@@ -545,7 +557,6 @@ export function sanatciView(ctx) {
     if (canFollow) actions.push(followButton());
     if (canMsg) actions.push(h("button", { type: "button", class: "dk-sanatci-detay-act dk-press", onclick: onMsg }, ico("chat", 17, "1.9"), h("span", {}, "Mesaj")));
     if (canOffer) actions.push(h("button", { type: "button", class: "dk-sanatci-detay-act is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, "Teklif İste")));
-    if (canInvite) actions.push(h("a", { href: inviteHref, class: "dk-sanatci-detay-act is-pink dk-press", "aria-label": `${name} sanatçısını davet et (Sanatçı Bul)` }, ico("send", 16, "2.1"), h("span", {}, "Davet Et")));
     const identity = h("section", { class: "dk-container dk-sanatci-detay-id", "aria-labelledby": "dk-sanatci-detay-h-name" },
       h("div", { class: "dk-sanatci-detay-avwrap dk-rise" }, avatar,
         a.availabilityStatus === "open" ? h("span", { class: "dk-sanatci-detay-avdot", "aria-hidden": "true" }) : null),
@@ -587,6 +598,15 @@ export function sanatciView(ctx) {
       return node;
     };
 
+    // Çaldığı mekanlar (legacy venueChips): mekan yorumları (authorId = mekan uid) — etkinlik sorgusundan bağımsız; geçmiş etkinlikler
+    // yüklenirse onların (venueId, venueName) çiftleri önce gelir (02 bölümünde birleştirilir).
+    const reviewVenues = new Map();
+    revs.forEach((r) => { if (r.authorType !== "venue") return; const n = String(r.authorName || r.venueName || "").trim(); if (n && !reviewVenues.get(n)) reviewVenues.set(n, r.authorId || null); });
+    const venueChipList = (list) => h("div", { class: "dk-sanatci-detay-vchips" }, ...list.map(([n, vid]) => {
+      const inner = [ico("building", 13, "1.9", "#FF8A2A"), h("span", {}, n)];
+      return vid ? h("a", { href: "#/mekan/" + encodeURIComponent(vid), class: "dk-sanatci-detay-vchip dk-press" }, ...inner) : h("span", { class: "dk-sanatci-detay-vchip" }, ...inner);
+    }));
+
     // ── 01 HAKKINDA ──
     {
       const head = secHead("hakkinda", "HAKKINDA", ["Sahnenin arkasındaki ", h("em", {}, "isim")]);
@@ -597,6 +617,8 @@ export function sanatciView(ctx) {
       addSection("hakkinda", "Hakkında", head,
         h("p", { class: cx("dk-sanatci-detay-bio", !a.bio && "is-dim") }, a.bio || "Sanatçı henüz biyografi eklememiş."),
         meta.length ? h("div", { class: "dk-sanatci-detay-meta" }, ...meta) : null,
+        // etkinlik sorgusu başarısızsa (02 gizli) mekan çipleri burada kalır — legacy özelliği kaybolmasın
+        !Array.isArray(events) && reviewVenues.size ? h("div", { class: "dk-sanatci-detay-vblock" }, monoLabel("ÇALDIĞI MEKANLAR", "is-14"), venueChipList([...reviewVenues.entries()].slice(0, 10))) : null,
         featuredSetCard(a.featuredSetUrl),
         featuredReviewFigure(featuredReviewOf(revs)));
     }
@@ -610,7 +632,7 @@ export function sanatciView(ctx) {
       // Çaldığı mekanlar: geçmiş etkinliklerin (venueId, venueName) + mekan yorumları (legacy venueChips; authorId = mekan uid)
       const venues = new Map();
       past.forEach((e) => { const n = String(e.venueName || "").trim(); if (n && !venues.has(n)) venues.set(n, e.venueId || null); });
-      revs.forEach((r) => { if (r.authorType === "venue") { const n = String(r.authorName || r.venueName || "").trim(); if (n && !venues.has(n)) venues.set(n, r.authorId || null); else if (n && !venues.get(n) && r.authorId) venues.set(n, r.authorId); } });
+      reviewVenues.forEach((vid, n) => { if (!venues.has(n)) venues.set(n, vid); else if (!venues.get(n) && vid) venues.set(n, vid); });
       const venueList = [...venues.entries()].slice(0, 10);
       if (upcoming.length || past.length || venueList.length) {
         // İlk görünüm: bir sıra (3 kolon ≥1280) / iki sıra (2 kolon ≤1279) — yetim kart bırakmasın
@@ -645,10 +667,7 @@ export function sanatciView(ctx) {
           h("div", { class: "dk-sanatci-detay-past-head" },
             h("h3", { class: "dk-sanatci-detay-h3" }, "Geçmiş performanslar"),
             venueList.length ? h("span", { class: "dk-sanatci-detay-lbl is-14" }, "ÇALDIĞI MEKANLAR") : null),
-          venueList.length ? h("div", { class: "dk-sanatci-detay-vchips" }, ...venueList.map(([n, vid]) => {
-            const inner = [ico("building", 13, "1.9", "#FF8A2A"), h("span", {}, n)];
-            return vid ? h("a", { href: "#/mekan/" + encodeURIComponent(vid), class: "dk-sanatci-detay-vchip dk-press" }, ...inner) : h("span", { class: "dk-sanatci-detay-vchip" }, ...inner);
-          })) : null,
+          venueList.length ? venueChipList(venueList) : null,
           past.length ? h("ul", { class: "dk-sanatci-detay-rows", "aria-label": "Geçmiş performanslar" }, ...past.slice(0, 5).map((e) => {
             const r = pastRating(e);
             return h("li", { class: "dk-sanatci-detay-row dk-row" },
@@ -734,7 +753,7 @@ export function sanatciView(ctx) {
 
       if (pkgBlock || info.length || reel) {
         const head = secHead("paketler", "BOOKING", pkgs.length ? ["Paketler & ", h("em", {}, "fiyat")] : ["Booking & ", h("em", {}, "detaylar")]);
-        addSection("paketler", "Paketler", head,
+        addSection("paketler", pkgs.length ? "Paketler" : "Booking", head,
           segEl, pkgBlock,
           info.length ? h("div", { class: "dk-sanatci-detay-infogrid" }, ...info) : null,
           reel);
@@ -744,19 +763,12 @@ export function sanatciView(ctx) {
     // ── 04 YORUMLAR ──
     {
       const reviewBtn = canReview
-        ? h("button", { type: "button", class: "dk-sanatci-detay-act is-rv dk-press", onclick: onReview }, ico("plus", 15, "2"), h("span", {}, "Yorum yap"))
+        ? h("button", { type: "button", class: "dk-sanatci-detay-act is-rv dk-press", onclick: onReview }, ico("plus", 15, "2"), h("span", {}, mine ? "Yorumunu güncelle" : "Yorum yap"))
         : null;
       const head = secHead("yorumlar", "YORUMLAR", ["Dinleyiciler ne ", h("em", {}, "diyor")], reviewBtn);
-      // Yorum sayısı (bant/özet) = reviews.length (sahibinin notu) ama listede yalnız dinleyici yorumları var (legacy) → mekan vb.
-      // yorumları da varsa dağılım yazılır: "9 yorum · 7 dinleyici, 2 mekan · …" — "Tüm yorumları gör (7)" ile çelişmesin.
-      const rsumCaption = () => {
-        const tail = "ortalama yalnız puanlı yorumlardan hesaplanır";
-        if (custRevs.length === revs.length) return `${revs.length} yorum · ${tail}`;
-        const nVen = revs.filter((r) => r.authorType === "venue").length;
-        const nOther = revs.length - custRevs.length - nVen;
-        const parts = [`${custRevs.length} dinleyici`, nVen ? `${nVen} mekan` : null, nOther ? `${nOther} diğer` : null].filter(Boolean);
-        return `${revs.length} yorum · ${parts.join(", ")} · ${tail}`;
-      };
+      // Artboard metni birebir; {N} = reviews.length (sahibinin notu "Yorum = reviews.length"). Liste legacy gibi yalnız dinleyici yorumları
+      // (mekan yorumları puana/sayıya girer, listede yok) — "Tüm yorumları gör (n)" ile fark sahibine açık soru olarak raporlandı.
+      const rsumCaption = () => `${revs.length} yorum · ortalama yalnız puanlı yorumlardan hesaplanır`;
       const summary = revs.length ? h("div", { class: "dk-sanatci-detay-rsum" },
         h("span", { class: "dk-sanatci-detay-rsum-n" }, avg),
         h("div", { class: "dk-sanatci-detay-rsum-col" },
@@ -816,7 +828,6 @@ export function sanatciView(ctx) {
     ].filter(Boolean);
     const ctas = [];
     if (canOffer) ctas.push(h("button", { type: "button", class: "dk-sanatci-detay-cta is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, "Teklif İste")));
-    if (canInvite) ctas.push(h("a", { href: inviteHref, class: "dk-sanatci-detay-cta is-pink dk-press", "aria-label": `${name} sanatçısını davet et (Sanatçı Bul)` }, ico("send", 16, "2.1"), h("span", {}, "Davet Et")));
     if (canMsg) ctas.push(h("button", { type: "button", class: "dk-sanatci-detay-cta dk-press", onclick: onMsg }, ico("chat", 16, "1.9"), h("span", {}, "Mesaj gönder")));
     if (canFollow && !canOffer) ctas.unshift((() => { const b = followButton(); b.classList.add("is-cta"); return b; })());
     const summaryCard = h("div", { class: "dk-sanatci-detay-sum" },
@@ -870,40 +881,69 @@ export function sanatciView(ctx) {
     mqOne.addEventListener("change", placeAside);
     destroyPaint.push(() => mqOne.removeEventListener("change", placeAside));
 
-    // Yapışkan yan kolon (≥1024): sahibinin notu "özet kartı sticky; top 96". Yalnız özet kartı yapışınca sosyal + sıradaki kartları
-    // altında kalıyordu (odak/fare erişilemez). Artık yan kolonun TAMAMI yapışır: sığıyorsa top 96 (özet kartı 96'da), sığmıyorsa
-    // top = innerHeight − yükseklik − 24 (negatif) → önce son karta kadar kayar, sonra alt kenarı görünür hâlde sabitlenir; hiçbir kart örtülmez.
+    // Yapışkan özet kartı (≥1024) — sahibinin notu "sağ kolon özet kartı position: sticky; top: 96px" (CSS .dk-sanatci-detay-sum).
+    // Yan kolon ızgara satırına gerilir (align-self: stretch) → kart sol kolon boyunca 96'da kalır; sosyal + sıradaki kartları normal
+    // akışta opak kartın altından geçer (spec çapraz notu: opak zemin, z-index 2). Mod sınıfları (yalnız ≥1024 CSS'inde etkili):
+    //   is-stick-all : kolonun tamamı innerHeight − 120'ye sığıyorsa kolon birlikte 96'da yapışır (hiçbir kart örtülmez; spec alternatifi)
+    //   is-nostick   : özet kartı tek başına sığmıyorsa (alçak pencere) yapışma yok — fiyat/CTA hiçbir zaman kesilmez
+    //   is-released  : klavye odağı sosyal/sıradaki kartındayken kartın altındaki bantta yer yoksa kart geçici olarak akışa döner
+    const STICK_TOP = 96, ASIDE_GAP = 20;
     const fitAside = () => {
       if (!aside.isConnected) return;
-      const t = Math.min(96, Math.round(window.innerHeight - aside.offsetHeight - 24));
-      aside.style.setProperty("--dk-sanatci-detay-aside-top", t + "px");
+      const kids = [...aside.children];
+      const contentH = kids.reduce((sum, k) => sum + k.offsetHeight, 0) + ASIDE_GAP * Math.max(0, kids.length - 1);
+      const avail = window.innerHeight - STICK_TOP - 24;
+      aside.classList.toggle("is-stick-all", contentH <= avail);
+      aside.classList.toggle("is-nostick", contentH > avail && summaryCard.offsetHeight > avail);
     };
     fitAside();
     window.addEventListener("resize", fitAside);
     let ro = null;
-    try { ro = new ResizeObserver(fitAside); ro.observe(aside); } catch (_) {}
-    // Klavye: yan kolon alt kenarıyla sabitken özet kartının düğmesi yapışkan üst çubuğun (76) altında kalabilir (ör. 1280×800) →
-    // odak kolona girince kolon odaktaki öğe görünene dek aşağı kaydırılır (top büyütülür; en çok 96); odak kolondan çıkınca geri alınır.
+    try { ro = new ResizeObserver(fitAside); [...aside.children].forEach((k) => ro.observe(k)); } catch (_) {}
+
+    // Klavye odağı görünür kalsın (WCAG 2.4.11): Chrome odaktaki öğeyi yalnız pencere dışındaysa kaydırır — yapışkan başlığın (76) ya da
+    // yapışkan özet kartının altında kalan öğeyi görmez (Shift+Tab ile yukarı dönüşte öğe top 0'a hizalanır). Yalnız klavye odağında
+    // (:focus-visible) düzeltilir; fare tıklaması ve sekme düğmesinin programatik h2 odağı (tabPause) sayfayı oynatmaz.
+    // SHARED-CANDIDATE: dk-base'e html{scroll-padding-top:96px} (başlık payı tüm masaüstü sayfalarında) — burada yerel çözüm.
     let focusRaf = 0;
-    const onAsideFocusIn = (e) => {
+    const headerEl = shell.header?.node || null;
+    const scrollByY = (dy) => { if (Math.abs(dy) >= 1) window.scrollBy({ top: dy, left: 0, behavior: "instant" }); };
+    const onFocusIn = (e) => {
+      const t = e.target;
+      if (!(t instanceof Element) || tabPause) return;
       cancelAnimationFrame(focusRaf);
       focusRaf = requestAnimationFrame(() => {
-        if (getComputedStyle(aside).position !== "sticky" || !aside.contains(e.target)) return;
-        const r = e.target.getBoundingClientRect();
-        const at = aside.getBoundingClientRect().top;
-        const minTop = Math.min(96, Math.round(window.innerHeight - aside.offsetHeight - 24));
-        let t = null;
-        if (r.top < 96) t = Math.min(96, Math.round(at + (96 - r.top)));                       // üst çubuğun altında → aşağı
-        else if (r.bottom > window.innerHeight - 24) t = Math.max(minTop, Math.round(at - (r.bottom - (window.innerHeight - 24)))); // alttan taşıyor → yukarı
-        if (t != null) aside.style.setProperty("--dk-sanatci-detay-aside-top", t + "px");
+        if (dead || document.activeElement !== t || !root.contains(t)) return;
+        let kb = false; try { kb = t.matches(":focus-visible"); } catch (_) {}
+        if (!kb) return;
+        const vh = window.innerHeight;
+        const hb = Math.max(0, headerEl ? headerEl.getBoundingClientRect().bottom : 76);
+        let r = t.getBoundingClientRect();
+        // 1) pencere kenarları: yapışkan başlık altı / alt kenar
+        if (r.top < hb + 4) { scrollByY(r.top - (hb + 20)); r = t.getBoundingClientRect(); }
+        else if (r.bottom > vh) { scrollByY(Math.min(r.top - (hb + 20), r.bottom - vh + 16)); r = t.getBoundingClientRect(); }
+        // 2) sabit özet kartının altında kalan sosyal / sıradaki kartı öğesi
+        if (!aside.contains(t) || summaryCard.contains(t) || aside.classList.contains("is-released")) return;
+        if (getComputedStyle(summaryCard).position !== "sticky") return;
+        const sb = summaryCard.getBoundingClientRect();
+        if (!(r.top < sb.bottom + 8 && r.bottom > sb.top)) return;
+        const target = sb.bottom + ASIDE_GAP;
+        if (target + r.height <= vh - 16) { scrollByY(r.top - target); return; }   // kartın hemen altına (kart sabit kalır)
+        aside.classList.add("is-released");                                        // yer yok → kart akışa döner, öğe yerinde kalır
+        r = t.getBoundingClientRect();
+        if (r.top < hb + 4) scrollByY(r.top - (hb + 20));
       });
     };
-    const onAsideFocusOut = (e) => { if (!aside.contains(e.relatedTarget)) { cancelAnimationFrame(focusRaf); fitAside(); } };
-    aside.addEventListener("focusin", onAsideFocusIn);
-    aside.addEventListener("focusout", onAsideFocusOut);
+    const onFocusOut = (e) => {
+      if (!aside.classList.contains("is-released")) return;
+      const nt = e.relatedTarget;
+      if (!(nt instanceof Node && aside.contains(nt) && !summaryCard.contains(nt))) aside.classList.remove("is-released");
+    };
+    root.addEventListener("focusin", onFocusIn);
+    root.addEventListener("focusout", onFocusOut);
     destroyPaint.push(() => {
       window.removeEventListener("resize", fitAside); if (ro) ro.disconnect(); cancelAnimationFrame(focusRaf);
-      aside.removeEventListener("focusin", onAsideFocusIn); aside.removeEventListener("focusout", onAsideFocusOut);
+      root.removeEventListener("focusin", onFocusIn); root.removeEventListener("focusout", onFocusOut);
     });
     paintFollow();
     setFollowerText();

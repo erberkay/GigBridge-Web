@@ -143,13 +143,12 @@ function eventCard(ev) {
 // karuseli (VIP önce, sonra tarih; ilk 5; 4 sn), GigBridge Top 10 (attendeeCount), Sadece GigBridge'de (+ boş durum), En Yeniler
 // (isNew), Bu Hafta (7 gün), Popüler Sanatçılar (takip). Stiller: css/m-kesfet.css — hepsi .mk kökü altında (diğer mobil rotalar
 // piksel piksel aynı kalır). export: yönetici paneli bu ekranı modalda önizler (admin.js) — API aynı: kesfetPage() → düğüm.
+// URL (masaüstü WebKesfet ile aynı anahtarlar, paylaşılabilir): #/kesfet?kategori=…&sehir=istanbul|tumu&tur=jazz|…&q=…
+//   açılışta okunur; değişince history.replaceState ile yazılır (yalnız #/kesfet rotasında — yönetici önizlemesinde değil).
 const MK_CSS = "css/m-kesfet.css";
 const MK_CATS = ["TÜMÜ", "ETKİNLİKLER", "MEKANLAR", "SANATÇILAR"];
 const MK_CAT_SLUG = { "TÜMÜ": "tumu", "ETKİNLİKLER": "etkinlikler", "MEKANLAR": "mekanlar", "SANATÇILAR": "sanatcilar" };
 let _mkSeq = 0;
-// Tasarımın altın TOP 10 çipi (Popüler Sanatçılar başlığı → app ListenerTop10). Mobil webde bu rota YOK (app.js ≤768'de
-// #/top10 → #/kesfet), çip bu yüzden gizli. Mobil dinleyici Top 10 görünümü gelince "#/top10" yap → çip görünür.
-const MK_TOP10_HREF = null;
 
 // Keşfet'e özel ortak modüller (masaüstü paylaşımlı SAF yardımcılar, ikonlar, tür renkleri, canlı sayaç) — YALNIZ Keşfet
 // açılınca dinamik yüklenir: customer.js tüm mobil rotalarda statik yüklendiği için diğer rotalar bu ~49 KB'ı ödemesin.
@@ -295,7 +294,6 @@ function mkSection({ title, sub, right, id }, ...kids) {
     h("div", { class: "mk-sec-head" }, h("div", { class: "mk-sec-titles" }, h2, sub ? h("span", { class: "mk-sub" }, sub) : null), right || null),
     ...kids);
 }
-const mkMoreLink = (href, label = "TÜMÜNÜ GÖR") => h("a", { class: "mk-more", href }, label);
 const mkMoreBtn = (onClick, label = "TÜMÜNÜ GÖR") => h("button", { type: "button", class: "mk-more", onclick: onClick }, label);
 const mkRow = (cls, items) => h("div", { class: "mk-hscroll mk-scroll" + (cls ? " " + cls : "") }, ...items);
 
@@ -305,7 +303,7 @@ function mkHeroCard(ev, eager) {
   const now = mkTonight(ev), st = mkStatus(ev), att = Number(ev.attendeeCount) || 0;
   const g = mkGenre(ev);
   return h("a", { class: "mk-hero-card mk-press", href: mkHref(ev) },
-    mkImg(ev, "mk-hero-img mk-kb", ev.title || "Etkinlik", eager),
+    mkImg(ev, "mk-hero-img mk-kb", "", eager), // başlık bağlantı metninde → görsel dekoratif (ad iki kez okunmasın)
     h("span", { class: "mk-hero-grad" }),
     h("div", { class: "mk-hero-top" },
       h("div", { class: "mk-hero-badges" },
@@ -325,7 +323,7 @@ function mkEventCard(ev, { rank } = {}) {
   const st = mkStatus(ev);
   return h("a", { class: "mk-ecard mk-press", href: mkHref(ev) },
     h("div", { class: "mk-ecard-media" },
-      mkImg(ev, "mk-ecard-img", ev.title || "Etkinlik"),
+      mkImg(ev, "mk-ecard-img", ""),
       rank ? h("span", { class: "mk-ecard-shade" }) : null,
       st ? h("span", { class: "mk-sbadge", style: { background: st.color } }, st.label) : null,
       rank ? h("span", { class: "mk-rank" + (rank <= 3 ? " gold" : "") }, mkVh("Sıra "), String(rank)) : null),
@@ -336,16 +334,19 @@ function mkEventCard(ev, { rank } = {}) {
         h("span", { class: "mk-ecard-venue" }, [ev.venueName, ev.artistName].filter(Boolean).join(" · ") || "—"),
         h("span", { class: "mk-ecard-price" }, mkPrice(ev)))));
 }
-// ETKİNLİKLER sekmesi / arama sonucu satırı — 72px görsel, zaman (bugün/yarın pembe), fiyat + katılımcı
+// ETKİNLİKLER sekmesi / arama sonucu satırı — 72px görsel, zaman (bugün/yarın pembe), fiyat + katılımcı; legacy ecard2 durum
+// rozeti (dolu → bekleme listesi, VIP, sadece GigBridge'de, yoğun/popüler, yeni) kartlardaki düz renkli rozet dilinde alt satırda
 function mkEventRow(ev) {
   const ms = msOf(ev), hot = ms != null && (H.isToday(ms) || H.isTomorrow(ms));
   const att = Number(ev.attendeeCount) || 0;
+  const st = mkStatus(ev);
   return h("a", { class: "mk-erow mk-press", href: mkHref(ev) },
     mkImg(ev, "mk-erow-img", ""),
     h("div", { class: "mk-erow-main" },
       h("span", { class: "mk-erow-when" + (hot ? " hot" : "") }, mkWhen(ev), mkDist(ev)),
       h("span", { class: "mk-erow-title" }, ev.title || "Etkinlik"),
-      h("span", { class: "mk-erow-sub" }, [ev.venueName, ev.artistName].filter(Boolean).join(" · ") || "—")),
+      h("span", { class: "mk-erow-sub" }, [ev.venueName, ev.artistName].filter(Boolean).join(" · ") || "—"),
+      st ? h("span", { class: "mk-erow-tag", style: { background: st.color } }, mkVh(" · "), st.label) : null),
     h("div", { class: "mk-erow-side" },
       h("span", { class: "mk-erow-price" }, mkPrice(ev)),
       h("span", { class: "mk-erow-att", title: att + " katılımcı" }, svgRaw(MKI.people, { size: 12, sw: "2" }), String(att), mkVh(" katılımcı"))));
@@ -362,7 +363,7 @@ function mkVenueCard(v) {
   const gs = mkVenueGenres(v);
   const { rating, parts } = mkVenueMeta(v);
   return h("a", { class: "mk-vcard mk-press", href: "#/mekan/" + v.id },
-    v.photoURL ? h("img", { class: "mk-vcard-img", src: v.photoURL, alt: v.displayName || "Mekan", loading: "lazy", decoding: "async" }) : h("span", { class: "mk-vcard-img mk-noimg mk-noimg-venue" }),
+    v.photoURL ? h("img", { class: "mk-vcard-img", src: v.photoURL, alt: "", loading: "lazy", decoding: "async" }) : h("span", { class: "mk-vcard-img mk-noimg mk-noimg-venue" }),
     h("span", { class: "mk-vcard-grad" }),
     h("span", { class: "mk-vtype" }, mkUp(v.venueType || "Mekan")),
     h("div", { class: "mk-vcard-body" },
@@ -444,41 +445,77 @@ function mkArtistRow(a, fx) {
     mkFollowBtn(a, fx, "mk-follow mk-follow-row"));
 }
 
-// ?kategori= (masaüstü/paylaşılan bağlantılar) — yalnız #/kesfet rotasındayken okunur/yazılır (yönetici önizlemesinde değil)
-function mkReadCatQuery() {
-  if (base() !== "#/kesfet") return;
-  const q = new URLSearchParams((location.hash.split("?")[1]) || "");
+// URL sorgusu — masaüstü WebKesfet ile aynı anahtarlar/slug'lar (kategori, sehir, tur, q): paylaşılan bağlantı telefonda da
+// aynı şehir/tür/aramayla açılır. Yalnız #/kesfet rotasındayken okunur/yazılır (yönetici önizlemesinde değil).
+const mkQuery = () => new URLSearchParams((location.hash.split("?")[1]) || "");
+const mkSlug = (s) => fold(s).trim().replace(/[^a-z0-9&]+/g, "-").replace(/^-+|-+$/g, "");
+const mkCitySlug = (c) => (c === "TÜMÜ" ? "tumu" : mkSlug(c));
+// tür anahtarı masaüstü famFromSlug ile uyumlu: "hip-hop" ≡ "hiphop", "r&b" ≡ "rnb"
+const mkGenreKey = (s) => { const t = fold(s).replace(/[^a-z0-9&]/g, ""); return t === "r&b" ? "rnb" : t; };
+function mkCityFromSlug(slug, extra = []) {
+  const f = mkSlug(slug);
+  if (!f) return null;
+  if (f === "tumu") return "TÜMÜ";
+  return PROVINCES.find((p) => mkSlug(p) === f) || extra.find((c) => c && mkSlug(c) === f) || null;
+}
+function mkSaveCity(c) { activeCity = c; try { localStorage.setItem("gb_city", c); } catch (_) {} }
+// Açılış: kategori + sehir hemen uygulanır (il değilse veri gelince etkinlik şehirleriyle eşlenir); tur/q renderKesfet'e gider
+function mkReadQuery() {
+  const out = { city: null, tur: null, q: "" };
+  if (base() !== "#/kesfet") return out;
+  const q = mkQuery();
   const k = MK_CATS.find((c) => MK_CAT_SLUG[c] === q.get("kategori"));
   if (k) activeCategory = k;
+  const s = q.get("sehir");
+  if (s) { const c = mkCityFromSlug(s); if (c) mkSaveCity(c); else out.city = s; }
+  out.tur = q.get("tur") || null;
+  out.q = q.get("q") || "";
+  return out;
 }
-function mkWriteCatQuery() {
+// patch: { kategori, sehir, tur, q } — null/"" siler; history.state korunur
+function mkWriteQuery(patch) {
   if (base() !== "#/kesfet") return;
-  const q = new URLSearchParams((location.hash.split("?")[1]) || "");
-  if (activeCategory === "TÜMÜ") q.delete("kategori"); else q.set("kategori", MK_CAT_SLUG[activeCategory]);
+  const q = mkQuery();
+  Object.entries(patch).forEach(([k, v]) => { if (v == null || v === "") q.delete(k); else q.set(k, String(v)); });
   const qs = q.toString();
-  try { history.replaceState(history.state, "", location.pathname + location.search + "#/kesfet" + (qs ? "?" + qs : "")); } catch (_) {}
+  const hash = "#/kesfet" + (qs ? "?" + qs : "");
+  if (hash === location.hash) return;
+  try { history.replaceState(history.state, "", location.pathname + location.search + hash); } catch (_) {}
 }
+const mkCatPatch = () => ({ kategori: activeCategory === "TÜMÜ" ? null : MK_CAT_SLUG[activeCategory] });
 
 // Sayfa: kök + legacy döner simge + legacy alt sekme çubuğu (diğer 4 sekmeyle AYNI çubuk — sekme değişiminde zıplamaz;
 // ≥900 yedek yolunda legacy kenar çubuğu). m-kesfet.css + ortak modüller gelince başlık + gövde döner simgenin yerini alır.
 export function kesfetPage() {
   const preview = base() !== "#/kesfet"; // yönetici paneli önizlemesi (admin.js) — gezinme/yazma yok
-  mkReadCatQuery();
-  mkWriteCatQuery(); // URL ↔ etkin sekme eşit kalsın (modül durumu korunmuş sekmeyle #/kesfet'e dönüldüyse)
+  const url = mkReadQuery();
+  mkWriteQuery(mkCatPatch()); // URL ↔ etkin sekme eşit kalsın (modül durumu korunmuş sekmeyle #/kesfet'e dönüldüyse)
   const page = h("div", { class: "page has-nav mk", style: { "--role": C } });
   const life = mkLife(page);
-  const boot = h("div", { class: "content" }, h("div", { class: "loading" }, spinner()));
+  const boot = h("div", { class: "content" });
   page.append(boot, bottomnav(NAV, "kesfet", C));
-  Promise.all([ensureCss(MK_CSS), mkLoadMods()]).then(() => {
+  // m-kesfet.css ya da ortak modüller gelmezse (ensureCss hata olsa da false ile ÇÖZER) stilsiz sayfa yerine legacy hata kutusu
+  // + "Tekrar dene": CSS → yeniden ister (ensureCss başarısız girişi önbellekten düşürür); modül → tarayıcı başarısız ES modül
+  // içe aktarımını sayfa ömrü boyunca önbellekler → sayfayı yeniler (yönetici önizlemesinde yenileme yok, yalnız yeniden dener)
+  const fail = (modFail) => {
     if (life.dead) return;
-    mkEnsureMonoBold();
-    const ui = mkBuild(page, life, preview);
-    boot.replaceWith(ui.head, ui.body);
-    renderKesfet(ui);
-  }, () => {
-    if (life.dead) return;
-    clear(boot); boot.append(errBox("Keşfet yüklenemedi."));
-  });
+    clear(boot);
+    boot.append(errBox("Keşfet yüklenemedi."), h("div", { style: { display: "flex", justifyContent: "center", marginTop: "4px" } },
+      btn("Tekrar dene", { variant: "ghost", ic: "refresh-outline", onClick: modFail && !preview ? () => location.reload() : load })));
+  };
+  function load() {
+    clear(boot); boot.append(h("div", { class: "loading" }, spinner()));
+    Promise.all([ensureCss(MK_CSS), mkLoadMods()]).then(([cssOk]) => {
+      if (life.dead) return;
+      if (cssOk === false) return fail(false);
+      mkEnsureMonoBold();
+      const ui = mkBuild(page, life, preview);
+      ui.url = url;
+      boot.replaceWith(ui.head, ui.body);
+      renderKesfet(ui);
+    }, () => fail(true));
+  }
+  load();
   return page;
 }
 
@@ -535,7 +572,10 @@ async function renderKesfet(ui) {
   let events = [], artists = [], venues = [], loaded = false;
   let term = "", genreFilter = "", dateKey = "all";
   let heroStop = null; // etkin karusel aralığı — her çizimde öncekini kapatır (kapanışlar birikmez)
+  let heroPaused = false; // kullanıcı otomatik geçişi durdurdu (WCAG 2.2.2) — filtre/şehir değişip karusel yeniden çizilse de kalır
   life.add(() => heroStop?.());
+  const url = ui.url || { city: null, tur: null, q: "" };
+  if (url.q) { term = url.q; sInput.value = url.q; }
   const fx = { followSet: new Set(), inert: ui.preview };
 
   // ── Sekmeler ──
@@ -564,7 +604,7 @@ async function renderKesfet(ui) {
   const setCategory = (k) => {
     if (k === activeCategory) return;
     activeCategory = k; // ayrı sayfaya gitmeden içerik sola kayarak gelir (app sekme davranışı)
-    paintTabs(true); mkWriteCatQuery(); drawBody(true); toTop();
+    paintTabs(true); mkWriteQuery(mkCatPatch()); drawBody(true); toTop();
   };
   tabBtns.forEach((b, i) => b.addEventListener("click", () => setCategory(MK_CATS[i])));
   tabs.addEventListener("keydown", (e) => {
@@ -584,11 +624,12 @@ async function renderKesfet(ui) {
   life.add(() => window.removeEventListener("resize", onResize));
 
   // ── Açılır paneller (şehir + tür): dış dokunuş / Esc / odak dışarı kapatır ──
-  // Dış dokunuş YALNIZ kapatır: ardından gelen tık yutulur → paneli kapatırken alttaki kart/bağlantı açılmaz.
+  // İçerik (.mk-body) üzerindeki dış dokunuş YALNIZ kapatır: ardından gelen tık yutulur → paneli kapatırken alttaki kart/bağlantı
+  // açılmaz. Başlık (sekmeler, arama), alt sekme çubuğu ve sayfa dışı (ör. yönetici önizleme düğmeleri) ilk dokunuşta çalışır.
   let pop = null, popTrig = null, swallowOff = null;
   const armSwallow = () => {
     swallowOff?.();
-    const eat = (e) => { e.preventDefault(); e.stopPropagation(); off(); };
+    const eat = (e) => { if (body.contains(e.target)) { e.preventDefault(); e.stopPropagation(); } off(); };
     const off = () => {
       clearTimeout(t);
       document.removeEventListener("click", eat, true);
@@ -604,7 +645,7 @@ async function renderKesfet(ui) {
     if (!pop || pop.contains(e.target) || popTrig.contains(e.target)) return;
     const otherTrig = cityBtn.contains(e.target) || fBtn.contains(e.target); // diğer panelin düğmesi → o panel açılsın
     closePop(false);
-    if (!otherTrig) armSwallow();
+    if (!otherTrig && body.contains(e.target)) armSwallow();
   };
   const onDocKey = (e) => { if (e.key === "Escape" && pop) { e.preventDefault(); closePop(true); } };
   // Klavye odağı panel + tetikleyici dışına çıkınca kapan (panel sekmeleri/içeriği örtmesin). relatedTarget yoksa (pencere
@@ -637,11 +678,13 @@ async function renderKesfet(ui) {
   let cityCount = new Map();
   const cSearch = h("input", { type: "search", class: "mk-pop-input", "aria-label": "Şehir ara", placeholder: "Şehir ara...", autocomplete: "off", oninput: () => drawCities() });
   const listBox = h("div", { class: "mk-citylist", role: "listbox", "aria-label": "Şehirler" });
+  const paintCity = () => {
+    cityName.textContent = mkCityLabel(activeCity);
+    cityBtn.setAttribute("aria-label", "Şehir seç, şu an " + mkCityLabel(activeCity));
+  };
   const setCity = (c, focusBack) => {
-    activeCity = c;
-    try { localStorage.setItem("gb_city", c); } catch (_) {}
-    cityName.textContent = mkCityLabel(c);
-    cityBtn.setAttribute("aria-label", "Şehir seç, şu an " + mkCityLabel(c));
+    mkSaveCity(c); paintCity();
+    mkWriteQuery({ sehir: mkCitySlug(c) });
     closePop(!!focusBack); drawBody(false); drawCities();
   };
   // Liste: tek sekme durağı (seçili şehir, yoksa ilk) + ↑/↓/Home/End; ↑ ilk seçenekte aramaya döner, aramada ↓ listeye iner
@@ -708,7 +751,7 @@ async function renderKesfet(ui) {
   const drawFilter = (opts) => {
     clear(filterPop);
     const chip = (label, val, dot) => {
-      const b = h("button", { type: "button", class: "mk-gchip", onclick: () => { genreFilter = val; paintFilter(); drawBody(false); } },
+      const b = h("button", { type: "button", class: "mk-gchip", onclick: () => { genreFilter = val; paintFilter(); mkWriteQuery({ tur: val ? mkSlug(val) : null }); drawBody(false); } },
         h("span", { class: "mk-gdot", style: { background: dot } }), label);
       chips.push([val, b]);
       return b;
@@ -724,10 +767,12 @@ async function renderKesfet(ui) {
   fBtn.addEventListener("click", (e) => togglePop(filterPop, fBtn, e));
   drawFilter([]);
 
-  // ── Arama ──
-  sInput.addEventListener("input", () => { term = sInput.value; drawBody(false); });
+  // ── Arama (?q= gecikmeli yazılır — Safari replaceState sınırı) ──
+  const writeQ = H.debounce(() => mkWriteQuery({ q: term.trim() || null }), 400);
+  life.add(() => writeQ.cancel());
+  sInput.addEventListener("input", () => { term = sInput.value; drawBody(false); writeQ(); });
   sInput.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && sInput.value) { e.preventDefault(); sInput.value = ""; term = ""; drawBody(false); }
+    if (e.key === "Escape" && sInput.value) { e.preventDefault(); sInput.value = ""; term = ""; drawBody(false); writeQ.flush(); }
     else if (e.key === "Enter") sInput.blur();
   });
 
@@ -747,8 +792,13 @@ async function renderKesfet(ui) {
   cityNames = ["TÜMÜ", ...[...new Set([...events.map(evCity).filter(Boolean), ...PROVINCES])]];
   cityCount = new Map();
   events.forEach((e) => { const k = fold(evCity(e)); if (k) cityCount.set(k, (cityCount.get(k) || 0) + 1); });
+  // ?sehir= il listesinde yoksa etkinlik şehirleriyle eşle (masaüstü cityFromSlug ile aynı)
+  if (url.city) { const c = mkCityFromSlug(url.city, events.map(evCity)); if (c) { mkSaveCity(c); paintCity(); } }
   drawCities();
-  drawFilter([...new Set([...events.flatMap((e) => Array.isArray(e.genre) ? e.genre : (e.genre ? [e.genre] : [])), ...artists.flatMap((a) => Array.isArray(a.genres) ? a.genres : (a.genre ? [a.genre] : []))].map((g) => (g || "").trim()).filter(Boolean))]);
+  const genreOpts = [...new Set([...events.flatMap((e) => Array.isArray(e.genre) ? e.genre : (e.genre ? [e.genre] : [])), ...artists.flatMap((a) => Array.isArray(a.genres) ? a.genres : (a.genre ? [a.genre] : []))].map((g) => (g || "").trim()).filter(Boolean))];
+  drawFilter(genreOpts);
+  // ?tur= — tür seçeneğiyle eşleşirse uygula (masaüstü aile anahtarları: jazz, electronic, hip-hop, rnb…; eşleşme yoksa filtre yok)
+  if (url.tur) { const want = mkGenreKey(url.tur), g = genreOpts.find((x) => mkGenreKey(x) === want); if (g) { genreFilter = g; paintFilter(); } }
 
   const inCity = (ev) => activeCity === "TÜMÜ" || fold(evCity(ev)) === fold(activeCity);
   const mg = (item) => { if (!genreFilter) return true; const raw = item.genres ?? item.genre; const gs = Array.isArray(raw) ? raw : (raw ? [raw] : []); return gs.some((g) => fold(g) === fold(genreFilter)); };
@@ -825,76 +875,124 @@ async function renderKesfet(ui) {
     return h("div", { class: "mk-evtab", "aria-label": "Etkinlikler" },
       h("div", { class: "mk-dates mk-scroll", role: "group", "aria-label": "Tarihe göre süz" }, ...btns), list);
   }
-  // TÜMÜ — legacy bölümleri aynı sıra/koşullarla, tasarımın kart dilinde
+  const toEvents = (dk = "all") => mkMoreBtn(() => { dateKey = dk; setCategory("ETKİNLİKLER"); });
+  // TÜMÜ — legacy bölümleri aynı sıra/koşullarla, tasarımın kart dilinde. Etkinlik bölümlerinin "TÜMÜNÜ GÖR"ü tasarımdaki gibi
+  // sayfa değiştirmeden ETKİNLİKLER sekmesine geçer (goEvents; legacy #/etkinlikler ile aynı liste + tarih şeridi o sekmede).
   function allView(cityEvents, fArtists) {
     const wrap = h("div", { class: "mk-all" });
+    const t10Id = ui.sid + "-top10";
     if (!cityEvents.length) {
       wrap.append(h("div", { class: "mk-pad0" }, mkEmpty(svgIcon("compass", { size: 30, sw: "1.5" }), noEventsTitle(), NO_EVENTS_SUB)));
     } else {
       // Hero: VIP önce, sonra tarih — ilk 5
       const hero = [...cityEvents].sort((a, b) => ((b.vipStatus === "approved") - (a.vipStatus === "approved")) || (msOf(a) ?? 0) - (msOf(b) ?? 0)).slice(0, 5);
       wrap.append(heroSection(hero));
-      // Top 10 — katılımcı sayısına göre
+      // Top 10 — katılımcı sayısına göre (başlık TOP 10 çipinin hedefi → programla odaklanabilir)
       const topList = [...cityEvents].sort((a, b) => (b.attendeeCount ?? 0) - (a.attendeeCount ?? 0)).slice(0, 10);
-      wrap.append(mkSection({ title: "GigBridge Top 10", id: ui.sid + "-top10", right: mkMoreLink("#/etkinlikler") },
-        mkRow("", topList.map((e, i) => mkEventCard(e, { rank: i + 1 })))));
+      const t10 = mkSection({ title: "GigBridge Top 10", id: t10Id, right: toEvents() },
+        mkRow("", topList.map((e, i) => mkEventCard(e, { rank: i + 1 }))));
+      t10.querySelector(".mk-h2").tabIndex = -1;
+      wrap.append(t10);
     }
     // Sadece GigBridge'de — her zaman görünür
     const excl = cityEvents.filter((e) => e.vipStatus === "approved" || e.isExclusive);
-    wrap.append(mkSection({ title: "Sadece GigBridge'de", sub: "Özel etkinlikler, VIP deneyimler", right: mkMoreLink("#/etkinlikler") },
+    wrap.append(mkSection({ title: "Sadece GigBridge'de", sub: "Özel etkinlikler, VIP deneyimler", right: toEvents() },
       excl.length ? mkRow("", excl.map((e) => mkEventCard(e)))
         : h("div", { class: "mk-excl-empty" }, svgIcon("star", { size: 18, stroke: true, sw: "1.7" }), h("span", {}, "Şu an özel etkinlik yok — VIP deneyimler yakında burada."))));
     // En Yeniler (yalnız varsa)
     const news = cityEvents.filter((e) => e.isNew === true);
-    if (news.length) wrap.append(mkSection({ title: "GigBridge'de En Yeniler!", right: mkMoreLink("#/etkinlikler") }, mkRow("", news.map((e) => mkEventCard(e)))));
-    // Bu Hafta
+    if (news.length) wrap.append(mkSection({ title: "GigBridge'de En Yeniler!", right: toEvents() }, mkRow("", news.map((e) => mkEventCard(e)))));
+    // Bu Hafta (TÜMÜNÜ GÖR → ETKİNLİKLER sekmesi, BU HAFTA süzgeci seçili)
     const week = cityEvents.filter((e) => { const ms = msOf(e); return ms != null && ms <= Date.now() + 7 * 86400e3; });
-    if (week.length) wrap.append(mkSection({ title: "Bu Hafta", sub: activeCity !== "TÜMÜ" ? activeCity : null, right: mkMoreLink("#/etkinlikler") }, mkRow("", week.map((e) => mkEventCard(e)))));
-    // Popüler Sanatçılar (+ altın TOP 10 çipi — yalnız mobil #/top10 rotası varsa; bkz. MK_TOP10_HREF)
+    if (week.length) wrap.append(mkSection({ title: "Bu Hafta", sub: activeCity !== "TÜMÜ" ? activeCity : null, right: toEvents("week") }, mkRow("", week.map((e) => mkEventCard(e)))));
+    // Popüler Sanatçılar + tasarımın altın TOP 10 çipi. Uygulamada dinleyici Top 10'a (DinleyiciTop10) gider; mobil webde o rota
+    // yok (app.js ≤768: #/top10 → #/kesfet) → spec'in geçici yedeği: bu sayfadaki "GigBridge Top 10" bölümüne kaydırıp başlığa
+    // odaklanır (farklı sıralama: katılımcı sayısı). Top 10 bölümü yoksa (şehirde etkinlik yok) çip gizli.
     if (fArtists.length) {
-      const chip = MK_TOP10_HREF ? h("a", { class: "mk-t10chip mk-press", href: MK_TOP10_HREF }, svgRaw(MKI.trophy, { size: 12, _kind: "multi" }), "TOP 10") : null;
+      const chip = cityEvents.length ? h("button", { type: "button", class: "mk-t10chip mk-press", onclick: () => jumpTo(t10Id) },
+        svgRaw(MKI.trophy, { size: 12, _kind: "multi" }), "TOP 10", mkVh(" — GigBridge Top 10 bölümüne git")) : null;
       wrap.append(mkSection({ title: "Popüler Sanatçılar", right: h("div", { class: "mk-sec-right" }, chip, mkMoreBtn(() => setCategory("SANATÇILAR"))) },
         mkRow("mk-hscroll-a", fArtists.slice(0, 5).map((a) => mkArtistCard(a, fx)))));
     }
     return wrap;
   }
-  // Öne çıkan karusel (legacy: VIP önce, sonra tarih; ilk 5; 4 sn) — kaydırmalı (scroll-snap), her slayt klavyeyle odaklanır
-  // (odaklanan slayt görünür kayar). Noktalar legacy'deki gibi YALNIZ gösterge (dokunma hedefi değil). Başlık: ilk slayt
-  // şu an / bu gece ise tasarımın "Bu Gece" başlığı + bugünün tarihi ("SAL · 29 EYL"); değilse görünür başlık yok (legacy).
-  // Otomatik ilerleme: üzerine gelme / odak / dokunma / gizli sekme / azaltılmış hareket → durur.
+  // Bölüm başlığına kaydır + odakla (yapışkan başlık payı: .mk-h2[tabindex] scroll-margin-top, m-kesfet.css)
+  function jumpTo(id) {
+    const el = body.querySelector("#" + CSS.escape(id));
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    el.scrollIntoView({ behavior: mkReduced() ? "auto" : "smooth", block: "start" });
+  }
+  // Öne Çıkanlar karuseli (legacy: VIP önce, sonra tarih; ilk 5; 4 sn) — kaydırmalı (scroll-snap). Başlık satırı tasarımın H2
+  // dilinde her zaman görünür: "Öne Çıkanlar" + TÜMÜNÜ GÖR — slaytlar farklı günlerden olabildiği için tasarımın "Bu Gece" +
+  // tarih başlığı bölüme değil slayta ait: ŞU AN / BU GECE / BUGÜN rozeti (mkTonight). Kartın altında (legacy yeri) slayt
+  // noktaları (düğme, "Slayt 2 / 5: başlık", ←/→/Home/End) + sağda durdur/oynat (WCAG 2.2.2; azaltılmış harekette otomatik geçiş
+  // yok → düğme yok). Klavye: slaytlar tek sekme durağı (etkin slayt) + ←/→ ile önceki/sonraki. Otomatik ilerleme: kullanıcı
+  // durdurdu / üzerine gelme / odak / dokunma / gizli sekme → durur; elle geçişten sonra 6 sn bekler.
   function heroSection(list) {
     const n = list.length, reduced = mkReduced();
     const slides = list.map((ev, i) => mkHeroCard(ev, i === 0));
     const track = h("div", { class: "mk-hero-track mk-scroll" }, ...slides);
     let idx = 0, hold = 0, hover = false, focusIn = false, touching = false;
-    const dotEls = n > 1 ? list.map(() => h("span", { class: "mk-dot" })) : [];
-    const paint = (i) => { idx = i; dotEls.forEach((d, j) => d.classList.toggle("on", j === i)); };
+    const dotBtns = n > 1 ? list.map((ev, i) => h("button", { type: "button", role: "tab", class: "mk-dot", "aria-label": `Slayt ${i + 1} / ${n}: ${ev.title || "Etkinlik"}`, onclick: () => goTo(i, true) },
+      h("span", { class: "mk-dot-v" }))) : [];
+    const paint = (i) => {
+      idx = i;
+      dotBtns.forEach((d, j) => { const on = j === i; d.classList.toggle("on", on); d.setAttribute("aria-selected", on ? "true" : "false"); d.tabIndex = on ? 0 : -1; });
+      slides.forEach((s, j) => { s.tabIndex = j === i ? 0 : -1; });
+    };
     const step = () => (slides[0].offsetWidth || track.clientWidth) + 20;
-    const goTo = (i) => { track.scrollTo({ left: i * step(), behavior: reduced ? "auto" : "smooth" }); paint(i); };
+    function goTo(i, user) {
+      i = ((i % n) + n) % n;
+      track.scrollTo({ left: i * step(), behavior: reduced ? "auto" : "smooth" });
+      paint(i);
+      if (user) hold = Date.now();
+      return i;
+    }
+    const keyStep = (e) => (e.key === "ArrowRight" ? idx + 1 : e.key === "ArrowLeft" ? idx - 1 : e.key === "Home" ? 0 : e.key === "End" ? n - 1 : null);
     track.addEventListener("scroll", () => { const i = Math.round(track.scrollLeft / step()); if (i !== idx && i >= 0 && i < n) paint(i); }, { passive: true });
     track.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") hover = true; });
     track.addEventListener("pointerleave", () => { hover = false; });
     track.addEventListener("touchstart", () => { touching = true; }, { passive: true });
     track.addEventListener("touchend", () => { touching = false; hold = Date.now(); }, { passive: true });
-    track.addEventListener("focusin", (e) => { const j = slides.indexOf(e.target); if (j >= 0) paint(j); });
-    const dots = dotEls.length ? h("div", { class: "mk-dots", "aria-hidden": "true" }, ...dotEls) : null;
-    const t0 = mkTonight(list[0]);
-    let sec;
-    if (t0 === "ŞU AN" || t0 === "BU GECE") {
-      const d = new Date();
-      const dateLbl = `${mkUp(H.DAYS_TR_SHORT[d.getDay()])} · ${d.getDate()} ${mkUp(H.MONTHS_TR_SHORT[d.getMonth()])}`;
-      sec = mkSection({ title: "Bu Gece", id: ui.sid + "-hero", right: h("span", { class: "mk-sec-date" }, dateLbl) }, track, dots);
-    } else {
-      sec = h("section", { class: "mk-sec", "aria-label": "Öne çıkan etkinlikler" }, track, dots);
+    track.addEventListener("focusin", (e) => { const j = slides.indexOf(e.target); if (j >= 0 && j !== idx) paint(j); });
+    track.addEventListener("keydown", (e) => {
+      if (n < 2 || slides.indexOf(e.target) < 0) return;
+      const j = keyStep(e);
+      if (j == null) return;
+      e.preventDefault();
+      slides[goTo(j, true)].focus({ preventScroll: true });
+    });
+    let ctl = null;
+    if (n > 1) {
+      const dots = h("div", { class: "mk-dots", role: "tablist", "aria-label": "Öne çıkan etkinlikler" }, ...dotBtns);
+      dots.addEventListener("keydown", (e) => {
+        const j = keyStep(e);
+        if (j == null) return;
+        e.preventDefault();
+        dotBtns[goTo(j, true)].focus();
+      });
+      let pauseBtn = null;
+      if (!reduced) {
+        pauseBtn = h("button", { type: "button", class: "mk-hero-pause mk-press" });
+        const paintPause = () => {
+          pauseBtn.setAttribute("aria-label", heroPaused ? "Otomatik geçişi başlat" : "Otomatik geçişi durdur");
+          pauseBtn.replaceChildren(svgIcon(heroPaused ? "playFilled" : "pause", { size: 12 }));
+        };
+        pauseBtn.addEventListener("click", () => { heroPaused = !heroPaused; hold = Date.now(); paintPause(); });
+        paintPause();
+      }
+      ctl = h("div", { class: "mk-hero-ctl" }, dots, pauseBtn);
     }
+    const sec = mkSection({ title: "Öne Çıkanlar", id: ui.sid + "-hero", right: toEvents() }, track, ctl);
     sec.classList.add("mk-hero-sec");
     sec.addEventListener("focusin", () => { focusIn = true; });
     sec.addEventListener("focusout", (e) => { if (!sec.contains(e.relatedTarget)) focusIn = false; });
     paint(0);
     if (n > 1 && !reduced) {
       const iv = setInterval(() => {
-        if (hover || focusIn || touching || document.hidden || Date.now() - hold < 6000) return;
-        goTo((idx + 1) % n);
+        if (heroPaused || hover || focusIn || touching || document.hidden || Date.now() - hold < 6000) return;
+        goTo(idx + 1);
       }, 4000);
       heroStop = () => clearInterval(iv);
     }

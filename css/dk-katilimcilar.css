@@ -8,6 +8,8 @@
   --dk-swap-dur: 360ms; --dk-swap-y: 8px;
   box-sizing: border-box; width: 100%; max-width: calc(1280px + 2 * var(--dk-gutter)); margin: 0 auto; padding: 0 var(--dk-gutter);
 }
+/* Klavye odağı yapışkan header'ın (76) altında kalmasın (WCAG 2.4.11): tarayıcı odaklanan öğeyi 96 px aşağıda durdurur */
+.dk-katilimcilar :is(a, button, input, [tabindex]) { scroll-margin-top: 96px; }
 
 /* ---------- breadcrumb (h64, 13px, "/" #5E636D) ---------- */
 .dk-katilimcilar-bc { height: 64px; box-sizing: border-box; min-width: 0; white-space: nowrap; }

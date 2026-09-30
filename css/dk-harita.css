@@ -51,6 +51,8 @@
 
 /* Liste */
 .dk-harita .dk-harita-list { flex-grow: 1; min-height: 0; overflow-y: auto; margin: 0; padding: 4px 16px 16px; list-style: none; border-top: 1px solid #14171D; display: flex; flex-direction: column; gap: 6px; }
+.dk-harita .dk-harita-list:focus { outline: none; }
+.dk-harita .dk-harita-list:focus-visible { outline: 2px solid #4ED8FF; outline-offset: -2px; }
 .dk-harita-li { display: block; flex-shrink: 0; }
 .dk-harita-row {
   position: relative; width: 100%; box-sizing: border-box; margin-top: 6px; padding: 14px 14px 14px 18px;
@@ -91,11 +93,12 @@
 .dk-harita .dk-harita-leaflet.leaflet-container { background: #0A0C10; font-family: var(--dk-font-sans); outline-offset: -2px; }
 .dk-harita .dk-harita-leaflet.leaflet-container:focus-visible { outline: 2px solid #4ED8FF; }
 /* Koyu karo görünümü: legacy ile AYNI OSM karoları, yalnız CSS filtresi (spec §4.3 seçenek a; yeni sağlayıcı/anahtar yok).
-   Tek renkli mavi-siyah (artboard gibi): ters çevir → gri → sepya → mavi tona döndür → ton doygunluğu → parlaklık. Gri basamağı
-   POI ikonlarını (pembe/mavi), parkları (yeşil) ve ana yolları (turuncu) nötrler → tür renkli pinlerle yarışan renk gürültüsü yok.
-   Ölçüm (1440, İstanbul z13–14): kara ≈ #0D1217 (düz kara #090B0E), deniz ≈ #121921 (artboard #0A0C10 / #0B1824); etiketler soluk mavi-gri.
+   Ters çevir → kısmi sepya (kara ile denizin ton farkı KORUNUR; tam gri basamağı yok) → mavi tona döndür → doygunluk → düşük parlaklık.
+   Parametreler OSM paletinin (kara #F2EFE9, deniz #AAD3DF, yerleşim #E0DFDF, bina #D9D0C9, park, ana yol, etiket) sRGB filtre
+   benzetimiyle hedefe (artboard kara #0A0C10, deniz #0B1824) en küçük kareler aramasıyla seçildi; ölçüm (1440, İstanbul):
+   düz kara ≈ #0A0C0E, deniz ≈ #0D1A23, yerleşim ≈ #0D1116, etiketler ≈ #4A4D4D; park/POI/ana yol renkleri koyu ve düşük doygunlukta kalır.
    Bilinen sınır: ters çevirme yolları karadan KOYU yapar (artboard'da açık) — ayrı koyu karo sağlayıcısı gerekir (Q13). */
-.dk-harita .dk-harita-leaflet .leaflet-tile-pane { filter: invert(1) grayscale(1) sepia(1) hue-rotate(170deg) saturate(2.2) brightness(.38) contrast(.97); opacity: .8; }
+.dk-harita .dk-harita-leaflet .leaflet-tile-pane { filter: invert(1) sepia(.85) hue-rotate(170deg) saturate(3) brightness(.29) contrast(.95); }
 .dk-harita .dk-harita-leaflet .leaflet-tile { -webkit-user-select: none; user-select: none; }
 
 /* Leaflet div işaretçileri: varsayılan beyaz kutu yok */
@@ -173,6 +176,8 @@
   transition: left 420ms var(--dk-ease), top 420ms var(--dk-ease);
 }
 .dk-harita-card.is-tracking { transition: none; }
+/* pin görünür alanın dışındayken kart gizli (köşeye sıkışıp kontrolleri/atfı örtmez); seçim sürer */
+.dk-harita-card.is-off { visibility: hidden; pointer-events: none; }
 .dk-harita-card.is-zooming { transition: left 250ms cubic-bezier(0, 0, .25, 1), top 250ms cubic-bezier(0, 0, .25, 1); }
 .dk-harita-cmedia { position: relative; height: 120px; overflow: hidden; }
 .dk-harita-cimg { width: 100%; height: 100%; object-fit: cover; display: block; }

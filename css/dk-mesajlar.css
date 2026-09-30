@@ -108,7 +108,7 @@
 .dk-mesajlar-loading { margin: 0 auto 40px; color: #8A8E97; display: flex; }
 /* konuşma seçili değil (boş gelen kutusu / tek bölmeden dönüş): yer tutucu dikeyde ortada */
 .dk-mesajlar-chat-none .dk-mesajlar-log { justify-content: center; }
-.dk-mesajlar-chat-none .dk-mesajlar-cempty { margin-bottom: 0; }
+.dk-mesajlar-chat-none .dk-mesajlar-cempty, .dk-mesajlar-chat-none .dk-mesajlar-loading { margin-bottom: 0; }
 /* teklif kartı (WebPanelMesajlar OfferChatCard) */
 .dk-mesajlar-ocol { width: 380px; flex: 0 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .dk-mesajlar-offer { width: 100%; box-sizing: border-box; border-radius: 16px 16px 16px 4px; border: 1px solid #1F232B; background: #0E1014; overflow: hidden; }

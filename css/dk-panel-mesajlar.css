@@ -108,7 +108,7 @@
 .dk-panel-mesajlar-loading { margin: 0 auto 40px; color: #8A8E97; display: flex; }
 /* konuşma seçili değil (boş gelen kutusu / tek bölmeden dönüş): yer tutucu dikeyde ortada */
 .dk-panel-mesajlar-chat-none .dk-panel-mesajlar-log { justify-content: center; }
-.dk-panel-mesajlar-chat-none .dk-panel-mesajlar-cempty { margin-bottom: 0; }
+.dk-panel-mesajlar-chat-none .dk-panel-mesajlar-cempty, .dk-panel-mesajlar-chat-none .dk-panel-mesajlar-loading { margin-bottom: 0; }
 /* teklif kartı (WebPanelMesajlar OfferChatCard) */
 .dk-panel-mesajlar-ocol { width: 380px; flex: 0 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .dk-panel-mesajlar-offer { width: 100%; box-sizing: border-box; border-radius: 16px 16px 16px 4px; border: 1px solid #1F232B; background: #0E1014; overflow: hidden; }
@@ -220,6 +220,8 @@
 .dk-panel-mesajlar-tabs { display: grid; padding: 3px; border: 1px solid #1F232B; border-radius: 8px; background: #0E1014; }
 .dk-panel-mesajlar-tab { height: 32px; min-width: 0; margin: 0; padding: 1px 6px; border: 0; border-radius: 5px; background: transparent; color: #8A8E97; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .dk-panel-mesajlar-tab.is-on { background: #1C2029; color: #F2F1EE; }
+/* sekme paneli (role=tabpanel) — yalnız <ul>'yi sarar; liste bölmesindeki esnek kaydırma düzeni ul'de aynen sürer */
+.dk-panel-mesajlar-tp { flex-grow: 1; min-height: 0; display: flex; flex-direction: column; }
 /* mekan özeti yer tutucusu: #14171D + baş harf (spec §11) */
 .dk-panel-mesajlar-cph { background: #14171D; }
 

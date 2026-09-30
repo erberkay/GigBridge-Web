@@ -9,6 +9,8 @@
   --dk-row-hover-bg: #14171D;          /* artboard .gb-row:hover */
   box-sizing: border-box; width: 100%; max-width: calc(1280px + 2 * var(--dk-gutter)); margin: 0 auto; padding: 0 var(--dk-gutter);
 }
+/* Klavye odağı yapışkan header'ın (76) altında kalmasın (WCAG 2.4.11): tarayıcı odaklanan öğeyi 96 px aşağıda durdurur */
+.dk-etkinlikler :is(a, button, input, [tabindex]) { scroll-margin-top: 96px; }
 
 /* ---------- 1. sayfa başı (76–302) ---------- */
 .dk-etkinlikler-head { padding: 56px 0 36px; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
@@ -24,17 +26,18 @@
   position: relative; display: flex; align-items: stretch; gap: 6px;
   margin: -4px; padding: 4px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; scroll-behavior: smooth;
 }
+@media (prefers-reduced-motion: reduce) { .dk-etkinlikler-strip { scroll-behavior: auto; } }
 .dk-etkinlikler-strip::-webkit-scrollbar { display: none; }
 .dk-etkinlikler-strip.is-fade-r { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent); }
 .dk-etkinlikler-strip.is-fade-l { -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px); mask-image: linear-gradient(90deg, transparent, #000 56px); }
 .dk-etkinlikler-strip.is-fade-l.is-fade-r { -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent); }
-/* Hücreler 92/60 genişlikte (artboard); içerik dar kalırsa orantılı küçülür (en az 72/48) → 1280'de 14 gün sığar, kaydırma yalnız daha dar genişliklerde */
+/* Hücreler SABİT 92×60 / 60×60 (artboard: flex-shrink 0); şerit (≈1243) içeriğe sığmazsa (<1403 px, 1280 dahil) küçülmez, kaydırılır + kenar solması (spec §3.10) */
 .dk-etkinlikler-q, .dk-etkinlikler-day {
   position: relative; overflow: hidden; box-sizing: border-box; height: 60px; padding: 0 4px; white-space: nowrap;
   border-radius: 8px; border: 1px solid #1F232B; background: #0E1014; color: #A3A7AF;
 }
-.dk-etkinlikler-q { flex: 0 1 92px; min-width: 72px; font-size: 14px; font-weight: 600; }
-.dk-etkinlikler-day { flex: 0 1 60px; min-width: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.dk-etkinlikler-q { flex: 0 0 92px; font-size: 14px; font-weight: 600; }
+.dk-etkinlikler-day { flex: 0 0 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
 .dk-etkinlikler-q.is-on, .dk-etkinlikler-day.is-on { background: #14171D; border-color: #F2F1EE; color: #F2F1EE; }
 .dk-etkinlikler-dl { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; color: #8A8E97; }
 .dk-etkinlikler-dl.is-rel { color: #FF4FA3; }
@@ -48,13 +51,12 @@
 /* ---------- 3. gövde: kenar çubuğu 280 + sonuçlar ---------- */
 .dk-etkinlikler-body { padding: 40px 0 88px; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 40px; align-items: start; }
 
-/* FilterSidebar — header yapışkan (76) → top 100 (spec §3.3). Yapışkanken ekrana sığmazsa (≈1015 > 900−124) iç kaydırma:
-   ŞEHİR listesi her kaydırma konumunda erişilebilir kalır. Yüksek ekranda (≥1140) sınır devreye girmez → artboard ile aynı. */
+/* FilterSidebar — header yapışkan (76) → top 100 (spec §3.3). Artboard gibi TAM BOY (yükseklik sınırı / iç kaydırma yok).
+   Ekrana sığmazsa etkinlikler.js fitSide() top'u innerHeight − H − 24'e çeker ("alttan yapışkan": önce akar, alt kenarı görünür kalır). */
 .dk-etkinlikler-side {
-  position: sticky; top: 100px; box-sizing: border-box; max-height: calc(100vh - 124px); overflow-y: auto;
+  position: sticky; top: 100px; box-sizing: border-box;
   border-radius: 12px; border: 1px solid #1F232B; background: #0A0B0F;
 }
-.dk-etkinlikler-side .dk-etkinlikler-sh { position: sticky; top: 0; z-index: 1; background: #0A0B0F; }
 .dk-etkinlikler-fp { display: flex; flex-direction: column; }
 .dk-etkinlikler-sh { padding: 18px 20px; border-bottom: 1px solid #1F232B; display: flex; align-items: center; justify-content: space-between; }
 .dk-etkinlikler-sht { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 600; }
@@ -77,14 +79,16 @@
 .dk-etkinlikler-daychip[hidden] { display: none; }
 .dk-etkinlikler-fs-price .dk-seg { width: 100%; }
 .dk-etkinlikler-fs-price .dk-seg-b { flex: 1 1 0; min-width: 0; padding: 1px 6px; }
-/* şehir listesi: arama 81 ile uzarsa kenar çubuğu (max-height) / çekmece gövdesi kendi içinde kaydırır — iç içe kaydırma yok */
+/* şehir listesi: varsayılan liste (etkinliği olan şehirler) tam boy. Arama etkinken (.is-q; 81 ile uzayabilir) YALNIZ kenar çubuğunda
+   ~10,5 satırla sınırlı iç kaydırma; çekmecede gövde zaten kendi içinde kayar. */
 .dk-etkinlikler-cities { display: flex; flex-direction: column; gap: 2px; }
+.dk-etkinlikler-side .dk-etkinlikler-cities.is-q { max-height: 419px; overflow-y: auto; overscroll-behavior: contain; }
 .dk-etkinlikler-cities .dk-rdo { flex-shrink: 0; }
 .dk-etkinlikler-cities .dk-rdo:focus-visible { outline-offset: -2px; }
 .dk-etkinlikler-nocity { padding: 8px; font-size: 13px; color: #8A8E97; }
 
-/* Sonuç kolonu — ızgara sütunu kolon genişliğine göre (container query): ≥800 → 3 (1180+ viewport; kart ≥250), altı → 2.
-   Eşik etkinlikler.js COL3_MIN ile aynı (sayfa boyu 9/10). */
+/* Sonuç kolonu — ızgara sütunu kolon genişliğine göre (container query): ≥800 → 3 (≈1180+ viewport; kart ≥250), altı → 2 (Q12:
+   kanvas notu 1024–1279'da 3 istiyor; 260 kenar çubuğunun yanında 1024–1179'da 3 kolon kartı ≈210'a düşürür → spec §3.10 önerisi 2). */
 .dk-etkinlikler-res { min-width: 0; display: flex; flex-direction: column; gap: 24px; container-type: inline-size; }
 .dk-etkinlikler-bar { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .dk-etkinlikler-barl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }

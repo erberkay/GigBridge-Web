@@ -244,7 +244,14 @@ export function katilimcilarView(ctx) {
       const added = list.slice(before, Math.min(limit, list.length)).map(personCard);
       grid.append(...added);
       renderMore(list.length, Math.min(limit, list.length), false);
-      added[0]?.querySelector("button")?.focus({ preventScroll: true });
+      // odak (tıklanan düğme yeniden çizildi) ilk YENİ karta: mesaj düğmesi varsa o, yoksa (anonim / ben) kartın kendisi (tabindex −1)
+      // → odak <body>'ye düşmez; sonraki Tab yeni kartlardan devam eder
+      const first = added[0];
+      if (first) {
+        const target = first.querySelector("button") || first;
+        if (target === first) first.tabIndex = -1;
+        target.focus({ preventScroll: true });
+      }
     });
     more.replaceChildren(h("span", { class: "dk-katilimcilar-morecap" }, `${fmtInt(total)} kişiden ${fmtInt(shown)} tanesi gösteriliyor`), btn);
   }

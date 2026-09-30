@@ -16,17 +16,21 @@
 //   sekmeleri (IntersectionObserver), yaklaşan etkinlikler (3 kolonda 3, 2 kolonda 2×2; "Tümünü gör" yerinde genişletir) +
 //   sahne alan sanatçılar (events where venueId == id), puan özeti, mini Leaflet haritası, telefon/web sitesi bilgi satırları,
 //   "Sanatçılar için" CTA (misafir → #/register?rol=artist; dinleyici → onaylı çıkış + sanatçı kaydı).
-// Puan & Yorum modalı mevcut yorumu (varsa) önceden doldurur (belge kimliği `${uid}_${venueId}` → yazım üzerine yazar; legacy ile aynı).
+// Puan & Yorum modalı: yorum yoksa submitVenueReview (`${uid}_${venueId}`, legacy ile birebir); kendi yorumu varsa ön-doldurur ve
+//   legacy "Yorumu Düzenle" yamasıyla günceller (updateMyReview {comment, rating, overallRating}). App yeniden değerlendirmeyi
+//   engeller ("Zaten Değerlendirdiniz") → sahibi sorusu 4 (public-b OQ4).
 //
 // Veri: userById · getVenueReviews · isFavVenue · venueTimeline (data.js, mevcut) + eventsAtVenue (bu modülde; salt-okuma,
-// tek alanlı sorgu, cleanupEventBanners YAN ETKİSİ YOK) + sanatçı belgeleri (userById, en çok 12). Yazımlar: favVenue/unfavVenue,
-// submitVenueReview (legacy ile birebir). Yeni alan/indeks/Cloud Function YOK.
-// Panel rolleri (masaüstü politika 3): sanatçı → Mesaj (#/artist/mesaj) + Puan Ver (#/artist/mekanlar = kendi değerlendirme akışı);
+// tek alanlı sorgu, cleanupEventBanners YAN ETKİSİ YOK) + sanatçı belgeleri (userById, en çok 12) + sanatçı izleyicide
+// artistAcceptedInvitations (data.js). Yazımlar: favVenue/unfavVenue, submitVenueReview / updateMyReview (legacy ile birebir).
+// Yeni alan/indeks/Cloud Function YOK.
+// Panel rolleri (masaüstü politika 3): sanatçı → Mesaj (#/artist/mesaj) + (yalnız bu mekanda kabul edilmiş daveti varsa) Puan Ver /
+// Yorum yap (#/artist/mekanlar?q={mekan} = kendi değerlendirme akışı); "artists" görünürlüklü sanatçı yorumlarını görür (app ile aynı);
 // mekan/organizatör → yalnız Mesaj; mekanın kendi sayfası → "Profili düzenle"; yönetici → aksiyon yok.
 import { h, loadLeaflet } from "../../ui.js";
 import { session, logout } from "../../store.js";
 import { db, collection, getDocs, query, where } from "../../firebase.js";
-import { userById, getVenueReviews, isFavVenue, favVenue, unfavVenue, venueTimeline, submitVenueReview, updateMyReview, convIdFor } from "../../data.js";
+import { userById, getVenueReviews, isFavVenue, favVenue, unfavVenue, venueTimeline, submitVenueReview, updateMyReview, convIdFor, artistAcceptedInvitations } from "../../data.js";
 import { requestChat as legacyRequestChat } from "../../pages/messages.js";
 import { publicShell } from "../shared/public-shell.js";
 import { svgIcon, svgRaw, svgPath } from "../shared/icons.js";
@@ -100,6 +104,14 @@ async function eventsAtVenue(venueId) {
   const snap = await getDocs(query(collection(db, "events"), where("venueId", "==", venueId)));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
+// Etkinlik durumu (herkese açık listeler): web/app yalnız "upcoming" ve "cancelled" yazar; legacy/app herkese açık listeler
+// status == "upcoming" süzer (discoverEvents). Yaklaşan = "upcoming" (ya da durumsuz eski belge); sahne alanlar ayrıca
+// bitmiş durumları (functions/rankings.js NON_PUBLISHED'daki "completed"/"past") da sayar. Diğer her durum (iptal/taslak/
+// silinmiş/arşiv/bilinmeyen) iki listeden de düşer. SHARED-CANDIDATE: sanatci.js UNPUBLISHED/DONE_STATUS ile tek helpers yardımcısı.
+const evStatus = (e) => String(e?.status || "").trim().toLowerCase();
+const isHiddenEv = (e) => e.isDraft === true || e.cancelled === true;
+const isListedUpcoming = (e) => !isHiddenEv(e) && (evStatus(e) === "" || evStatus(e) === "upcoming");
+const isListedPlayed = (e) => !isHiddenEv(e) && ["", "upcoming", "completed", "past"].includes(evStatus(e));
 
 // İzleyici rolü → aksiyon kümesi
 function viewerKind(venueId) {
@@ -156,12 +168,15 @@ export function mekanView(ctx) {
     const seq = ++reqSeq;
     if (!quiet) renderSkeleton();
     const me = session.user?.uid;
-    const [v, revs, fav, tl, evs] = await Promise.all([
+    const isArtistViewer = viewerKind(id) === "artist" && !!me;
+    const [v, revs, fav, tl, evs, invs] = await Promise.all([
       userById(id).catch(() => undefined),
       getVenueReviews(id).catch(() => []),
       isRealUser() && me ? isFavVenue(me, id) : false,
       venueTimeline(id).catch(() => []),
       eventsAtVenue(id).catch(() => null),
+      // sanatçı izleyici: "Mekan Değerlendir" listesiyle (artist/mekanlar.js) AYNI kaynak — kabul edilmiş davetler
+      isArtistViewer ? artistAcceptedInvitations(me).catch(() => []) : null,
     ]);
     if (dead || seq !== reqSeq) return;
     if (v === undefined) { if (!quiet) renderMessage("error"); return; }
@@ -169,10 +184,15 @@ export function mekanView(ctx) {
     // göstermez, Puan Ver ile mekan-olmayana venueReviews yazdırmaz. userType'ı olmayan eski mekan belgeleri geçer.
     if (!v || (v.userType && v.userType !== "venue")) return renderMessage("notfound");
 
-    // etkinlikler: iptaller hariç; yaklaşan = bitmemiş (canlı dahil) artan; geçmiş = bitmiş azalan
-    const live = (evs || []).filter((e) => e.status !== "cancelled" && eventStartMs(e) != null);
-    const upcoming = live.filter((e) => !isEventOver(e)).sort((a, b) => eventStartMs(a) - eventStartMs(b));
-    const past = live.filter((e) => isEventOver(e)).sort((a, b) => eventStartMs(b) - eventStartMs(a));
+    // Sanatçının bu mekandaki kabul edilmiş daveti (mekanlar.js gruplama anahtarı venueId ?? venueName ile aynı eşleşme) → yalnız
+    // o zaman Puan Ver / Yorum yap görünür ve #/artist/mekanlar?q={davetteki mekan adı} ile satıra süzülür.
+    const artistInv = invs ? (invs.find((i) => i.venueId === id) || invs.find((i) => !i.venueId && i.venueName && fold(i.venueName) === fold(v.displayName || ""))) : null;
+    const artistReview = artistInv ? { q: artistInv.venueName || "" } : null;
+
+    // etkinlikler: yayında olmayanlar hariç; yaklaşan = "upcoming" + bitmemiş (canlı dahil) artan; geçmiş = bitmiş azalan
+    const dated = (evs || []).filter((e) => eventStartMs(e) != null);
+    const upcoming = dated.filter((e) => isListedUpcoming(e) && !isEventOver(e)).sort((a, b) => eventStartMs(a) - eventStartMs(b));
+    const past = dated.filter((e) => isListedPlayed(e) && isEventOver(e)).sort((a, b) => eventStartMs(b) - eventStartMs(a));
     // sahne alan sanatçılar: geçmiş etkinliklerin tekil artistId'leri (en yeni önce, en çok 6); artistId yoksa ad ile
     const played = [];
     const seen = new Set();
@@ -188,7 +208,7 @@ export function mekanView(ctx) {
     if (dead || seq !== reqSeq) return;
     const artists = new Map(ids.map((a, i) => [a, docs[i]]));
     root.classList.toggle("is-static", quiet);   // sessiz yenilemede giriş animasyonları yeniden oynamasın
-    render({ v, revs, fav, tl, evsOk: evs != null, upcoming, played, artists });
+    render({ v, revs, fav, tl, evsOk: evs != null, upcoming, played, artists, artistReview });
     if (refocus) {
       const want = refocus; refocus = null;
       const ae = document.activeElement;
@@ -204,10 +224,11 @@ export function mekanView(ctx) {
     const kind = viewerKind(id);
     renderedKind = kind;
     const genres = [...new Set((Array.isArray(v.genres) ? v.genres : v.genre ? [v.genre] : []).filter(Boolean))];
-    // yorum kaynakları (legacy customer.js 853–858 birebir)
+    // yorum kaynakları (legacy customer.js 853–858 birebir; "artists" görünürlüklü sanatçı yorumları yalnız sanatçı izleyiciye —
+    // app VenueDetailScreen `visibility === 'artists' → isArtistViewer` ile aynı)
     const visOf = (r) => r.visibility ?? (r.isAnonymous ? "anonymous" : "everyone");
     const custR = d.revs.filter((r) => (r.authorType ?? "customer") !== "artist");
-    const artR = d.revs.filter((r) => (r.authorType ?? "customer") === "artist").filter((r) => visOf(r) !== "artists")
+    const artR = d.revs.filter((r) => (r.authorType ?? "customer") === "artist").filter((r) => visOf(r) !== "artists" || kind === "artist")
       .map((r) => { const anon = visOf(r) === "anonymous"; return { ...r, _name: anon ? "Anonim Sanatçı" : (r.authorName ?? r.artistName ?? "Sanatçı"), _anon: anon }; });
     const rated = d.revs.filter((r) => Number(r.overallRating ?? r.rating) > 0);
     const avgNum = rated.length ? rated.reduce((s, r) => s + Number(r.overallRating ?? r.rating), 0) / rated.length : null;
@@ -232,17 +253,18 @@ export function mekanView(ctx) {
       const go = () => { if (!dead) location.hash = msgRoute + (me ? "?c=" + encodeURIComponent(convIdFor(me, id)) : ""); };
       import("../messages/chat.js").then((m) => { try { m.requestChat?.(t); } catch (_) {} }).catch(() => {}).finally(go);
     };
-    // sanatçı → kendi "Mekan Değerlendir" akışı (kriterler + görünürlük + uygunluk; submitArtistVenueReview)
+    // sanatçı → kendi "Mekan Değerlendir" akışı (kriterler + görünürlük + uygunluk; submitArtistVenueReview). Yalnız bu mekanda
+    // kabul edilmiş daveti varsa (o listede satırı olur) görünür; ?q= davetteki mekan adıyla listeyi o satıra süzer.
     const reviewAction = (gateLabel, act) => () => {
       if (dkLoginGate(gateLabel)) return;
-      if (kind === "artist") { location.hash = "#/artist/mekanlar"; return; }
+      if (kind === "artist") { location.hash = "#/artist/mekanlar" + (d.artistReview?.q ? "?q=" + encodeURIComponent(d.artistReview.q) : ""); return; }
       openReview(act);
     };
     const doReview = reviewAction("Puan vermek", "review");
     const doReviewWrite = reviewAction("Yorum yapmak", "write");
     const canSave = kind === "guest" || kind === "customer";
     const canMessage = kind === "guest" || kind === "customer" || kind === "artist" || kind === "venue" || kind === "organizer";
-    const canReview = kind === "guest" || kind === "customer" || kind === "artist";
+    const canReview = kind === "guest" || kind === "customer" || (kind === "artist" && !!d.artistReview);
 
     // ── 1. breadcrumb ──
     const bc = h("div", { class: "dk-mekan-detay-bc" }, dkBreadcrumb({

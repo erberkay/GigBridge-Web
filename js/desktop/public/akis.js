@@ -91,6 +91,12 @@ const WEEK_MS = 7 * 86400e3;
 
 const uidOf = () => session.user?.uid || null;
 const myName = () => session.profile?.displayName || session.user?.displayName || "Kullanıcı";
+// Kendi avatarım (composer + yorum girişi): header'daki hesap avatarıyla AYNI bileşen/ad/foto (public-shell: dkAvatar customer, ad yedeği
+// "Hesabım") → header ile sayfa aynı rengi/baş harfi gösterir. Gönderi/yorum YAZARLARI legacy AV_GRADS ile kalır (spec §5.4).
+const selfAv = (size) => dkAvatar({
+  name: session.profile?.displayName || session.user?.displayName || "Hesabım",
+  photo: session.profile?.photoURL, size, type: session.profile?.userType || "customer", border: false,
+});
 const toMsSafe = (v) => { try { return v?.toMillis ? v.toMillis() : v?.seconds != null ? v.seconds * 1000 : null; } catch { return null; } };
 const whenText = (v) => (v == null ? "şimdi" : fmtDate(v));   // bekleyen serverTimestamp (null) → "şimdi"
 
@@ -144,12 +150,15 @@ export function akisView(ctx) {
   const eventCache = new Map(); // eventId → Promise<event|null>
   const getEvent = (id) => { if (!eventCache.has(id)) eventCache.set(id, eventById(id).catch(() => null)); return eventCache.get(id); };
 
-  // Şehir: Şehrim + başlık → girişliyse profil şehri (legacy), misafirse gb_city (TÜMÜ değilse; public-a Q19).
+  // Şehir kaynakları (public-a Q19 kararına dek):
+  //  • Şehrim süzgeci → girişliyse profil şehri (legacy + sahibin notu), misafirse header gb_city (TÜMÜ değilse).
+  //  • Sayfa şehri (BU HAFTA, öneri önceliği, "Tümü" bağlantısı) → header'da şehir seçiliyse O (Keşfet/Etkinlikler ile aynı tek kaynak:
+  //    header ile sayfa aynı şehri gösterir); header TÜMÜ ise Şehrim şehri (girişli → profil şehri).
+  //  • Başlık "AKIŞ · {ŞEHİR}" → gösterilen içeriğin şehri: Şehrim sekmesinde süzgeç şehri, Takip'te sayfa şehri.
   const headerCity = () => (getActiveCity() === ALL_CITIES ? "" : getActiveCity());
   const feedCity = () => (authed ? String(session.profile?.city || "").trim() : headerCity());
-  // Sağ ray (BU HAFTA + öneri önceliği): sayfada TEK şehir kaynağı — başlıktaki "AKIŞ · {ŞEHİR}" ile aynı şehir (Q19 kararına dek);
-  // Şehrim şehri yoksa (profilde şehir yok / misafir TÜMÜ) header şehri.
-  const railCity = () => feedCity() || headerCity();
+  const railCity = () => headerCity() || feedCity();
+  const headCity = () => (src === "sehir" ? feedCity() : railCity());
 
   // ══════════ Sol ray ══════════
   const join = authed ? null : h("div", { class: "dk-akis-join" },
@@ -218,8 +227,9 @@ export function akisView(ctx) {
     h("div", { class: "dk-akis-card-h" }, h("span", { class: "dk-akis-card-eb" }, "ÖNERİLEN SANATÇILAR"), h("a", { href: "#/top10", class: "dk-akis-card-a dk-link" }, "Top 10")),
     sugList);
   const weekList = h("div", { class: "dk-akis-week-list" }, ...[0, 1, 2, 3].map(() => skelRow(true)));
+  const weekAll = h("a", { href: "#/etkinlikler?tarih=bu-hafta", class: "dk-akis-card-a dk-link" }, "Tümü");
   const week = h("div", { class: "dk-akis-week" },
-    h("div", { class: "dk-akis-card-h" }, h("span", { class: "dk-akis-card-eb" }, "BU HAFTA"), h("a", { href: "#/etkinlikler?tarih=bu-hafta", class: "dk-akis-card-a dk-link" }, "Tümü")),
+    h("div", { class: "dk-akis-card-h" }, h("span", { class: "dk-akis-card-eb" }, "BU HAFTA"), weekAll),
     weekList);
   const mapTeaser = h("a", { href: "#/harita", class: "dk-akis-map dk-card" },
     svgRaw(SVG.map, { width: 312, height: 150, viewBox: "0 0 312 150", cls: "dk-akis-map-svg" }),
@@ -262,7 +272,7 @@ export function akisView(ctx) {
     if (changed) drawFeed();
   }
   function paintHead() {
-    const c = feedCity();
+    const c = headCity();
     eyebrow.textContent = c ? `AKIŞ · ${trUpper(c)}` : "AKIŞ";
   }
 
@@ -519,7 +529,7 @@ export function akisView(ctx) {
       thread = h("div", { class: "dk-akis-thread dk-fa", id: tid },
         threadEb, threadList,
         h("div", { class: "dk-akis-cin" },
-          authed ? gradAv(myName(), "dk-akis-av-32") : ghostAv("dk-akis-ghost-32", 15),
+          authed ? selfAv(32) : ghostAv("dk-akis-ghost-32", 15),
           h("label", { class: "dk-akis-cin-l" }, h("span", { class: "dk-sr" }, "Yorum yaz"), cInput),
           sendBtn));
       renderComments();
@@ -591,7 +601,7 @@ export function akisView(ctx) {
     let expanded = false, listOpen = false, selected = null, events = null, busy = false;
     const pill = h("button", { type: "button", class: "dk-akis-pill dk-press", "aria-expanded": "false", "aria-controls": "dk-akis-new" }, "Katıldığın etkinlik hakkında yorumun...");
     const shareB = h("button", { type: "button", class: "dk-akis-cta dk-press", "aria-expanded": "false", "aria-controls": "dk-akis-new" }, svgRaw(SVG.plus, { size: 15, sw: "2.2" }), "Paylaş");
-    const row = h("div", { class: "dk-akis-comp-row" }, authed ? gradAv(myName(), "dk-akis-av-40") : ghostAv("dk-akis-ghost-40", 18), pill, shareB);
+    const row = h("div", { class: "dk-akis-comp-row" }, authed ? selfAv(40) : ghostAv("dk-akis-ghost-40", 18), pill, shareB);
 
     const selL = h("span", { class: "dk-akis-sel-l" }, "Katıldığın etkinliği seç");
     const chev = h("span", { class: "dk-akis-sel-chev" });
@@ -731,8 +741,16 @@ export function akisView(ctx) {
         ? h("img", { src: a.photoURL, alt: "", loading: "lazy", decoding: "async", class: "dk-akis-sug-img" })
         : dkAvatar({ name, size: 40, genre: g || "Diğer" });
       if (photo.tagName === "IMG") photo.addEventListener("error", () => photo.replaceWith(dkAvatar({ name, size: 40, genre: g || "Diğer" })), { once: true });
+      // SHARED-CANDIDATE: dkFollowButton (ui.js) istek sürerken `b.disabled = true` yapar → klavyedeki odak <body>'ye düşer ve ikinci
+      // Enter hiçbir şey yapmaz. Foundation düzeltene dek (aria-disabled + meşgul koruması) klavyeyle basıldıysa odak düğmeye geri verilir.
+      let kbFocus = false;
+      const refocus = () => setTimeout(() => {
+        const ae = document.activeElement;
+        if (kbFocus && !destroyed && fb.isConnected && (!ae || ae === document.body)) { try { fb.focus({ preventScroll: true }); } catch (_) {} }
+        kbFocus = false;
+      }, 0);
       const fb = dkFollowButton({ variant: "rail", name, followed: followIds.has(a.id), onToggle: async (next) => {
-        if (dkLoginGate("Takip etmek")) return false;
+        if (dkLoginGate("Takip etmek")) { kbFocus = false; return false; }
         try {
           if (next) await followArtist(me, a); else await unfollowArtist(me, a.id);
           if (next) followIds.add(a.id); else followIds.delete(a.id);
@@ -740,11 +758,15 @@ export function akisView(ctx) {
           drawFeed();
           return true;
         } catch (_) { dkToast("İşlem başarısız", { type: "err" }); return false; }
+        finally { refocus(); }
       } });
-      return h("div", { class: "dk-akis-sug-r" },
+      const rowEl = h("div", { class: "dk-akis-sug-r" },
         h("a", { href: "#/sanatci/" + encodeURIComponent(a.id), class: "dk-akis-sug-a" }, photo,
           h("span", { class: "dk-akis-sug-c" }, h("span", { class: "dk-akis-sug-n" }, name), sub ? h("span", { class: "dk-akis-sug-s" }, sub) : null)),
         fb);
+      // yakalama evresi: düğmenin kendi tık işleyicisinden (disabled) ÖNCE — klavyeyle mi odaklıydı?
+      rowEl.addEventListener("click", (e) => { if (fb.contains(e.target)) kbFocus = document.activeElement === fb && fb.matches(":focus-visible"); }, true);
+      return rowEl;
     }));
   }
   // "Bu hafta" = WebEtkinlikler tarih=bu-hafta / WebLanding ile aynı pencere: bugün 00:00 ≤ başlangıç ≤ şimdi + 7 gün
@@ -752,29 +774,28 @@ export function akisView(ctx) {
   // SHARED-CANDIDATE: cards.eventRowMini alt satırı artboard'da "{mekan} · Bugün 21:00 | Yarın 22:00 | Sal 20:30" — kart yalnız saati yazıyor;
   // burada gün etiketi eklenerek düzeltiliyor.
   const dayWord = (s) => (isToday(s) ? "Bugün" : isTomorrow(s) ? "Yarın" : DAYS_TR_SHORT[new Date(s).getDay()]);
+  // "Tümü" kartla aynı şehir kapsamını açar (Etkinlikler sehir= yoksa gb_city'yi kullanırdı → profil şehri düşerdi).
+  // Slug, WebEtkinlikler citySlug ile birebir.
+  const citySlug = (c) => fold(c).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   function drawWeek() {
-    if (weekEvents == null) return;
     const c = railCity();
+    weekAll.setAttribute("href", "#/etkinlikler?tarih=bu-hafta" + (c ? "&sehir=" + citySlug(c) : ""));
+    if (weekEvents == null) return;
     const list = weekEvents.filter((e) => inWeek(e) && (!c || fold(e.city || e.location?.city) === fold(c))).slice(0, 4);
     if (!list.length) { week.hidden = true; return; }
     week.hidden = false;
     weekList.replaceChildren(...list.map((e) => {
       const row = eventRowMini(e);
       const s = eventStartMs(e);
-      // Gün + saat kendi (küçülmeyen) aralığında: dar rayda yalnız mekan adı kısalır, "Bugün 19:15" hep okunur.
+      // Artboard: tek satır "{mekan} · {gün saat}", sonda üç nokta (paylaşılan .dk-erm-s). Kart yalnız saati yazar → gün etiketi eklenir.
       const subEl = row.querySelector(".dk-erm-s");
-      if (subEl && s != null) {
-        const when = `${dayWord(s)} ${fmtTime(s)}`;
-        subEl.replaceChildren(...(e.venueName
-          ? [h("span", { class: "dk-akis-wk-v" }, e.venueName), h("span", { class: "dk-akis-wk-w" }, " · " + when)]
-          : [h("span", { class: "dk-akis-wk-w" }, when)]));
-      }
+      if (subEl && s != null) subEl.textContent = [e.venueName, `${dayWord(s)} ${fmtTime(s)}`].filter(Boolean).join(" · ");
       return row;
     }));
   }
 
   // ══════════ Veri yükleme ══════════
-  paintSrc(); paintHead(); drawFeed();
+  paintSrc(); paintHead(); drawFeed(); drawWeek();
   const unsubTl = listenTimeline((ps) => {
     if (destroyed) return;
     // Eski sayfalar yüklüyken yeni gönderi canlı pencereyi (ilk 50) kaydırır: pencereden kuyruktan düşen gönderi `older`da da yok
@@ -801,7 +822,7 @@ export function akisView(ctx) {
   listRealArtists().then((l) => { if (destroyed) return; artists = l; drawSuggestions(); }).catch(() => { artists = []; sug.hidden = true; });
   discoverEvents().then((l) => { if (destroyed) return; weekEvents = l; drawWeek(); }).catch(() => { weekEvents = []; week.hidden = true; });
 
-  // Header şehir seçimi (dk:citychange) → misafirde Şehrim + başlık, herkeste BU HAFTA + öneri önceliği
+  // Header şehir seçimi (dk:citychange) → herkeste sayfa şehri (başlık [Takip], BU HAFTA + "Tümü", öneri önceliği); misafirde Şehrim de
   const onCity = () => { drawFeed(); drawSuggestions(); drawWeek(); };
   window.addEventListener("dk:citychange", onCity);
   unsubs.push(() => window.removeEventListener("dk:citychange", onCity));

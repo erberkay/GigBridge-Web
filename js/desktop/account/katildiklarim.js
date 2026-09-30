@@ -16,7 +16,10 @@
 //   "Aynı etkinlik+hedef için ikinci yorum yerine mevcut yorum düzenlenir": hedefin mevcut yorumu (doküman kimliği ${uid}_${hedef})
 //   modalda ön-doldurulur. Aynı etkinliğe aitse updateMyReview (legacy "Yorumu Düzenle" yaması; createdAt korunur); başka bir
 //   etkinliğe aitse legacy reviewModal gibi submit* (setDoc) ile bu etkinliğe yeniden bağlanır (kural: hedef başına TEK yorum).
-// URL: ?filtre=puanlanmamis (sekme), ?puanla={eventId} (Biletlerim PUANLA / review_prompt bildirimi derin bağlantısı → modal açılır).
+// URL: ?filtre=puanlanmamis (sekme), ?puanla={eventId} (Biletlerim PUANLA / review_prompt bildirimi derin bağlantısı → modal açılır;
+//   parametre kalkınca — tarayıcı geri tuşu — modal kapanır).
+// İptal edilen etkinlik (status 'cancelled'): legacy gibi listelenir, "İPTAL EDİLDİ" çipiyle; puanlanamaz (Puanlanmamış/ilerleme dışı).
+// Kenar menüsü hapı bu sayfada geçmiş katılım sayısını gösterir (bkz. syncPill).
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
 import { attendedEvents, myReviews, submitArtistReview, submitVenueReview, updateMyReview } from "../../data.js";
@@ -36,6 +39,9 @@ const TAIL_MS = 6 * 3600e3;               // bilet kuralı (live.accountCounts T
 const OUT_MS = 360;                       // .dk-out (48px / 360ms)
 
 const reduced = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (_) { return false; } };
+// İptal edilen etkinlik (legacy venue.js ile aynı ölçüt): listede kalır (legacy parite) ama puanlanamaz — gerçekleşmeyen gece
+// sanatçı/mekan puanını ve Top 10'u etkilemesin. Daha önce yazılmış yorumu varsa "puanladın" durumu gösterilir.
+const isCancelled = (e) => e?.status === "cancelled";
 const clampStars = (v) => Math.max(0, Math.min(5, Math.round(Number(v) || 0)));
 const ratingOf = (r) => clampStars(r?.overallRating ?? r?.rating);
 const myName = (s) => s.profile?.displayName || s.user?.displayName || "Kullanıcı";   // legacy customer.js myName()
@@ -123,7 +129,18 @@ export function katildiklarimView(ctx) {
   let tab = (ctx.query?.get("filtre") === "puanlanmamis") ? "puanlanmamis" : "tumu";
   let openId = null;     // modalı açık etkinlik (kart kenarı turuncu)
   let modal = null;
+  let modalFromUrl = false;   // modal ?puanla= ile açıldı → parametre kalkınca (geri tuşu) kapanır
   const leaving = new Set();
+
+  // Kenar menüsü "Katıldıklarım" hapı bu sayfada listelenen (GEÇMİŞ) etkinlik sayısını gösterir → hap, "{N} etkinliğe katıldınız"
+  // ve "Tümü {N}" aynı ekranda çelişmez. Kabuğun kendi yenilemesinden SONRA uygulanır (aynı önbellekli söz → aynı mikro görev
+  // zincirinde, arada boyama yok). Yüklenene dek hap gizli; yükleme hatasında kabuğun değeri geri gelir.
+  // SHARED-CANDIDATE: live.accountCounts.attended tüm katılımları sayıyor (foundation §8.16) — tek satırla geçmiş (başlangıç + 6 sa ≤ şimdi)
+  // sayılırsa tüm hesap sayfalarında aynı olur ve bu yerel üzerine yazma etkisiz kalır.
+  let pillLocal = true;
+  const syncPill = () => { if (uid && pillLocal && !dead) shell.setCount("attended", loaded ? past.length : null); };
+  const refreshShellCounts = (force = false) => shell.refreshCounts(force).then(syncPill);
+  refreshShellCounts();
 
   const byEvent = () => {
     const m = new Map();
@@ -167,19 +184,23 @@ export function katildiklarimView(ctx) {
   listWrap.append(skeleton());
 
   // ── sayaçlar ──
+  // Puanlanabilir = geçmiş ve iptal edilmemiş (iptal edilmiş ama önceden puanlanmışsa ilerlemede puanlanmış sayılır)
+  const rateableOf = (map) => past.filter((e) => !isCancelled(e) || map.has(e.id));
   function syncCounts() {
     const map = byEvent();
-    const rated = past.filter((e) => map.has(e.id)).length;
+    const rateable = rateableOf(map);
+    const rated = rateable.filter((e) => map.has(e.id)).length;
     const total = past.length;
+    const goal = rateable.length;
     seg.dk.setCount("tumu", total);
-    seg.dk.setCount("puanlanmamis", total - rated);
-    progFill.style.width = (total ? Math.round((rated / total) * 100) : 0) + "%";
-    progLbl.textContent = `${rated}/${total} PUANLANDI`;
-    prog.setAttribute("aria-valuemax", String(total));
+    seg.dk.setCount("puanlanmamis", goal - rated);
+    progFill.style.width = (goal ? Math.round((rated / goal) * 100) : 0) + "%";
+    progLbl.textContent = `${rated}/${goal} PUANLANDI`;
+    prog.setAttribute("aria-valuemax", String(goal));
     prog.setAttribute("aria-valuenow", String(rated));
-    prog.setAttribute("aria-valuetext", `${total} etkinlikten ${rated} tanesi puanlandı`);
-    // Katıldığı etkinliklerin hepsi henüz yaklaşan → "0 etkinliğe katıldınız" çelişkili olur (kenar hapı tümünü sayar); sayıyı gösterme
-    leadEl.textContent = !total && all.length ? LEAD_TAIL : `${total} etkinliğe katıldınız. ${LEAD_TAIL}`;
+    prog.setAttribute("aria-valuetext", `${goal} etkinlikten ${rated} tanesi puanlandı`);
+    // Geçmiş katılım yoksa (hiç katılım yok ya da hepsi henüz yaklaşan) "0 etkinliğe katıldınız." boş durum kutusuyla yinelenir → sayı yok
+    leadEl.textContent = total ? `${total} etkinliğe katıldınız. ${LEAD_TAIL}` : LEAD_TAIL;
   }
 
   // ── satır ──
@@ -188,9 +209,11 @@ export function katildiklarimView(ctx) {
     if (x) {
       const stars = h("span", { class: "dk-katildiklarim-ministars", role: "img", "aria-label": `${n} / 5 yıldız` });
       for (let k = 1; k <= 5; k++) stars.append(starSvg(k <= n, 15, "1.6"));
+      // görünür metin adın başında (etiket-adda); etkinlik adı her satırın bağlantısını ayırt eder
       return h("span", { class: "dk-katildiklarim-rated" }, stars,
-        h("a", { href: "#/yorumlarim", class: "dk-katildiklarim-golink" }, "PUANLADIN · YORUMA GİT"));
+        h("a", { href: "#/yorumlarim", class: "dk-katildiklarim-golink", "aria-label": `Puanladın · yoruma git: ${evTitle(e)}` }, "PUANLADIN · YORUMA GİT"));
     }
+    if (isCancelled(e)) return h("span", { class: "dk-katildiklarim-cancel" }, "İPTAL EDİLDİ");
     const star = svgRaw(STAR, { size: 14, sw: "1.5", fill: true });
     star.setAttribute("stroke", "currentColor"); star.setAttribute("stroke-width", "1.5"); star.setAttribute("stroke-linejoin", "round");
     return h("button", { type: "button", class: "dk-katildiklarim-rate dk-press", "aria-label": `${evTitle(e)} etkinliğini puanla`, onclick: () => openRate(e) },
@@ -245,7 +268,7 @@ export function katildiklarimView(ctx) {
       return;
     }
     ctl.hidden = false;
-    const list = past.filter((e) => tab === "tumu" || !map.has(e.id) || leaving.has(e.id));
+    const list = past.filter((e) => tab === "tumu" || leaving.has(e.id) || (!map.has(e.id) && !isCancelled(e)));
     timeline = h("div", { class: "dk-katildiklarim-tl" }, h("span", { class: "dk-katildiklarim-rail", "aria-hidden": "true" }));
     let idx = 0, cur = null, curKey = null, sec = null;
     list.forEach((e) => {
@@ -328,10 +351,11 @@ export function katildiklarimView(ctx) {
   const markOpen = () => rows.forEach((r, id) => r._card.classList.toggle("is-open", id === openId));
 
   // ── Puanla modalı (RateModal) ──
-  function openRate(e) {
+  function openRate(e, { fromUrl = false } = {}) {
     if (dkLoginGate("Puanlamak")) return;
-    if (!uid) return;
+    if (!uid || isCancelled(e)) return;
     try { modal?.close("replace"); } catch (_) {}
+    modalFromUrl = fromUrl;
     openId = e.id; markOpen();
     const T = {
       artist: { key: "artist", kind: "SANATÇI", id: e.artistId || null, name: e.artistName || "Sanatçı", col: "reviews" },
@@ -340,10 +364,9 @@ export function katildiklarimView(ctx) {
     const existing = (t) => t.id ? reviews.find((r) => r._col === t.col && (r.id === `${uid}_${t.id}` || (t.key === "artist" ? r.targetId : r.venueId) === t.id)) : null;
     const drafts = {};
     Object.values(T).forEach((t) => { const ex = existing(t); drafts[t.key] = { stars: ex ? ratingOf(ex) : 0, text: ex?.comment || "", ex }; });
-    // Varsayılan hedef mekan (tasarım). Mekanın yorumu BAŞKA bir etkinliğe bağlıysa (kaydetmek onu bu etkinliğe taşır) ve sanatçı
-    // serbestse sanatçı seçilir → kullanıcı yanlışlıkla eski yorumunu taşımaz. Kimliği olmayan hedef seçilemez.
-    const free = (k) => T[k].id && (!drafts[k].ex || drafts[k].ex.eventId === e.id);
-    let target = free("venue") ? "venue" : free("artist") ? "artist" : T.venue.id ? "venue" : "artist";
+    // Varsayılan hedef her zaman MEKAN (artboard DCLogic target:'venue' + spec §6); kimliği yoksa sanatçı. Mevcut yorum ön-doldurulur ve
+    // başka bir etkinliğe bağlıysa not satırı bunu söyler (hedef başına tek yorum → kaydetmek o yorumu bu etkinliğe taşır).
+    let target = T.venue.id ? "venue" : "artist";
 
     // hedef seçimi (radio kartları)
     const tBtns = {};
@@ -387,6 +410,7 @@ export function katildiklarimView(ctx) {
       starLbl.classList.toggle("is-on", !!n);
       const send = m?.buttons?.[1];
       if (send) send.setAttribute("aria-disabled", n ? "false" : "true");
+      if (n) m?.setError("");
     }
     function pickTarget(k) {
       if (!T[k].id) return;
@@ -437,7 +461,7 @@ export function katildiklarimView(ctx) {
         return false;
       }
       invalidateAccountCounts(uid);
-      shell.refreshCounts(true);
+      refreshShellCounts(true);
       close("action");
       dkToast(`Değerlendirmen kaydedildi · ${t.name}`);
       afterRated(e, prevId);
@@ -459,14 +483,24 @@ export function katildiklarimView(ctx) {
         { label: "İptal", variant: "outline" },
         { label: "Değerlendirmeyi gönder", variant: "primary", keepOpen: true, busyLabel: "Gönderiliyor…", onClick: (close) => submit(close) },
       ],
-      onClose: () => {
-        if (modal === m) modal = null;
+      onClose: (reason) => {
+        if (modal === m) { modal = null; modalFromUrl = false; }
         if (dead) return;
         if (openId === e.id) { openId = null; markOpen(); }
-        if (queryOf().get("puanla")) writeQuery({ puanla: null });
+        // "replace": yeni bir ?puanla bağlantısı bu modalın yerine açılıyor → yeni parametre URL'de kalmalı
+        if (reason !== "replace" && queryOf().get("puanla")) writeQuery({ puanla: null });
       },
     });
     modal = m;
+    // Yıldız seçilmeden "Değerlendirmeyi gönder" (aria-disabled; odaklanabilir kalır): dkModal'ın meşgul etiketi ("Gönderiliyor…")
+    // yanıp sönmesin — tıklamayı yakala (yakalama evresi, düğmeye ulaşmadan), nedeni duyur (role=alert) ve odağı yıldızlara taşı.
+    m.dialog.addEventListener("click", (ev) => {
+      const send = m.buttons[1];
+      if (!send || !send.contains(ev.target) || send.getAttribute("aria-disabled") !== "true") return;
+      ev.preventDefault(); ev.stopPropagation();
+      m.setError("Göndermek için önce yıldız seç.");
+      try { stars.dk.focusTarget()?.focus(); } catch (_) {}
+    }, true);
     // dkModal (hesap varyantı) yapısını RateModal düzenine çevir: [medya başlığı (kapat düğmesi içinde)] + [iç gövde: h2, gövde, eylemler]
     const dlg = m.dialog;
     const titleEl = dlg.querySelector(".dk-mdl-t");
@@ -485,12 +519,17 @@ export function katildiklarimView(ctx) {
     const f = q?.get("filtre") === "puanlanmamis" ? "puanlanmamis" : "tumu";
     if (f !== tab) { tab = f; seg.dk.set(f); drawList(true); }
     const pid = q?.get("puanla");
-    if (pid && loaded && openId !== pid) {
+    if (!pid) {
+      // ?puanla= ile açılan modal ve parametre kalktı (tarayıcı geri tuşu) → URL ile modal eşzamanlı kalsın
+      if (modal && modalFromUrl) { try { modal.close("route"); } catch (_) {} }
+      return;
+    }
+    if (loaded && openId !== pid) {
       const now = Date.now();
       // derin bağlantı: listedeki (geçmiş) etkinlik ya da BİTMİŞ (eventEndMs < şimdi) katıldığın etkinlik — review_prompt bildirimi
-      // endAt geçince gönderilir (functions sendReviewPrompts), bu an başlangıç + 6 sa'ten önce olabilir. Süren/yaklaşan → yok say.
+      // endAt geçince gönderilir (functions sendReviewPrompts), bu an başlangıç + 6 sa'ten önce olabilir. Süren/yaklaşan/iptal → yok say.
       const e = past.find((x) => x.id === pid) || all.find((x) => x.id === pid && (eventEndMs(x) ?? Infinity) < now);
-      if (e) openRate(e);
+      if (e && !isCancelled(e)) openRate(e, { fromUrl: true });
       else writeQuery({ puanla: null });
     }
   }
@@ -510,11 +549,16 @@ export function katildiklarimView(ctx) {
       past = all.filter((e) => { const st = eventStartMs(e); return st != null && st + TAIL_MS <= now; })
         .sort((a, b) => eventStartMs(b) - eventStartMs(a));
       loaded = true;
+      pillLocal = true;
+      syncPill();
       drawList(true);
       applyQuery(ctx.query);
     } catch (err) {
       if (dead) return;
       console.warn("[dk]", err);
+      // liste yok → hap kabuğun değerine (tüm katılımlar) döner
+      pillLocal = false;
+      shell.refreshCounts();
       listWrap.removeAttribute("aria-busy");
       const retry = dkButton("Tekrar dene", { variant: "light", size: 42, onClick: () => { listWrap.replaceChildren(skeleton()); load(); } });
       listWrap.replaceChildren(dkEmpty({ icon: "alertCircle", ring: true, title: "Katıldıkların yüklenemedi.", sub: "Bağlantını kontrol edip tekrar dene.", action: retry }));

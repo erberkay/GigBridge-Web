@@ -199,12 +199,21 @@ export function bildirimlerView(ctx) {
     if (t === "review_prompt" && ev) return { href: "#/etkinlik/" + ev, cta: { href: "#/katildiklarim?puanla=" + ev, label: "Değerlendir" } };
     return null;
   }
+  // Ekran okuyucu için ayırt edici ad: aynı başlıklı kartlar ("Etkinlik nasıldı?") etkinlik adıyla ayrışır (yoksa gövde).
+  const labelOf = (n, title) => {
+    const extra = String(n.eventTitle || n.body || "").trim();
+    return extra && extra !== title ? `${title} (${extra.length > 80 ? extra.slice(0, 79) + "…" : extra})` : title;
+  };
   function buildCard(n) {
     const tv = typeView(n.type);
     const c = TONES[tv.tone];
     const title = n.title || "Bildirim";
     const body = n.body || "";
     const nav = navOf(n);
+    const name = labelOf(n, title);
+    let el = null;
+    // tıklamada GÜNCEL kaydı kullan (kart yalnız read değişince yeniden kurulmaz → kapanıştaki n eskir) → gereksiz markNotifRead yok
+    const markIfUnread = () => { const cur = el?._n || n; if (isUnread(cur)) markNotifRead(cur.id); };
     const tile = h("span", { class: "dk-bildirimler-tile", style: { color: c, background: rgba(c, 0.10), borderColor: rgba(c, 0.35) } },
       tv.path ? svgPath(tv.path, { size: 20, sw: "1.8" }) : svgIcon(tv.icon, { size: 20, sw: "1.8" }));
     const titleEl = h("span", { class: "dk-bildirimler-ttl" }, h("span", { class: "dk-sr dk-bildirimler-srun" }, "Okunmamış: "), title);
@@ -216,12 +225,12 @@ export function bildirimlerView(ctx) {
     const main = nav
       ? h("a", { href: nav.href, class: "dk-bildirimler-main is-nav" }, tile, text)
       : h("div", { class: "dk-bildirimler-main" }, tile, text);
-    if (nav) main.addEventListener("click", () => { if (isUnread(n)) markNotifRead(n.id); });
-    const cta = nav?.cta ? h("a", { href: nav.cta.href, class: "dk-bildirimler-cta dk-press", "aria-label": `${nav.cta.label}: ${title}` }, nav.cta.label) : null;
-    if (cta) { main.classList.add("has-cta"); cta.addEventListener("click", () => { if (isUnread(n)) markNotifRead(n.id); }); }
-    const x = h("button", { type: "button", class: "dk-bildirimler-x dk-press", "aria-label": `${title} bildirimini sil` }, svgIcon("x", { size: 15, sw: "2" }));
+    if (nav) main.addEventListener("click", markIfUnread);
+    const cta = nav?.cta ? h("a", { href: nav.cta.href, class: "dk-bildirimler-cta dk-press", "aria-label": `${nav.cta.label}: ${n.eventTitle || name}` }, nav.cta.label) : null;
+    if (cta) { main.classList.add("has-cta"); cta.addEventListener("click", markIfUnread); }
+    const x = h("button", { type: "button", class: "dk-bildirimler-x dk-press", "aria-label": `${name} bildirimini sil` }, svgIcon("x", { size: 15, sw: "2" }));
     x.addEventListener("click", () => remove(n.id));
-    const el = h("div", { class: "dk-bildirimler-nf", dataset: { id: n.id } }, h("span", { class: "dk-bildirimler-bar", "aria-hidden": "true" }), main, cta, x);
+    el = h("div", { class: "dk-bildirimler-nf", dataset: { id: n.id } }, h("span", { class: "dk-bildirimler-bar", "aria-hidden": "true" }), main, cta, x);
     el._main = main; el._title = title; el._body = body; el._time = text.querySelector(".dk-bildirimler-time"); el._n = n;
     el._srun = titleEl.querySelector(".dk-bildirimler-srun");
     return el;
@@ -244,9 +253,12 @@ export function bildirimlerView(ctx) {
     el.classList.add("dk-rise"); el.style.setProperty("--dk-delay", delay + "ms");
     el.addEventListener("animationend", (e) => { if (e.target === el) el.classList.remove("dk-rise"); }, { once: true });
   };
+  // Önce artık listede olmayan çocuklar çıkarılır, SONRA sıra düzeltilir: kalan öğeler (odaklı × düğmesini taşıyan kart dahil)
+  // gereksiz yere yeniden eklenmez — insertBefore ile taşınan öğe odağını kaybeder (odak <body>'ye düşerdi).
   function place(parent, kids, offset = 0) {
+    const keep = new Set(kids);
+    [...parent.children].slice(offset).forEach((c) => { if (!keep.has(c)) c.remove(); });
     kids.forEach((k, j) => { const at = parent.children[j + offset]; if (at !== k) parent.insertBefore(k, at || null); });
-    while (parent.children.length > kids.length + offset) parent.lastElementChild.remove();
   }
   function draw() {
     if (!ready) return;
@@ -352,6 +364,17 @@ export function bildirimlerView(ctx) {
     const next = order.slice(at + 1).find(ok) || order.slice(0, Math.max(0, at)).reverse().find(ok);
     try { (next ? next.querySelector(".dk-bildirimler-x") : shell.content)?.focus({ preventScroll: true }); } catch (_) {}
   }
+  // Çıkış animasyonu sürerken (320 ms) görünüm yok edilir ya da sayfa kapanırsa onaylanmış silme kaybolmasın:
+  // destroy()/pagehide bekleyenleri hemen deleteNotif ile işler (Yorumlarım commitPending ile aynı desen).
+  const pendingDel = new Set();
+  const flushPending = () => {
+    if (!pendingDel.size) return;
+    const ids = [...pendingDel];
+    pendingDel.clear();
+    ids.forEach((id) => { deleteNotif(id).catch(() => {}); });
+  };
+  window.addEventListener("pagehide", flushPending);
+  unsubs.push(() => window.removeEventListener("pagehide", flushPending));
   function remove(id) {
     if (leaving.has(id)) return;
     const rec = cards.get(id);
@@ -359,10 +382,12 @@ export function bildirimlerView(ctx) {
     leaving.add(id);
     syncHead();
     const go = async () => {
+      if (!pendingDel.delete(id)) return;   // destroy/pagehide zaten işledi
       await deleteNotif(id);   // hata yutulur (data.js); başarısızsa canlı liste kartı geri getirir
       leaving.delete(id);
       if (!dead) { cards.delete(id); draw(); }
     };
+    pendingDel.add(id);
     if (rec && !reduced()) {
       rec.el.classList.remove("dk-rise"); rec.el.classList.add("dk-out");
       later(() => { rec.el.style.visibility = "hidden"; go(); }, OUT_MS);
@@ -533,6 +558,7 @@ export function bildirimlerView(ctx) {
     destroy() {
       dead = true;
       timers.forEach(clearTimeout); timers.clear();
+      flushPending();   // çıkış animasyonu sırasında ayrıldıysa onaylanmış silme işlenir
       try { fullModal?.close(); } catch (_) {}
       unsubs.forEach((f) => { try { f(); } catch (_) {} });
     },
