@@ -131,7 +131,7 @@ export function panelShell(opts = {}) {
   // ═════════ KENAR ÇUBUĞU ═════════
   const brand = h("div", { class: "dk-ps-brand" },
     h("a", { href: siteReady ? SITE : HOME[role], class: "dk-logo dk-ps-logo", "aria-label": siteReady ? "GigBridge ana sayfa" : "Panel ana sayfası" },
-      h("span", { class: "dk-logo-tile", style: { width: "32px", height: "32px" } }, svgIcon("logo", { size: 18, sw: "2.4" })),
+      h("span", { class: "dk-logo-tile", style: { width: "32px", height: "32px" } }, h("img", { src: "/assets/logo-icon.svg", alt: "", width: 32, height: 32, decoding: "async" })),
       h("span", { class: "dk-logo-word" }, "GigBridge")),
     h("span", { class: "dk-ps-rolebadge" }, role === "artist" ? h("span", { class: "dk-ps-rolebadge-dot" }) : null, R.badge));
 

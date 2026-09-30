@@ -32,8 +32,9 @@ export const uid = (p = "dk") => `${p}-${++_uid}`;
 // ══════════════════════════════════════════════════════════════════════
 export function dkLogo({ href = "#/kesfet", size = 32, label = "GigBridge ana sayfa", wordmark = true, cls } = {}) {
   const small = size <= 30;
+  // Uygulama ile aynı marka ikonu (GigBridgeIcon = assets/logo-icon.svg) — Berkay: "mobildeki logo burada da olacak"
   const tile = h("span", { class: "dk-logo-tile", style: { width: size + "px", height: size + "px" } },
-    svgIcon("logo", { size: small ? 17 : 18, sw: "2.4" }));
+    h("img", { src: "/assets/logo-icon.svg", alt: "", width: size, height: size, decoding: "async" }));
   const word = wordmark ? h("span", { class: "dk-logo-word", style: small ? { fontSize: "19px" } : null }, "GigBridge") : null;
   return href
     ? h("a", { href, class: cx("dk-logo", cls), "aria-label": label }, tile, word)

@@ -55,9 +55,11 @@
   --dk-role-organizer: #FF4FA3;
   --dk-role-admin: #A78BFA;
   /* yazı aileleri */
-  --dk-font-sans: "Space Grotesk", system-ui, sans-serif;
-  --dk-font-serif: "Instrument Serif", Georgia, serif;
-  --dk-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* Kurumsal yazı tipi (2026-09-30, Berkay): Inter — assets/fonts/gb-fonts.css. Rol adları korunur:
+     serif = başlık (GB Display, Inter 700), mono = etiket/rakam (GB Label, Inter 600). */
+  --dk-font-sans: "GB Sans", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --dk-font-serif: "GB Display", "GB Sans", "Inter", system-ui, sans-serif;
+  --dk-font-mono: "GB Label", "GB Sans", "Inter", system-ui, sans-serif;
   /* yarıçaplar */
   --dk-r-4: 4px; --dk-r-6: 6px; --dk-r-8: 8px; --dk-r-10: 10px; --dk-r-12: 12px; --dk-r-14: 14px;
   /* hareket */
@@ -366,3 +368,7 @@ html[data-dk] #toasts { bottom: 32px; }
 .dk-legacy { min-width: 0; position: relative; }
 .dk-legacy > .page.has-nav { display: block; max-width: none; min-height: 0; padding: 0; margin: 0; }
 .dk-legacy > .page.has-nav > .content { max-width: none; width: auto; margin: 0; padding: 0; }
+
+/* Kurumsal tipografi ayarı (Inter): sentetik kalın/eğik yok, başlıklarda sıkı harf aralığı */
+.dk { font-synthesis: none; }
+.dk .dk-display, .dk h1 { letter-spacing: -0.025em !important; }

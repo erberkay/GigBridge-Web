@@ -1,7 +1,7 @@
 // Masaüstü alan CSS'lerini tembel yükler (FOUC'suz: görünüm, CSS'i yüklenmeden mount edilmez).
 // Her dosya bir kez eklenir; <link> head'in SONUNA gider → style.css + aether.css'ten sonra (kaskadda en son).
 // CSS_VER: index.html'deki ?v= deseniyle aynı mantık — dk-*.css değişince artır (GitHub Pages ~10 dk HTTP önbelleği).
-export const CSS_VER = "20260929c";
+export const CSS_VER = "20260930f";
 
 const _css = new Map();
 
@@ -30,7 +30,7 @@ export function ensureCssAll(list) {
 // arayüzü piksel piksel aynı kalsın diye 700 oraya eklenmedi). İlk masaüstü mount denemesinde bir kez eklenir.
 // media="(min-width: 769px)": sayfa sonradan mobile geçerse (döndürme/yeniden boyutlandırma) @font-face kuralı devre dışı
 // kalır → mobilde mono+700 metin eskisi gibi (sentetik kalın) çizilir.
-export const DESKTOP_FONT_HREF = "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap";
+export const DESKTOP_FONT_HREF = "/assets/fonts/gb-fonts.css";  // kurumsal font (Inter) — yerel
 let _font = null;
 export function ensureDesktopFonts() {
   if (_font) return _font;
