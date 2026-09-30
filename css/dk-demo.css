@@ -1,0 +1,37 @@
+/* dk-demo.css — YALNIZ geliştirici kataloğu (#/dk-demo; js/desktop/dev/demo.js). Üretimde rota kayıtlı değil → yüklenmez. */
+.dkd-wrap { box-sizing: border-box; width: 100%; max-width: calc(1280px + 2 * var(--dk-gutter)); margin: 0 auto; padding: 48px var(--dk-gutter) 96px; display: flex; flex-direction: column; gap: 56px; }
+.dkd-intro { display: flex; flex-direction: column; gap: 14px; }
+.dkd-intro p { margin: 0; max-width: 640px; font-size: 15.5px; line-height: 1.55; color: #A3A7AF; }
+.dkd-toc { display: flex; flex-wrap: wrap; gap: 10px 20px; font-size: 13.5px; }
+.dkd-sec { display: flex; flex-direction: column; gap: 20px; padding-top: 32px; border-top: 1px solid #14171D; scroll-margin-top: 96px; }
+.dkd-sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.dkd-sec-h h2 { margin: 0; font-family: var(--dk-font-sans); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.dkd-sec-h span { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; text-transform: uppercase; }
+.dkd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.dkd-col { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.dkd-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.dkd-lab { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #5E636D; text-transform: uppercase; }
+.dkd-bar { border-top: 1px solid #1F232B; border-bottom: 1px solid #1F232B; padding-right: 400px; }
+.dkd-roleadmin { --dk-role: #A78BFA; }
+.dkd-roleorg { --dk-role: #FF4FA3; }
+.dkd-cover { padding: 24px; border-radius: 10px; background: linear-gradient(90deg, rgba(255,79,163,0.2), rgba(6,7,10,0)), url("../assets/web/artist-dj-booth.jpg") center / cover; }
+.dkd-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.dkd-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: stretch; }
+.dkd-grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.dkd-grid5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; }
+.dkd-tablecard { border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; overflow: hidden; }
+.dkd-tt { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.dkd-ttc { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dkd-ttc b { font-size: 14.5px; font-weight: 600; color: #F2F1EE; }
+.dkd-ttc span { font-size: 12.5px; color: #8A8E97; }
+.dkd-herodots { position: relative; height: 72px; padding: 16px 20px 0 28px; border-radius: 12px; background: linear-gradient(180deg, #14171D, #06070A); display: flex; align-items: center; justify-content: space-between; }
+.dkd-rail { width: 312px; padding: 20px; border-radius: 12px; border: 1px solid #1F232B; display: flex; flex-direction: column; gap: 4px; }
+.dkd-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); gap: 8px; }
+.dkd-ic { height: 64px; border-radius: 8px; border: 1px solid #14171D; background: #0A0B0F; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #C9CACD; }
+.dkd-ic span { font-family: var(--dk-font-mono); font-size: 9.5px; color: #8A8E97; }
+.dkd-fill { box-sizing: border-box; border: 1px dashed #1F232B; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #5E636D; }
+.dk-pub-main > .dkd-fill { margin: 48px var(--dk-gutter); }
+.dkd-auth-r { font-size: 14px; color: #8A8E97; }
+.dkd-prevbtn { font-size: 13.5px !important; padding: 0 14px !important; }
+@media (max-width: 1279px) { .dkd-grid4, .dkd-grid5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .dkd-bar { padding-right: 0; } }
+@media (max-width: 1023px) { .dkd-grid3, .dkd-grid4, .dkd-grid5, .dkd-grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

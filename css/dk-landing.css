@@ -1,0 +1,261 @@
+/* dk-landing.css — WebLanding masaüstü görünümü (landing).
+   SAHİBİ: js/desktop/public/landing.js uygulayıcısı (specs/foundation.md §3). Spec: specs/public-a.md §2
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-landing (ve alt sınıfları .dk-landing-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan.
+   Ölçüler: design/WebLanding.dc.html (1440). Kutu modeli artboard gibi: box-sizing yazılmayan kutular content-box. */
+
+/* ── kök + artboard hareket değişkenleri (foundation §2.4: rise 700ms/16px · swap 380ms/8px) ── */
+.dk-landing {
+  --dk-rise-dur: 700ms; --dk-rise-y: 16px;
+  --dk-swap-dur: 380ms; --dk-swap-y: 8px;
+  display: flex; flex-direction: column;
+}
+.dk-landing [hidden] { display: none !important; }
+.dk-landing-stack { display: flex; flex-direction: column; }
+
+/* ── ortak başlık parçaları (SectionHead — Landing: gap 12, H2 52) ── */
+.dk-landing-sh { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.dk-landing-eb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+.dk-landing-h2 { margin: 0; font-family: var(--dk-font-serif); font-weight: 400; font-size: 52px; line-height: 1.02; letter-spacing: -0.01em; color: #F2F1EE; }
+.dk-landing-h2-44 { font-size: 44px; line-height: 1.04; }
+.dk-landing-h1 em, .dk-landing-h2 em, .dk-landing-cta-h em { font-style: italic; color: #FF4FA3; }
+
+/* ── butonlar (hero + CTA) ── */
+.dk-landing-btn {
+  box-sizing: border-box; height: 52px; padding: 0 24px; border-radius: 6px;
+  display: flex; align-items: center; gap: 10px; font-size: 15.5px; white-space: nowrap;
+}
+.dk-landing .dk-landing-btn-pink, .dk-landing .dk-landing-btn-pink:hover { background: #FF4FA3; color: #06070A; font-weight: 600; }
+.dk-landing .dk-landing-btn-outline, .dk-landing .dk-landing-btn-outline:hover { border: 1px solid #2C303A; color: #F2F1EE; font-weight: 500; }
+
+/* ════════════════════ 1. HERO ════════════════════ */
+.dk-landing-hero { padding: 88px 0 96px; }
+.dk-landing-hero-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: center; }
+.dk-landing-hero-l { grid-column: span 6; display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.dk-landing-hero-eb {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97;
+}
+.dk-landing-hero-line { width: 24px; height: 1px; background: #8A8E97; display: block; flex-shrink: 0; }
+.dk-landing-h1 { margin: 0; font-family: var(--dk-font-serif); font-weight: 400; font-size: 80px; line-height: 1; letter-spacing: -0.01em; color: #F2F1EE; }
+.dk-landing-lead { margin: 0; max-width: 520px; font-size: 18px; line-height: 1.6; color: #A3A7AF; }
+.dk-landing-ctas { display: flex; align-items: center; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
+.dk-landing-guest { margin-left: 8px; display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 500; white-space: nowrap; }
+.dk-landing-admin { align-self: flex-start; margin-top: 12px; display: flex; align-items: center; gap: 7px; font-size: 12.5px; }
+
+/* ── HeroCollage (kolaj; 519×580) ──
+   Artboard: grid-column 8 / span 5 (1440'ta 519.33). Hücre 7…12'ye açılır ve kolaj sağa yaslanır; genişlik = span 5
+   (6 kolonluk hücrenin 5/6'sı − 4px), en az 519 → 1280–1439'da da ana kart hücreden taşmaz, çipler görselin sol kenarını keser. */
+.dk-landing-hc { grid-column: 7 / -1; justify-self: end; width: max(519px, calc(500% / 6 - 4px)); position: relative; height: 580px; min-width: 0; }
+.dk-landing-hc-main {
+  position: absolute; top: 0; right: 0; width: 460px; height: 520px;
+  border-radius: 12px; overflow: hidden; border: 1px solid #1F232B; background: #0E1014;
+  display: block; transition: border-color 200ms ease;
+}
+.dk-landing .dk-landing-hc-main, .dk-landing .dk-landing-hc-main:hover { color: #F2F1EE; }
+a.dk-landing-hc-main:hover { border-color: #2C303A; }
+.dk-landing-hc-main.is-loading > .dk-skel { position: absolute; inset: 0; }
+.dk-landing-hc-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-landing-hc-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(6,7,10,0.05) 0%, rgba(6,7,10,0.2) 50%, rgba(6,7,10,0.92) 100%); }
+.dk-landing-hc-cap { position: absolute; left: 24px; right: 24px; bottom: 22px; display: flex; flex-direction: column; gap: 8px; }
+.dk-landing-hc-eb {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+  font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #7CE0B0;
+}
+.dk-landing-hc-eb.is-next { color: #C9CACD; }   /* canlı değil (sıradaki etkinlik / genel yedek): yeşil "canlı" rengi kullanılmaz */
+.dk-landing-hc-ebt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dk-landing-hc-dot { position: relative; width: 7px; height: 7px; display: block; flex-shrink: 0; }
+.dk-landing-hc-ping, .dk-landing-hc-core { position: absolute; top: 0; left: 0; width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: block; }
+.dk-landing-hc-t {
+  font-family: var(--dk-font-serif); font-size: 40px; line-height: 1.02; letter-spacing: -0.01em;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+.dk-landing-hc-s { font-size: 14px; color: #C9CACD; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.dk-landing-hc-artist {
+  position: absolute; left: 0; bottom: 0; width: 250px; box-sizing: border-box; padding: 14px;
+  border-radius: 12px; border: 1px solid #1F232B; background: #0A0B0F;
+  display: flex; align-items: center; gap: 12px; transition: border-color 200ms ease;
+}
+.dk-landing-hc-av { flex-shrink: 0; }
+.dk-landing-hc-acol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-landing-hc-name { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dk-landing-hc-role { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #FF4FA3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-landing-hc-venue {
+  position: absolute; left: 36px; top: 70px; width: 196px; box-sizing: border-box; padding: 14px 16px;
+  border-radius: 12px; border: 1px solid #1F232B; background: #0A0B0F;
+  display: flex; flex-direction: column; gap: 6px; transition: border-color 200ms ease;
+}
+.dk-landing .dk-landing-hc-artist, .dk-landing .dk-landing-hc-artist:hover,
+.dk-landing .dk-landing-hc-venue, .dk-landing .dk-landing-hc-venue:hover { color: #F2F1EE; }
+a.dk-landing-hc-artist:hover, a.dk-landing-hc-venue:hover { border-color: #2C303A; }
+.dk-landing-hc-vk { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #FF8A2A; }
+.dk-landing-hc-vline { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #A3A7AF; min-width: 0; }
+.dk-landing-hc-vline > svg { flex-shrink: 0; }
+.dk-landing-hc-vline > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ════════════════════ 2. FEATURES ════════════════════ */
+.dk-landing-feat { padding: 88px 0; border-top: 1px solid #14171D; }
+.dk-landing-feat-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
+.dk-landing-feat-p { margin: 0; max-width: 380px; font-size: 15.5px; line-height: 1.6; color: #A3A7AF; }
+.dk-landing-fgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 1px solid #1F232B; }
+.dk-landing-fitem {
+  box-sizing: border-box; padding: 32px 28px 8px 0; margin-right: 28px; min-width: 0;
+  display: flex; flex-direction: column; gap: 16px; border-right: 1px solid #1F232B;
+}
+.dk-landing-fitem:nth-child(4) { border-right: 0; }
+.dk-landing-fno { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-landing-ftile { width: 44px; height: 44px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; display: flex; align-items: center; justify-content: center; }
+.dk-landing-ft { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; color: #F2F1EE; }
+.dk-landing-fd { margin: 0; font-size: 14.5px; line-height: 1.6; color: #A3A7AF; }
+
+/* ════════════════════ 3. ROLES ════════════════════ */
+.dk-landing-roles { padding: 88px 0; background: #0A0B0F; border-top: 1px solid #14171D; border-bottom: 1px solid #14171D; }
+.dk-landing-rgrid { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 40px; align-items: stretch; }
+.dk-landing-tabs { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dk-landing-tab {
+  position: relative; overflow: hidden; width: 100%; box-sizing: border-box; padding: 20px 22px;
+  border-radius: 10px; border: 1px solid #1F232B; background: transparent; color: #F2F1EE;
+  display: flex; align-items: center; gap: 16px; text-align: left;
+}
+.dk-landing-tab.is-on { border-color: #2C303A; background: #0E1014; }
+.dk-landing-tab-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; display: block; }
+.dk-landing-tab.is-on .dk-landing-tab-bar { background: var(--dk-landing-rc); }
+.dk-landing-tab-dot { width: 10px; height: 10px; flex-shrink: 0; border-radius: 50%; background: var(--dk-landing-rc); display: block; }
+.dk-landing-tab-col { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-landing-tab-name { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.dk-landing-tab-short { font-size: 13.5px; color: #8A8E97; }
+.dk-landing-tab-arrow { flex-shrink: 0; color: #5E636D; }
+.dk-landing-tab.is-on .dk-landing-tab-arrow { color: var(--dk-landing-rc); }
+
+.dk-landing-panel {
+  position: relative; overflow: hidden; min-height: 460px; min-width: 0; border-radius: 14px;
+  border: 1px solid #1F232B; background: #0E1014;
+  display: grid; grid-template-columns: minmax(0, 1fr) 340px;
+}
+.dk-landing-panel:focus-visible { outline-offset: 2px; }
+.dk-landing-panel-bar { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--dk-landing-rc); display: block; z-index: 2; }
+.dk-landing-panel-text { box-sizing: border-box; padding: 44px 44px 40px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.dk-landing-panel-eb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: var(--dk-landing-rc); }
+.dk-landing-h3 { margin: 0; font-family: var(--dk-font-serif); font-weight: 400; font-size: 40px; line-height: 1.04; letter-spacing: -0.01em; color: #F2F1EE; }
+.dk-landing-bullets { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.dk-landing-bullets > li { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; line-height: 1.5; color: #C9CACD; }
+.dk-landing-bullets > li > svg { flex-shrink: 0; margin-top: 2px; color: var(--dk-landing-rc); }
+.dk-landing-panel-cta {
+  margin-top: auto; align-self: flex-start; box-sizing: border-box; height: 44px; padding: 0 18px; border-radius: 6px;
+  display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 600; white-space: nowrap;
+}
+.dk-landing .dk-landing-panel-cta, .dk-landing .dk-landing-panel-cta:hover { background: var(--dk-landing-rc); color: #06070A; }
+.dk-landing-panel-media { position: relative; overflow: hidden; background: #14171D; }
+.dk-landing-panel-media > img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-landing-panel-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(14,16,20,0.9) 0%, rgba(14,16,20,0.1) 40%); }
+
+/* ════════════════════ 4. EVENTS ════════════════════ */
+.dk-landing-ev { padding: 88px 0; }
+.dk-landing-evhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.dk-landing-all { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.dk-landing-evgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+/* Landing kart farkı (spec §2.3.5): alt satır "{n} katılımcı" 13px #8A8E97, ikonsuz */
+.dk-landing-evgrid .dk-ecd-att { color: #8A8E97; }
+/* İskelet kart = gerçek kartın iskeleti (görsel 200 · gövde 16/18/18 gap 8 · alt satır border-top), satır yükseklikleri
+   gerçek karttaki gibi (kicker 14 · tek satır başlık 25 · meta 18 · alt satır 20) → 1440'ta 352 = tek satırlı gerçek kart */
+.dk-landing-skel-body { flex-grow: 1; gap: 8px; }
+.dk-landing-skel-body > .dk-skel:nth-child(1) { margin: 1.5px 0; }
+.dk-landing-skel-body > .dk-skel:nth-child(2) { margin: 3.5px 0; }
+.dk-landing-skel-body > .dk-skel:nth-child(3) { margin: 2.5px 0; }
+.dk-landing-skel-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid #1F232B; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dk-landing-skel-foot > .dk-skel { margin: 3.5px 0; }
+
+/* ════════════════════ 5. APP PROMO ════════════════════ */
+.dk-landing-appwrap { padding-bottom: 88px; }
+.dk-landing.is-noev .dk-landing-appwrap { padding-top: 88px; }   /* etkinlik bölümü gizliyken rol bölümüyle arası */
+.dk-landing-app {
+  position: relative; overflow: hidden; box-sizing: border-box; padding: 56px; border-radius: 14px;
+  border: 1px solid #1F232B; background: #0A0B0F;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: center;
+}
+.dk-landing-app-prism { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; display: block; }
+.dk-landing-app-text { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dk-landing-app-p { margin: 0; max-width: 560px; font-size: 16px; line-height: 1.6; color: #A3A7AF; }
+.dk-landing-stores { display: flex; gap: 12px; }
+.dk-landing-store {
+  box-sizing: border-box; height: 56px; padding: 0 22px; border-radius: 8px; border: 1px solid #2C303A; background: #0E1014;
+  display: flex; align-items: center; gap: 12px; white-space: nowrap;
+}
+.dk-landing .dk-landing-store, .dk-landing .dk-landing-store:hover { color: #F2F1EE; }
+.dk-landing-store-col { display: flex; flex-direction: column; gap: 1px; }
+.dk-landing-store-k { font-size: 11px; color: #8A8E97; }
+.dk-landing-store-l { font-size: 15px; font-weight: 600; }
+
+/* ════════════════════ 6. CTA ════════════════════ */
+.dk-landing-cta { padding: 72px 0 104px; }
+.dk-landing-cta-in { display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
+.dk-landing-cta-h { margin: 0; font-family: var(--dk-font-serif); font-weight: 400; font-size: 72px; line-height: 1; letter-spacing: -0.01em; color: #F2F1EE; }
+.dk-landing-cta-p { margin: 0; max-width: 520px; font-size: 16.5px; line-height: 1.6; color: #A3A7AF; }
+.dk-landing-cta-row { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+
+/* ════════════════════ Duyarlı ════════════════════ */
+/* 1024–1439: rol paneli 1440'taki metin/görsel oranını korusun (1280'de 340 görsel kolonu metni 292 px'e sıkıştırıyordu) */
+@media (max-width: 1439px) {
+  .dk-landing-rgrid { grid-template-columns: 300px minmax(0, 1fr); gap: 32px; }
+  .dk-landing-panel { grid-template-columns: minmax(0, 1fr) 280px; }
+  .dk-landing-panel-text { padding: 40px 36px 36px; }
+}
+/* 1024–1279 (kanvas: "hero tek kolon"; kart ızgaraları 3) — spec §2.10 */
+@media (max-width: 1279px) {
+  .dk-landing-hero-grid { grid-template-columns: minmax(0, 1fr); row-gap: 64px; }
+  .dk-landing-hero-l { grid-column: 1 / -1; }
+  .dk-landing-h1 { font-size: 64px; }
+  .dk-landing-lead { max-width: 560px; }
+  .dk-landing-hc { grid-column: 1 / -1; width: 519px; max-width: 100%; justify-self: center; }
+
+  /* Özellikler 2×2: 2. ve 4. öğenin sağ ayırıcısı yok; satır ayırıcısı (kesintisiz) */
+  .dk-landing-fgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-landing-fitem { padding: 32px 28px 32px 0; }
+  .dk-landing-fitem:nth-child(2n) { border-right: 0; margin-right: 0; margin-left: -28px; padding-left: 28px; padding-right: 0; }
+  .dk-landing-fitem:nth-child(n+3) { border-top: 1px solid #1F232B; }
+
+  /* Etkinlikler 3 kolon (3 kart) */
+  .dk-landing-evgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dk-landing-evgrid > :nth-child(n+4) { display: none; }
+}
+/* 769–1023: hamburger (kabuk) · hero tek kolon, kolaj ≤460 · özellikler 2 kolon · rol sekmeleri yatay şerit, panel görselsiz ·
+   etkinlikler 2×2 · uygulama tanıtımı alt alta · CTA başlığı 56 */
+@media (max-width: 1023px) {
+  .dk-landing-hero { padding: 64px 0 72px; }
+  .dk-landing-hero-grid { row-gap: 48px; }
+  .dk-landing-h1 { font-size: 56px; }
+  /* Kolaj oranlı küçülür (519×580 → en çok 460 geniş; parçalar aynı oranda) */
+  .dk-landing-hc { width: 460px; height: auto; aspect-ratio: 519 / 580; }
+  .dk-landing-hc-main { width: calc(88.63% - 2px); height: calc(89.66% - 2px); }
+  .dk-landing-hc-venue { left: 6.94%; top: 12.07%; }
+  .dk-landing-hc-t { font-size: 34px; }
+
+  .dk-landing-feat, .dk-landing-roles, .dk-landing-ev { padding: 72px 0; }
+  .dk-landing-feat-head { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .dk-landing-h2 { font-size: 44px; }
+  .dk-landing-h2-44 { font-size: 40px; }
+
+  .dk-landing-rgrid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .dk-landing-tabs { flex-direction: row; gap: 8px; }
+  .dk-landing-tab { flex: 1 1 0; padding: 14px 14px 14px 16px; gap: 10px; align-items: flex-start; }
+  .dk-landing-tab-dot { margin-top: 6px; }
+  .dk-landing-tab-name { font-size: 16px; }
+  .dk-landing-tab-short { font-size: 12.5px; }
+  .dk-landing-tab-arrow { display: none; }
+  .dk-landing-panel { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .dk-landing-panel-media { display: none; }
+  .dk-landing-panel-text { padding: 36px 32px 32px; }
+  .dk-landing-panel-cta { margin-top: 12px; }
+
+  .dk-landing-evgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-landing-evgrid > :nth-child(n+4) { display: flex; }
+  .dk-landing-ev, .dk-landing.is-noev .dk-landing-appwrap { padding-top: 72px; }
+  .dk-landing-appwrap { padding-bottom: 72px; }
+
+  .dk-landing-app { grid-template-columns: minmax(0, 1fr); gap: 28px; padding: 40px; }
+  .dk-landing-stores { flex-wrap: wrap; }
+
+  .dk-landing-cta { padding: 56px 0 88px; }
+  .dk-landing-cta-h { font-size: 56px; }
+}

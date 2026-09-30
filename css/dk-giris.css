@@ -1,0 +1,65 @@
+/* dk-giris.css — WebGiris masaüstü görünümü (giris): giriş MODALI (portal: .dk-giris-ovl / .dk-giris-modal) +
+   #/login tam sayfa (AuthSplit kolonu: .dk-giris). Ortak form parçaları .dk-giris-* (iki yüzeyde aynı).
+   SAHİBİ: js/desktop/auth/giris.js uygulayıcısı (specs/foundation.md §3). Spec: specs/auth.md WebGiris (modal + #/login tam sayfa)
+   KAPSAM: tüm seçiciler .dk-giris* sınıfları altında; çıplak eleman seçicisi / legacy sınıf adı YOK.
+   Modal herkese açık sayfaların portalında açılır → bu dosya openLoginModal() tarafından da yüklenir. */
+
+/* ---------- Form (modal + tam sayfa) — artboard WebGiris form bloğu ---------- */
+.dk-giris-form { margin: 0; display: flex; flex-direction: column; gap: 16px; }
+.dk-giris-fld { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dk-giris-lrow { display: flex; align-items: center; justify-content: space-between; }
+.dk-giris-forgot {
+  height: 24px; padding: 0; border: 0; background: none; color: #4ED8FF;
+  font-family: var(--dk-font-sans); font-size: 13px; font-weight: 500;
+}
+.dk-giris-forgot[aria-disabled="true"] { cursor: default; pointer-events: none; }
+.dk-giris-status { display: flex; flex-direction: column; }
+/* hata varken şifre alanı da kırmızı kenar (artboard inBd; e-posta aria-invalid ile dk-ui kuralından) */
+.dk-giris-form .dk-inp.dk-giris-bad { border-color: rgba(255,90,110,0.55) !important; }
+.dk-giris-rc { margin: 0; font-size: 11.5px; line-height: 1.5; color: #8A8E97; text-align: center; }
+.dk-giris-rc .dk-giris-rc-a, .dk-giris-rc .dk-giris-rc-a:hover { color: #A3A7AF; text-decoration: underline; }
+
+/* ---------- #/login tam sayfa ---------- */
+.dk-giris-topr { font-size: 14px; color: #8A8E97; white-space: nowrap; }
+.dk-giris-topr .dk-giris-topr-a { font-weight: 600; }
+
+/* ---------- Modal (portal) ---------- */
+/* karartma: rgba(6,7,10,.74) + blur(5px); arka sayfanın saturate(.7)'si backdrop-filter'da (artboard: sayfa filter:saturate(.7)) */
+/* backdrop-filter kaplamanın KENDİSİNDE (artboard: gb-fade + backdrop-filter aynı öğede). Alt öğede (.dk-ovl-bg) olursa
+   üstteki opaklık animasyonu (dk-fade) "backdrop root" oluşturup bulanıklığın arka sayfayı görmesini engelliyor. */
+.dk-ovl.dk-giris-ovl {
+  padding: 16px; --dk-fade-dur: 300ms;
+  background: rgba(6,7,10,0.74);
+  -webkit-backdrop-filter: blur(5px) saturate(0.7);
+  backdrop-filter: blur(5px) saturate(0.7);
+}
+.dk-ovl.dk-giris-ovl .dk-ovl-bg { background: transparent; }
+.dk-mdl.dk-giris-modal {
+  --dk-pop-dur: 420ms; --dk-pop-y: 14px; --dk-focus-border: #4ED8FF;
+  max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px);
+  padding: 0; gap: 0; border-radius: 14px; border: 1px solid #1F232B; background: #0A0B0F; overflow: hidden;
+}
+.dk-giris-prism { position: absolute; top: 0; left: 0; right: 0; z-index: 1; height: 3px; display: block; }
+.dk-mdl.dk-giris-modal > .dk-mdl-body { gap: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.dk-giris-mb { padding: 32px 36px 28px; display: flex; flex-direction: column; gap: 20px; }
+.dk-giris-mhead { display: flex; align-items: center; justify-content: space-between; }
+.dk-giris-mlogo .dk-logo-word { font-size: 18px; }
+.dk-giris-x {
+  width: 40px; height: 40px; box-sizing: border-box; padding: 0; flex-shrink: 0;
+  border-radius: 8px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF;
+  display: flex; align-items: center; justify-content: center;
+}
+.dk-giris-mtitle { display: flex; flex-direction: column; gap: 8px; }
+.dk-giris-msub { margin: 0; font-size: 15px; line-height: 1.5; color: #A3A7AF; }
+.dk-giris-mfoot {
+  padding-top: 18px; border-top: 1px solid #14171D;
+  display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; color: #A3A7AF;
+}
+.dk-giris-mfoot .dk-giris-mfoot-a { font-weight: 600; }
+/* odak: portal herkese açık alanda (data-area=public) → auth artboard'unun input halkası + #10131A odak zemini burada */
+.dk-mdl.dk-giris-modal .dk-inp:focus { background: #10131A; }
+.dk-mdl.dk-giris-modal .dk-inp:focus-visible { outline: 2px solid #4ED8FF; outline-offset: 2px; }
+
+/* SHARED-CANDIDATE: AuthSplit orta bölgesinin dikey iç boşluğu. Kabuk 32px veriyor (artboard'da yok) → uzun durumlarda (hata/onay
+   notu) kolon 6px aşağı kayıyor ve sayfa 12px kayıyor. Artboard kanıtı: WebKayit 1040'ta kolon üst satırın 20px altında başlıyor. */
+.dk-auth-center:has(> .dk-giris) { padding: 20px 0; }

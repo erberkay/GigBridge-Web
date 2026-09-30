@@ -1,0 +1,172 @@
+/* dk-admin-panel.css — WebAdmin masaüstü görünümü (admin).
+   SAHİBİ: js/desktop/admin/admin.js uygulayıcısı (specs/foundation.md §3). Spec: specs/org-admin.md WebAdmin
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-admin-panel (kabuğun main#dk-main'i) ya da .dk-admin-panel-* sınıfları altında
+   (üst bar "Keşfet önizleme" düğmesi .dk-admin-panel-kbtn, portal çekmecesi .dk-admin-panel-drw). Ölçüler artboard satır içi stillerinden birebir. */
+
+/* ---------- kök (kabuk içerik bölgesi; boşluk 24 kabuktan) ---------- */
+.dk-admin-panel { --dk-admin-v: #A78BFA; }
+.dk-admin-panel.is-warm .dk-rise { animation: none; }
+
+/* ---------- üst bar: Keşfet önizleme (artboard: a.gb-press 40, pad 0 14, r6, #2C303A, 13.5/500, pusula 16 #A78BFA) ---------- */
+.dk-admin-panel-kbtn { box-sizing: border-box; height: 40px; padding: 0 14px; margin: 0; border-radius: 6px; border: 1px solid #2C303A; background: transparent;
+  color: #F2F1EE; display: flex; align-items: center; gap: 8px; font-family: var(--dk-font-sans); font-size: 13.5px; font-weight: 500; white-space: nowrap; flex-shrink: 0; cursor: pointer; }
+.dk-admin-panel-kbtn svg { flex-shrink: 0; }
+/* ≤1179: üst bar sığsın diye yalnız ikon (erişilebilir ad aria-label'da) */
+@media (max-width: 1179px) {
+  .dk-admin-panel-kbtn { width: 40px; padding: 0; justify-content: center; }
+  .dk-admin-panel-kbtn-l { display: none; }
+}
+
+/* ---------- 1. hero ---------- */
+.dk-admin-panel-hero .dk-hero-eb { color: #A78BFA; }
+
+/* ---------- 2. KPI (dkKpi panel varyantı = artboard; aktif kenar rgba(167,139,250,.5)) ---------- */
+.dk-admin-panel-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.dk-admin-panel-kpi { width: 100%; margin: 0; cursor: pointer; }
+.dk-admin-panel .dk-kpi.is-active { border-color: rgba(167,139,250,0.5); }
+
+/* ---------- 3. iki kolon ---------- */
+.dk-admin-panel-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
+
+/* tablo kartı */
+.dk-admin-panel-card { border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; overflow: hidden; min-width: 0; container: dkadmtbl / inline-size; }
+/* sekme şeridi (dkUnderlineTabs sans): artboard h56 border-box → alt çizgi iç gölge (yatay kaydırmada kırpılmasın), çubuk bottom 0 */
+.dk-admin-panel .dk-admin-panel-tabs { box-sizing: border-box; height: 56px; border-bottom: 0; box-shadow: inset 0 -1px 0 #14171D; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.dk-admin-panel-tabs::-webkit-scrollbar { display: none; }
+.dk-admin-panel .dk-admin-panel-tabs .dk-utab-bar { bottom: 0; }
+.dk-admin-panel .dk-admin-panel-tabs .dk-utab-t { flex-shrink: 0; }
+.dk-admin-panel .dk-admin-panel-tabs .dk-utab-t:focus-visible { outline-offset: -2px; }
+/* taşma göstergesi (admin.js syncTabs): kaydırılabilir yönde kenar solması */
+.dk-admin-panel .dk-admin-panel-tabs.is-ovf-r { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+.dk-admin-panel .dk-admin-panel-tabs.is-ovf-l { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); }
+.dk-admin-panel .dk-admin-panel-tabs.is-ovf-l.is-ovf-r { -webkit-mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); }
+/* başvuru türü çipleri (artboard: h32 r16 pad 0 12 13/500 gap 6 nokta 7) */
+.dk-admin-panel-subs { padding: 12px 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #14171D; }
+.dk-admin-panel .dk-admin-panel-chip { gap: 6px; }
+
+/* tablo: başlık 40 + satırlar (ızgara 1.5fr 1.2fr 140 200, boşluk 16, pad 0 20) */
+.dk-admin-panel-tbl { display: flex; flex-direction: column; min-width: 0; }
+.dk-admin-panel-thead, .dk-admin-panel-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr) 140px 200px; gap: 16px; align-items: center; box-sizing: border-box; border-bottom: 1px solid #14171D; }
+.dk-admin-panel-thead { height: 40px; padding: 0 20px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-admin-panel-thead > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-admin-panel-thead > .dk-admin-panel-c4 { text-align: right; }
+.dk-admin-panel-row { position: relative; min-height: 68px; padding: 12px 20px; background: transparent; }
+.dk-admin-panel-row.is-sel { background: rgba(167,139,250,0.06); }
+.dk-admin-panel-row.is-sel.dk-row:hover { background: rgba(167,139,250,0.06); }
+.dk-admin-panel-selbar { position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: transparent; display: block; }
+.dk-admin-panel-row.is-sel .dk-admin-panel-selbar { background: #A78BFA; }
+.dk-admin-panel-row:not(.is-skel) { cursor: pointer; }
+.dk-admin-panel-c1, .dk-admin-panel-c2, .dk-admin-panel-c3 { min-width: 0; }
+/* kolon 1: seçim düğmesi (avatar 38 + başlık/alt) */
+.dk-admin-panel-pick { min-width: 0; max-width: 100%; padding: 0; margin: 0; border: 0; background: none; color: #F2F1EE; display: flex; align-items: center; gap: 12px; text-align: left; font: inherit; cursor: pointer; }
+.dk-admin-panel-av { width: 38px; height: 38px; flex-shrink: 0; color: #06070A; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+.dk-admin-panel-av.is-lg { width: 56px; height: 56px; font-size: 20px; }
+.dk-admin-panel-tcol { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-admin-panel-t { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-admin-panel-s { min-width: 0; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #8A8E97; }
+.dk-admin-panel-stx { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* kolon 2: tür etiketi + metin */
+.dk-admin-panel-row > .dk-admin-panel-c2 { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #A3A7AF; }
+.dk-admin-panel-c2t { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-admin-panel-ktag { height: 22px; box-sizing: border-box; padding: 0 8px; border-radius: 4px; border: 1px solid; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; display: flex; align-items: center; flex-shrink: 0; }
+.dk-admin-panel-ktag.is-alt { display: none; height: 18px; padding: 0 6px; font-size: 9px; }
+/* kolon 4: işlemler */
+.dk-admin-panel-row > .dk-admin-panel-c4 { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+.dk-admin-panel-act { height: 34px; box-sizing: border-box; padding: 0 10px; margin: 0; border-radius: 6px; border: 1px solid; display: flex; align-items: center; gap: 6px;
+  font-family: var(--dk-font-sans); font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.dk-admin-panel-act.is-ok { border-color: rgba(124,224,176,0.45); background: rgba(124,224,176,0.08); color: #7CE0B0; }
+.dk-admin-panel-act.is-no { border-color: rgba(255,90,110,0.45); background: rgba(255,90,110,0.06); color: #FF5A6E; }
+.dk-admin-panel-act svg { flex-shrink: 0; }
+/* yazım sürerken aria-disabled (odak korunur; tıklama admin.js'te yok sayılır) */
+.dk-admin-panel-act[aria-disabled="true"], .dk-admin-panel-dok[aria-disabled="true"], .dk-admin-panel-dno[aria-disabled="true"] { opacity: 0.55; cursor: default; }
+.dk-admin-panel-act[aria-busy="true"], .dk-admin-panel-dok[aria-busy="true"], .dk-admin-panel-dno[aria-busy="true"] { opacity: 0.8; cursor: progress; }
+.dk-admin-panel-undo { height: 34px; padding: 0 6px; margin: 0; border: 0; background: none; font-family: var(--dk-font-sans); font-size: 13px; font-weight: 500; cursor: pointer; }
+.dk-admin-panel-undo[aria-disabled="true"], .dk-admin-panel-dundo[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
+/* boş / hata / iskelet */
+.dk-admin-panel-empty { padding: 56px 20px; text-align: center; font-size: 14px; color: #8A8E97; }
+.dk-admin-panel-err { padding: 48px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; font-size: 13.5px; color: #8A8E97; }
+.dk-admin-panel-err .dk-btn { margin-top: 6px; }
+.dk-admin-panel-skc1 { display: flex; align-items: center; gap: 12px; }
+.dk-admin-panel-row.is-skel .dk-admin-panel-tcol { gap: 8px; }
+/* dipnot */
+.dk-admin-panel-foot { padding: 14px 20px; display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #8A8E97; }
+.dk-admin-panel-foot svg { flex-shrink: 0; }
+
+/* ---------- detay paneli ---------- */
+/* yapışkan yalnız sığarsa: admin.js syncSticky → yüksekliği > 100vh − 120 ise .is-free (doğal akış, artboard gibi; iç kaydırma/kırpma yok) */
+.dk-admin-panel-detail { border-radius: 12px; border: 1px solid #1F232B; background: #0A0B0F; overflow: hidden; display: flex; flex-direction: column; min-width: 0;
+  position: sticky; top: 96px; }
+.dk-admin-panel-detail.is-free { position: relative; top: auto; }
+.dk-admin-panel-dhead { padding: 20px; border-bottom: 1px solid #14171D; display: flex; flex-direction: column; gap: 14px; }
+.dk-admin-panel-deb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA; }
+.dk-admin-panel-drow { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.dk-admin-panel-dcol { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.dk-admin-panel-dt { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; color: #F2F1EE; overflow-wrap: anywhere; }
+.dk-admin-panel-dsub { font-size: 13.5px; color: #A3A7AF; overflow-wrap: anywhere; }
+.dk-admin-panel-dl { margin: 0; padding: 8px 20px; }
+.dk-admin-panel-dl > div { padding: 12px 0; border-bottom: 1px solid #14171D; display: flex; justify-content: space-between; gap: 16px; }
+.dk-admin-panel-dl dt { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; padding-top: 2px; flex-shrink: 0; }
+.dk-admin-panel-dl dd { margin: 0; min-width: 0; font-size: 14px; color: #F2F1EE; text-align: right; overflow-wrap: anywhere; }
+.dk-admin-panel-msg { margin: 8px 20px 0; padding: 14px; border-radius: 8px; background: #0E1014; border: 1px solid #1F232B; display: flex; flex-direction: column; gap: 6px; }
+.dk-admin-panel-msg > span { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-admin-panel-msg > p { margin: 0; font-size: 14px; line-height: 1.55; color: #F2F1EE; white-space: pre-line; overflow-wrap: anywhere; }
+.dk-admin-panel-dact { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.dk-admin-panel-dok, .dk-admin-panel-dno { height: 44px; margin: 0; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--dk-font-sans); font-size: 14px; font-weight: 600; cursor: pointer; }
+.dk-admin-panel-dok { border: 0; background: #A78BFA; color: #06070A; }
+.dk-admin-panel-dno { border: 1px solid rgba(255,90,110,0.45); background: transparent; color: #FF5A6E; }
+.dk-admin-panel-dok svg, .dk-admin-panel-dno svg { flex-shrink: 0; }
+.dk-admin-panel .dk-admin-panel-dmsg, .dk-admin-panel-drw .dk-admin-panel-dmsg,
+.dk-admin-panel .dk-admin-panel-dmsg:hover, .dk-admin-panel-drw .dk-admin-panel-dmsg:hover { color: #F2F1EE; }
+.dk-admin-panel-dmsg { height: 44px; box-sizing: border-box; border-radius: 6px; border: 1px solid #2C303A; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 500; }
+.dk-admin-panel-done { padding: 12px 14px; border-radius: 8px; border: 1px solid; display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: #F2F1EE; }
+.dk-admin-panel-done > span { flex-grow: 1; }
+.dk-admin-panel-dundo { height: 32px; padding: 0 4px; margin: 0; border: 0; background: none; font-family: var(--dk-font-sans); font-size: 13px; font-weight: 500; cursor: pointer; }
+.dk-admin-panel-dempty { padding: 56px 24px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; font-size: 13.5px; color: #8A8E97; }
+.dk-admin-panel-det { font-size: 15px; font-weight: 600; color: #F2F1EE; }
+.dk-admin-panel-dl .dk-skel { display: block; }
+
+/* ---------- çekmece (portal; dar ekranda detay) ---------- */
+.dk-admin-panel-drw .dk-drw-body { gap: 0; }
+/* başlık 2+ satır olabilir (ad isteği / sorun konusu) → sabit 80 yerine en az 80, dikey pay 16 */
+.dk-admin-panel-drw .dk-drw-head { height: auto; min-height: 80px; padding-top: 16px; padding-bottom: 16px; }
+.dk-admin-panel-drw .dk-drw-head h2 { overflow-wrap: anywhere; }
+.dk-admin-panel-drw .dk-admin-panel-drow.is-drw { padding-bottom: 18px; border-bottom: 1px solid #14171D; }
+.dk-admin-panel-drw .dk-admin-panel-dl { padding: 8px 0; }
+.dk-admin-panel-drw .dk-admin-panel-msg { margin: 8px 0 0; }
+.dk-admin-panel-drw .dk-admin-panel-dact { padding: 20px 0 0; }
+
+/* ---------- duyarlı ----------
+   ≥1440: artboard (detay 380) · 1180–1439: detay 320 · <1180: detay gizli → sağ çekmece (spec §10) ·
+   KPI 2×2 <1380 (spec: <1180; daha darda 4'lü dizide "Mekan ve organizatör başvurusu" alt metni iki satıra sarıp kartları 147→164 büyütüyordu) ·
+   tablo KENDİ genişliğine göre (container query): <640 → TÜR sütunu gizli, tür etiketi başlığın altına (spec "col2 hidden") ·
+   <560 → satırlar kart (avatar + başlık | durum, işlemler ikinci satır; spec 769–1023 "rows → cards"). */
+@media (max-width: 1439px) {
+  .dk-admin-panel-grid { grid-template-columns: minmax(0, 1fr) 320px; }
+}
+@media (max-width: 1379px) {
+  .dk-admin-panel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1179px) {
+  .dk-admin-panel-grid { grid-template-columns: minmax(0, 1fr); }
+  .dk-admin-panel-detail { display: none; }
+}
+/* dar kart (≈1180–1224: detay 320 yanında): sekme şeridi sıkışır (şerit pad 4, aralık 0, sekme pad 8) → 4 sekme sığar */
+@container dkadmtbl (max-width: 560px) {
+  .dk-admin-panel .dk-admin-panel-tabs { padding: 0 4px; gap: 0; }
+  .dk-admin-panel .dk-admin-panel-tabs .dk-utab-t { padding: 0 8px; }
+  .dk-admin-panel .dk-admin-panel-tabs .dk-utab-bar { left: 4px; right: 4px; }
+}
+@container dkadmtbl (max-width: 639px) {
+  .dk-admin-panel-thead, .dk-admin-panel-row { grid-template-columns: minmax(0, 1fr) 140px 200px; }
+  .dk-admin-panel-row > .dk-admin-panel-c2, .dk-admin-panel-thead > .dk-admin-panel-c2 { display: none; }
+  .dk-admin-panel-ktag.is-alt { display: flex; }
+}
+@container dkadmtbl (max-width: 559px) {
+  .dk-admin-panel-thead { display: none; }
+  .dk-admin-panel-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "c1 c3" "c4 c4"; row-gap: 10px; column-gap: 12px; }
+  .dk-admin-panel-row > .dk-admin-panel-c1 { grid-area: c1; }
+  .dk-admin-panel-row > .dk-admin-panel-c3 { grid-area: c3; }
+  .dk-admin-panel-row > .dk-admin-panel-c4 { grid-area: c4; justify-content: flex-start; padding-left: 50px; }
+  .dk-admin-panel-row > .dk-admin-panel-c4:empty { display: none; }
+}

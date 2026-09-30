@@ -1,0 +1,90 @@
+/* dk-takip.css — WebTakip masaüstü görünümü (takip).
+   SAHİBİ: js/desktop/account/takip.js uygulayıcısı (specs/foundation.md §3). Spec: specs/hesap.md WebTakip
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-takip (ve alt sınıfları .dk-takip-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan.
+   Ölçüler: design/WebTakip.dc.html (1440; içerik kolonu 968, gap 28). */
+
+.dk-takip { --dk-toast-life: 3.6s; }
+.dk-takip .dk-ph { margin-bottom: 0; }               /* WebTakip PageHead'de alt boşluk yok (Profil'de 8) */
+
+/* ── sekmeler + arama ── */
+.dk-takip-ctl { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.dk-takip-ctl[hidden] { display: none; }
+.dk-takip-search {
+  width: 340px; height: 46px; box-sizing: border-box; padding: 0 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0E1014;
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0; transition: border-color 160ms ease; cursor: text;
+}
+.dk-takip-search svg { flex-shrink: 0; }
+.dk-takip-search:focus-within { border-color: var(--dk-focus-border, #FF4FA3); }
+.dk .dk-takip-q {
+  flex-grow: 1; min-width: 0; padding: 0; border: 0 !important; background: none; outline: none;
+  color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14.5px;
+}
+.dk-takip-q::-webkit-search-cancel-button { filter: invert(.6); }
+
+/* ── ızgara + kart (FollowCard) ── */
+.dk-takip-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.dk-takip-cell { display: flex; min-width: 0; }
+.dk-takip-card {
+  flex-grow: 1; min-width: 0; display: flex; flex-direction: column; border: 1px solid #1F232B; border-radius: 12px;
+  overflow: hidden; background: #0E1014;
+}
+.dk-takip .dk-takip-media { position: relative; height: 176px; overflow: hidden; display: block; background: #14171D; color: #F2F1EE; }
+.dk-takip-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-takip-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 600; letter-spacing: -0.04em; color: #F2F1EE; }
+.dk-takip-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,7,10,0) 50%, rgba(6,7,10,0.6) 100%); display: block; pointer-events: none; }
+.dk-takip-chip {
+  position: absolute; top: 12px; left: 12px; max-width: calc(100% - 24px); height: 24px; box-sizing: border-box; padding: 0 9px;
+  display: flex; align-items: center; gap: 7px; border-radius: 4px; background: rgba(6,7,10,0.78); border: 1px solid var(--c-bd, rgba(255,79,163,0.5));
+  color: var(--c, #FF4FA3); font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap; overflow: hidden;
+}
+.dk-takip-chip > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+.dk-takip-chip.is-live { left: auto; right: 12px; --c: #FF5A6E; --c-bd: rgba(255,90,110,0.5); overflow: visible; }
+.dk-takip-chip[hidden] { display: none; }
+.dk-takip-media.has-live .dk-takip-chip:not(.is-live) { max-width: calc(100% - 130px); }   /* "BU GECE" ile çakışmasın */
+.dk-takip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c, #FF4FA3); display: block; flex-shrink: 0; }
+.dk-takip-ping { position: relative; width: 6px; height: 6px; display: block; flex-shrink: 0; }
+.dk-takip-ping .dk-takip-dot { position: absolute; top: 0; left: 0; }
+
+.dk-takip-nm { padding: 16px 18px 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dk-takip .dk-takip-name { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; color: #F2F1EE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-takip-meta { font-size: 13px; color: #8A8E97; }
+
+/* UpcomingBox */
+.dk-takip-up { margin: 14px 18px 0; box-sizing: border-box; padding: 12px 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; display: flex; align-items: center; gap: 14px; }
+.dk-takip-upc { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 42px; }   /* artboard: küçülebilir (etiket 42'yi taşar, ortalı) */
+.dk-takip-upn { font-size: 24px; line-height: 1; font-weight: 600; color: #F2F1EE; min-height: 24px; display: flex; align-items: center; }
+.dk-takip-upn.is-zero { color: #8A8E97; }
+.dk-takip-upl { font-family: var(--dk-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap; }
+.dk-takip-updiv { width: 1px; align-self: stretch; background: #1F232B; flex-shrink: 0; }
+.dk-takip-nx { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-takip-nxl { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-takip-nxt { font-size: 13.5px; color: #C9CACD; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* aksiyonlar */
+.dk-takip-acts { margin-top: auto; padding: 14px 18px 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dk-takip-acts.is-single { grid-template-columns: minmax(0, 1fr); }   /* grup/kullanıcı: webde profil sayfası yok */
+.dk-takip .dk-takip-see {
+  height: 40px; box-sizing: border-box; border-radius: 6px; border: 1px solid #2C303A; color: #F2F1EE;
+  display: flex; align-items: center; justify-content: center; font-size: 13.5px; font-weight: 500; white-space: nowrap;
+}
+.dk-takip-unf {
+  height: 40px; box-sizing: border-box; border-radius: 6px; border: 1px solid rgba(255,79,163,0.45); background: rgba(255,79,163,0.08); color: #FF4FA3;
+  display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 13.5px; font-weight: 600; white-space: nowrap; min-width: 0;
+}
+.dk-takip-unf svg { flex-shrink: 0; }
+.dk-takip .dk-takip-unf:hover { border-color: rgba(255,90,110,0.6); color: #FF5A6E; background-color: rgba(255,90,110,0.08); }
+
+/* yükleniyor */
+.dk-takip-skel { border: 1px solid #1F232B; border-radius: 12px; overflow: hidden; background: #0E1014; display: flex; flex-direction: column; }
+.dk-takip-skelb { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ── duyarlı ── */
+@media (max-width: 1279px) {
+  .dk-takip-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-takip-search { width: 280px; padding: 0 12px; gap: 8px; }   /* 280'de yer tutucu kırpılmasın */
+}
+@media (max-width: 1023px) {
+  .dk-takip-ctl { flex-wrap: wrap; gap: 16px; }
+  .dk-takip-search { width: 100%; }
+}

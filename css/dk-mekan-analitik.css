@@ -1,0 +1,248 @@
+/* dk-mekan-analitik.css — WebMekanAnalitik masaüstü görünümü (venueAnalitik).
+   SAHİBİ: js/desktop/venue/analitik.js uygulayıcısı (specs/foundation.md §3). Spec: specs/mekan.md WebMekanAnalitik
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-mekan-analitik (ve alt sınıfları .dk-mekan-analitik-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan.
+   Kök = kabuğun içerik bölgesi (main.dk-ps-content: pad 32 40 48, gap 28 — kabuk). Ölçüler artboard'un satır içi stillerinden birebir.
+   Hareket: kabuk mekan değişkenleri (rise 600/12, swap 380/8); çizgi .dk-draw (pathLength=1600 → her uzunlukta tam çizim). */
+
+.dk-mekan-analitik [hidden], .dk-mekan-analitik-revmodal [hidden] { display: none !important; }
+
+/* ── Hero ── */
+.dk-mekan-analitik-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.dk-mekan-analitik-herocol { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dk-mekan-analitik-eyebrow { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #FF8A2A; }
+.dk-mekan-analitik-h2 { margin: 0; font-family: var(--dk-font-serif); font-size: 44px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.02; color: #F2F1EE; }
+.dk-mekan-analitik-h2 em { font-style: italic; color: #FF4FA3; }
+.dk-mekan-analitik-lead { margin: 0; font-size: 15px; color: #A3A7AF; }
+.dk-mekan-analitik-range { font-family: var(--dk-font-mono); font-size: 12px; color: #8A8E97; }
+.dk-mekan-analitik-heroright { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.dk-mekan-analitik-pseg { display: flex; padding: 4px; border: 1px solid #1F232B; border-radius: 8px; background: #0E1014; }
+.dk-mekan-analitik-pb { height: 36px; box-sizing: border-box; padding: 0 16px; border: 0; border-radius: 5px; background: transparent; color: #8A8E97; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.dk-mekan-analitik-pb[aria-selected="true"] { background: #1C2029; color: #F2F1EE; }
+
+/* ── Gövde ── */
+.dk-mekan-analitik-body { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.dk-mekan-analitik-metrics { display: flex; flex-direction: column; gap: 16px; }
+.dk-mekan-analitik-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.dk-mekan-analitik-kpi { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dk-mekan-analitik-kpitop { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dk-mekan-analitik-kpiic { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; background: rgba(255,138,42,0.10); color: #FF8A2A; display: flex; align-items: center; justify-content: center; }
+.dk-mekan-analitik-kpil { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-mekan-analitik-kpiv { font-size: 32px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
+.dk-mekan-analitik-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.dk-mekan-analitik-tile { padding: 14px 16px; border-radius: 10px; border: 1px solid #1F232B; display: flex; align-items: center; gap: 12px; min-width: 0; }
+/* artboard: düz span + satır içi svg (23 px satır kutusu, ikon üstte) — flex ile ortalamak ikonu 2.5 px aşağı itiyordu */
+.dk-mekan-analitik-tileic { color: #8A8E97; display: block; }
+.dk-mekan-analitik-tileic > svg { display: inline; vertical-align: baseline; }
+.dk-mekan-analitik-tilecol { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.dk-mekan-analitik-tilev { font-size: 18px; font-weight: 600; white-space: nowrap; }
+.dk-mekan-analitik-tilel { font-size: 12px; color: #8A8E97; }
+
+/* ── Pano satırları (≥1280: A 2fr|1fr · B 1fr|2fr · C 2fr|1fr, gap 24; satırlar arası 28) ── */
+.dk-mekan-analitik-dash { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.dk-mekan-analitik-row { display: grid; gap: 24px; min-width: 0; }
+.dk-mekan-analitik-row.is-a, .dk-mekan-analitik-row.is-c { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.dk-mekan-analitik-row.is-b { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+.dk-mekan-analitik-row.is-a, .dk-mekan-analitik-row.is-b { align-items: stretch; }
+.dk-mekan-analitik-row.is-c { align-items: start; }
+.dk-mekan-analitik-rcol { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+
+/* Kart (panel kartı: pad 20 24) */
+.dk-mekan-analitik-card { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.dk-mekan-analitik-card.is-genre, .dk-mekan-analitik-card.is-days { gap: 18px; }
+.dk-mekan-analitik-card.is-all { gap: 14px; }
+.dk-mekan-analitik-card.is-table { padding: 0; gap: 0; overflow: hidden; }
+.dk-mekan-analitik-chead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.dk-mekan-analitik-ccol { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.dk-mekan-analitik-ceb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+.dk-mekan-analitik-h3 { margin: 0; font-family: var(--dk-font-sans); font-size: 18px; font-weight: 600; letter-spacing: normal; color: #F2F1EE; }
+.dk-mekan-analitik-sseg { display: flex; padding: 3px; border: 1px solid #1F232B; border-radius: 8px; background: #0A0B0F; flex-shrink: 0; }
+.dk-mekan-analitik-sb { height: 30px; padding: 0 12px; border: 0; border-radius: 5px; background: transparent; color: #8A8E97; font-size: 13px; font-weight: 500; }
+.dk-mekan-analitik-sb[aria-checked="true"] { background: #1C2029; color: #F2F1EE; }
+.dk-mekan-analitik-dempty { box-sizing: border-box; border: 1px dashed #2C303A; border-radius: 10px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 16px; font-size: 13.5px; color: #8A8E97; }
+.dk-mekan-analitik-foot, .dk-mekan-analitik-note { font-size: 12px; color: #8A8E97; }
+.dk-mekan-analitik-card.is-genre .dk-mekan-analitik-foot { margin-top: auto; }
+.dk-mekan-analitik-distrow { margin-top: auto; display: flex; }
+
+/* ── 01 Çizgi grafik (genişlik ölçülür; 250 yüksek) ── */
+.dk-mekan-analitik-chart { position: relative; width: 100%; height: 250px; }
+.dk-mekan-analitik-grid { position: absolute; left: 48px; right: 8px; height: 0; border-top: 1px dashed #1F232B; display: block; }
+.dk-mekan-analitik-grid.is-base { border-top-style: solid; }
+.dk-mekan-analitik-ytick { position: absolute; left: 0; width: 40px; text-align: right; font-family: var(--dk-font-mono); font-size: 10.5px; color: #8A8E97; }
+.dk-mekan-analitik-svg { position: absolute; top: 0; left: 0; display: block; }
+.dk-mekan-analitik .dk-draw.is-still { animation: none; }
+.dk-mekan-analitik-pt { position: absolute; box-sizing: border-box; border-radius: 50%; border: 2px solid #FF8A2A; background: #0E1014; display: block; pointer-events: none; }
+.dk-mekan-analitik-pt.is-hi { background: #FF8A2A; }
+.dk-mekan-analitik-xl { position: absolute; width: 64px; text-align: center; font-family: var(--dk-font-mono); font-size: 10.5px; color: #8A8E97; pointer-events: none; white-space: nowrap; }
+.dk-mekan-analitik-xl.is-hi { color: #F2F1EE; }
+.dk-mekan-analitik-hit { position: absolute; top: 10px; padding: 0; border: 0; background: transparent; cursor: crosshair; }
+.dk-mekan-analitik-hit:focus-visible { outline-offset: -2px; }
+.dk-mekan-analitik-tip { position: absolute; width: 132px; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid #2C303A; background: rgba(6,7,10,0.94); display: flex; flex-direction: column; gap: 2px; pointer-events: none; transition: left 200ms ease, top 200ms ease; }
+.dk-mekan-analitik-tipl { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #8A8E97; }
+.dk-mekan-analitik-tipv { font-family: var(--dk-font-mono); font-size: 15px; font-weight: 600; color: #FF8A2A; }
+.dk-mekan-analitik-tips { font-size: 11.5px; color: #A3A7AF; }
+
+/* ── 02 / 03-Saatler çubuk listesi ── */
+.dk-mekan-analitik-bars { display: flex; flex-direction: column; gap: 16px; }
+.dk-mekan-analitik-bars:empty { display: none; }
+.dk-mekan-analitik-bar { display: flex; flex-direction: column; gap: 7px; }
+.dk-mekan-analitik-barrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13.5px; }
+.dk-mekan-analitik-barl { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-analitik-barv { font-family: var(--dk-font-mono); font-size: 12px; font-weight: 600; color: #A3A7AF; white-space: nowrap; }
+.dk-mekan-analitik-barv.is-first { color: #FF8A2A; }
+.dk-mekan-analitik-barrest { color: #8A8E97; font-weight: 400; }
+.dk-mekan-analitik-track { height: 8px; border-radius: 4px; background: #14171D; display: block; overflow: hidden; }
+.dk-mekan-analitik-fillw { height: 100%; display: block; }  /* genişlik + soluklaştırma (1 / .45); animasyon içteki dolguda */
+.dk-mekan-analitik-fill { width: 100%; height: 100%; border-radius: 4px; background: #FF8A2A; display: block; }
+
+/* ── 03 Sütun grafik ── */
+.dk-mekan-analitik-cols { height: 220px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.dk-mekan-analitik-col { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+.dk-mekan-analitik-colv { font-family: var(--dk-font-mono); font-size: 10.5px; color: #8A8E97; }
+.dk-mekan-analitik-colv.is-top { color: #F2F1EE; }
+.dk-mekan-analitik-colbarw { width: 100%; min-height: 2px; display: block; }  /* yükseklik + soluklaştırma (1 / .38) */
+.dk-mekan-analitik-colbar { width: 100%; height: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: #FF8A2A; display: block; }
+.dk-mekan-analitik-coll { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; color: #8A8E97; }
+
+/* ── 04 Sanatçılar ── */
+.dk-mekan-analitik .dk-mekan-analitik-find { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; color: #FF8A2A; flex-shrink: 0; }
+.dk-mekan-analitik .dk-mekan-analitik-find:hover { color: #FF8A2A; filter: brightness(1.15); }
+.dk-mekan-analitik-perfgrid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; }
+.dk-mekan-analitik-perfgrid.is-empty { grid-template-columns: minmax(0, 1fr); }
+.dk-mekan-analitik-ranks { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.dk-mekan-analitik-rankli { display: block; min-width: 0; }
+.dk-mekan-analitik-rank { width: 100%; height: 56px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #1F232B; background: transparent; color: #F2F1EE; display: flex; align-items: center; gap: 12px; text-align: left; min-width: 0; }
+.dk-mekan-analitik-rank[aria-pressed="true"] { border-color: rgba(255,138,42,0.55); background: rgba(255,138,42,0.06); }
+.dk-mekan-analitik-rk { font-family: var(--dk-font-mono); width: 24px; flex-shrink: 0; font-size: 12px; font-weight: 700; color: #8A8E97; }
+.dk-mekan-analitik-rk.is-first { color: #FFD700; }
+.dk-mekan-analitik-rav { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; object-fit: cover; object-position: 50% 22%; display: block; }
+.dk-mekan-analitik-rav.is-ini { background: #1C2029; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
+/* artboard'da ad/alt satır 352 px listede iki satıra kırılıyor (tasarım hatası) → ad tek satır + üç nokta; alt satır ≤ 2 satır */
+.dk-mekan-analitik-rnc { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-mekan-analitik-rn { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* alt satır en çok 2 satır (artboard da kırıyor): 1440'ta 90 px ad kolonunda "{tür} · {n} etkinlik" kesilmesin; 56 px satıra sığar */
+.dk-mekan-analitik-rs { font-size: 12px; line-height: 1.2; color: #8A8E97; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: anywhere; }
+.dk-mekan-analitik-rright { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.dk-mekan-analitik-rv { font-family: var(--dk-font-mono); font-size: 13px; font-weight: 600; }
+.dk-mekan-analitik-rvl { font-size: 11px; color: #8A8E97; }
+.dk-mekan-analitik-rrev { font-family: var(--dk-font-mono); width: 84px; flex-shrink: 0; text-align: right; font-size: 12.5px; color: #A3A7AF; white-space: nowrap; }
+.dk-mekan-analitik-rsrev { display: none; }
+/* Kart 04 içeriği < 670 px (1440'ta tam 670; 1280–1439 satır B 2fr kolonu, ~1024–1060 tam genişlik): sabit parçalar (sıra 24 +
+   avatar 34 + sağ kolon + GELİR 84 + boşluklar ≈ 260) 300 px panelin yanında ad kolonunu 0–90 px'e eziyordu → GELİR alt satıra iner,
+   panel 256, aralık 16 (ad ≥ ~128 px @1280). Kapsayıcı sorgusu kartın içerik kutusunu ölçer. */
+.dk-mekan-analitik-card.is-perf { container: dkma-perf / inline-size; }
+@container dkma-perf (max-width: 669.5px) {
+  .dk-mekan-analitik-perfgrid { grid-template-columns: minmax(0, 1fr) 256px; gap: 16px; }
+  .dk-mekan-analitik-rrev { display: none; }
+  .dk-mekan-analitik-rsrev { display: inline; }
+}
+.dk-mekan-analitik-perf { padding: 16px; border-radius: 10px; border: 1px solid #1F232B; background: #0A0B0F; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dk-mekan-analitik-peb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #FF8A2A; }
+.dk-mekan-analitik-pname { font-size: 17px; font-weight: 600; }
+.dk-mekan-analitik-pstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #1F232B; border-radius: 8px; }
+.dk-mekan-analitik-pcell { padding: 10px; display: flex; flex-direction: column; gap: 3px; border-right: 1px solid #1F232B; min-width: 0; }
+.dk-mekan-analitik-pcell:last-child { border-right: 0; }
+.dk-mekan-analitik-pv { font-size: 17px; font-weight: 600; }
+.dk-mekan-analitik-pv.is-rate { color: #FF8A2A; }
+.dk-mekan-analitik-pl { font-size: 11px; color: #8A8E97; }
+.dk-mekan-analitik-pevs { display: flex; flex-direction: column; }
+.dk-mekan-analitik-pev { height: 44px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #14171D; }
+.dk-mekan-analitik-pevcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.dk-mekan-analitik-pevt { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-analitik-pevm { font-size: 11.5px; color: #8A8E97; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-analitik-peva { display: flex; align-items: center; gap: 4px; color: #FF8A2A; flex-shrink: 0; }
+.dk-mekan-analitik-peva > span { font-family: var(--dk-font-mono); font-size: 12.5px; font-weight: 600; color: #F2F1EE; }
+
+/* ── 05 Etkinlik tablosu ── */
+.dk-mekan-analitik-thead { padding: 20px 24px 16px; }
+.dk-mekan-analitik-trange { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap; }
+.dk-mekan-analitik-tr { box-sizing: border-box; padding: 0 24px; display: grid; grid-template-columns: 64px minmax(0, 1fr) 150px 96px 100px; gap: 14px; align-items: center; border-bottom: 1px solid #14171D; }
+.dk-mekan-analitik-th { height: 36px; border-top: 1px solid #14171D; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
+.dk-mekan-analitik-threv { text-align: right; }
+.dk-mekan-analitik-trow { height: 54px; transition: background-color 160ms ease; }
+.dk-mekan-analitik-trow:hover { background: #0C0E12; }
+@keyframes dkMekanAnFlash { 0%, 60% { background: rgba(255,138,42,0.10); } 100% { background: transparent; } }
+.dk-mekan-analitik-trow.is-flash { animation: dkMekanAnFlash 2s ease both; }
+.dk-mekan-analitik-tdate { font-family: var(--dk-font-mono); font-size: 11.5px; font-weight: 600; color: #A3A7AF; }
+.dk-mekan-analitik-tev { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-mekan-analitik-ttitle { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-analitik-tsub { font-size: 12px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-analitik-tsubrev { display: none; }
+.dk-mekan-analitik-tatt { display: flex; flex-direction: column; gap: 6px; }
+.dk-mekan-analitik-tattn { font-family: var(--dk-font-mono); font-size: 12px; white-space: nowrap; }
+.dk-mekan-analitik-tattv { color: #F2F1EE; font-weight: 600; }
+.dk-mekan-analitik-tattc { color: #8A8E97; }
+.dk-mekan-analitik-prog { height: 4px; border-radius: 2px; background: #1F232B; display: block; overflow: hidden; }
+.dk-mekan-analitik-prog > span { height: 100%; background: #FF8A2A; display: block; }
+.dk-mekan-analitik-trev { font-family: var(--dk-font-mono); font-size: 12.5px; text-align: right; white-space: nowrap; }
+.dk-mekan-analitik-status { height: 24px; box-sizing: border-box; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 12px; border: 1px solid #2C303A; color: #A3A7AF; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.dk-mekan-analitik-status.is-cancel { border-color: rgba(255,90,110,0.4); color: #FF5A6E; }
+.dk-mekan-analitik-status.is-live { border-color: rgba(124,224,176,0.35); background: rgba(124,224,176,0.10); color: #7CE0B0; }
+.dk-mekan-analitik-tempty { height: 100px; display: flex; align-items: center; justify-content: center; font-size: 13.5px; color: #8A8E97; border-bottom: 1px solid #14171D; }
+.dk-mekan-analitik-tfoot { height: 48px; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 13px; color: #8A8E97; }
+.dk-mekan-analitik-more { height: 32px; padding: 0; border: 0; background: none; font-size: 13px; }
+
+/* ── 06 Yorumlar ── */
+.dk-mekan-analitik-score { display: flex; align-items: center; gap: 16px; }
+.dk-mekan-analitik-scorev { font-family: var(--dk-font-serif); font-size: 48px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.02; color: #FF8A2A; }
+.dk-mekan-analitik-scorecol { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.dk-mekan-analitik-scoret { font-size: 12.5px; color: #8A8E97; }
+.dk-mekan-analitik-stars { display: flex; }
+.dk-mekan-analitik-starw { position: relative; display: block; flex-shrink: 0; }
+.dk-mekan-analitik-starw > svg { position: absolute; left: 0; top: 0; display: block; }
+.dk-mekan-analitik-starhalf { clip-path: inset(0 50% 0 0); }
+.dk-mekan-analitik-rev { padding: 14px; border-radius: 10px; border: 1px solid #1F232B; background: #0A0B0F; display: flex; flex-direction: column; gap: 8px; }
+.dk-mekan-analitik-revhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dk-mekan-analitik-revn { font-size: 13.5px; font-weight: 600; }
+.dk-mekan-analitik-revt { margin: 0; font-size: 13.5px; line-height: 1.5; color: #C9CACD; }
+.dk-mekan-analitik-rev.is-empty .dk-mekan-analitik-revt { color: #8A8E97; }
+.dk-mekan-analitik-revm { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #8A8E97; }
+.dk-mekan-analitik-all { align-self: flex-start; display: flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font-size: 13px; font-weight: 500; }
+.dk-mekan-analitik-revmodal .dk-mdl-sub { font-size: 13px; color: #8A8E97; }
+.dk-mekan-analitik-revlist { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── Genel özet ── */
+.dk-mekan-analitik-ogrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #1F232B; border: 1px solid #1F232B; border-radius: 8px; overflow: hidden; }
+.dk-mekan-analitik-ocell { padding: 12px; background: #0E1014; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.dk-mekan-analitik-ov { font-size: 18px; font-weight: 600; }
+.dk-mekan-analitik-ol { font-size: 11.5px; color: #8A8E97; }
+
+/* ── Yükleniyor / hata ── */
+.dk-mekan-analitik-skel { display: flex; flex-direction: column; gap: 16px; }
+.dk-mekan-analitik-skel .dk-mekan-analitik-row { margin-top: 12px; }
+.dk-mekan-analitik-error { height: 280px; box-sizing: border-box; border: 1px dashed #2C303A; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #8A8E97; text-align: center; }
+.dk-mekan-analitik-error-t { font-size: 16px; font-weight: 600; color: #F2F1EE; }
+.dk-mekan-analitik-error-s { font-size: 13.5px; }
+.dk-mekan-analitik-error-b { margin-top: 6px; height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-size: 13.5px; }
+
+/* ── Duyarlı ── */
+@media (max-width: 1279px) {
+  .dk-mekan-analitik-hero { flex-wrap: wrap; row-gap: 16px; }
+  /* KPI 2×2, ikincil 3+2; satırlar tek kolon — Tür + Günler ve Yorumlar + Genel özet yan yana (spec §10) */
+  .dk-mekan-analitik-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-mekan-analitik-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dk-mekan-analitik-dash { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px;
+    grid-template-areas: "trend trend" "genre days" "perf perf" "tbl tbl" "rev all"; align-items: stretch; }
+  .dk-mekan-analitik-row, .dk-mekan-analitik-rcol { display: contents; }
+  .dk-mekan-analitik-card.is-trend { grid-area: trend; }
+  .dk-mekan-analitik-card.is-genre { grid-area: genre; }
+  .dk-mekan-analitik-card.is-days { grid-area: days; }
+  .dk-mekan-analitik-card.is-perf { grid-area: perf; }
+  .dk-mekan-analitik-card.is-table { grid-area: tbl; }
+  .dk-mekan-analitik-card.is-rev { grid-area: rev; }
+  .dk-mekan-analitik-card.is-all { grid-area: all; align-self: start; }
+  .dk-mekan-analitik-skel .dk-mekan-analitik-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 1023px) {
+  .dk-mekan-analitik-h2 { font-size: 40px; }
+  .dk-mekan-analitik-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-mekan-analitik-dash { grid-template-columns: minmax(0, 1fr); grid-template-areas: "trend" "genre" "days" "perf" "tbl" "rev" "all"; }
+  .dk-mekan-analitik-card.is-all { align-self: stretch; }
+  .dk-mekan-analitik-chart { height: 220px; }
+  .dk-mekan-analitik-tr { grid-template-columns: 56px minmax(0, 1fr) 140px 100px; }
+  .dk-mekan-analitik-trev, .dk-mekan-analitik-threv { display: none; }
+  .dk-mekan-analitik-tsubrev { display: inline; }
+}
+@media (max-width: 860px) {
+  .dk-mekan-analitik-perfgrid { grid-template-columns: minmax(0, 1fr); }
+}

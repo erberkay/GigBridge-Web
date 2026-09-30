@@ -14,6 +14,9 @@ import {
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE, profileTagline, profileResidency, featuredSet, venueChips, featuredReview, availabilityBadge, bookingRequestModal, rateCardBlock, suitabilityBlock, serviceAreaBlock, techRiderBlock, videoReel, languagesBlock, priceBadge, addOnsBlock, termsBlock, trustedBadge } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { loginModal, changeEmailModal, changePasswordModal } from "./auth.js";
+// Mobil Keşfet (Kesfet.dc.html) — CSS tembel yükleyici (css.js app.js'te zaten statik). Ortak SAF yardımcılar/ikonlar/tür
+// renkleri/canlı sayaç YALNIZ Keşfet açılınca dinamik yüklenir (mkLoadMods).
+import { ensureCss } from "../desktop/css.js";
 
 const C = ROLE.customer;
 const NAV = [
@@ -132,198 +135,775 @@ function eventCard(ev) {
       h("div", { class: "ecard-meta" }, icon("calendar-outline", { size: 12 }), " " + eventWhen(ev)),
       h("div", { class: "ecard-meta", style: { color: ev.ticketPrice ? "var(--amber)" : "var(--success)", fontWeight: "700" } }, ev.ticketPrice ? fmtTL(ev.ticketPrice) : "Ücretsiz")));
 }
-// ══════════ KEŞFET — app HomeScreen ile birebir ══════════
-// export: yönetici paneli bu ekranı modal olarak gömerek önizler (admin.js).
+// ══════════ KEŞFET (mobil ≤768) — uygulamanın Kesfet.dc.html ekranı birebir ══════════
+// Görünüm: Kesfet.dc.html (selamlama + şehir başlığı, zil/profil, düz arama çubuğu + tür filtresi, eşit 4 sekme + kayan prizma
+// göstergesi, kart dili). Alt sekme çubuğu: legacy bottomnav() — diğer 4 sekmeyle aynı (tasarım çubuğu ui.js'e ortak aday).
+// Veri/davranış legacy renderKesfet ile AYNI: şehir listesi (Konumumu kullan + arama + 81 il, gb_city), arama (etkinlik +
+// app gibi sanatçı/mekan), türe göre filtre (+ "Sanatçıları Ara"), sekmeler sayfa değişmeden kayar, hero
+// karuseli (VIP önce, sonra tarih; ilk 5; 4 sn), GigBridge Top 10 (attendeeCount), Sadece GigBridge'de (+ boş durum), En Yeniler
+// (isNew), Bu Hafta (7 gün), Popüler Sanatçılar (takip). Stiller: css/m-kesfet.css — hepsi .mk kökü altında (diğer mobil rotalar
+// piksel piksel aynı kalır). export: yönetici paneli bu ekranı modalda önizler (admin.js) — API aynı: kesfetPage() → düğüm.
+const MK_CSS = "css/m-kesfet.css";
+const MK_CATS = ["TÜMÜ", "ETKİNLİKLER", "MEKANLAR", "SANATÇILAR"];
+const MK_CAT_SLUG = { "TÜMÜ": "tumu", "ETKİNLİKLER": "etkinlikler", "MEKANLAR": "mekanlar", "SANATÇILAR": "sanatcilar" };
+let _mkSeq = 0;
+// Tasarımın altın TOP 10 çipi (Popüler Sanatçılar başlığı → app ListenerTop10). Mobil webde bu rota YOK (app.js ≤768'de
+// #/top10 → #/kesfet), çip bu yüzden gizli. Mobil dinleyici Top 10 görünümü gelince "#/top10" yap → çip görünür.
+const MK_TOP10_HREF = null;
+
+// Keşfet'e özel ortak modüller (masaüstü paylaşımlı SAF yardımcılar, ikonlar, tür renkleri, canlı sayaç) — YALNIZ Keşfet
+// açılınca dinamik yüklenir: customer.js tüm mobil rotalarda statik yüklendiği için diğer rotalar bu ~49 KB'ı ödemesin.
+// Yükleme (ve m-kesfet.css) bitene dek sayfa legacy döner simgesini gösterir.
+let H = null, famColor = null, svgRaw = null, svgIcon = null, subscribeLive = null, _mkMods = null;
+function mkLoadMods() {
+  if (!_mkMods) {
+    _mkMods = Promise.all([
+      import("../desktop/shared/helpers.js"), import("../desktop/shared/genres.js"),
+      import("../desktop/shared/icons.js"), import("../desktop/shared/live.js"),
+    ]).then(([hp, gn, ic, lv]) => { H = hp; famColor = gn.genreColor; svgRaw = ic.svgRaw; svgIcon = ic.svgIcon; subscribeLive = lv.subscribeLive; });
+    _mkMods.catch(() => { _mkMods = null; }); // hata → sonraki açılışta yeniden dene
+  }
+  return _mkMods;
+}
+
+// Kesfet.dc.html ikon gövdeleri — birebir kopya
+const MKI = {
+  pin: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"></path><circle cx="12" cy="10" r="2.3"></circle>',
+  chev: '<path d="m6 9 6 6 6-6"></path>',
+  bell: '<path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2h-15z"></path><path d="M10 20.5a2 2 0 0 0 4 0"></path>',
+  user: '<circle cx="12" cy="9" r="3.5"></circle><path d="M5.5 19.5a6.5 6.5 0 0 1 13 0"></path>',
+  search: '<circle cx="11" cy="11" r="6.5"></circle><path d="m20 20-4.2-4.2"></path>',
+  sliders: '<path d="M4 7h16M7 12h10M10 17h4"></path>',
+  trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor"></path><path d="M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 14v4M8 21h8M9.5 18h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
+  ticket: '<path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"></path><path d="M14 7v10" stroke-dasharray="2 2"></path>',
+  people: '<circle cx="9" cy="9" r="3"></circle><path d="M3.5 19a5.5 5.5 0 0 1 11 0"></path><circle cx="17" cy="10" r="2.3"></circle><path d="M15.5 14.6A4.5 4.5 0 0 1 21 19"></path>',
+  star: '<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"></path>',
+  navFill: '<path d="M20.5 3.5 3.8 10.4c-.8.3-.7 1.4.1 1.6l6.6 1.6 1.6 6.6c.2.8 1.3.9 1.6.1z"></path>', // WebKesfet CityPicker
+};
+
+// JetBrains Mono 700 YALNIZ bu ekran için, ayrı aile adıyla ("MK Mono"). index.html'in ortak isteği 400/500/600 (mobil birebir
+// kuralı); global 'JetBrains Mono' ailesine 700 eklemek diğer mobil rotaların mono+700 metnini değiştirirdi. Başarısızsa
+// CSS 'JetBrains Mono' 600 yüzüne düşer (zarif yedek).
+let _mkMonoBold = null;
+function mkEnsureMonoBold() {
+  if (_mkMonoBold) return;
+  _mkMonoBold = fetch("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap")
+    .then((r) => (r.ok ? r.text() : ""))
+    .then((css) => {
+      if (!/@font-face/.test(css)) { _mkMonoBold = null; return; }
+      const s = document.createElement("style");
+      s.dataset.mk = "font";
+      s.textContent = css.replace(/font-family:\s*['"]JetBrains Mono['"]/g, "font-family: 'MK Mono'");
+      document.head.append(s);
+    })
+    .catch(() => { _mkMonoBold = null; });
+}
+
+// Legacy sayfaların destroy kancası yok → düğüm DOM'dan çıkınca (rota değişimi / önizleme kapandı) temizlik: belge
+// dinleyicileri, karusel aralığı, pencere boyutu dinleyicisi, canlı bildirim aboneliği. Yönlendirici/önizleme döndürülen düğümü
+// eşzamanlı ekler → mikro görev/ilk karede bağlı görülür; bağlandıktan sonra ayrılan sayfa ≤1 sn içinde temizlenir. Hiç
+// bağlanmayan düğüm için 15 sn emniyet süresi. add(): ölü sayfada kaydedilen temizlik hemen çalışır.
+function mkLife(node) {
+  const fns = [];
+  let seen = false, idle = 0, dead = false;
+  const mark = () => { if (node.isConnected) seen = true; };
+  const kill = () => {
+    if (dead) return;
+    dead = true; clearInterval(iv);
+    fns.splice(0).forEach((f) => { try { f(); } catch (_) {} });
+  };
+  const iv = setInterval(() => {
+    if (node.isConnected) { seen = true; return; }
+    if (!seen && ++idle < 15) return;
+    kill();
+  }, 1000);
+  queueMicrotask(mark);
+  requestAnimationFrame(mark);
+  return {
+    add(f) { if (dead) { try { f(); } catch (_) {} } else fns.push(f); return f; },
+    get dead() { return dead; },
+  };
+}
+
+const mkReduced = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
+const mkCityLabel = (c) => (c === "TÜMÜ" ? "Tüm Şehirler" : c);
+function mkGreeting(d = new Date()) {
+  const x = d.getHours();
+  if (x >= 5 && x < 12) return "GÜNAYDIN";
+  if (x >= 12 && x < 18) return "İYİ GÜNLER";
+  if (x >= 18 && x < 22) return "İYİ AKŞAMLAR";
+  return "İYİ GECELER";
+}
+const mkUp = (s) => String(s || "").toLocaleUpperCase("tr-TR");
+// Tür adı büyük harf: İngilizce adlar en-US ("MELODIC TECHNO", "INDIE" — tasarım), Türkçe adlar tr-TR ("AKUSTİK", "TÜRKÜ").
+// SHARED-CANDIDATE: genres.js genreLabel() her adı tr-TR ile büyütüyor ("MELODİC") — masaüstü de aynı karara bağlanmalı.
+const MK_TR_ASCII = new Set(["akustik", "klasik", "alternatif", "elektronik", "enstrumantal", "arabesk", "damar", "caz", "muzik"]);
+const mkGenreUp = (g) => {
+  const s = String(g || "").trim();
+  if (!s) return "";
+  const tr = /[çğıöşüâîûÇĞİÖŞÜ]/.test(s) || s.split(/[\s/&-]+/).some((w) => MK_TR_ASCII.has(fold(w)));
+  return s.toLocaleUpperCase(tr ? "tr-TR" : "en-US");
+};
+const mkGenre = (ev) => mkGenreUp((Array.isArray(ev.genre) ? ev.genre[0] : ev.genre) || "");
+const mkPrice = (ev) => (ev.ticketPrice ? fmtTL(ev.ticketPrice) : "Ücretsiz");
+const mkHref = (ev) => "#/etkinlik/" + ev.id;
+const mkVh = (t) => h("span", { class: "mk-vh" }, t); // yalnız ekran okuyucu
+// Durum rozeti — legacy statusBadge önceliği/metni (dolu > VIP > sadece GigBridge'de > yoğun > popüler > yeni), tasarım renkleri
+function mkStatus(ev) {
+  const att = ev.attendeeCount ?? 0;
+  if (ev.capacity && att >= ev.capacity) return { label: "BEKLEME LİSTESİNE KATIL!", color: "#A3A7AF" };
+  if (ev.vipStatus === "approved") return { label: "VIP DENEYİM", color: "#FFD700" };
+  if (ev.isExclusive) return { label: "SADECE GİGBRİDGE'DE", color: "#FF8A2A" };
+  if (att > 400) return { label: "YOĞUN İLGİ", color: "#FF5A6E" };
+  if (att > 200) return { label: "ŞİMDİ POPÜLER", color: "#FF4FA3" };
+  if (ev.isNew) return { label: "YENİ", color: "#7CE0B0" };
+  return null;
+}
+// "BU GECE" (tasarım) — gerçek veriyle: şu an sürüyor → ŞU AN, bugün 17:00 sonrası → BU GECE, bugün daha erken → BUGÜN
+function mkTonight(ev) {
+  if (isLive(ev)) return "ŞU AN";
+  const ms = msOf(ev);
+  if (ms == null || !H.isToday(ms)) return null;
+  return new Date(ms).getHours() >= 17 ? "BU GECE" : "BUGÜN";
+}
+// "BUGÜN · 21:00" / "YARIN · 22:00" / "CUM 2 EKİ · 23:00" (todayTimeOnly: bugünse yalnız saat — rozet zaten "BU GECE" der)
+function mkWhen(ev, { todayTimeOnly = false } = {}) {
+  const ms = msOf(ev);
+  if (ms == null) return mkUp(eventWhen(ev));
+  const time = ev.startTime || H.fmtTime(ms);
+  if (todayTimeOnly && H.isToday(ms)) return time;
+  return [mkUp(H.fmtDayLabel(ms)), time].filter(Boolean).join(" · ");
+}
+// Mesafe (legacy distPill karşılığı) — "Konumumu kullan" sonrası; ekran okuyucu için " · " ayıracı (görsel boşluk CSS'te)
+function mkDist(ev) {
+  if (!userCoords || ev.location?.lat == null) return null;
+  return h("span", { class: "mk-dist" }, mkVh(" · "), H.fmtKm(haversineKm(userCoords, { lat: ev.location.lat, lng: ev.location.lng })));
+}
+// Etkinlik görseli; bannerUrl yoksa tür rengiyle koyu gradyan (sahte görsel YOK)
+function mkImg(ev, cls, alt, eager) {
+  if (ev.bannerUrl) return h("img", { class: cls, src: ev.bannerUrl, alt: alt ?? "", loading: eager ? null : "lazy", decoding: "async" });
+  const c = famColor((Array.isArray(ev.genre) ? ev.genre[0] : ev.genre) || "");
+  return h("span", { class: cls + " mk-noimg", style: { background: `linear-gradient(150deg, ${H.rgba(c, 0.3)}, #0E1014 78%)` } });
+}
+function mkEmpty(iconEl, title, sub, cls) {
+  return h("div", { class: "mk-empty" + (cls ? " " + cls : "") }, iconEl,
+    h("span", { class: "mk-empty-t" }, title), sub ? h("span", { class: "mk-empty-s" }, sub) : null);
+}
+function mkSection({ title, sub, right, id }, ...kids) {
+  const h2 = h("h2", { class: "mk-h2", id: id || null }, title);
+  return h("section", { class: "mk-sec", "aria-labelledby": id || null },
+    h("div", { class: "mk-sec-head" }, h("div", { class: "mk-sec-titles" }, h2, sub ? h("span", { class: "mk-sub" }, sub) : null), right || null),
+    ...kids);
+}
+const mkMoreLink = (href, label = "TÜMÜNÜ GÖR") => h("a", { class: "mk-more", href }, label);
+const mkMoreBtn = (onClick, label = "TÜMÜNÜ GÖR") => h("button", { type: "button", class: "mk-more", onclick: onClick }, label);
+const mkRow = (cls, items) => h("div", { class: "mk-hscroll mk-scroll" + (cls ? " " + cls : "") }, ...items);
+
+// ── Kartlar ──
+// Hero ("Bu Gece" kartı): 216px, Ken Burns görsel, rozet(ler) + fiyat çipi, tür · saat, başlık, sanatçı · mekan + katılımcı
+function mkHeroCard(ev, eager) {
+  const now = mkTonight(ev), st = mkStatus(ev), att = Number(ev.attendeeCount) || 0;
+  const g = mkGenre(ev);
+  return h("a", { class: "mk-hero-card mk-press", href: mkHref(ev) },
+    mkImg(ev, "mk-hero-img mk-kb", ev.title || "Etkinlik", eager),
+    h("span", { class: "mk-hero-grad" }),
+    h("div", { class: "mk-hero-top" },
+      h("div", { class: "mk-hero-badges" },
+        now ? h("span", { class: "mk-live" }, h("span", { class: "mk-ping", "aria-hidden": "true" }, h("span", { class: "mk-ping-a" }), h("span", {})), now) : null,
+        st ? h("span", { class: "mk-hbadge", style: { "--c": st.color, "--cb": H.rgba(st.color, 0.5) } }, st.label) : null),
+      h("span", { class: "mk-price-chip" }, mkPrice(ev))),
+    h("div", { class: "mk-hero-text" },
+      h("span", { class: "mk-hero-eyebrow" }, [g, mkWhen(ev, { todayTimeOnly: !!now })].filter(Boolean).join(" · "), mkDist(ev)),
+      h("span", { class: "mk-hero-title" }, ev.title || "Etkinlik"),
+      h("div", { class: "mk-hero-row" },
+        h("span", { class: "mk-hero-sub" }, [ev.artistName, ev.venueName].filter(Boolean).join(" · ")),
+        att ? h("span", { class: "mk-hero-att", title: att + " katılımcı" }, svgRaw(MKI.people, { size: 12, sw: "2" }), String(att), mkVh(" katılımcı")) : null)));
+}
+// "Yaklaşan Etkinlikler" kartı (232px) — Top 10 / Sadece GigBridge'de / En Yeniler / Bu Hafta; rank → Top 10 sıra numarası
+// (masaüstü WebKesfet Top 10 dili: Instrument Serif, −0.04em, ilk 3 altın — 128px görsele ölçekli)
+function mkEventCard(ev, { rank } = {}) {
+  const st = mkStatus(ev);
+  return h("a", { class: "mk-ecard mk-press", href: mkHref(ev) },
+    h("div", { class: "mk-ecard-media" },
+      mkImg(ev, "mk-ecard-img", ev.title || "Etkinlik"),
+      rank ? h("span", { class: "mk-ecard-shade" }) : null,
+      st ? h("span", { class: "mk-sbadge", style: { background: st.color } }, st.label) : null,
+      rank ? h("span", { class: "mk-rank" + (rank <= 3 ? " gold" : "") }, mkVh("Sıra "), String(rank)) : null),
+    h("div", { class: "mk-ecard-body" },
+      h("span", { class: "mk-ecard-when" }, mkWhen(ev), mkDist(ev)),
+      h("span", { class: "mk-ecard-title" }, ev.title || "Etkinlik"),
+      h("div", { class: "mk-ecard-foot" },
+        h("span", { class: "mk-ecard-venue" }, [ev.venueName, ev.artistName].filter(Boolean).join(" · ") || "—"),
+        h("span", { class: "mk-ecard-price" }, mkPrice(ev)))));
+}
+// ETKİNLİKLER sekmesi / arama sonucu satırı — 72px görsel, zaman (bugün/yarın pembe), fiyat + katılımcı
+function mkEventRow(ev) {
+  const ms = msOf(ev), hot = ms != null && (H.isToday(ms) || H.isTomorrow(ms));
+  const att = Number(ev.attendeeCount) || 0;
+  return h("a", { class: "mk-erow mk-press", href: mkHref(ev) },
+    mkImg(ev, "mk-erow-img", ""),
+    h("div", { class: "mk-erow-main" },
+      h("span", { class: "mk-erow-when" + (hot ? " hot" : "") }, mkWhen(ev), mkDist(ev)),
+      h("span", { class: "mk-erow-title" }, ev.title || "Etkinlik"),
+      h("span", { class: "mk-erow-sub" }, [ev.venueName, ev.artistName].filter(Boolean).join(" · ") || "—")),
+    h("div", { class: "mk-erow-side" },
+      h("span", { class: "mk-erow-price" }, mkPrice(ev)),
+      h("span", { class: "mk-erow-att", title: att + " katılımcı" }, svgRaw(MKI.people, { size: 12, sw: "2" }), String(att), mkVh(" katılımcı"))));
+}
+// Mekan meta: "4,7 (128) · 600 kişi · İstanbul" (puan/yorum sayısı Cloud Functions'tan; yoksa atlanır)
+function mkVenueMeta(v, { city = true } = {}) {
+  const rating = Number(v.avgRating) > 0 ? Number(v.avgRating).toFixed(1) : null;
+  const rc = Number(v.reviewCount) || 0;
+  return { rating, parts: [rating ? (rc ? `${rating} (${rc})` : rating) : null, v.capacity ? v.capacity + " kişi" : null, city ? v.city || null : null].filter(Boolean) };
+}
+const mkVenueGenres = (v) => (Array.isArray(v.genres) ? v.genres : v.genre ? [v.genre] : []).filter(Boolean);
+// MEKANLAR kartı — 168px; tür rozeti (venueType, yoksa MEKAN — app ile aynı), ★ puan (yorum) · kapasite · şehir, tür etiketleri
+function mkVenueCard(v) {
+  const gs = mkVenueGenres(v);
+  const { rating, parts } = mkVenueMeta(v);
+  return h("a", { class: "mk-vcard mk-press", href: "#/mekan/" + v.id },
+    v.photoURL ? h("img", { class: "mk-vcard-img", src: v.photoURL, alt: v.displayName || "Mekan", loading: "lazy", decoding: "async" }) : h("span", { class: "mk-vcard-img mk-noimg mk-noimg-venue" }),
+    h("span", { class: "mk-vcard-grad" }),
+    h("span", { class: "mk-vtype" }, mkUp(v.venueType || "Mekan")),
+    h("div", { class: "mk-vcard-body" },
+      h("span", { class: "mk-vcard-name" }, v.displayName || "Mekan"),
+      h("div", { class: "mk-vcard-row" },
+        h("span", { class: "mk-vcard-meta" },
+          rating ? svgRaw(MKI.star, { size: 14, fill: true, color: "#FF8A2A", attrs: { stroke: "#FF8A2A", "stroke-width": "1.5", "stroke-linejoin": "round" } })
+            : parts.length ? svgRaw(MKI.pin, { size: 14, sw: "2", color: "#C9CACD" }) : null,
+          h("span", { class: "mk-vcard-meta-t" }, parts.join(" · "))),
+        gs.length ? h("span", { class: "mk-vtags" }, ...gs.slice(0, 2).map((g) => h("span", { class: "mk-vtag" }, mkGenreUp(g)))) : null)));
+}
+// Arama sonucu mekan satırı (app HomeScreen searchVenues: ad + tür · şehir → mekan detayı) — etkinlik satırı dilinde
+function mkVenueRow(v) {
+  const { rating, parts } = mkVenueMeta(v, { city: false });
+  return h("a", { class: "mk-erow mk-vrow mk-press", href: "#/mekan/" + v.id },
+    v.photoURL ? h("img", { class: "mk-erow-img", src: v.photoURL, alt: "", loading: "lazy", decoding: "async" })
+      : h("span", { class: "mk-erow-img mk-noimg mk-noimg-venue mk-vrow-ph", "aria-hidden": "true" }, svgIcon("building", { size: 24, sw: "1.6" })),
+    h("div", { class: "mk-erow-main" },
+      h("span", { class: "mk-erow-when mk-vrow-type" }, [mkUp(v.venueType || "Mekan"), v.city ? mkUp(v.city) : null].filter(Boolean).join(" · ")),
+      h("span", { class: "mk-erow-title" }, v.displayName || "Mekan"),
+      parts.length ? h("span", { class: "mk-erow-sub mk-vrow-meta" },
+        rating ? svgRaw(MKI.star, { size: 12, fill: true, color: "#FF8A2A", attrs: { stroke: "#FF8A2A", "stroke-width": "1.5", "stroke-linejoin": "round" } }) : null,
+        h("span", {}, parts.join(" · "))) : null),
+    svgIcon("chevronRight", { size: 16, sw: "2", cls: "mk-vrow-chev" }));
+}
+// Sanatçı yardımcıları
+const mkAName = (a) => a.displayName || "Sanatçı";
+const mkAGenre = (a) => (Array.isArray(a.genres) ? a.genres[0] : a.genre) || "Müzik";
+const mkByPop = (a, b) => ((Number(b.followerCount) || 0) - (Number(a.followerCount) || 0)) || mkAName(a).localeCompare(mkAName(b), "tr");
+function mkAvatar(a, cls) {
+  const name = mkAName(a);
+  return a.photoURL
+    ? h("span", { class: cls }, h("img", { src: a.photoURL, alt: "", loading: "lazy", decoding: "async" }))
+    : h("span", { class: cls + " ph", "aria-hidden": "true" }, name.charAt(0).toLocaleUpperCase("tr-TR"));
+}
+// Takip düğmesi — legacy artistRowHome akışı (misafir → giriş kapısı; followArtist/unfollowArtist; hata → toast).
+// Erişilebilir ad = görünen metin + gizli sanatçı adı ("TAKİP ET — Mert Arslan"); durum metinle söylenir (aria-pressed yok:
+// değişen etiket + pressed çift anlatım olurdu). fx.inert: yönetici önizlemesi — YAZMA YOK (legacy'de .hs-artist korumasıyla
+// da etkisizdi; yeni düğme o korumanın dışında kaldığı için burada kapatılır).
+function mkFollowBtn(a, fx, cls) {
+  let on = fx.followSet.has(a.id);
+  const txt = h("span", {});
+  const b = h("button", { type: "button", class: cls + " mk-press" }, txt, mkVh(" — " + mkAName(a)));
+  if (fx.inert) { b.setAttribute("aria-disabled", "true"); b.title = "Önizlemede devre dışı"; }
+  const paint = () => { txt.textContent = on ? "TAKİPTE" : "TAKİP ET"; b.classList.toggle("on", on); };
+  b.addEventListener("click", async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (fx.inert || b.closest(".km-frame")) return;
+    if (loginGate("Takip etmek")) return;
+    if (b.disabled) return;
+    b.disabled = true;
+    try {
+      if (on) { await unfollowArtist(uid(), a.id); fx.followSet.delete(a.id); on = false; }
+      else { await followArtist(uid(), a); fx.followSet.add(a.id); on = true; }
+      paint();
+    } catch (_) { toast("İşlem başarısız", "err"); }
+    b.disabled = false;
+  });
+  paint();
+  return b;
+}
+// Popüler Sanatçılar kartı (138px)
+function mkArtistCard(a, fx) {
+  return h("div", { class: "mk-acard" },
+    h("a", { class: "mk-acard-link", href: "#/sanatci/" + a.id },
+      mkAvatar(a, "mk-aphoto"),
+      h("span", { class: "mk-acard-name" }, mkAName(a)),
+      h("span", { class: "mk-acard-meta" }, mkGenreUp(mkAGenre(a)) + " · " + H.kFmt(a.followerCount ?? 0))),
+    mkFollowBtn(a, fx, "mk-follow mk-follow-card"));
+}
+// SANATÇILAR sekmesi / arama sonucu satırı
+function mkArtistRow(a, fx) {
+  return h("div", { class: "mk-arow" },
+    h("a", { class: "mk-arow-link", href: "#/sanatci/" + a.id },
+      mkAvatar(a, "mk-arow-photo"),
+      h("span", { class: "mk-arow-text" },
+        h("span", { class: "mk-arow-name" }, mkAName(a)),
+        h("span", { class: "mk-arow-meta" }, mkGenreUp(mkAGenre(a)) + " · " + H.kFmt(a.followerCount ?? 0) + " TAKİPÇİ"))),
+    mkFollowBtn(a, fx, "mk-follow mk-follow-row"));
+}
+
+// ?kategori= (masaüstü/paylaşılan bağlantılar) — yalnız #/kesfet rotasındayken okunur/yazılır (yönetici önizlemesinde değil)
+function mkReadCatQuery() {
+  if (base() !== "#/kesfet") return;
+  const q = new URLSearchParams((location.hash.split("?")[1]) || "");
+  const k = MK_CATS.find((c) => MK_CAT_SLUG[c] === q.get("kategori"));
+  if (k) activeCategory = k;
+}
+function mkWriteCatQuery() {
+  if (base() !== "#/kesfet") return;
+  const q = new URLSearchParams((location.hash.split("?")[1]) || "");
+  if (activeCategory === "TÜMÜ") q.delete("kategori"); else q.set("kategori", MK_CAT_SLUG[activeCategory]);
+  const qs = q.toString();
+  try { history.replaceState(history.state, "", location.pathname + location.search + "#/kesfet" + (qs ? "?" + qs : "")); } catch (_) {}
+}
+
+// Sayfa: kök + legacy döner simge + legacy alt sekme çubuğu (diğer 4 sekmeyle AYNI çubuk — sekme değişiminde zıplamaz;
+// ≥900 yedek yolunda legacy kenar çubuğu). m-kesfet.css + ortak modüller gelince başlık + gövde döner simgenin yerini alır.
 export function kesfetPage() {
-  const guest = !authed();
-  const cityLabel = h("span", { class: "hs-city-label" }, activeCity);
-  const chev = icon("chevron-down", { size: 11, color: "#9090B0" });
-  const cityDrop = h("div", { class: "hs-citydrop", style: { display: "none" } });
-  let dropOpen = false;
-  const setDrop = (v) => { dropOpen = v; cityDrop.style.display = v ? "" : "none"; chev.setAttribute("name", v ? "chevron-up" : "chevron-down"); chev.style.color = v ? "#FF4FA3" : "#8A8E97"; };
-  const cityChip = h("button", { class: "hs-citychip", onclick: () => setDrop(!dropOpen) },
-    icon("location-sharp", { size: 11, color: "var(--primary)" }), cityLabel, chev);
-  const bell = guest
-    ? h("button", { class: "icon-btn login-chip", onclick: () => loginModal() }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
-    : h("button", { class: "hs-bell", onclick: () => go("#/bildirimler"), title: "Bildirimler" }, icon("notifications-outline", { size: 20 }));
-  const header = h("header", { class: "topbar hs-topbar", style: { "--role": C } },
-    h("div", { class: "hs-logo" }, h("img", { class: "hs-logo-img", src: "assets/logo-icon.svg", alt: "", width: 24, height: 24 }), h("span", {}, "GigBridge")),
-    // Şehir açılır listesi çipin hemen altına açılır (popover) — masaüstünde sola kaymaz.
-    h("div", { class: "hs-citywrap" }, cityChip, cityDrop), bell);
-  const content = h("div", { class: "content hs-content" }, h("div", { class: "loading" }, spinner()));
-  const page = h("div", { class: "page has-nav", style: { "--role": C } }, header, content, bottomnav(NAV, "kesfet", C));
-  renderKesfet(content, { cityDrop, cityLabel, closeDrop: () => setDrop(false) });
+  const preview = base() !== "#/kesfet"; // yönetici paneli önizlemesi (admin.js) — gezinme/yazma yok
+  mkReadCatQuery();
+  mkWriteCatQuery(); // URL ↔ etkin sekme eşit kalsın (modül durumu korunmuş sekmeyle #/kesfet'e dönüldüyse)
+  const page = h("div", { class: "page has-nav mk", style: { "--role": C } });
+  const life = mkLife(page);
+  const boot = h("div", { class: "content" }, h("div", { class: "loading" }, spinner()));
+  page.append(boot, bottomnav(NAV, "kesfet", C));
+  Promise.all([ensureCss(MK_CSS), mkLoadMods()]).then(() => {
+    if (life.dead) return;
+    mkEnsureMonoBold();
+    const ui = mkBuild(page, life, preview);
+    boot.replaceWith(ui.head, ui.body);
+    renderKesfet(ui);
+  }, () => {
+    if (life.dead) return;
+    clear(boot); boot.append(errBox("Keşfet yüklenemedi."));
+  });
   return page;
 }
 
-async function renderKesfet(root, hdr) {
-  let events = [], artists = [], venues = [], followSet = new Set();
-  try {
-    [events, artists, venues] = await Promise.all([discoverEvents(), listRealArtists(), listVenues()]);
-    if (authed()) { try { followSet = new Set((await followingList(uid())).map((f) => f.artistId || f.id)); } catch (_) {} }
-  } catch (e) { clear(root); root.append(errBox("Keşfet yüklenemedi.")); return; }
-  clear(root);
+// Başlık (selamlama + şehir · zil + profil/giriş), arama + tür filtresi, kategori sekmeleri, gövde
+function mkBuild(page, life, preview) {
+  const guest = !authed();
+  const sid = "mk" + (++_mkSeq);
+  const cityName = h("span", { class: "mk-city-name" }, mkCityLabel(activeCity));
+  const cityBtn = h("button", { type: "button", class: "mk-city", "aria-haspopup": "dialog", "aria-expanded": "false", "aria-controls": sid + "-city", "aria-label": "Şehir seç, şu an " + mkCityLabel(activeCity) },
+    svgRaw(MKI.pin, { size: 18, sw: "2", color: "#4ED8FF" }), cityName, svgRaw(MKI.chev, { size: 16, sw: "2", color: "#8A8E97", cls: "mk-city-chev" }));
+  const cityPop = h("div", { class: "mk-pop mk-citypop", id: sid + "-city", role: "dialog", "aria-label": "Şehir seç", hidden: true });
+  let bell;
+  if (guest) {
+    bell = h("button", { type: "button", class: "mk-bell mk-press", "aria-label": "Bildirimler", onclick: () => loginGate("Bildirimleri görmek") }, svgRaw(MKI.bell, { size: 19, sw: "1.8" }));
+  } else {
+    const dot = h("span", { class: "mk-bell-dot", hidden: true });
+    bell = h("a", { class: "mk-bell mk-press", href: "#/bildirimler", "aria-label": "Bildirimler" }, svgRaw(MKI.bell, { size: 19, sw: "1.8" }), dot);
+    // Okunmamış bildirim noktası — ortak canlı sayaç (live.js; aynı uid'de tek dinleyici), düğüm çıkınca abonelik kapanır
+    life.add(subscribeLive(uid(), (st) => {
+      const n = Number(st.unreadNotifs) || 0;
+      dot.hidden = !n;
+      bell.setAttribute("aria-label", n ? `Bildirimler, ${n} yeni` : "Bildirimler");
+    }, { messages: false }));
+  }
+  // Misafir: görünür "Giriş" etiketli hap (legacy "Giriş" çipinin karşılığı, spec §1.12) → loginModal; girişli: profil dairesi
+  const prof = guest
+    ? h("button", { type: "button", class: "mk-login mk-press", onclick: () => loginModal() }, svgRaw(MKI.user, { size: 18, sw: "1.8" }), h("span", {}, "Giriş"))
+    : h("a", { class: "mk-prof mk-press", href: "#/profil", "aria-label": "Profil" }, svgRaw(MKI.user, { size: 20, sw: "1.8" }));
+  const top = h("div", { class: "mk-top mk-rise" },
+    h("div", { class: "mk-hello" }, h("span", { class: "mk-greet" }, mkGreeting()), cityBtn),
+    h("div", { class: "mk-actions" }, bell, prof),
+    cityPop);
 
-  // ── Şehir açılır listesi (Konumumu Kullan + arama + 81 il) ──
-  const cityNames = ["TÜMÜ", ...[...new Set([...events.map((e) => (e.city || e.location?.city || "").trim()).filter(Boolean), ...PROVINCES])]];
-  const listBox = h("div", { class: "hs-citylist" });
-  const cSearch = h("input", { placeholder: "Şehir ara...", oninput: () => drawCities() });
-  const setCity = (c) => { activeCity = c; try { localStorage.setItem("gb_city", c); } catch (_) {} hdr.cityLabel.textContent = c; hdr.closeDrop(); drawBody(); drawCities(); };
-  const drawCities = () => {
+  // Arama + tür filtresi
+  const sInput = h("input", { type: "search", class: "mk-sinput", "aria-label": "Etkinlik, mekan veya sanatçı ara", placeholder: "Etkinlik, mekan veya sanatçı ara...", autocomplete: "off", enterkeyhint: "search" });
+  const fBtn = h("button", { type: "button", class: "mk-fbtn mk-press", "aria-label": "Türe göre filtrele", "aria-haspopup": "dialog", "aria-expanded": "false", "aria-controls": sid + "-filter" }, svgRaw(MKI.sliders, { size: 18, sw: "1.8" }));
+  const filterPop = h("div", { class: "mk-pop mk-filterpop", id: sid + "-filter", role: "dialog", "aria-label": "Türe göre filtrele", hidden: true });
+  const search = h("div", { class: "mk-search mk-rise", role: "search" },
+    h("div", { class: "mk-sbar" }, svgRaw(MKI.search, { size: 17, sw: "1.8", color: "#8A8E97" }), sInput, h("span", { class: "mk-sdiv", "aria-hidden": "true" }), fBtn),
+    filterPop);
+
+  // Kategori sekmeleri — eşit 4 hücre + tek kayan prizma göstergesi (metin genişliğinde)
+  const ind = h("span", { class: "mk-ind mk-prism", "aria-hidden": "true" });
+  const tabBtns = MK_CATS.map((k, i) => h("button", { type: "button", role: "tab", id: `${sid}-tab${i}`, class: "mk-tab", "aria-controls": sid + "-panel" }, h("span", { class: "mk-tab-t" }, k)));
+  const tabs = h("div", { class: "mk-tabs mk-rise", role: "tablist", "aria-label": "Kategoriler" }, ...tabBtns, ind);
+
+  const head = h("header", { class: "mk-head" }, top, search, tabs);
+  const body = h("div", { class: "mk-body", id: sid + "-panel", role: "tabpanel" }, h("div", { class: "loading" }, spinner()));
+  return { page, life, sid, preview, head, cityBtn, cityName, cityPop, sInput, fBtn, filterPop, tabs, tabBtns, ind, body };
+}
+
+async function renderKesfet(ui) {
+  const { page, life, head, cityBtn, cityName, cityPop, sInput, fBtn, filterPop, tabs, tabBtns, ind, body } = ui;
+  let events = [], artists = [], venues = [], loaded = false;
+  let term = "", genreFilter = "", dateKey = "all";
+  let heroStop = null; // etkin karusel aralığı — her çizimde öncekini kapatır (kapanışlar birikmez)
+  life.add(() => heroStop?.());
+  const fx = { followSet: new Set(), inert: ui.preview };
+
+  // ── Sekmeler ──
+  const catIdx = () => Math.max(0, MK_CATS.indexOf(activeCategory));
+  const moveInd = (animate) => {
+    const b = tabBtns[catIdx()], t = b.firstChild;
+    if (!b.offsetWidth) return false;
+    const w = t.offsetWidth;
+    if (!animate) ind.style.transition = "none";
+    ind.style.left = (b.offsetLeft + (b.offsetWidth - w) / 2) + "px";
+    ind.style.width = w + "px";
+    if (!animate) { void ind.offsetWidth; ind.style.transition = ""; }
+    return true;
+  };
+  // Yapışkan başlık yüksekliği → odaklanan içerik öğesi başlığın altında kalmasın (scroll-margin-top, m-kesfet.css)
+  const syncHeadH = () => { if (head.offsetHeight) page.style.setProperty("--mk-head-h", head.offsetHeight + "px"); };
+  const paintTabs = (animate) => {
+    tabBtns.forEach((b, i) => { const on = i === catIdx(); b.setAttribute("aria-selected", on ? "true" : "false"); b.tabIndex = on ? 0 : -1; });
+    body.setAttribute("aria-labelledby", tabBtns[catIdx()].id);
+    moveInd(animate);
+  };
+  const toTop = () => {
+    const sc = page.closest(".km-body");
+    if (sc) { if (sc.scrollTop > 0) sc.scrollTop = 0; } else if (window.scrollY > 0) window.scrollTo(0, 0);
+  };
+  const setCategory = (k) => {
+    if (k === activeCategory) return;
+    activeCategory = k; // ayrı sayfaya gitmeden içerik sola kayarak gelir (app sekme davranışı)
+    paintTabs(true); mkWriteCatQuery(); drawBody(true); toTop();
+  };
+  tabBtns.forEach((b, i) => b.addEventListener("click", () => setCategory(MK_CATS[i])));
+  tabs.addEventListener("keydown", (e) => {
+    const i = tabBtns.indexOf(document.activeElement);
+    if (i < 0) return;
+    const j = e.key === "ArrowRight" ? (i + 1) % 4 : e.key === "ArrowLeft" ? (i + 3) % 4 : e.key === "Home" ? 0 : e.key === "End" ? 3 : null;
+    if (j == null) return;
+    e.preventDefault(); tabBtns[j].focus(); setCategory(MK_CATS[j]);
+  });
+  paintTabs(false);
+  // Gösterge ilk yerleşim: CSS hazır ve düğüm bağlı (bu noktada ikisi de), fontlar gelince ve pencere boyutu değişince
+  const place = () => { let n = 0; const tick = () => { syncHeadH(); if (!moveInd(false) && n++ < 40) requestAnimationFrame(tick); }; requestAnimationFrame(tick); };
+  place();
+  try { document.fonts?.ready?.then(() => { moveInd(false); syncHeadH(); }); } catch (_) {}
+  const onResize = () => { moveInd(false); syncHeadH(); };
+  window.addEventListener("resize", onResize);
+  life.add(() => window.removeEventListener("resize", onResize));
+
+  // ── Açılır paneller (şehir + tür): dış dokunuş / Esc / odak dışarı kapatır ──
+  // Dış dokunuş YALNIZ kapatır: ardından gelen tık yutulur → paneli kapatırken alttaki kart/bağlantı açılmaz.
+  let pop = null, popTrig = null, swallowOff = null;
+  const armSwallow = () => {
+    swallowOff?.();
+    const eat = (e) => { e.preventDefault(); e.stopPropagation(); off(); };
+    const off = () => {
+      clearTimeout(t);
+      document.removeEventListener("click", eat, true);
+      document.removeEventListener("pointercancel", off, true);
+      if (swallowOff === off) swallowOff = null;
+    };
+    const t = setTimeout(off, 800); // kaydırmaya dönen dokunuşta tık gelmez → süre dolunca kaldır
+    document.addEventListener("click", eat, true);
+    document.addEventListener("pointercancel", off, true);
+    swallowOff = off;
+  };
+  const onDocDown = (e) => {
+    if (!pop || pop.contains(e.target) || popTrig.contains(e.target)) return;
+    const otherTrig = cityBtn.contains(e.target) || fBtn.contains(e.target); // diğer panelin düğmesi → o panel açılsın
+    closePop(false);
+    if (!otherTrig) armSwallow();
+  };
+  const onDocKey = (e) => { if (e.key === "Escape" && pop) { e.preventDefault(); closePop(true); } };
+  // Klavye odağı panel + tetikleyici dışına çıkınca kapan (panel sekmeleri/içeriği örtmesin). relatedTarget yoksa (pencere
+  // odağı kaybı, devre dışı kalan düğme) açık kalır.
+  const onFocusOut = (e) => { const to = e.relatedTarget; if (pop && to && !pop.contains(to) && !popTrig.contains(to)) closePop(false); };
+  function closePop(focusBack) {
+    if (!pop) return;
+    const p = pop, t = popTrig;
+    pop = popTrig = null;
+    p.hidden = true; t.setAttribute("aria-expanded", "false"); t.classList.remove("open");
+    document.removeEventListener("pointerdown", onDocDown, true);
+    document.removeEventListener("keydown", onDocKey, true);
+    p.removeEventListener("focusout", onFocusOut); t.removeEventListener("focusout", onFocusOut);
+    if (focusBack) t.focus();
+  }
+  function togglePop(p, t, e) {
+    if (pop === p) return closePop(false);
+    closePop(false);
+    pop = p; popTrig = t;
+    p.hidden = false; t.setAttribute("aria-expanded", "true"); t.classList.add("open");
+    document.addEventListener("pointerdown", onDocDown, true);
+    document.addEventListener("keydown", onDocKey, true);
+    p.addEventListener("focusout", onFocusOut); t.addEventListener("focusout", onFocusOut);
+    if (e && e.detail === 0) p.querySelector("button, input")?.focus(); // klavyeyle açıldıysa odak panele
+  }
+  life.add(() => { closePop(false); swallowOff?.(); });
+
+  // ── Şehir paneli (Konumumu kullan + arama + 81 il; gb_city) ──
+  let cityNames = ["TÜMÜ", ...PROVINCES];
+  let cityCount = new Map();
+  const cSearch = h("input", { type: "search", class: "mk-pop-input", "aria-label": "Şehir ara", placeholder: "Şehir ara...", autocomplete: "off", oninput: () => drawCities() });
+  const listBox = h("div", { class: "mk-citylist", role: "listbox", "aria-label": "Şehirler" });
+  const setCity = (c, focusBack) => {
+    activeCity = c;
+    try { localStorage.setItem("gb_city", c); } catch (_) {}
+    cityName.textContent = mkCityLabel(c);
+    cityBtn.setAttribute("aria-label", "Şehir seç, şu an " + mkCityLabel(c));
+    closePop(!!focusBack); drawBody(false); drawCities();
+  };
+  // Liste: tek sekme durağı (seçili şehir, yoksa ilk) + ↑/↓/Home/End; ↑ ilk seçenekte aramaya döner, aramada ↓ listeye iner
+  function drawCities() {
     clear(listBox);
     const q = fold(cSearch.value.trim());
-    const list = cityNames.filter((c) => !q || fold(c).includes(q));
-    if (!list.length) { listBox.append(h("div", { class: "hs-city-empty" }, "Şehir bulunamadı")); return; }
-    list.forEach((c) => listBox.append(h("button", { class: "hs-city-item" + (c === activeCity ? " on" : ""), onclick: () => setCity(c) }, c)));
-  };
-  const locBtn = h("button", { class: "hs-locate", onclick: () => {
+    const list = cityNames.filter((c) => !q || fold(c).includes(q) || fold(mkCityLabel(c)).includes(q));
+    if (!list.length) { listBox.append(h("div", { class: "mk-city-empty" }, "Şehir bulunamadı")); return; }
+    const stop = list.includes(activeCity) ? activeCity : list[0];
+    list.forEach((c) => {
+      const on = c === activeCity;
+      const n = c === "TÜMÜ" ? events.length : (cityCount.get(fold(c)) || 0);
+      listBox.append(h("button", { type: "button", role: "option", class: "mk-city-opt", tabindex: c === stop ? "0" : "-1", "aria-selected": on ? "true" : "false", onclick: (e) => setCity(c, e.detail === 0) }, // klavyeyle seçildiyse odak şehir düğmesine döner
+        h("span", { class: "mk-city-opt-t" }, mkCityLabel(c)), n ? h("span", { class: "mk-city-n" }, String(n), mkVh(" etkinlik")) : null));
+    });
+  }
+  listBox.addEventListener("keydown", (e) => {
+    const opts = [...listBox.querySelectorAll(".mk-city-opt")];
+    const i = opts.indexOf(document.activeElement);
+    if (i < 0) return;
+    const j = e.key === "ArrowDown" ? Math.min(i + 1, opts.length - 1) : e.key === "ArrowUp" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? opts.length - 1 : null;
+    if (j == null) return;
+    e.preventDefault();
+    if (j < 0) { cSearch.focus(); return; }
+    opts.forEach((o, k) => { o.tabIndex = k === j ? 0 : -1; });
+    opts[j].focus();
+  });
+  cSearch.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowDown") return;
+    const o = listBox.querySelector('.mk-city-opt[tabindex="0"]') || listBox.querySelector(".mk-city-opt");
+    if (o) { e.preventDefault(); o.focus(); }
+  });
+  const locBtn = h("button", { type: "button", class: "mk-locate mk-press", onclick: (e) => {
     if (!navigator.geolocation) return toast("Tarayıcı konumu desteklemiyor", "err");
+    const kb = e.detail === 0; // klavyeyle: sonuçta odak şehir düğmesine (bulunduysa) ya da bu düğmeye döner
     locBtn.disabled = true;
+    const refocus = () => { if (kb && pop === cityPop) locBtn.focus(); };
     navigator.geolocation.getCurrentPosition(async (pos) => {
       userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      let match = null;
       try {
         const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${userCoords.lat}&lon=${userCoords.lng}&accept-language=tr`);
         const j = await r.json();
         const prov = j.address?.province || j.address?.state || j.address?.city || "";
-        const match = PROVINCES.find((p) => fold(p) === fold(prov));
-        if (match) { setCity(match); toast(match + " olarak ayarlandı"); } else toast("Şehir belirlenemedi", "err");
-      } catch (_) { toast("Şehir belirlenemedi", "err"); }
-      locBtn.disabled = false; drawBody();
-    }, () => { toast("Konum alınamadı (izin?)", "err"); locBtn.disabled = false; });
-  } }, icon("navigate", { size: 14, color: "var(--primary)" }), h("span", {}, "Konumumu Kullan"));
-  hdr.cityDrop.append(locBtn,
-    h("div", { class: "hs-citysearch" }, icon("search-outline", { size: 14, color: "var(--text-muted)" }), cSearch),
-    listBox);
+        match = PROVINCES.find((p) => fold(p) === fold(prov)) || null;
+      } catch (_) {}
+      locBtn.disabled = false;
+      if (life.dead) return;
+      if (match) { setCity(match, kb); toast(match + " olarak ayarlandı"); }
+      else { toast("Şehir belirlenemedi", "err"); drawBody(false); refocus(); }
+    }, () => { toast("Konum alınamadı (izin?)", "err"); locBtn.disabled = false; refocus(); });
+  } }, svgRaw(MKI.navFill, { size: 15, fill: true, color: "#4ED8FF" }), h("span", {}, "Konumumu kullan"));
+  cityPop.append(locBtn, h("label", { class: "mk-pop-search" }, svgRaw(MKI.search, { size: 14, sw: "2", color: "#8A8E97" }), cSearch), listBox);
+  cityBtn.addEventListener("click", (e) => togglePop(cityPop, cityBtn, e));
   drawCities();
 
-  // ── Arama + kategori sekmeleri ──
-  let term = "";
-  let genreFilter = "";
-  // Animasyonlu arama input (curvy-earwig-22) — dönen conic-gradient border glow + arama/filtre ikonları
-  const sInput = h("input", { class: "input", placeholder: "Ara...", oninput: (e) => { term = e.target.value; drawBody(); } });
-  const filterSvg = '<svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none"><path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" stroke-width="1" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
-  const searchSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" height="24" fill="none" class="feather feather-search"><circle stroke="url(#search)" r="8" cy="11" cx="11"></circle><line stroke="url(#searchl)" y2="16.65" y1="22" x2="16.65" x1="22"></line><defs><linearGradient gradientTransform="rotate(50)" id="search"><stop stop-color="#f8e7f8" offset="0%"></stop><stop stop-color="#b6a9b7" offset="50%"></stop></linearGradient><linearGradient id="searchl"><stop stop-color="#b6a9b7" offset="0%"></stop><stop stop-color="#837484" offset="50%"></stop></linearGradient></defs></svg>';
-  const searchBar = h("div", { class: "poda" },
-    h("div", { id: "poda" },
-      h("div", { class: "glow" }),
-      h("div", { class: "darkBorderBg" }),
-      h("div", { class: "darkBorderBg" }),
-      h("div", { class: "darkBorderBg" }),
-      h("div", { class: "white" }),
-      h("div", { class: "border" }),
-      h("div", { id: "main" },
-        sInput,
-        h("div", { id: "input-mask" }),
-        h("div", { id: "pink-mask" }),
-        h("div", { class: "filterBorder" }),
-        h("div", { id: "filter-icon", html: filterSvg }),
-        h("div", { id: "search-icon", html: searchSvg }))));
-  const CATS = [["TÜMÜ", "grid-outline"], ["ETKİNLİKLER", "ticket-outline"], ["MEKANLAR", "business-outline"], ["SANATÇILAR", "mic-outline"]];
-  const tabsRow = h("div", { class: "hs-tabs" });
-  const drawTabs = () => {
-    clear(tabsRow);
-    CATS.forEach(([k, ic]) => tabsRow.append(h("button", { class: "hs-tab" + (k === activeCategory ? " on" : ""), onclick: () => {
-      if (k === activeCategory) return;
-      activeCategory = k; drawTabs(); drawBody(); slideBody(); // ayrı sayfaya gitmeden, içerik sola kayarak gelir (app gibi)
-    } }, icon(ic, { size: 13 }), h("span", {}, k))));
+  // ── Tür filtresi paneli (sürgü düğmesi) ──
+  let chips = [];
+  const paintFilter = () => {
+    chips.forEach(([val, b]) => { const on = genreFilter === val; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+    fBtn.classList.toggle("on", !!genreFilter);
+    fBtn.setAttribute("aria-label", "Türe göre filtrele" + (genreFilter ? ", seçili: " + genreFilter : ""));
   };
-  drawTabs();
-
-  const body = h("div", { class: "hs-body" });
-  // Kategori değişince içerik SOLA KAYARAK gelsin (ayrı sayfaya gitmeden — app'teki tab davranışı)
-  const slideBody = () => { body.style.animation = "none"; void body.offsetWidth; body.style.animation = "kes-tab-slide 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both"; };
-  root.append(searchBar, tabsRow, body); // cityDrop artık başlıktaki çipin altında (popover)
-
-  // ── Filtre paneli (#filter-icon tıklayınca açılır) ──
-  const filterDrop = h("div", { class: "hs-filterdrop", style: { display: "none" } });
-  const GENRE_OPTS = [...new Set([...events.flatMap((e) => Array.isArray(e.genre) ? e.genre : (e.genre ? [e.genre] : [])), ...artists.flatMap((a) => Array.isArray(a.genres) ? a.genres : (a.genre ? [a.genre] : []))].map((g) => (g || "").trim()).filter(Boolean))];
-  const drawFilter = () => {
-    clear(filterDrop);
-    filterDrop.append(h("div", { class: "hs-fdrop-title" }, "Türe göre filtrele"));
-    const cr = h("div", { class: "hs-fdrop-chips" });
-    cr.append(h("button", { class: "chip" + (!genreFilter ? " on" : ""), onclick: () => { genreFilter = ""; drawFilter(); drawBody(); } }, "Tümü"));
-    GENRE_OPTS.forEach((g) => cr.append(h("button", { class: "chip" + (genreFilter === g ? " on" : ""), onclick: () => { genreFilter = g; drawFilter(); drawBody(); } }, g)));
-    filterDrop.append(cr);
-    filterDrop.append(h("button", { class: "hs-fdrop-artists", onclick: () => { activeCategory = "SANATÇILAR"; drawTabs(); drawBody(); filterDrop.style.display = "none"; } }, icon("mic-outline", { size: 14 }), h("span", {}, "Sanatçıları Ara")));
+  const drawFilter = (opts) => {
+    clear(filterPop);
+    const chip = (label, val, dot) => {
+      const b = h("button", { type: "button", class: "mk-gchip", onclick: () => { genreFilter = val; paintFilter(); drawBody(false); } },
+        h("span", { class: "mk-gdot", style: { background: dot } }), label);
+      chips.push([val, b]);
+      return b;
+    };
+    chips = [];
+    filterPop.append(
+      h("div", { class: "mk-pop-title" }, "TÜRE GÖRE FİLTRELE"),
+      h("div", { class: "mk-gchips", role: "group", "aria-label": "Türler" }, chip("Tümü", "", "#F2F1EE"), ...opts.map((g) => chip(g, g, famColor(g)))),
+      h("button", { type: "button", class: "mk-fartists mk-press", onclick: () => { closePop(false); setCategory("SANATÇILAR"); } },
+        svgIcon("mic", { size: 15 }), h("span", {}, "Sanatçıları Ara")));
+    paintFilter();
   };
-  drawFilter();
-  const fIcon = searchBar.querySelector("#filter-icon");
-  if (fIcon) { fIcon.style.cursor = "pointer"; fIcon.onclick = (e) => { e.stopPropagation(); filterDrop.style.display = filterDrop.style.display === "none" ? "block" : "none"; }; }
-  searchBar.after(filterDrop);
+  fBtn.addEventListener("click", (e) => togglePop(filterPop, fBtn, e));
+  drawFilter([]);
 
-  const inCity = (ev) => activeCity === "TÜMÜ" || fold((ev.city || ev.location?.city || "").trim()) === fold(activeCity);
+  // ── Arama ──
+  sInput.addEventListener("input", () => { term = sInput.value; drawBody(false); });
+  sInput.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && sInput.value) { e.preventDefault(); sInput.value = ""; term = ""; drawBody(false); }
+    else if (e.key === "Enter") sInput.blur();
+  });
 
-  function drawBody() {
+  // ── Veri (legacy ile aynı 3 okuma + takip listesi) ──
+  try {
+    [events, artists, venues] = await Promise.all([discoverEvents(), listRealArtists(), listVenues()]);
+    if (authed()) { try { fx.followSet = new Set((await followingList(uid())).map((f) => f.artistId || f.id)); } catch (_) {} }
+  } catch (e) {
+    if (life.dead) return;
     clear(body);
-    const mg = (item) => { if (!genreFilter) return true; const raw = item.genres ?? item.genre; const gs = Array.isArray(raw) ? raw : (raw ? [raw] : []); return gs.some((g) => fold(g) === fold(genreFilter)); };
+    body.append(h("div", { class: "mk-pad" }, mkEmpty(svgIcon("alertCircle", { size: 30, sw: "1.5" }), "Bir sorun oldu", "Keşfet yüklenemedi.")));
+    return;
+  }
+  if (life.dead) return;
+  loaded = true;
+  const evCity = (e) => (e.city || e.location?.city || "").trim();
+  cityNames = ["TÜMÜ", ...[...new Set([...events.map(evCity).filter(Boolean), ...PROVINCES])]];
+  cityCount = new Map();
+  events.forEach((e) => { const k = fold(evCity(e)); if (k) cityCount.set(k, (cityCount.get(k) || 0) + 1); });
+  drawCities();
+  drawFilter([...new Set([...events.flatMap((e) => Array.isArray(e.genre) ? e.genre : (e.genre ? [e.genre] : [])), ...artists.flatMap((a) => Array.isArray(a.genres) ? a.genres : (a.genre ? [a.genre] : []))].map((g) => (g || "").trim()).filter(Boolean))]);
+
+  const inCity = (ev) => activeCity === "TÜMÜ" || fold(evCity(ev)) === fold(activeCity);
+  const mg = (item) => { if (!genreFilter) return true; const raw = item.genres ?? item.genre; const gs = Array.isArray(raw) ? raw : (raw ? [raw] : []); return gs.some((g) => fold(g) === fold(genreFilter)); };
+  const noEventsTitle = () => (activeCity === "TÜMÜ" ? "Henüz etkinlik yok" : `${activeCity} için etkinlik yok`);
+  const NO_EVENTS_SUB = "Yakında canlı müzik etkinlikleri burada görünecek.";
+
+  function drawBody(animate) {
+    if (!loaded) return;
+    heroStop?.(); heroStop = null;
+    clear(body);
     const cityEvents = events.filter(inCity).filter(mg);
-    const fArtists = artists.filter(mg);
+    const fArtists = artists.filter(mg).sort(mkByPop);
     const fVenues = venues.filter(mg);
     const q = fold(term.trim());
+    let view;
+    if (q) view = searchView(cityEvents, fArtists, fVenues, q);
+    else if (activeCategory === "MEKANLAR") view = venuesView(fVenues);
+    else if (activeCategory === "SANATÇILAR") view = artistsView(fArtists);
+    else if (activeCategory === "ETKİNLİKLER") view = eventsView(cityEvents);
+    else view = allView(cityEvents, fArtists);
+    body.append(view);
+    if (animate) view.classList.add("mk-tabanim");
+  }
 
-    if (q) { // arama sonuçları
-      const list = cityEvents.filter((e) => [e.title, e.venueName, e.artistName].some((x) => fold(x).includes(q)));
-      if (!list.length) { body.append(h("div", { class: "hs-empty" }, icon("search-outline", { size: 32, color: "var(--text-muted)" }), h("div", { class: "hs-empty-sub" }, "Sonuç bulunamadı"))); return; }
-      body.append(h("div", { class: "hs-vlist" }, ...list.map((e) => ecard2(e, true))));
-      return;
+  // Arama (app HomeScreen paritesi): etkinlik (başlık/mekan/sanatçı adı — legacy eşleşmesi, şehir içinde) + sanatçı (ad/tür)
+  // + mekan (ad/şehir) — sanatçı/mekan listeleri bellekte (yeni sorgu yok); tür süzgeci üçüne de uygulanır
+  function searchView(cityEvents, fArtists, fVenues, q) {
+    const evs = cityEvents.filter((e) => [e.title, e.venueName, e.artistName].some((x) => fold(x).includes(q)));
+    const ars = fArtists.filter((a) => [a.displayName, ...(Array.isArray(a.genres) ? a.genres : [a.genre])].some((x) => fold(x).includes(q)));
+    const vns = fVenues.filter((v) => [v.displayName, v.city].some((x) => fold(x).includes(q)));
+    if (!evs.length && !ars.length && !vns.length) return h("div", { class: "mk-pad" }, mkEmpty(svgRaw(MKI.search, { size: 30, sw: "1.5" }), "Sonuç bulunamadı"));
+    const grp = (label, n, list) => h("section", { class: "mk-sgroup", "aria-label": label },
+      h("div", { class: "mk-slabel", "aria-hidden": "true" }, label, h("span", { class: "mk-slabel-n" }, String(n))), list);
+    return h("div", { class: "mk-results" },
+      evs.length ? grp("ETKİNLİKLER", evs.length, h("div", { class: "mk-erows" }, ...evs.map(mkEventRow))) : null,
+      ars.length ? grp("SANATÇILAR", ars.length, h("div", { class: "mk-alist" }, ...ars.map((a) => mkArtistRow(a, fx)))) : null,
+      vns.length ? grp("MEKANLAR", vns.length, h("div", { class: "mk-erows" }, ...vns.map(mkVenueRow))) : null);
+  }
+  function venuesView(list) {
+    if (!list.length) return h("div", { class: "mk-pad" }, mkEmpty(svgIcon("building", { size: 30, sw: "1.5" }), "Henüz mekan yok", "Mekanlar katıldıkça burada listelenecek."));
+    return h("div", { class: "mk-vlist", "aria-label": "Mekanlar" }, ...list.map(mkVenueCard));
+  }
+  function artistsView(list) {
+    if (!list.length) return h("div", { class: "mk-pad" }, mkEmpty(svgIcon("mic", { size: 30, sw: "1.5" }), "Henüz sanatçı yok", "Sanatçılar katıldıkça burada görünecek."));
+    return h("div", { class: "mk-alist", "aria-label": "Sanatçılar" }, ...list.map((a) => mkArtistRow(a, fx)));
+  }
+  // ETKİNLİKLER: tarih şeridi (TÜMÜ / BU HAFTA / BU AY + 14 gün; app EventsScreen/HomeScreen ile aynı süzgeç) + satırlar
+  function eventsView(cityEvents) {
+    const t0 = _startOfDay(Date.now());
+    const defs = [{ key: "all", kind: "all", label: "TÜMÜ" }, { key: "week", kind: "week", label: "BU HAFTA" }, { key: "month", kind: "month", label: "BU AY" }];
+    for (let i = 0; i < 14; i++) {
+      const dayMs = t0 + i * 86400e3, d = new Date(dayMs);
+      defs.push({ key: "d" + dayMs, kind: "day", dayMs, label: mkUp(H.DAYS_TR_SHORT[d.getDay()]), sub: String(d.getDate()), aria: `${H.DAYS_TR[d.getDay()]} ${d.getDate()} ${H.MONTHS_TR[d.getMonth()]}` });
     }
-
-    if (activeCategory === "MEKANLAR") {
-      if (!fVenues.length) { body.append(hsEmpty("business-outline", "Henüz mekan yok", "Mekanlar katıldıkça burada listelenecek.")); return; }
-      body.append(h("div", { class: "hs-vlist" }, ...fVenues.map(venueCardBig)));
-      return;
-    }
-    if (activeCategory === "SANATÇILAR") {
-      if (!fArtists.length) { body.append(hsEmpty("mic-outline", "Henüz sanatçı yok", "Sanatçılar katıldıkça burada görünecek.")); return; }
-      body.append(h("div", { class: "hs-alist" }, ...fArtists.map((a) => artistRowHome(a, followSet))));
-      return;
-    }
-    if (activeCategory === "ETKİNLİKLER") {
-      if (!cityEvents.length) { body.append(hsEmpty("ticket-outline", activeCity === "TÜMÜ" ? "Henüz etkinlik yok" : `${activeCity} için etkinlik yok`, "Yakında canlı müzik etkinlikleri burada görünecek.")); return; }
-      const sorted = [...cityEvents].sort((a, b) => (msOf(a) ?? 0) - (msOf(b) ?? 0));
-      body.append(h("div", { class: "hs-vlist" }, ...sorted.map((e) => ecard2(e, true))));
-      return;
-    }
-
-    // TÜMÜ
+    if (!defs.some((d) => d.key === dateKey)) dateKey = "all";
+    const sorted = [...cityEvents].sort((a, b) => (msOf(a) ?? 0) - (msOf(b) ?? 0));
+    const list = h("div", { class: "mk-erows" });
+    const btns = defs.map((d) => h("button", { type: "button", class: "mk-date mk-press" + (d.kind === "day" ? " day" : ""), "aria-label": d.aria || null, onclick: () => { dateKey = d.key; paint(); } },
+      h("span", { class: "mk-date-l" }, d.label), d.sub ? h("span", { class: "mk-date-s" }, d.sub) : null));
+    const paint = () => {
+      btns.forEach((b, i) => b.setAttribute("aria-pressed", defs[i].key === dateKey ? "true" : "false"));
+      clear(list);
+      const f = defs.find((d) => d.key === dateKey) || defs[0], now = Date.now();
+      const rows = sorted.filter((e) => dateMatches(msOf(e), f, now));
+      if (!rows.length) {
+        list.append(dateKey !== "all"
+          ? mkEmpty(svgRaw(MKI.ticket, { size: 30, sw: "1.5" }), "Bu tarihte etkinlik yok")
+          : mkEmpty(svgRaw(MKI.ticket, { size: 30, sw: "1.5" }), noEventsTitle(), NO_EVENTS_SUB));
+        return;
+      }
+      rows.forEach((e) => list.append(mkEventRow(e)));
+    };
+    paint();
+    return h("div", { class: "mk-evtab", "aria-label": "Etkinlikler" },
+      h("div", { class: "mk-dates mk-scroll", role: "group", "aria-label": "Tarihe göre süz" }, ...btns), list);
+  }
+  // TÜMÜ — legacy bölümleri aynı sıra/koşullarla, tasarımın kart dilinde
+  function allView(cityEvents, fArtists) {
+    const wrap = h("div", { class: "mk-all" });
     if (!cityEvents.length) {
-      body.append(hsEmpty("compass-outline", activeCity === "TÜMÜ" ? "Henüz etkinlik yok" : `${activeCity} için etkinlik yok`, "Yakında canlı müzik etkinlikleri burada görünecek."));
+      wrap.append(h("div", { class: "mk-pad0" }, mkEmpty(svgIcon("compass", { size: 30, sw: "1.5" }), noEventsTitle(), NO_EVENTS_SUB)));
     } else {
-      // Hero: VIP önce, sonra tarihe göre — ilk 5
+      // Hero: VIP önce, sonra tarih — ilk 5
       const hero = [...cityEvents].sort((a, b) => ((b.vipStatus === "approved") - (a.vipStatus === "approved")) || (msOf(a) ?? 0) - (msOf(b) ?? 0)).slice(0, 5);
-      body.append(heroCarousel(hero));
+      wrap.append(heroSection(hero));
       // Top 10 — katılımcı sayısına göre
-      const top = [...cityEvents].sort((a, b) => (b.attendeeCount ?? 0) - (a.attendeeCount ?? 0)).slice(0, 10);
-      body.append(hsSect("GigBridge Top 10", null, () => go("#/etkinlikler")),
-        h("div", { class: "hs-hscroll" }, ...top.map((e, i) => top10Card(e, i + 1))));
+      const topList = [...cityEvents].sort((a, b) => (b.attendeeCount ?? 0) - (a.attendeeCount ?? 0)).slice(0, 10);
+      wrap.append(mkSection({ title: "GigBridge Top 10", id: ui.sid + "-top10", right: mkMoreLink("#/etkinlikler") },
+        mkRow("", topList.map((e, i) => mkEventCard(e, { rank: i + 1 })))));
     }
     // Sadece GigBridge'de — her zaman görünür
     const excl = cityEvents.filter((e) => e.vipStatus === "approved" || e.isExclusive);
-    body.append(hsSect("Sadece GigBridge'de", "Özel etkinlikler, VIP deneyimler", () => go("#/etkinlikler")));
-    if (excl.length) body.append(h("div", { class: "hs-hscroll" }, ...excl.map((e) => ecard2(e))));
-    else body.append(h("div", { class: "hs-excl-empty" }, icon("sparkles-outline", { size: 18, color: "var(--text-muted)" }), h("span", {}, "Şu an özel etkinlik yok — VIP deneyimler yakında burada.")));
+    wrap.append(mkSection({ title: "Sadece GigBridge'de", sub: "Özel etkinlikler, VIP deneyimler", right: mkMoreLink("#/etkinlikler") },
+      excl.length ? mkRow("", excl.map((e) => mkEventCard(e)))
+        : h("div", { class: "mk-excl-empty" }, svgIcon("star", { size: 18, stroke: true, sw: "1.7" }), h("span", {}, "Şu an özel etkinlik yok — VIP deneyimler yakında burada."))));
     // En Yeniler (yalnız varsa)
     const news = cityEvents.filter((e) => e.isNew === true);
-    if (news.length) body.append(hsSect("GigBridge'de En Yeniler!", null, () => go("#/etkinlikler")),
-      h("div", { class: "hs-hscroll" }, ...news.map((e) => ecard2(e))));
+    if (news.length) wrap.append(mkSection({ title: "GigBridge'de En Yeniler!", right: mkMoreLink("#/etkinlikler") }, mkRow("", news.map((e) => mkEventCard(e)))));
     // Bu Hafta
     const week = cityEvents.filter((e) => { const ms = msOf(e); return ms != null && ms <= Date.now() + 7 * 86400e3; });
-    if (week.length) body.append(hsSect("Bu Hafta", activeCity !== "TÜMÜ" ? activeCity : null, () => go("#/etkinlikler")),
-      h("div", { class: "hs-hscroll" }, ...week.map((e) => ecard2(e))));
-    // Popüler Sanatçılar
-    if (fArtists.length) body.append(hsSect("Popüler Sanatçılar", null, () => { activeCategory = "SANATÇILAR"; drawTabs(); drawBody(); }),
-      h("div", { class: "hs-alist" }, ...fArtists.slice(0, 5).map((a) => artistRowHome(a, followSet))));
+    if (week.length) wrap.append(mkSection({ title: "Bu Hafta", sub: activeCity !== "TÜMÜ" ? activeCity : null, right: mkMoreLink("#/etkinlikler") }, mkRow("", week.map((e) => mkEventCard(e)))));
+    // Popüler Sanatçılar (+ altın TOP 10 çipi — yalnız mobil #/top10 rotası varsa; bkz. MK_TOP10_HREF)
+    if (fArtists.length) {
+      const chip = MK_TOP10_HREF ? h("a", { class: "mk-t10chip mk-press", href: MK_TOP10_HREF }, svgRaw(MKI.trophy, { size: 12, _kind: "multi" }), "TOP 10") : null;
+      wrap.append(mkSection({ title: "Popüler Sanatçılar", right: h("div", { class: "mk-sec-right" }, chip, mkMoreBtn(() => setCategory("SANATÇILAR"))) },
+        mkRow("mk-hscroll-a", fArtists.slice(0, 5).map((a) => mkArtistCard(a, fx)))));
+    }
+    return wrap;
   }
-  drawBody();
+  // Öne çıkan karusel (legacy: VIP önce, sonra tarih; ilk 5; 4 sn) — kaydırmalı (scroll-snap), her slayt klavyeyle odaklanır
+  // (odaklanan slayt görünür kayar). Noktalar legacy'deki gibi YALNIZ gösterge (dokunma hedefi değil). Başlık: ilk slayt
+  // şu an / bu gece ise tasarımın "Bu Gece" başlığı + bugünün tarihi ("SAL · 29 EYL"); değilse görünür başlık yok (legacy).
+  // Otomatik ilerleme: üzerine gelme / odak / dokunma / gizli sekme / azaltılmış hareket → durur.
+  function heroSection(list) {
+    const n = list.length, reduced = mkReduced();
+    const slides = list.map((ev, i) => mkHeroCard(ev, i === 0));
+    const track = h("div", { class: "mk-hero-track mk-scroll" }, ...slides);
+    let idx = 0, hold = 0, hover = false, focusIn = false, touching = false;
+    const dotEls = n > 1 ? list.map(() => h("span", { class: "mk-dot" })) : [];
+    const paint = (i) => { idx = i; dotEls.forEach((d, j) => d.classList.toggle("on", j === i)); };
+    const step = () => (slides[0].offsetWidth || track.clientWidth) + 20;
+    const goTo = (i) => { track.scrollTo({ left: i * step(), behavior: reduced ? "auto" : "smooth" }); paint(i); };
+    track.addEventListener("scroll", () => { const i = Math.round(track.scrollLeft / step()); if (i !== idx && i >= 0 && i < n) paint(i); }, { passive: true });
+    track.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") hover = true; });
+    track.addEventListener("pointerleave", () => { hover = false; });
+    track.addEventListener("touchstart", () => { touching = true; }, { passive: true });
+    track.addEventListener("touchend", () => { touching = false; hold = Date.now(); }, { passive: true });
+    track.addEventListener("focusin", (e) => { const j = slides.indexOf(e.target); if (j >= 0) paint(j); });
+    const dots = dotEls.length ? h("div", { class: "mk-dots", "aria-hidden": "true" }, ...dotEls) : null;
+    const t0 = mkTonight(list[0]);
+    let sec;
+    if (t0 === "ŞU AN" || t0 === "BU GECE") {
+      const d = new Date();
+      const dateLbl = `${mkUp(H.DAYS_TR_SHORT[d.getDay()])} · ${d.getDate()} ${mkUp(H.MONTHS_TR_SHORT[d.getMonth()])}`;
+      sec = mkSection({ title: "Bu Gece", id: ui.sid + "-hero", right: h("span", { class: "mk-sec-date" }, dateLbl) }, track, dots);
+    } else {
+      sec = h("section", { class: "mk-sec", "aria-label": "Öne çıkan etkinlikler" }, track, dots);
+    }
+    sec.classList.add("mk-hero-sec");
+    sec.addEventListener("focusin", () => { focusIn = true; });
+    sec.addEventListener("focusout", (e) => { if (!sec.contains(e.relatedTarget)) focusIn = false; });
+    paint(0);
+    if (n > 1 && !reduced) {
+      const iv = setInterval(() => {
+        if (hover || focusIn || touching || document.hidden || Date.now() - hold < 6000) return;
+        goTo((idx + 1) % n);
+      }, 4000);
+      heroStop = () => clearInterval(iv);
+    }
+    return sec;
+  }
+
+  drawBody(true);
 }
 
-// Bölüm başlığı — mor vurgu çubuğu + başlık + TÜMÜ
-function hsSect(title, sub, onSeeAll) {
-  return h("div", { class: "hs-secthead" },
-    h("div", { class: "hs-accent" }),
-    h("div", { class: "grow" }, h("div", { class: "hs-secttitle" }, title), sub ? h("div", { class: "hs-sectsub" }, sub) : null),
-    onSeeAll ? h("button", { class: "hs-seeall", onclick: onSeeAll }, h("span", {}, "TÜMÜ"), icon("chevron-forward", { size: 12, color: "var(--primary)" })) : null);
-}
 function hsEmpty(ic, title, sub) {
   return h("div", { class: "hs-empty" }, icon(ic, { size: 44, color: "var(--text-muted)" }),
     h("div", { class: "hs-empty-title" }, title), h("div", { class: "hs-empty-sub" }, sub));
@@ -355,49 +935,6 @@ function distPill(ev) {
   return h("span", { class: "dpill" }, icon("navigate", { size: 10, color: "var(--primary)" }), (km < 1 ? Math.round(km * 1000) + " m" : km.toFixed(1) + " km"));
 }
 
-// Hero carousel — 4sn otomatik + noktalar
-function heroCarousel(list) {
-  const slides = list.map((ev) => h("div", { class: "hero-slide", onclick: () => go("#/etkinlik/" + ev.id), style: ev.bannerUrl ? { backgroundImage: `url(${ev.bannerUrl})` } : null },
-    h("div", { class: "hero-grad" }),
-    h("div", { class: "hero-body" },
-      statusBadge(ev),
-      h("div", { class: "hero-title" }, ev.title || "Etkinlik"),
-      h("div", { class: "hero-sub" }, ev.artistName ? [icon("mic", { size: 12, color: "rgba(255,255,255,0.85)" }), " " + ev.artistName + " · " + (ev.venueName || "")] : (ev.venueName || "")),
-      h("div", { class: "hero-meta" },
-        h("span", { class: "hero-pill" }, icon("calendar-outline", { size: 11, color: "#9090B0" }), eventWhen(ev)),
-        distPill(ev)),
-      genrePills(ev),
-      h("div", { class: "hero-foot" }, h("span", { class: "hero-price" + (ev.ticketPrice ? "" : " free") }, priceTxt(ev))))));
-  const slider = h("div", { class: "hero-slider" }, ...slides);
-  const dots = h("div", { class: "hero-dots" }, ...list.map((_, i) => h("span", { class: "hdot" + (i === 0 ? " on" : "") })));
-  const setDot = (i) => [...dots.children].forEach((d, j) => d.classList.toggle("on", j === i));
-  let idx = 0;
-  slider.addEventListener("scroll", () => { const i = Math.round(slider.scrollLeft / slider.clientWidth); if (i !== idx) { idx = i; setDot(i); } });
-  if (list.length > 1) {
-    const iv = setInterval(() => {
-      if (!slider.isConnected) return clearInterval(iv);
-      idx = (idx + 1) % list.length;
-      slider.scrollTo({ left: idx * slider.clientWidth, behavior: "smooth" });
-      setDot(idx);
-    }, 4000);
-  }
-  return h("div", { class: "hero-wrap" }, slider, dots);
-}
-
-// Top 10 kartı — 270px, sıra rozeti
-function top10Card(ev, rank) {
-  return h("div", { class: "t10", onclick: () => go("#/etkinlik/" + ev.id), style: ev.bannerUrl ? { backgroundImage: `url(${ev.bannerUrl})` } : null },
-    h("div", { class: "t10-grad" }),
-    h("div", { class: "t10-rank" }, String(rank)),
-    h("div", { class: "t10-body" },
-      statusBadge(ev),
-      h("div", { class: "t10-title" }, ev.title || "Etkinlik"),
-      h("div", { class: "t10-sub" }, [ev.artistName, ev.venueName].filter(Boolean).join(" · ")),
-      h("div", { class: "hero-meta" }, h("span", { class: "hero-pill" }, icon("calendar-outline", { size: 10, color: "var(--text-muted)" }), eventWhen(ev)), distPill(ev)),
-      genrePills(ev),
-      h("div", { class: "t10-foot" }, h("span", { class: "t10-price" + (ev.ticketPrice ? "" : " free") }, priceTxt(ev)))));
-}
-
 // Standart etkinlik kartı — 210×270 görsel zemin (full=true: arama sonucu, tam genişlik)
 function ecard2(ev, full) {
   return h("div", { class: "ecard2" + (full ? " full" : ""), onclick: () => go("#/etkinlik/" + ev.id), style: ev.bannerUrl ? { backgroundImage: `url(${ev.bannerUrl})` } : null },
@@ -410,45 +947,6 @@ function ecard2(ev, full) {
       h("div", { class: "ecard2-foot" },
         h("span", { class: "ecard2-date" }, icon("calendar-outline", { size: 10, color: "rgba(255,255,255,0.6)" }), " " + eventWhen(ev)),
         pricePill(ev))));
-}
-
-// Mekan kartı — 160px görsel zemin
-function venueCardBig(v) {
-  const gs = (Array.isArray(v.genres) ? v.genres : v.genre ? [v.genre] : []).filter(Boolean);
-  return h("div", { class: "vcard", onclick: () => go("#/mekan/" + v.id), style: v.photoURL ? { backgroundImage: `url(${v.photoURL})` } : null },
-    h("div", { class: "vcard-grad" }),
-    h("div", { class: "vcard-body" },
-      h("span", { class: "vcard-type" }, "MEKAN"),
-      h("div", { class: "vcard-name" }, v.displayName || "Mekan"),
-      h("div", { class: "vcard-meta" },
-        icon("location-outline", { size: 11, color: "rgba(255,255,255,0.6)" }), h("span", {}, v.city || "—"),
-        v.avgRating ? [h("span", { class: "vdot" }, "·"), icon("star", { size: 10, color: "#F59E0B" }), h("span", { class: "vrate" }, Number(v.avgRating).toFixed(1))] : null,
-        v.capacity ? [h("span", { class: "vdot" }, "·"), h("span", { class: "vcap" }, v.capacity + " kişi")] : null),
-      gs.length ? h("div", { class: "gpills" }, ...gs.slice(0, 2).map((g) => h("span", { class: "gpill gp-purple" }, String(g).toLocaleUpperCase("tr-TR")))) : null));
-}
-
-// Sanatçı satırı — 52px foto, takip butonu (app tasarımı)
-function artistRowHome(a, followSet) {
-  const name = a.displayName || "Sanatçı";
-  let on = followSet.has(a.id);
-  const fBtn = h("button", { class: "hs-follow" + (on ? " on" : ""), onclick: async (e) => {
-    e.stopPropagation();
-    if (loginGate("Takip etmek")) return;
-    fBtn.disabled = true;
-    try {
-      if (on) { await unfollowArtist(uid(), a.id); followSet.delete(a.id); on = false; }
-      else { await followArtist(uid(), a); followSet.add(a.id); on = true; }
-      fBtn.classList.toggle("on", on); fBtn.textContent = on ? "TAKİP" : "TAKİP ET";
-    } catch (_) { toast("İşlem başarısız", "err"); }
-    fBtn.disabled = false;
-  } }, on ? "TAKİP" : "TAKİP ET");
-  return h("div", { class: "hs-artist", onclick: () => go("#/sanatci/" + a.id) },
-    a.photoURL ? h("div", { class: "hs-aphoto", style: { backgroundImage: `url(${a.photoURL})` } }) : h("div", { class: "hs-aphoto ph" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
-    h("div", { class: "grow" },
-      h("div", { class: "hs-aname" }, name),
-      h("div", { class: "hs-agenre" }, (Array.isArray(a.genres) ? a.genres[0] : a.genre) || "Müzik"),
-      h("div", { class: "hs-afoll" }, (a.followerCount ?? 0) + " takipçi")),
-    fBtn);
 }
 
 // ── Etkinlikler listesi (app EventsScreen) — tarih filtreli tam liste ──

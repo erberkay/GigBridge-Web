@@ -1,0 +1,292 @@
+/* dk-sanatci-top10.css — WebSanatciTop10 masaüstü görünümü (artistTop10 · #/artist/top10) + ORTAK Top 10 parçaları.
+   SAHİBİ: js/desktop/artist/top10.js + js/desktop/artist/top10-parts.js uygulayıcısı (specs/foundation.md §3). Spec: specs/sanatci.md WebSanatciTop10
+   KAPSAM: .dk-sanatci-top10 kökü (+ .dk-sanatci-top10-*) ve ortak parçalar (.dk-t10-*) YALNIZ iki kök altında:
+   :is(.dk-sanatci-top10, .dk-top10). Dinleyici Top 10 (#/top10, css/dk-top10.css) bu dosyayı top10-parts.js üzerinden yükler.
+   Ölçüler artboard inline stillerinden birebir (1440: içerik 1104, sol kolon 740, sağ 340). Tek sapma (spec önerisi): SKOR sütunu 200 → 160
+   ve ad/alt satır tek satır + üç nokta (artboard'da kimlik sütunu ≈152 px'e düşüp 64 px satırlardan taşıyordu). */
+
+/* ═════════ 1. Sayfa kökü + başlık (sanatçı paneli) ═════════ */
+.dk-sanatci-top10 { --dk-fade-dur: 200ms; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+.dk-sanatci-top10-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.dk-sanatci-top10-hl { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.dk-sanatci-top10 .dk-sanatci-top10-eyebrow { color: #FFD700; }
+.dk-sanatci-top10-sub { margin: 0; font-size: 15px; color: #A3A7AF; }
+.dk-sanatci-top10-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+
+/* ═════════ 2. "Senin sıran" + sağ kolon ═════════ */
+.dk-sanatci-top10-aside { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.dk-sanatci-top10-me {
+  position: relative; overflow: hidden; box-sizing: border-box; padding: 22px; border: 1px solid rgba(255,79,163,0.4); border-radius: 12px;
+  background: linear-gradient(160deg, rgba(255,79,163,0.10), rgba(14,16,20,0) 60%), #0E1014; display: flex; flex-direction: column; gap: 14px;
+}
+.dk-sanatci-top10-mel { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #FF4FA3; }
+.dk-sanatci-top10-mewho { min-width: 0; display: flex; align-items: center; gap: 14px; }
+.dk-sanatci-top10-meav { flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%; object-fit: cover; object-position: 50% 25%; display: block; border: 2px solid #FF4FA3; }
+.dk-sanatci-top10-meav.is-ph {
+  background: linear-gradient(160deg, rgba(255,79,163,0.3), rgba(78,216,255,0.14)); color: #F2F1EE;
+  display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 600;
+}
+.dk-sanatci-top10-mecol { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-sanatci-top10-mename { font-size: 17px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-sanatci-top10-memeta { font-size: 13px; color: #8A8E97; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-sanatci-top10-merank { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.dk-sanatci-top10-menum { flex-shrink: 0; font-family: var(--dk-font-serif); font-size: 64px; line-height: 1; color: #F2F1EE; }
+.dk-sanatci-top10-metxt { min-width: 0; font-size: 14px; color: #A3A7AF; }
+.dk-sanatci-top10-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.dk-sanatci-top10-tile { padding: 12px; border-radius: 8px; background: #0A0B0F; border: 1px solid #14171D; display: flex; flex-direction: column; gap: 4px; }
+.dk-sanatci-top10-tl { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-sanatci-top10-tv { font-size: 18px; font-weight: 600; }
+.dk-sanatci-top10 .dk-sanatci-top10-cta, .dk-sanatci-top10 .dk-sanatci-top10-cta:hover {
+  height: 44px; box-sizing: border-box; border-radius: 6px; background: #FF4FA3; color: #06070A;
+  display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 600;
+}
+
+/* ═════════ 3. ORTAK PARÇALAR (.dk-t10-*) — iki Top 10 sayfası ═════════ */
+/* 3.1 Liste türü sekmeleri (pembe aktif) */
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-kind { flex-shrink: 0; display: flex; padding: 4px; border: 1px solid #1F232B; border-radius: 8px; background: #0E1014; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-kindb {
+  height: 40px; box-sizing: border-box; padding: 0 18px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #8A8E97;
+  display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; white-space: nowrap;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-kindb.is-on { border-color: rgba(255,79,163,0.45); background: rgba(255,79,163,0.12); color: #FF4FA3; }
+
+/* 3.2 Filtre kartı */
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-filters {
+  box-sizing: border-box; padding: 16px 20px; border: 1px solid #1F232B; border-radius: 12px; background: #0E1014;
+  display: flex; flex-direction: column; gap: 14px; min-width: 0;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-frow { display: flex; align-items: center; gap: 14px 28px; flex-wrap: wrap; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-fgrp { min-width: 0; display: flex; align-items: center; gap: 12px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-pers { display: flex; gap: 4px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-per {
+  position: relative; height: 40px; box-sizing: border-box; padding: 0 14px; border: 0; border-radius: 6px; background: transparent; color: #8A8E97;
+  font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-per.is-on { background: #1C2029; color: #F2F1EE; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-div { width: 1px; height: 28px; background: #1F232B; display: block; flex-shrink: 0; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-chips { display: flex; gap: 6px; min-width: 0; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-chip {
+  flex-shrink: 0; height: 36px; box-sizing: border-box; padding: 0 14px; border-radius: 18px; border: 1px solid #1F232B; background: transparent;
+  color: #A3A7AF; font-size: 13.5px; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-chip.is-on { border-color: rgba(255,79,163,0.55); background: rgba(255,79,163,0.10); color: #FF4FA3; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-chip-other > span { max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-chev { flex-shrink: 0; margin-right: -3px; transition: transform 200ms ease; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-chip-other.is-open .dk-t10-chev { transform: rotate(180deg); }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-count {
+  margin-left: auto; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-count-d { display: none; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-drow { display: flex; align-items: center; gap: 12px; padding-top: 12px; border-top: 1px solid #14171D; min-width: 0; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-drow.is-off > :not(.dk-t10-count) { opacity: 0.6; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-dhint { font-size: 13.5px; color: #8A8E97; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-dhint[hidden], :is(.dk-sanatci-top10, .dk-top10) .dk-t10-dchips[hidden] { display: none; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-dchips { flex-wrap: wrap; }
+
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-dinput {
+  height: 36px; width: 150px; box-sizing: border-box; padding: 0 14px; margin: 0; border-radius: 18px; border: 1px solid #1F232B !important;
+  background: transparent; color: #F2F1EE; font-family: inherit; font-size: 13.5px; outline: none; box-shadow: none !important;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-dinput:focus { border-color: #FF4FA3 !important; }
+
+/* 3.3 Ana ızgaranın sol kolonu = sonuç paneli (role=tabpanel, tabindex=-1: yeniden dene/yenile sonrası odak buraya döner) */
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-left { min-width: 0; display: flex; flex-direction: column; gap: 16px; container: t10left / inline-size; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-left:focus { outline: none; }
+
+/* 3.4 Kürsü */
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-pod {
+  position: relative; box-sizing: border-box; padding: 28px 28px 0; border: 1px solid #1F232B; border-radius: 12px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,215,0,0.10) 0%, rgba(14,16,20,0) 60%), #0E1014;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: end; overflow: hidden;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-pcol { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; color: #F2F1EE; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-plink { min-width: 0; max-width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; color: #F2F1EE; }
+:is(.dk-sanatci-top10, .dk-top10) a.dk-t10-plink:hover { color: #F2F1EE; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-ring {
+  position: relative; flex-shrink: 0; width: var(--t10-sz, 84px); height: var(--t10-sz, 84px); box-sizing: border-box; border-radius: 50%;
+  padding: 3px; border: 2px solid #FFD700; display: block;
+}
+:is(.dk-sanatci-top10, .dk-top10) .is-r1 { --t10-sz: 112px; --t10-ph: 150px; }
+:is(.dk-sanatci-top10, .dk-top10) .is-r2 { --t10-sz: 92px; --t10-ph: 112px; }
+:is(.dk-sanatci-top10, .dk-top10) .is-r3 { --t10-sz: 84px; --t10-ph: 84px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-ringimg { width: 100%; height: 100%; box-sizing: border-box; border-radius: 50%; object-fit: cover; object-position: 50% 25%; display: block; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-ringimg.is-ph {
+  background: linear-gradient(160deg, rgba(255,79,163,0.3), rgba(78,216,255,0.14)); color: #F2F1EE;
+  display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 600;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-coin {
+  position: absolute; right: -2px; bottom: -2px; width: 28px; height: 28px; border-radius: 50%; color: #06070A; border: 3px solid #0E1014;
+  display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-mono); font-size: 13px; font-weight: 700;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-pname { max-width: 100%; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-sen {
+  flex-shrink: 0; height: 20px; box-sizing: border-box; padding: 0 7px; display: flex; align-items: center; border-radius: 4px; background: #FF4FA3;
+  color: #06070A; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-sen.is-sm { height: 18px; padding: 0 6px; font-size: 9.5px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-psub { max-width: 100%; font-size: 13px; color: #8A8E97; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-prate { max-width: 100%; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-prate > svg { flex-shrink: 0; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-pcnt { font-weight: 400; color: #8A8E97; overflow: hidden; text-overflow: ellipsis; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-ped {
+  margin-top: 6px; width: 100%; height: var(--t10-ph, 84px); box-sizing: border-box; border-radius: 8px 8px 0 0; border: 1px solid #1F232B; border-bottom: 0;
+  background: linear-gradient(180deg, rgba(242,241,238,0.05), rgba(14,16,20,0)); display: flex; align-items: flex-start; justify-content: center; padding-top: 14px;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-ped.is-first { border-color: rgba(255,215,0,0.45); background: linear-gradient(180deg, rgba(255,215,0,0.14), rgba(14,16,20,0)); }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-pnum { font-family: var(--dk-font-serif); font-size: 44px; line-height: 1; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-pacts { display: flex; gap: 6px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-pod.is-skel .dk-t10-pcol { gap: 10px; }
+
+/* 3.5 Sıralama tablosu */
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-table {
+  --t10-cols: 44px 44px minmax(0, 1fr) 160px 72px 84px 20px;
+  border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; overflow: hidden;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-table.has-acts { --t10-cols: 44px 44px minmax(0, 1fr) 160px 72px 84px 94px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-thead {
+  height: 38px; box-sizing: border-box; padding: 0 20px; display: grid; grid-template-columns: var(--t10-cols); gap: 14px; align-items: center;
+  border-bottom: 1px solid #14171D; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-row {
+  position: relative; height: 64px; box-sizing: border-box; padding: 0 20px; display: grid; grid-template-columns: var(--t10-cols); gap: 14px;
+  align-items: center; border-bottom: 1px solid #14171D; color: #F2F1EE;
+}
+/* NOT: burada background YOK — dk-base .dk-row:hover (#0C0E12, artboard .gb-row:hover) aynı özgüllükte ve önce yüklenir; SEN satırının
+   pembe zemini (.is-me, 0,3,0) hover'ı ezer (artboard'da satır içi zemin :hover'ı ezer). */
+:is(.dk-sanatci-top10, .dk-top10) a.dk-t10-row:hover { color: #F2F1EE; }
+:is(.dk-sanatci-top10, .dk-top10) a.dk-t10-row:focus-visible { outline-offset: -2px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-row.is-me { background: rgba(255,79,163,0.07); }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-rk { font-family: var(--dk-font-mono); font-size: 17px; font-weight: 700; color: #C9CACD; display: flex; align-items: center; gap: 6px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-mv { display: flex; align-items: center; gap: 3px; font-family: var(--dk-font-mono); font-size: 11.5px; font-weight: 700; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-mv.is-up { color: #7CE0B0; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-mv.is-down { color: #FF5A6E; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-mv.is-same { color: #7D818B; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-mv-in { display: none; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-id { min-width: 0; display: flex; align-items: center; gap: 12px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-av { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; object-fit: cover; object-position: 50% 25%; display: block; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-av.is-ph {
+  background: linear-gradient(160deg, rgba(255,79,163,0.28), rgba(78,216,255,0.12)); color: #F2F1EE;
+  display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-idcol { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-nm { min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-nmt, :is(.dk-sanatci-top10, .dk-top10) .dk-t10-sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-sub { font-size: 12.5px; color: #8A8E97; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-track { height: 6px; border-radius: 3px; background: #1F232B; overflow: hidden; display: block; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-fill { height: 100%; border-radius: 3px; background: #FFD700; display: block; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-fill.is-me { background: #FF4FA3; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-pt { display: flex; align-items: center; gap: 5px; font-size: 14.5px; font-weight: 600; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-pt > svg { flex-shrink: 0; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-cnt { font-size: 13.5px; color: #A3A7AF; white-space: nowrap; }
+/* satır içi bağlantı (dinleyici: kalp/zil düğmeli satırlar) — bağlantı satırın tamamını kaplar, düğmeler üstte */
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-idlink, :is(.dk-sanatci-top10, .dk-top10) .dk-t10-idlink:hover { min-width: 0; display: block; color: #F2F1EE; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-idlink::after { content: ""; position: absolute; inset: 0; z-index: 0; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-idlink:focus-visible { outline: none; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-row:has(.dk-t10-idlink:focus-visible) { outline: 2px solid var(--dk-focus-ring, #4ED8FF); outline-offset: -2px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-acts { position: relative; z-index: 1; display: flex; justify-content: flex-end; gap: 6px; }
+/* iskelet satırları */
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-skrow { display: flex; gap: 16px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-skcol { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+
+/* 3.6 Boş / hata durumu (Keşfet stili, 320 kesikli) */
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-empty {
+  height: 320px; box-sizing: border-box; padding: 0 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  border: 1px dashed #2C303A; border-radius: 12px; color: #8A8E97; text-align: center;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-empty-t { font-size: 17px; font-weight: 600; color: #F2F1EE; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-empty-s { font-size: 14px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-retry { height: 40px; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-size: 13.5px; }
+
+/* 3.6b Puanlar okunamadı uyarısı (tasarımda yok) */
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-note {
+  box-sizing: border-box; min-height: 52px; padding: 10px 12px 10px 16px; border: 1px solid rgba(255,138,42,0.35); border-radius: 12px;
+  background: rgba(255,138,42,0.06); display: flex; align-items: center; gap: 12px; font-size: 13.5px; line-height: 1.45; color: #C9CACD;
+}
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-note-ic { flex-shrink: 0; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-note-t { min-width: 0; flex: 1 1 auto; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-note .dk-t10-retry { flex-shrink: 0; height: 36px; }
+
+/* 3.7 Bilgi + DEĞİŞİM kartları */
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-info { box-sizing: border-box; padding: 20px; border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; display: flex; gap: 12px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-info-ic { flex-shrink: 0; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-info-col { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-info-t { font-size: 14px; font-weight: 600; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-info-b { font-size: 13px; line-height: 1.55; color: #A3A7AF; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-legend { box-sizing: border-box; padding: 20px; border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; display: flex; flex-direction: column; gap: 10px; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-legend-l { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+:is(.dk-sanatci-top10, .dk-top10) .dk-t10-legend-r { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #A3A7AF; }
+
+/* 3.8 Duyarlı tablo/kürsü. Sıra önemli (aynı özgüllük → sonraki kazanır):
+   (a) kap ≤699/≤779: SKOR gizli (yalnız çok dar sol kolon güvenlik ağı) → (b) spec §10 medya kuralları → (c) kap ≤599/≤559 en dar hâl. */
+@container t10left (max-width: 699px) {
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-table:not(.has-acts) { --t10-cols: 44px 44px minmax(0, 1fr) 72px 84px 20px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-table:not(.has-acts) .dk-t10-c-bar { display: none; }
+}
+@container t10left (max-width: 779px) {
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-table.has-acts { --t10-cols: 44px 44px minmax(0, 1fr) 72px 84px 94px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-table.has-acts .dk-t10-c-bar { display: none; }
+}
+/* 1024–1279 (spec): kürsü 3 sütun, halkalar 0.85× */
+@media (max-width: 1279px) {
+  :is(.dk-sanatci-top10, .dk-top10) .is-r1 { --t10-sz: 95px; }
+  :is(.dk-sanatci-top10, .dk-top10) .is-r2 { --t10-sz: 78px; }
+  :is(.dk-sanatci-top10, .dk-top10) .is-r3 { --t10-sz: 71px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-ringimg.is-ph { font-size: 26px; }
+}
+/* <1100 (spec, yalnız sanatçı paneli — kenar çubuğu yüzünden sol kolon dar; dinleyici sayfası kap sorgularına bırakılır): SKOR gizli */
+@media (max-width: 1099px) {
+  .dk-sanatci-top10 .dk-t10-table { --t10-cols: 44px 44px minmax(0, 1fr) 72px 84px 20px; }
+  .dk-sanatci-top10 .dk-t10-c-bar { display: none; }
+}
+/* 769–1023 (spec): halkalar 88/72/64 · kürsüler 110/84/64 · tablo SKOR + DEĞ. sütunsuz (ok sıra numarasının yanında) */
+@media (max-width: 1023px) {
+  :is(.dk-sanatci-top10, .dk-top10) .is-r1 { --t10-sz: 88px; --t10-ph: 110px; }
+  :is(.dk-sanatci-top10, .dk-top10) .is-r2 { --t10-sz: 72px; --t10-ph: 84px; }
+  :is(.dk-sanatci-top10, .dk-top10) .is-r3 { --t10-sz: 64px; --t10-ph: 64px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-ringimg.is-ph { font-size: 24px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-pnum { font-size: 38px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-table:not(.has-acts) { --t10-cols: 64px minmax(0, 1fr) 72px 84px 20px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-table.has-acts { --t10-cols: 64px minmax(0, 1fr) 72px 84px 94px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-c-mv, :is(.dk-sanatci-top10, .dk-top10) .dk-t10-c-bar { display: none; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-mv-in { display: flex; }
+}
+@container t10left (max-width: 599px) {
+  :is(.dk-sanatci-top10, .dk-top10) .is-r1 { --t10-sz: 88px; --t10-ph: 110px; }
+  :is(.dk-sanatci-top10, .dk-top10) .is-r2 { --t10-sz: 72px; --t10-ph: 84px; }
+  :is(.dk-sanatci-top10, .dk-top10) .is-r3 { --t10-sz: 64px; --t10-ph: 64px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-pod { padding: 24px 16px 0; gap: 10px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-pname { font-size: 15px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-pnum { font-size: 36px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-ringimg.is-ph { font-size: 24px; }
+}
+@container t10left (max-width: 559px) {
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-table:not(.has-acts) { --t10-cols: 64px minmax(0, 1fr) 64px 20px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-table.has-acts { --t10-cols: 64px minmax(0, 1fr) 64px 94px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-c-mv, :is(.dk-sanatci-top10, .dk-top10) .dk-t10-c-cnt { display: none; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-mv-in { display: flex; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-thead, :is(.dk-sanatci-top10, .dk-top10) .dk-t10-row { padding: 0 16px; gap: 12px; }
+}
+
+/* ═════════ 4. Duyarlı sayfa düzeni (spec §10) ═════════ */
+/* ≤1399: sağ kolon listenin altına (Senin sıran / bilgi / değişim yan yana). Artboard'un 740 px sol kolonu yalnız ≥1400'de oluşur;
+   1280–1399'da aside yanda kalsa sol kolon 580–699 px'e düşer ve SKOR sütunu sığmaz (spec: SKOR yalnız <1100'de gizlenir).
+   Filtre kartı: ayraç gizli + satır aralığı 20 → sayaç 1280'de ilk satırda kalır. */
+/* <1440: sayaç İLÇE satırının sağına (ilk satır dar kartta kırılınca sayaç tek başına alt satıra düşmesin) */
+@media (max-width: 1439px) {
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-frow > .dk-t10-count { display: none; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-count-d { display: block; }
+}
+@media (max-width: 1399px) {
+  .dk-sanatci-top10-grid { grid-template-columns: minmax(0, 1fr); }
+  .dk-sanatci-top10-aside { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); align-items: start; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-div { display: none; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-frow { column-gap: 20px; }
+}
+@media (max-width: 1023px) {
+  /* filtre kartı satırları alt alta (dönem / şehir / sayaç) */
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-frow { flex-direction: column; align-items: flex-start; gap: 14px; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-fgrp { max-width: 100%; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-fgrp .dk-t10-chips { flex-wrap: wrap; }
+  :is(.dk-sanatci-top10, .dk-top10) .dk-t10-drow { flex-wrap: wrap; }
+}

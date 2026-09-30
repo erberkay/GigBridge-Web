@@ -1,0 +1,206 @@
+/* dk-profil.css — WebProfil masaüstü görünümü (profil).
+   SAHİBİ: js/desktop/account/profil.js uygulayıcısı (specs/foundation.md §3). Spec: specs/hesap.md WebProfil
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-profil (ve alt sınıfları .dk-profil-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan.
+   Modallar portalda çizilir; diyalog kutusu da .dk-profil sınıfını taşır (dkModal cls) → aynı kapsam.
+   Ölçüler: design/WebProfil.dc.html (1440; içerik kolonu 968, gap 24; gövde 624 + 320). */
+
+/* ════════ Profil özeti ════════ */
+.dk-profil-sum { border: 1px solid #1F232B; border-radius: 12px; overflow: hidden; background: #0E1014; }
+.dk-profil-cover { position: relative; height: 168px; overflow: hidden; }
+.dk-profil-coverph {
+  position: absolute; inset: 0; display: block;
+  background: radial-gradient(120% 140% at 15% 0%, rgba(78,216,255,0.22), transparent 55%), radial-gradient(120% 140% at 85% 10%, rgba(255,79,163,0.2), transparent 55%), linear-gradient(120deg, #14171D, #0E1014);
+}
+.dk-profil-coverimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 60%; display: block; }
+.dk-profil-covershade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,7,10,0.15) 0%, rgba(14,16,20,0.92) 100%); display: block; }
+.dk-profil-coverline { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; display: block; }
+
+.dk-profil-id { padding: 0 28px 24px; display: flex; align-items: flex-start; gap: 24px; }
+.dk-profil-av { position: relative; margin-top: -56px; width: 112px; height: 112px; flex-shrink: 0; }
+.dk-profil-avimg { border: 4px solid #0E1014; }
+.dk-profil-av > .dk-av { position: relative; }
+.dk-profil-avbtn { display: block; width: 112px; height: 112px; padding: 0; margin: 0; border: 0; border-radius: 50%; background: none; cursor: zoom-in; }
+.dk-profil-cam {
+  position: absolute; right: 2px; bottom: 4px; width: 34px; height: 34px; box-sizing: border-box; border-radius: 50%; border: 2px solid #0E1014;
+  background: #F2F1EE; color: #06070A; display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.dk-profil-cam:focus-within { outline: 2px solid #4ED8FF; outline-offset: 2px; }   /* artboard: label:focus-within */
+.dk-profil-cam.is-busy { opacity: .6; pointer-events: none; }
+.dk-profil .dk-profil-file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; padding: 0; border: 0; }
+.dk-profil-idtx { flex-grow: 1; min-width: 0; padding-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.dk-profil-name { font-size: 30px; line-height: 1.1; font-weight: 600; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+.dk-profil-meta { font-size: 14px; color: #8A8E97; overflow-wrap: anywhere; }
+.dk-profil-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dk-profil-chip {
+  height: 26px; box-sizing: border-box; padding: 0 10px; display: flex; align-items: center; gap: 6px; border-radius: 13px;
+  font-size: 12.5px; font-weight: 600; white-space: nowrap;
+}
+.dk-profil-chip[hidden] { display: none; }
+.dk-profil-chip.is-role { border: 1px solid rgba(78,216,255,0.4); background: rgba(78,216,255,0.08); color: #4ED8FF; }
+.dk-profil-chip.is-member { --mc: #CD7F32; --mc-rgb: 205,127,50; border: 1px solid rgba(var(--mc-rgb),0.45); background: rgba(var(--mc-rgb),0.10); color: var(--mc); }
+.dk-profil-chip.is-city { border: 1px solid #1F232B; color: #A3A7AF; font-weight: 500; }
+.dk-profil-edit {
+  flex-shrink: 0; margin-top: 22px; height: 44px; box-sizing: border-box; padding: 0 18px; border-radius: 6px; border: 1px solid #2C303A;
+  background: transparent; color: #F2F1EE; display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 500; white-space: nowrap;
+}
+
+/* StatStrip */
+.dk-profil-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid #1F232B; }
+.dk-profil .dk-profil-stat {
+  box-sizing: border-box; padding: 20px 28px; display: flex; flex-direction: column; gap: 6px; color: #F2F1EE; min-width: 0;
+  transition: background-color 160ms ease;
+}
+.dk-profil .dk-profil-stat:hover { background-color: #12141A; color: #F2F1EE; }
+.dk-profil-stat + .dk-profil-stat { border-left: 1px solid #1F232B; }
+.dk-profil-statv { font-size: 32px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; min-height: 32px; display: flex; align-items: center; }
+.dk-profil-statv.has-avg { align-items: baseline; gap: 12px; }
+.dk-profil-avg { display: flex; align-items: center; gap: 4px; font-family: var(--dk-font-mono); font-size: 13px; font-weight: 600; letter-spacing: normal; color: #FF8A2A; white-space: nowrap; }
+.dk-profil-avg[hidden] { display: none; }
+.dk-profil-statl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+
+/* ════════ Gövde (sol 624 · sağ 320) ════════ */
+.dk-profil-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.dk-profil-l { grid-column: 1; grid-row: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+.dk-profil-r { grid-column: 2; grid-row: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+
+.dk-profil-card { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; overflow: hidden; }
+.dk-profil-chead { padding: 20px 24px 16px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.dk-profil .dk-profil-h2 { margin: 0; font-family: var(--dk-font-sans); font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.dk-profil-tag { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; white-space: nowrap; }
+
+/* SettingRow */
+.dk-profil-row { min-height: 72px; box-sizing: border-box; padding: 12px 24px; border-top: 1px solid #1F232B; display: flex; align-items: center; gap: 16px; }
+.dk-profil-row.is-toggle { cursor: pointer; }
+.dk-profil-tile { width: 38px; height: 38px; flex-shrink: 0; border-radius: 6px; background: #14171D; color: #A3A7AF; display: flex; align-items: center; justify-content: center; }
+.dk-profil-rowtx { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-profil-rowl { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-profil-rowv { font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
+.dk-profil-rowv.is-dots { letter-spacing: 0.2em; }
+.dk-profil-rowv.is-muted { color: #8A8E97; }
+.dk-profil-rowh { font-size: 12.5px; color: #8A8E97; }
+.dk-profil-rowh.is-warn { color: #FFB347; }
+.dk-profil-chg {
+  flex-shrink: 0; height: 36px; box-sizing: border-box; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; background: transparent;
+  color: #F2F1EE; font-size: 13.5px; font-weight: 500;
+}
+.dk-profil-chg.is-locked { color: #8A8E97; }
+
+/* İlgi alanı türleri */
+.dk-profil-gcard { box-sizing: border-box; padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 14px; }
+.dk-profil-ghead { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.dk-profil .dk-profil-gp { margin: 0; font-size: 13.5px; line-height: 1.5; color: #8A8E97; }
+.dk-profil-genres { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Son aktiviteler */
+.dk-profil .dk-profil-acts { margin: 0; padding: 0; list-style: none; }
+.dk-profil-actli { display: block; border-top: 1px solid #1F232B; }
+.dk-profil .dk-profil-act { min-height: 64px; box-sizing: border-box; padding: 12px 24px; display: flex; align-items: center; gap: 16px; color: #F2F1EE; }
+.dk-profil .dk-profil-act:hover { color: #F2F1EE; }
+.dk-profil-act.is-empty { font-size: 14px; color: #8A8E97; }
+.dk-profil-actic { width: 36px; height: 36px; flex-shrink: 0; box-sizing: border-box; border-radius: 50%; border: 1px solid; display: flex; align-items: center; justify-content: center; } /* renk tonu satır içi: c / c@.35 / c@.10 */
+.dk-profil-acttx { flex-grow: 1; min-width: 0; font-size: 14.5px; line-height: 1.4; color: #C9CACD; }
+.dk-profil-actt { flex-shrink: 0; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; color: #8A8E97; white-space: nowrap; }
+
+/* NextTicketCard */
+.dk-profil-tkwrap { display: flex; min-width: 0; }
+.dk-profil .dk-profil-tk {
+  flex-grow: 1; min-width: 0; display: flex; flex-direction: column; border: 1px solid rgba(255,79,163,0.35); border-radius: 12px; overflow: hidden;
+  background: #0E1014; color: #F2F1EE;
+}
+.dk-profil .dk-profil-tk.is-empty, .dk-profil .dk-profil-tk.is-skel { border-color: #1F232B; }
+.dk-profil .dk-profil-tk:hover .dk-profil-tkimg { transform: none; }   /* WebProfil'de görsel yakınlaşması yok (yalnız kart kalkar) */
+.dk-profil-tkmedia { position: relative; height: 132px; overflow: hidden; display: block; flex-shrink: 0; }
+.dk-profil-tkimg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-profil-tkchip {
+  position: absolute; top: 12px; left: 12px; height: 24px; box-sizing: border-box; padding: 0 9px; display: flex; align-items: center; border-radius: 4px;
+  background: rgba(6,7,10,0.8); border: 1px solid rgba(255,90,110,0.5); color: #FF5A6E; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap;
+}
+.dk-profil-tkchip.is-later { border-color: rgba(78,216,255,0.5); color: #4ED8FF; }
+.dk-profil-tkb { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; }
+.dk-profil-tkeb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #FF4FA3; }
+.dk-profil-tkt { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.dk-profil-tks { font-size: 13.5px; color: #8A8E97; }
+.dk-profil-tkcta {
+  margin-top: 10px; height: 40px; box-sizing: border-box; border-radius: 6px; background: #FF4FA3; color: #06070A;
+  display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 600;
+}
+.dk-profil .dk-profil-tkcta2 { margin-top: 10px; }
+
+/* SettingsLinkList */
+.dk-profil .dk-profil-seth { margin: 0; padding: 18px 20px 14px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-profil .dk-profil-set {
+  width: 100%; height: 56px; box-sizing: border-box; margin: 0; padding: 0 20px; border: 0; border-top: 1px solid #1F232B; background: transparent;
+  display: flex; align-items: center; gap: 14px; color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14.5px; font-weight: 500; text-align: left; cursor: pointer;
+}
+.dk-profil .dk-profil-set:hover { color: #F2F1EE; background-color: var(--dk-row-hover-bg, #12141A); }   /* artboard a.gb-row:hover */
+.dk-profil .dk-profil-set.is-danger, .dk-profil .dk-profil-set.is-danger:hover { color: #FF5A6E; }
+.dk-profil-set svg { flex-shrink: 0; }
+.dk-profil-setl { flex-grow: 1; }
+.dk-profil-setwrap { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.dk-profil .dk-profil-note { margin: 0; padding: 0 4px; font-size: 12.5px; line-height: 1.55; color: #8A8E97; }
+
+/* Misafir */
+.dk-profil-gacts { margin-top: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.dk-profil-gacts .dk-btn { margin-top: 0; }
+
+/* ════════ Modallar (portal; diyalog .dk-profil.dk-profil-mdl) ════════ */
+.dk-profil-mb { display: flex; flex-direction: column; min-width: 0; }
+.dk-profil .dk-profil-mp { margin: 0; font-size: 14px; line-height: 1.5; color: #A3A7AF; }
+.dk-profil-mcur { font-size: 13.5px; color: #8A8E97; }
+.dk-profil-mcur b { color: #F2F1EE; font-weight: 600; }
+.dk-profil-lbl2 { margin-top: 6px; }
+.dk-profil-mst { min-height: 18px; font-size: 12.5px; line-height: 1.45; color: #8A8E97; }
+.dk-profil-mst[data-kind="err"] { color: #FF5A6E; }
+.dk-profil-mst[data-kind="ok"] { color: #7CE0B0; }
+.dk-profil-mst.is-empty-hide:empty { display: none; }
+.dk-profil .dk-profil-mfoot { margin: 4px 0 0; font-size: 13px; color: #8A8E97; text-align: center; }
+.dk-profil-reset { padding: 0; margin: 0; border: 0; background: none; color: #FF4FA3; font-size: 13px; font-weight: 600; cursor: pointer; }
+.dk-profil-reset:hover { color: #FF8AC4; }
+.dk-profil-reset:disabled { color: #8A8E97; cursor: default; }
+.dk-profil .dk-profil-mlink { font-size: 13.5px; color: #4ED8FF; }
+.dk-profil-lbimg { display: block; width: 100%; max-height: 64vh; object-fit: contain; border-radius: 8px; background: #06070A; }
+/* Şehir Seç */
+.dk-profil-loc {
+  height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(78,216,255,0.4); background: rgba(78,216,255,0.08);
+  color: #4ED8FF; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;
+}
+.dk-profil-csearch {
+  height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 8px; border: 1px solid #1F232B; background: #06070A;
+  display: flex; align-items: center; gap: 10px; cursor: text;
+}
+.dk-profil-csearch svg { flex-shrink: 0; }
+.dk-profil-csearch:focus-within { outline: 2px solid #4ED8FF; outline-offset: 2px; }   /* artboard: label:focus-within */
+.dk-profil .dk-profil-cq {
+  flex-grow: 1; min-width: 0; padding: 0; border: 0 !important; background: none; color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14.5px; outline: none;
+}
+.dk-profil-cq::-webkit-search-cancel-button { filter: invert(.6); }
+.dk-profil-clist { max-height: 232px; overflow-y: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 2px; margin: -2px; }
+.dk-profil-clist[hidden], .dk-profil-cnone[hidden] { display: none; }
+.dk-profil-city {
+  height: 40px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 1px solid #1F232B; background: transparent; color: #F2F1EE;
+  text-align: left; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dk-profil-city.is-on { border-color: rgba(78,216,255,0.55); background: rgba(78,216,255,0.08); color: #4ED8FF; }
+.dk-profil-cnone { font-size: 13px; color: #8A8E97; }
+
+/* ════════ Duyarlı ════════ */
+/* 1024–1279: gövde tek kolon; sağ kolon kartları (bilet + ayarlar) özet kartının altında 2 kolonlu satır; istatistik hücreleri daralır */
+@media (max-width: 1279px) {
+  .dk-profil-body { grid-template-columns: minmax(0, 1fr); }
+  .dk-profil-r { grid-column: 1; grid-row: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .dk-profil-l { grid-column: 1; grid-row: 2; }
+  .dk-profil .dk-profil-stat { padding: 16px 20px; }
+}
+/* 769–1023: istatistik 2×2; sağ kolon kartları tam genişlik alt alta */
+@media (max-width: 1023px) {
+  .dk-profil-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-profil-stat:nth-child(3) { border-left: 0; }
+  .dk-profil-stat:nth-child(n+3) { border-top: 1px solid #1F232B; }
+  .dk-profil-r { display: flex; flex-direction: column; align-items: stretch; }
+  .dk-profil-id { padding: 0 24px 24px; gap: 20px; }
+}
+@media (max-width: 860px) {
+  .dk-profil-id { flex-wrap: wrap; }
+  .dk-profil-edit { margin-top: 0; margin-left: 132px; }
+}

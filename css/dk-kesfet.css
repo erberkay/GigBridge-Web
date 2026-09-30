@@ -1,0 +1,259 @@
+/* dk-kesfet.css — WebKesfet masaüstü görünümü (kesfet).
+   SAHİBİ: js/desktop/public/kesfet.js uygulayıcısı (specs/foundation.md §3). Spec: specs/public-a.md §1
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-kesfet (ve alt sınıfları .dk-kesfet-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan.
+   Ölçüler artboard'un satır içi stillerinden birebir (1440: içerik 1280, yan boşluk 80). >1440: içerik 1280 ortalı
+   (--dk-kesfet-x = max(gutter, (100% − 1280)/2)); Top 10 izi sol hizayı korur, sağa taşar. */
+
+.dk-kesfet {
+  --dk-rise-dur: 700ms;
+  --dk-rise-y: 16px;
+  --dk-kesfet-x: max(var(--dk-gutter), calc((100% - 1280px) / 2));
+  display: flex; flex-direction: column; min-width: 0; flex-grow: 1;
+}
+
+/* ══════════ HERO ══════════ */
+.dk-kesfet .dk-kesfet-hero {
+  flex-shrink: 0; position: relative; z-index: 5;
+  padding: 64px var(--dk-kesfet-x) 56px;
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: center;
+}
+.dk-kesfet .dk-kesfet-hl { grid-column: span 6; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+.dk-kesfet .dk-kesfet-eb {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #FF4FA3;
+}
+.dk-kesfet .dk-kesfet-eb-bar { width: 24px; height: 2px; background: #FF4FA3; display: block; flex-shrink: 0; }
+.dk-kesfet .dk-kesfet-h1 {
+  margin: 0; font-family: var(--dk-font-serif); font-weight: 400; font-size: 76px; line-height: 1.02;
+  letter-spacing: -0.01em; color: #F2F1EE;
+}
+.dk-kesfet .dk-kesfet-h1 em { font-style: italic; color: #FF4FA3; }
+.dk-kesfet .dk-kesfet-lead { margin: 0; max-width: 520px; font-size: 18px; line-height: 1.55; color: #A3A7AF; }
+
+/* HeroSearchBar */
+.dk-kesfet .dk-kesfet-sw { position: relative; }
+.dk-kesfet .dk-kesfet-sb {
+  height: 68px; box-sizing: border-box; padding: 8px; display: flex; align-items: center;
+  border: 1px solid #1F232B; border-radius: 10px; background: #0E1014; transition: border-color 160ms ease;
+}
+/* odak göstergesi (artboard'da input outline:none; erişilebilirlik için çubuğun kenarı camgöbeği olur) */
+.dk-kesfet .dk-kesfet-sb:has(.dk-kesfet-si:focus-visible) { border-color: var(--dk-focus-border); }
+.dk-kesfet .dk-kesfet-sq {
+  flex-grow: 1; min-width: 0; height: 100%; box-sizing: border-box; padding: 0 16px;
+  display: flex; flex-direction: column; justify-content: center; gap: 3px; border-right: 1px solid #1F232B; cursor: text;
+}
+.dk-kesfet .dk-kesfet-sk { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-kesfet .dk-kesfet-si {
+  width: 100%; min-width: 0; margin: 0; padding: 0; background: none; border: 0; outline: none; box-shadow: none;
+  color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 15px; line-height: normal;
+}
+.dk-kesfet .dk-kesfet-si:focus-visible { outline: none; }
+.dk-kesfet .dk-kesfet-sc {
+  width: 190px; flex-shrink: 0; height: 100%; box-sizing: border-box; padding: 0 16px; margin: 0;
+  background: none; border: 0; display: flex; align-items: center; gap: 10px; color: #F2F1EE; text-align: left;
+}
+.dk-kesfet .dk-kesfet-sc-col { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-kesfet .dk-kesfet-sc-v { display: flex; align-items: center; gap: 7px; font-size: 15px; min-width: 0; }
+.dk-kesfet .dk-kesfet-sc-v > svg { flex-shrink: 0; }
+.dk-kesfet .dk-kesfet-sc-city { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-kesfet .dk-kesfet-sc-chev { flex-shrink: 0; stroke: #8A8E97; transition: transform 200ms ease; }
+.dk-kesfet .dk-kesfet-sc.is-open .dk-kesfet-sc-chev { stroke: #FF4FA3; transform: rotate(180deg); }
+.dk-kesfet .dk-kesfet-go {
+  height: 100%; flex-shrink: 0; margin: 0 0 0 8px; box-sizing: border-box; padding: 0 22px; border: 0; border-radius: 6px;
+  background: #FF4FA3; color: #06070A; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;
+}
+
+/* Tür çipleri */
+.dk-kesfet .dk-kesfet-gr { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dk-kesfet .dk-kesfet-gr-l {
+  font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; margin-right: 4px;
+}
+.dk-kesfet .dk-kesfet-gr .dk-chip { display: flex; }
+
+/* HeroCarousel */
+.dk-kesfet .dk-kesfet-hc {
+  grid-column: 8 / span 5; position: relative; height: 540px; border-radius: 12px; overflow: hidden;
+  border: 1px solid #1F232B; background: #0E1014;
+}
+.dk-kesfet .dk-kesfet-hc-skel { position: absolute; inset: 0; display: flex; }
+.dk-kesfet .dk-kesfet-hs {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: block; color: #F2F1EE;
+  opacity: 0; z-index: 1; transition: opacity 600ms ease;
+}
+.dk-kesfet .dk-kesfet-hs.is-on { opacity: 1; z-index: 2; }
+.dk-kesfet .dk-kesfet-hs:hover { color: #F2F1EE; }
+.dk-kesfet .dk-kesfet-hs:focus-visible { outline-offset: -3px; }
+.dk-kesfet .dk-kesfet-hs-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-kesfet .dk-kesfet-hs-ph {
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--dk-font-serif); font-size: 160px; color: rgba(242,241,238,0.5);
+}
+.dk-kesfet .dk-kesfet-hs-grad {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(180deg, rgba(6,7,10,0.15) 0%, rgba(6,7,10,0.3) 42%, rgba(6,7,10,0.96) 100%);
+}
+.dk-kesfet .dk-kesfet-hs-badge { position: absolute; top: 18px; left: 18px; display: flex; }
+.dk-kesfet .dk-kesfet-hs-body { position: absolute; left: 28px; right: 28px; bottom: 84px; display: flex; flex-direction: column; gap: 10px; }
+.dk-kesfet .dk-kesfet-hs-g { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; }
+.dk-kesfet .dk-kesfet-hs-t { font-family: var(--dk-font-serif); font-size: 52px; line-height: 1; letter-spacing: -0.01em; }
+.dk-kesfet .dk-kesfet-hs-s { font-size: 15px; color: #C9CACD; }
+.dk-kesfet .dk-kesfet-hs-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
+.dk-kesfet .dk-kesfet-hs-date {
+  height: 28px; box-sizing: border-box; padding: 0 10px; border-radius: 14px; border: 1px solid rgba(242,241,238,0.18);
+  background: rgba(6,7,10,0.5); display: flex; align-items: center; gap: 7px; font-size: 13px; color: #F2F1EE;
+}
+.dk-kesfet .dk-kesfet-hs-price { font-family: var(--dk-font-mono); font-size: 15px; font-weight: 600; }
+.dk-kesfet .dk-kesfet-hc-ctl {
+  position: absolute; left: 28px; right: 20px; bottom: 22px; z-index: 20; padding-top: 16px;
+  border-top: 1px solid rgba(242,241,238,0.14); display: flex; align-items: center; justify-content: space-between;
+}
+/* artboard: sayaç dots tablist'inin İÇİNDE → 6 (gap) + 10 (margin) = 16 px; ortak bileşende etiket tablist dışında
+   (SHARED-CANDIDATE: dk-ui .dk-car-lbl margin-left 16) */
+.dk-kesfet .dk-kesfet-hc-ctl .dk-car-lbl { margin-left: 16px; }
+/* Otomatik geçiş durdur/oynat (WCAG 2.2.2) — artboard'da yok: görsel olarak gizli, klavye odağında sayacın yanında görünür */
+.dk-kesfet .dk-kesfet-hc-pause {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+.dk-kesfet .dk-kesfet-hc-pause:focus-visible {
+  position: static; width: 28px; height: 28px; margin: 0 0 0 12px; overflow: visible; clip: auto;
+  border-radius: 50%; border: 1px solid rgba(242,241,238,0.22); background: rgba(6,7,10,0.6); color: #F2F1EE;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.dk-kesfet .dk-kesfet-hc-pause[hidden] { display: none; }
+.dk-kesfet .dk-kesfet-hc-empty {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 12px; padding: 40px; text-align: center; color: #8A8E97;
+}
+.dk-kesfet .dk-kesfet-hc-et { font-size: 18px; font-weight: 600; color: #F2F1EE; }
+.dk-kesfet .dk-kesfet-hc-es { font-size: 14px; }
+
+/* Mesafe çipi (legacy distPill; yalnız "Konumumu kullan" sonrası) */
+.dk-kesfet .dk-kesfet-dist {
+  display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; vertical-align: middle;
+  font-family: var(--dk-font-mono); font-size: 11px; font-weight: 600; color: #4ED8FF; white-space: nowrap;
+}
+.dk-kesfet .dk-kesfet-dist.is-hero { margin-left: 0; font-size: 12.5px; }
+
+/* ══════════ KATEGORİ ÇUBUĞU ══════════ */
+.dk-kesfet .dk-kesfet-cats {
+  flex-shrink: 0; position: relative; z-index: 2; margin: 0 var(--dk-kesfet-x); height: 64px;
+  border-top: 1px solid #1F232B; border-bottom: 1px solid #1F232B;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+}
+.dk-kesfet .dk-kesfet-cats > .dk-utab { height: 100%; flex-shrink: 0; }
+.dk-kesfet .dk-kesfet-cats .dk-utab-t { color: #8A8E97; }
+.dk-kesfet .dk-kesfet-cats .dk-utab-t.is-on { color: #F2F1EE; }
+.dk-kesfet .dk-kesfet-cats .dk-utab-bar { opacity: 1; background-color: transparent; }
+.dk-kesfet .dk-kesfet-cats .dk-utab-t.is-on .dk-utab-bar { background-color: #FF4FA3; }
+.dk-kesfet .dk-kesfet-cats .dk-utab-t:focus-visible { outline-offset: -2px; }
+.dk-kesfet .dk-kesfet-sum {
+  font-family: var(--dk-font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ══════════ GÖVDE ══════════ */
+.dk-kesfet .dk-kesfet-body { flex-shrink: 0; display: flex; flex-direction: column; }
+.dk-kesfet .dk-kesfet-body:focus { outline: none; }   /* yalnız programatik odak ("Tekrar dene" sonrası; tabindex −1) */
+.dk-kesfet .dk-kesfet-all { display: flex; flex-direction: column; }
+.dk-kesfet .dk-kesfet-sec { padding: 72px var(--dk-kesfet-x) 0; display: flex; flex-direction: column; gap: 28px; }
+.dk-kesfet .dk-kesfet-cat { padding-top: 56px; gap: 24px; }
+.dk-kesfet .dk-kesfet-srch { padding: 56px var(--dk-kesfet-x) 88px; gap: 28px; }
+.dk-kesfet .dk-kesfet-srch-head { display: flex; flex-direction: column; gap: 10px; }
+.dk-kesfet .dk-kesfet-srch-h { font-size: 44px; overflow-wrap: anywhere; }
+
+/* Top 10 — sağa taşan iz */
+.dk-kesfet .dk-kesfet-t10 { padding: 64px 0 0 var(--dk-kesfet-x); display: flex; flex-direction: column; gap: 28px; }
+.dk-kesfet .dk-kesfet-t10 > .dk-sh { padding-right: max(var(--dk-gutter), calc(100% - 1280px)); }   /* % = bölümün içerik kutusu (W − X) → her genişlikte tam X */
+.dk-kesfet .dk-kesfet-t10-ctl { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+.dk-kesfet .dk-kesfet-t10-ctl .dk-car-arrows { gap: 16px; }   /* artboard: TÜMÜ · geri · ileri tek satırda 16 px (SHARED-CANDIDATE: outline varyantı) */
+.dk-kesfet .dk-kesfet-t10-in { gap: 20px; }
+.dk-kesfet .dk-kesfet-t10 .dk-ect:focus-visible { outline-offset: -2px; }
+
+/* Izgaralar */
+.dk-kesfet .dk-kesfet-g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.dk-kesfet .dk-kesfet-g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.dk-kesfet .dk-kesfet-rows {
+  padding: 56px var(--dk-kesfet-x) 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px;
+}
+.dk-kesfet .dk-kesfet-rows .dk-arr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Boş durumlar (artboard: yükseklik 260/240 içerik + 1px kesikli kenar) */
+.dk-kesfet .dk-kesfet-empty { min-height: 262px; padding: 32px 24px; }
+.dk-kesfet .dk-kesfet-empty.is-inset { margin: 56px var(--dk-kesfet-x) 0; }
+.dk-kesfet .dk-kesfet-empty.is-span { grid-column: 1 / -1; min-height: 242px; }
+/* artboard boş kutudan sonra (boş) ızgarayı yine çizer → bölüm aralığı (24 / 28) altta kalır */
+.dk-kesfet .dk-kesfet-cat > .dk-kesfet-empty { margin-bottom: 24px; }
+.dk-kesfet .dk-kesfet-xe, .dk-kesfet .dk-kesfet-se { margin-bottom: 28px; }
+.dk-kesfet .dk-kesfet-empty .dk-empty-s { line-height: normal; }
+.dk-kesfet .dk-kesfet-xe {
+  height: 88px; box-sizing: border-box; padding: 0 24px; border-radius: 10px; border: 1px dashed #2C303A;
+  display: flex; align-items: center; gap: 12px; font-size: 14.5px; color: #8A8E97;
+}
+.dk-kesfet .dk-kesfet-xe > svg { flex-shrink: 0; }
+.dk-kesfet .dk-kesfet-se {
+  height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  border: 1px dashed #2C303A; border-radius: 12px; color: #8A8E97; font-size: 15px;
+}
+
+/* ══════════ UYGULAMA TANITIMI (Keşfet varyantı) ══════════ */
+.dk-kesfet .dk-kesfet-app {
+  flex-shrink: 0; margin: 96px var(--dk-kesfet-x); box-sizing: border-box; padding: 48px 56px; border-radius: 14px;
+  border: 1px solid #1F232B; background: #0A0B0F; display: flex; align-items: center; justify-content: space-between; gap: 40px;
+  position: relative; overflow: hidden;
+}
+.dk-kesfet .dk-kesfet-app-prism { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; display: block; }
+.dk-kesfet .dk-kesfet-app-t { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.dk-kesfet .dk-kesfet-app-h {
+  margin: 0; font-family: var(--dk-font-serif); font-weight: 400; font-size: 44px; line-height: 1.04; letter-spacing: -0.01em; color: #F2F1EE;
+}
+.dk-kesfet .dk-kesfet-app-h em { font-style: italic; color: #FF4FA3; }
+.dk-kesfet .dk-kesfet-app-p { margin: 0; max-width: 520px; font-size: 16px; line-height: 1.55; color: #A3A7AF; }
+.dk-kesfet .dk-kesfet-stores { display: flex; gap: 12px; flex-shrink: 0; }
+.dk-kesfet .dk-kesfet-store {
+  height: 52px; box-sizing: border-box; padding: 0 20px; border-radius: 8px; border: 1px solid #2C303A; background: #0E1014;
+  color: #F2F1EE; display: flex; align-items: center; gap: 12px;
+}
+.dk-kesfet .dk-kesfet-store:hover { color: #F2F1EE; }
+.dk-kesfet .dk-kesfet-store-col { display: flex; flex-direction: column; gap: 1px; }
+.dk-kesfet .dk-kesfet-store-k { font-size: 11px; color: #8A8E97; }
+.dk-kesfet .dk-kesfet-store-l { font-size: 15px; font-weight: 600; }
+
+/* ══════════ DUYARLI ══════════ */
+/* 1280–1359: hero sol kolonu 548 → şehir segmenti biraz daralır (yer tutucu metin kesilmesin) */
+@media (min-width: 1280px) and (max-width: 1359px) {
+  .dk-kesfet .dk-kesfet-sc { width: 170px; }
+}
+/* 1024–1279 (sahibi): yan boşluk 40 (dk-base), hero tek kolon + karusel altta, kart ızgaraları 3 (3 kart), sanatçı 4 */
+@media (max-width: 1279px) {
+  .dk-kesfet .dk-kesfet-hero { grid-template-columns: minmax(0, 1fr); row-gap: 40px; }
+  .dk-kesfet .dk-kesfet-hl { grid-column: 1 / -1; }
+  .dk-kesfet .dk-kesfet-h1 { font-size: 64px; }
+  .dk-kesfet .dk-kesfet-hc { grid-column: 1 / -1; height: 460px; }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .dk-kesfet .dk-kesfet-lim4 > :nth-child(n+4) { display: none; }
+  .dk-kesfet .dk-kesfet-lim5 > :nth-child(n+5) { display: none; }
+}
+/* 769–1023 (sahibi): ızgaralar 2 kolon (sanatçı 3 @≥900), özel etkinlikler 1, şehir segmenti 160, uygulama tanıtımı alt alta */
+@media (max-width: 1023px) {
+  .dk-kesfet .dk-kesfet-h1 { font-size: 56px; }
+  .dk-kesfet .dk-kesfet-sc { width: 160px; }
+  .dk-kesfet .dk-kesfet-go { padding: 0 18px; }
+  .dk-kesfet .dk-kesfet-hs-t { font-size: 44px; }
+  .dk-kesfet .dk-kesfet-cats > .dk-utab { gap: 22px; }
+  .dk-kesfet .dk-kesfet-g2 { grid-template-columns: minmax(0, 1fr); }
+  .dk-kesfet .dk-kesfet-g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-kesfet .dk-kesfet-app { flex-direction: column; align-items: flex-start; gap: 28px; padding: 40px; }
+}
+@media (min-width: 900px) and (max-width: 1023px) {
+  .dk-kesfet .dk-kesfet-lim5 > :nth-child(n+4) { display: none; }
+}
+@media (max-width: 899px) {
+  .dk-kesfet .dk-kesfet-lim5 > :nth-child(n+5) { display: none; }
+  .dk-kesfet .dk-kesfet-rows { grid-template-columns: minmax(0, 1fr); }
+  .dk-kesfet .dk-kesfet-hc { height: 420px; }
+}
+
+/* Hareket azaltma: dk-base tüm animasyon/geçişleri kapatır; karusel otomatik geçişi JS'te kapalı. */

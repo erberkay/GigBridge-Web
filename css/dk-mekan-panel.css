@@ -1,0 +1,269 @@
+/* dk-mekan-panel.css — WebMekanPanel masaüstü görünümü (venuePanel, #/venue).
+   SAHİBİ: js/desktop/venue/panel.js uygulayıcısı (specs/foundation.md §3). Spec: specs/mekan.md WebMekanPanel
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-mekan-panel (ve alt sınıfları .dk-mekan-panel-*) altında; portal katmanları
+   (modal içerikleri) yalnız .dk-mekan-panel-* ad alanlı sınıflarla. Ölçüler artboard inline stillerinden birebir. */
+
+/* ═════════ kök ═════════ */
+.dk-mekan-panel { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-err { min-height: 320px; }
+
+/* ═════════ 1 · hero ═════════ */
+.dk-mekan-panel .dk-mekan-panel-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; }
+.dk-mekan-panel .dk-mekan-panel-herol { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-heroeb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #FF8A2A; }
+.dk-mekan-panel .dk-mekan-panel-h2 { margin: 0; font-family: var(--dk-font-serif); font-size: 48px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.02; color: #F2F1EE; }
+.dk-mekan-panel .dk-mekan-panel-h2 em { font-style: italic; color: #FF4FA3; }
+.dk-mekan-panel .dk-mekan-panel-lead { margin: 0; font-size: 15.5px; color: #A3A7AF; }
+.dk-mekan-panel .dk-mekan-panel-lead .dk-skel { display: inline-block; vertical-align: middle; max-width: 100%; }
+.dk-mekan-panel .dk-mekan-panel-strong { color: #F2F1EE; font-weight: 600; }
+.dk-mekan-panel .dk-mekan-panel-herolink, .dk-mekan-panel .dk-mekan-panel-herolink:hover { color: #FF8A2A; font-weight: 600; }
+.dk-mekan-panel .dk-mekan-panel-herolink:hover { text-decoration: underline; }
+/* gelir kutusu (KPIPair) */
+.dk-mekan-panel .dk-mekan-panel-pair { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; flex-shrink: 0; display: flex; align-items: stretch; }
+.dk-mekan-panel .dk-mekan-panel-paircell { padding: 16px 24px; display: flex; flex-direction: column; gap: 6px; }
+.dk-mekan-panel .dk-mekan-panel-pairdiv { width: 1px; background: #1F232B; display: block; }
+.dk-mekan-panel .dk-mekan-panel-pairl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-mekan-panel .dk-mekan-panel-pairv { font-family: var(--dk-font-mono); font-size: 26px; font-weight: 600; color: #F2F1EE; }
+.dk-mekan-panel .dk-mekan-panel-pairv.is-rev { color: #FF8A2A; }
+
+/* ═════════ 2 · KPI ═════════ */
+.dk-mekan-panel .dk-mekan-panel-kpis4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.dk-mekan-panel .dk-mekan-panel-kpi { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-kpih { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-kpiic { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.dk-mekan-panel .dk-mekan-panel-kpil { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-panel .dk-mekan-panel-kpiv { font-size: 32px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; color: #F2F1EE; }
+.dk-mekan-panel .dk-mekan-panel-kpis { font-size: 12.5px; color: #8A8E97; }
+
+/* ═════════ 3 · hızlı eylemler (ActionTile) ═════════ */
+.dk-mekan-panel .dk-mekan-panel-qas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.dk-mekan-panel .dk-mekan-panel-qa, .dk-mekan-panel .dk-mekan-panel-qa:hover { color: #F2F1EE; }
+.dk-mekan-panel .dk-mekan-panel-qa { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; height: 72px; box-sizing: border-box; padding: 0 18px; display: flex; align-items: center; gap: 14px; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-qaic { width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.dk-mekan-panel .dk-mekan-panel-qat { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-mekan-panel .dk-mekan-panel-qatt { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-panel .dk-mekan-panel-qats { font-size: 12.5px; color: #8A8E97; } /* artboard: alt yazı dar kartta 2 satıra sarar ("Sanatçı ve / organizatörler") */
+.dk-mekan-panel .dk-mekan-panel-qaar { color: #8A8E97; display: block; flex-shrink: 0; } /* artboard: satır içi svg (taban çizgisi hizası) */
+
+/* ═════════ kart ortakları ═════════ */
+.dk-mekan-panel .dk-mekan-panel-card { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; min-width: 0; }
+.dk-mekan-panel section.dk-mekan-panel-card { overflow: hidden; }
+.dk-mekan-panel .dk-mekan-panel-pad { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.dk-mekan-panel .dk-mekan-panel-sh { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-eb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+.dk-mekan-panel .dk-mekan-panel-eb.is-accent { color: #FF8A2A; }
+.dk-mekan-panel .dk-mekan-panel-h3 { margin: 0; font-size: 18px; font-weight: 600; }
+.dk-mekan-panel .dk-mekan-panel-cardhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.dk-mekan-panel .dk-mekan-panel-cardhead .dk-mekan-panel-h3 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-panel .dk-mekan-panel-list { display: flex; flex-direction: column; gap: 14px; }
+
+/* ═════════ 4 · etkinlik tablosu ═════════ */
+.dk-mekan-panel .dk-mekan-panel-evhead { padding: 20px 24px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-bottom: 1px solid #14171D; }
+.dk-mekan-panel .dk-mekan-panel-h3ev { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.015em; }
+.dk-mekan-panel .dk-mekan-panel-evtools { display: flex; align-items: center; gap: 12px; }
+.dk-mekan-panel .dk-mekan-panel-seg { display: flex; padding: 4px; border: 1px solid #1F232B; border-radius: 8px; background: #0A0B0F; }
+.dk-mekan-panel .dk-mekan-panel-segb { height: 34px; box-sizing: border-box; padding: 0 14px; border: 0; border-radius: 5px; background: transparent; color: #8A8E97; display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 500; }
+.dk-mekan-panel .dk-mekan-panel-segb.is-on { background: #1C2029; color: #F2F1EE; }
+.dk-mekan-panel .dk-mekan-panel-segn { font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; }
+.dk-mekan-panel .dk-mekan-panel-add, .dk-mekan-panel .dk-mekan-panel-add:hover { color: #F2F1EE; }
+.dk-mekan-panel .dk-mekan-panel-add { height: 42px; box-sizing: border-box; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 500; }
+
+.dk-mekan-panel .dk-mekan-panel-tr { box-sizing: border-box; padding: 0 24px; display: grid; grid-template-columns: 92px minmax(0, 1fr) 180px 88px 160px 124px 100px; gap: 16px; align-items: center; border-bottom: 1px solid #14171D; }
+.dk-mekan-panel .dk-mekan-panel-th { height: 40px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
+.dk-mekan-panel .dk-mekan-panel-right { text-align: right; }
+.dk-mekan-panel .dk-mekan-panel-row { height: 68px; }
+/* Bekleyen davetli satır: sarı çubuk (tasarım alt notunun vaadi; spec §8 önerisi) */
+.dk-mekan-panel .dk-mekan-panel-row.is-wait { box-shadow: inset 3px 0 0 #FFD700; }
+.dk-mekan-panel .dk-mekan-panel-date { display: flex; align-items: center; gap: 10px; }
+.dk-mekan-panel .dk-mekan-panel-dd { font-size: 24px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; width: 30px; flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-mmt { display: flex; flex-direction: column; gap: 3px; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #8A8E97; }
+.dk-mekan-panel .dk-mekan-panel-tm { color: #A3A7AF; }
+.dk-mekan-panel .dk-mekan-panel-ev { min-width: 0; display: flex; align-items: center; gap: 12px; }
+.dk-mekan-panel .dk-mekan-panel-thumb { width: 44px; height: 44px; flex-shrink: 0; border-radius: 6px; object-fit: cover; display: block; }
+.dk-mekan-panel .dk-mekan-panel-thumb.is-ph { display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: rgba(255,255,255,0.92); }
+.dk-mekan-panel .dk-mekan-panel-evcol { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-mekan-panel .dk-mekan-panel-evt { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; white-space: nowrap; min-width: 0; }
+/* tasarım hatası düzeltmesi (spec §4): başlık kısalır, rozetler taşmaz */
+.dk-mekan-panel .dk-mekan-panel-evtt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-panel .dk-mekan-panel-tonight { flex-shrink: 0; height: 20px; padding: 0 7px; display: flex; align-items: center; border-radius: 4px; background: rgba(255,90,110,0.12); color: #FF5A6E; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; }
+.dk-mekan-panel .dk-mekan-panel-vip { flex-shrink: 0; height: 20px; padding: 0 7px; display: flex; align-items: center; gap: 4px; border-radius: 4px; border: 1px solid rgba(255,138,42,0.45); color: #FF8A2A; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; }
+.dk-mekan-panel .dk-mekan-panel-evg { display: flex; align-items: center; gap: 6px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; white-space: nowrap; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-gname { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-gdot { width: 6px; height: 6px; border-radius: 50%; display: block; flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-gprice { display: none; color: #A3A7AF; flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-evar { display: none; font-size: 12.5px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-panel .dk-mekan-panel-ar { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.dk-mekan-panel .dk-mekan-panel-ar .dk-av { flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-noav { width: 30px; height: 30px; flex-shrink: 0; box-sizing: border-box; border-radius: 50%; border: 1px dashed #2C303A; color: #5E636D; display: flex; align-items: center; justify-content: center; }
+.dk-mekan-panel .dk-mekan-panel-arcol { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-mekan-panel .dk-mekan-panel-arn { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-panel .dk-mekan-panel-arf { font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-panel .dk-mekan-panel-price { font-family: var(--dk-font-mono); font-size: 14px; font-weight: 600; white-space: nowrap; }
+.dk-mekan-panel .dk-mekan-panel-price.is-free { color: #7CE0B0; }
+.dk-mekan-panel .dk-mekan-panel-att { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-attt { font-size: 13px; color: #A3A7AF; white-space: nowrap; }
+.dk-mekan-panel .dk-mekan-panel-attn { color: #F2F1EE; font-weight: 600; }
+.dk-mekan-panel .dk-mekan-panel-bar { height: 4px; border-radius: 2px; background: #1F232B; display: block; overflow: hidden; }
+.dk-mekan-panel .dk-mekan-panel-barf { height: 100%; display: block; }
+.dk-mekan-panel .dk-mekan-panel-pill { height: 26px; box-sizing: border-box; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border-radius: 13px; border: 1px solid; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.dk-mekan-panel .dk-mekan-panel-pdot { width: 6px; height: 6px; border-radius: 50%; display: block; flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-actcell { display: flex; justify-content: flex-end; }
+.dk-mekan-panel .dk-mekan-panel-act, .dk-mekan-panel .dk-mekan-panel-act:hover { color: #F2F1EE; }
+.dk-mekan-panel .dk-mekan-panel-act { height: 34px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 1px solid #2C303A; display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.dk-mekan-panel .dk-mekan-panel-orgtag { font-size: 12.5px; color: #8A8E97; white-space: nowrap; }
+.dk-mekan-panel .dk-mekan-panel-emptyrow { border-bottom: 1px solid #14171D; }
+.dk-mekan-panel .dk-mekan-panel-emptycell { min-height: 136px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; color: #8A8E97; }
+.dk-mekan-panel .dk-mekan-panel-emptyt { font-size: 15px; font-weight: 600; color: #F2F1EE; }
+.dk-mekan-panel .dk-mekan-panel-emptys { font-size: 13.5px; }
+.dk-mekan-panel .dk-mekan-panel-skelrow { height: 68px; }
+.dk-mekan-panel .dk-mekan-panel-skelev { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-foot { height: 52px; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 13px; color: #8A8E97; }
+.dk-mekan-panel .dk-mekan-panel-footnote { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-panel .dk-mekan-panel-footlink { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.dk-mekan-panel .dk-mekan-panel-footlink[hidden] { display: none; }
+
+/* ═════════ 5 · alt ızgara ═════════ */
+.dk-mekan-panel .dk-mekan-panel-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.dk-mekan-panel .dk-mekan-panel-stack { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-invcount { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; color: #FFD700; white-space: nowrap; }
+/* satır (InviteRow / ResidencyRow / ArtistRow ortak kutu) */
+.dk-mekan-panel .dk-mekan-panel-item { padding: 12px; border-radius: 10px; border: 1px solid #1F232B; background: #0A0B0F; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-item.is-pending { border-color: rgba(255,215,0,0.35); }
+.dk-mekan-panel .dk-mekan-panel-item > .dk-av { flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-icol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-mekan-panel .dk-mekan-panel-iname { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-panel .dk-mekan-panel-imeta { font-size: 12.5px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ücret / anlaşma satırı: para değeri kısaltılmaz, dar kolonda alt satıra sarar */
+.dk-mekan-panel .dk-mekan-panel-ifee { font-family: var(--dk-font-mono); font-size: 11px; color: #A3A7AF; overflow-wrap: anywhere; }
+.dk-mekan-panel .dk-mekan-panel-iright { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-istat { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.dk-mekan-panel .dk-mekan-panel-msg32, .dk-mekan-panel .dk-mekan-panel-msg36 { box-sizing: border-box; padding: 0; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #4ED8FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-msg32 { width: 32px; height: 32px; }
+.dk-mekan-panel .dk-mekan-panel-msg36 { width: 36px; height: 36px; }
+.dk-mekan-panel .dk-mekan-panel-msg32:disabled { opacity: .4; }
+/* RequestCard */
+.dk-mekan-panel .dk-mekan-panel-req { padding: 14px; border-radius: 10px; border: 1px dashed rgba(255,138,42,0.55); background: rgba(255,138,42,0.04); display: flex; flex-direction: column; gap: 12px; }
+.dk-mekan-panel .dk-mekan-panel-reqtop { display: flex; align-items: flex-start; gap: 12px; }
+.dk-mekan-panel .dk-mekan-panel-reqcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-mekan-panel .dk-mekan-panel-reqt { font-size: 15px; font-weight: 600; }
+.dk-mekan-panel .dk-mekan-panel-reqorg { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #A3A7AF; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-reqorg svg { flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-reqd { font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; }
+.dk-mekan-panel .dk-mekan-panel-reqbtns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dk-mekan-panel .dk-mekan-panel-rej { height: 40px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-size: 13.5px; font-weight: 500; }
+.dk-mekan-panel .dk-mekan-panel-acc { height: 40px; border-radius: 6px; border: 0; background: #FF8A2A; color: #06070A; font-size: 13.5px; font-weight: 600; }
+.dk-mekan-panel .dk-mekan-panel-rej:disabled, .dk-mekan-panel .dk-mekan-panel-acc:disabled { opacity: .5; }
+.dk-mekan-panel .dk-mekan-panel-emptybox { height: 72px; border-radius: 10px; border: 1px dashed #2C303A; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px; text-align: center; font-size: 13.5px; color: #8A8E97; }
+.dk-mekan-panel .dk-mekan-panel-emptybox svg { flex-shrink: 0; }
+/* ResidencyRow */
+.dk-mekan-panel .dk-mekan-panel-resic { width: 38px; height: 38px; flex-shrink: 0; border-radius: 8px; background: rgba(255,138,42,0.12); color: #FF8A2A; display: flex; align-items: center; justify-content: center; }
+.dk-mekan-panel .dk-mekan-panel-resm { font-family: var(--dk-font-mono); font-size: 11px; color: #A3A7AF; overflow-wrap: anywhere; }
+.dk-mekan-panel .dk-mekan-panel-resp { font-size: 12px; color: #8A8E97; }
+.dk-mekan-panel .dk-mekan-panel-rpill { height: 22px; padding: 0 8px; display: flex; align-items: center; border-radius: 11px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.dk-mekan-panel .dk-mekan-panel-rpill.is-ok { background: rgba(124,224,176,0.12); color: #7CE0B0; }
+.dk-mekan-panel .dk-mekan-panel-rpill.is-wait { background: rgba(255,215,0,0.10); color: #FFD700; }
+.dk-mekan-panel .dk-mekan-panel-rpill.is-cancel { background: rgba(255,90,110,0.10); color: #FF5A6E; }
+.dk-mekan-panel .dk-mekan-panel-rcancel { height: 28px; padding: 0 4px; border: 0; background: none; font-size: 12.5px; }
+/* ArtistRow (öneri) */
+.dk-mekan-panel .dk-mekan-panel-all, .dk-mekan-panel .dk-mekan-panel-all:hover { color: #FF8A2A; }
+.dk-mekan-panel .dk-mekan-panel-all { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.dk-mekan-panel .dk-mekan-panel-sphoto { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; object-fit: cover; object-position: center 25%; display: block; }
+.dk-mekan-panel .dk-mekan-panel-sphoto.is-ph { display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600; color: #06070A; }
+.dk-mekan-panel .dk-mekan-panel-smeta { font-size: 12.5px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-panel .dk-mekan-panel-srate { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #F2F1EE; white-space: nowrap; min-width: 0; }
+.dk-mekan-panel .dk-mekan-panel-srate svg { flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-sprice { color: #A3A7AF; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-panel .dk-mekan-panel-invite { height: 34px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; background: rgba(255,138,42,0.12); border: 1px solid rgba(255,138,42,0.5); color: #FF8A2A; display: flex; align-items: center; font-size: 13px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-sugempty { padding: 28px 12px; }
+.dk-mekan-panel .dk-mekan-panel-skelitem { border-color: #14171D; }
+
+/* ═════════ portal katmanları (modal) — .dk-mekan-panel-* ad alanı ═════════ */
+.dk-mdl.dk-mekan-panel-mdlaccept { gap: 18px; }
+.dk-mdl.dk-mekan-panel-mdlaccept .dk-mdl-body { gap: 18px; }
+.dk-mdl.dk-mekan-panel-mdlaccept .dk-mdl-acts { margin-top: 4px; }
+.dk-mdl.dk-mekan-panel-mdlres { gap: 16px; }
+.dk-mdl.dk-mekan-panel-modal .dk-btn-outline { font-weight: 400; }
+.dk-mdl.dk-mekan-panel-modal .dk-mekan-panel-msub { margin: 0; font-size: 14px; line-height: 1.55; color: #A3A7AF; }
+.dk-mdl.dk-mekan-panel-mdlaccept .dk-mekan-panel-msub { line-height: normal; }
+.dk-mdl.dk-mekan-panel-modal .dk-mekan-panel-mlabel { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-mdl.dk-mekan-panel-modal .dk-mekan-panel-mnote { padding: 12px 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: #A3A7AF; }
+.dk-mdl.dk-mekan-panel-modal .dk-mekan-panel-mnote svg { flex-shrink: 0; }
+.dk-mdl.dk-mekan-panel-modal .dk-mekan-panel-mnote-strong { color: #F2F1EE; }
+/* Davet modalı (WebMekanSanatciBul §4) */
+.dk-mdl.dk-mekan-panel-inv-modal .dk-mdl-headrow { justify-content: flex-start; gap: 14px; }
+.dk-mdl.dk-mekan-panel-inv-modal .dk-mdl-tcol { flex-grow: 1; gap: 3px; }
+.dk-mdl.dk-mekan-panel-inv-modal .dk-mdl-sub { font-size: 13px; line-height: normal; color: #8A8E97; }
+.dk-mdl.dk-mekan-panel-inv-modal .dk-mekan-panel-inv-av { flex-shrink: 0; font-weight: 600; }
+.dk-mdl.dk-mekan-panel-inv-modal .dk-mdl-body { gap: 18px; }
+.dk-mekan-panel-inv-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dk-mekan-panel-inv-tabs:has(> [hidden]) { grid-template-columns: minmax(0, 1fr); }
+.dk-mekan-panel-inv-tab { height: 42px; border-radius: 8px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.dk-mekan-panel-inv-tab.is-on { border-color: #FF8A2A; background: rgba(255,138,42,0.12); color: #FF8A2A; }
+.dk-mekan-panel-inv-tab[hidden] { display: none; }
+.dk-mekan-panel-inv-box { display: flex; flex-direction: column; gap: 14px; }
+.dk-mekan-panel-inv-box[hidden] { display: none; }
+.dk-mekan-panel-inv-fld { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dk-mekan-panel-inv-lbl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-mekan-panel-inv-g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dk-mdl .dk-mekan-panel-inv-in { width: 100%; height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14.5px; transition: border-color 160ms ease; }
+.dk-mdl textarea.dk-mekan-panel-inv-in { height: auto; padding: 12px 14px; line-height: 1.5; resize: none; }
+.dk-mdl select.dk-mekan-panel-inv-in { appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 36px; }
+.dk-mdl .dk-mekan-panel-inv-in[type="date"], .dk-mdl .dk-mekan-panel-inv-in[type="time"] { color-scheme: dark; }
+.dk-mdl .dk-mekan-panel-inv-in.is-ro { color: #A3A7AF; }
+.dk-mdl .dk-mekan-panel-inv-mono { font-family: var(--dk-font-mono); }
+.dk-mekan-panel-inv-selwrap { position: relative; display: block; }
+.dk-mekan-panel-inv-chev { position: absolute; right: 12px; top: 13px; pointer-events: none; }
+.dk-mekan-panel-inv-photo { position: relative; height: 44px; border-radius: 8px; border: 1px dashed #2C303A; background: transparent; color: #A3A7AF; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13.5px; }
+.dk-mekan-panel-inv-photo.is-set { color: #7CE0B0; }
+.dk-mekan-panel-inv-thumb { position: absolute; right: 6px; top: 5px; width: 56px; height: 32px; border-radius: 4px; object-fit: cover; }
+.dk-mekan-panel-inv-thumb[hidden] { display: none; }
+.dk-mekan-panel-inv-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dk-mekan-panel-inv-chip { height: 32px; box-sizing: border-box; padding: 0 12px; border-radius: 16px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF; display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; }
+.dk-mekan-panel-inv-chip.is-on { border-color: #FF8A2A; background: rgba(255,138,42,0.12); color: #FF8A2A; }
+.dk-mekan-panel-inv-err { padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,90,110,0.45); background: rgba(255,90,110,0.08); display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #FF5A6E; }
+.dk-mekan-panel-inv-err[hidden] { display: none; }
+.dk-mekan-panel-inv-err svg { flex-shrink: 0; }
+
+/* ═════════ duyarlı ═════════ */
+/* <1440: BİLET sütunu düşer, fiyat tür satırına eklenir (spec §10) */
+@media (max-width: 1439px) {
+  .dk-mekan-panel .dk-mekan-panel-tr { grid-template-columns: 80px minmax(0, 1fr) 160px 140px 116px 96px; }
+  .dk-mekan-panel .dk-mekan-panel-colprice { display: none; }
+  .dk-mekan-panel .dk-mekan-panel-gprice { display: inline; }
+}
+/* 1280–1365: 3 kolon (~300 px) para değerlerini / başlıkları kesiyordu → alt ızgara 1024–1279 düzeninde (2 kolon; öneriler iki
+   kolona yayılır, satırları 3 kolon, "Davet et" satır altında). Hızlı eylem kartı iç boşlukları daralır ("Etkinlik Oluştur" tek satır). */
+@media (max-width: 1365px) {
+  .dk-mekan-panel .dk-mekan-panel-qa { padding: 0 14px; gap: 10px; }
+  .dk-mekan-panel .dk-mekan-panel-grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-mekan-panel .dk-mekan-panel-sugcard { grid-column: 1 / -1; }
+  .dk-mekan-panel .dk-mekan-panel-sugcard .dk-mekan-panel-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .dk-mekan-panel .dk-mekan-panel-grid3.no-inv .dk-mekan-panel-stack { grid-column: 1 / -1; }
+  .dk-mekan-panel .dk-mekan-panel-sugcard .dk-mekan-panel-item { flex-wrap: wrap; }
+  .dk-mekan-panel .dk-mekan-panel-sugcard .dk-mekan-panel-icol { flex-basis: 0; }
+  .dk-mekan-panel .dk-mekan-panel-sugcard .dk-mekan-panel-invite { flex-basis: 100%; justify-content: center; }
+}
+/* 1024–1279: KPI + hızlı eylemler 2×2, hero yığılır, alt ızgara 2 kolon (öneriler iki kolona yayılır, satırları 3 kolon).
+   Tablo: spec'in <1440 ızgarası 1024–1199'da başlık sütununu ~0'a indiriyordu → ≤1279 sıkışık tablo: SANATÇI sütunu düşer,
+   sanatçı + ücret etkinlik hücresinin 3. satırında (yatay kaydırma yok; 769–1023 aynı düzen). */
+@media (max-width: 1279px) {
+  .dk-mekan-panel .dk-mekan-panel-tr { grid-template-columns: 76px minmax(0, 1fr) 120px 110px 90px; }
+  .dk-mekan-panel .dk-mekan-panel-colartist { display: none; }
+  .dk-mekan-panel .dk-mekan-panel-evar { display: block; }
+  .dk-mekan-panel .dk-mekan-panel-evcol { gap: 3px; }
+  .dk-mekan-panel .dk-mekan-panel-qa { padding: 0 18px; gap: 14px; }
+  .dk-mekan-panel .dk-mekan-panel-hero { flex-direction: column; align-items: stretch; gap: 20px; }
+  .dk-mekan-panel .dk-mekan-panel-pair > .dk-mekan-panel-paircell { flex: 1 1 0; }
+  .dk-mekan-panel .dk-mekan-panel-kpis4, .dk-mekan-panel .dk-mekan-panel-qas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* 769–1023: sıkışık tablo (yukarıda), alt ızgara tek kolon */
+@media (max-width: 1023px) {
+  .dk-mekan-panel .dk-mekan-panel-tr { padding: 0 20px; gap: 12px; }
+  .dk-mekan-panel .dk-mekan-panel-sugcard .dk-mekan-panel-item { flex-wrap: nowrap; }
+  .dk-mekan-panel .dk-mekan-panel-sugcard .dk-mekan-panel-invite { flex-basis: auto; }
+  .dk-mekan-panel .dk-mekan-panel-evhead { flex-wrap: wrap; align-items: center; }
+  .dk-mekan-panel .dk-mekan-panel-grid3 { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-panel .dk-mekan-panel-sugcard .dk-mekan-panel-list { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-panel .dk-mekan-panel-h2 { font-size: 40px; }
+}
+.dk-mdl.dk-mekan-panel-inv-modal .dk-btn-role.dk-btn-44 { padding: 0 20px; }

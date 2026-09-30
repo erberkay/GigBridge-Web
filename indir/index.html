@@ -23,79 +23,239 @@
   <meta name="twitter:image" content="https://gigbridges.com/assets/og-cover.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
-  <style>
-    :root{
-      --bg:#06070A; --surface:#0E0F1A; --border:#20223A; --text:#EDEDF5; --sec:#B7B7CE; --muted:#7A7C99;
-      --cyan:#22D3EE; --magenta:#E23FA9; --amber:#F5B301;
-      --prism:linear-gradient(90deg,#22D3EE 0%,#E23FA9 52%,#F5B301 100%);
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:"Space Grotesk",system-ui,-apple-system,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
-    a{color:inherit;text-decoration:none}
-    .prism-top{height:3px;background:var(--prism)}
-    header{padding:20px}
-    .brand{font-weight:700;font-size:20px;letter-spacing:-.02em;display:inline-flex;align-items:center;gap:9px}
-    .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--prism)}
-    main{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px 20px 60px}
-    .box{max-width:560px;width:100%}
-    .eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-weight:600;margin-bottom:16px}
-    h1{font-size:clamp(32px,7vw,52px);line-height:1.05;letter-spacing:-.03em;font-weight:700;margin-bottom:16px}
-    h1 em{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400;background:var(--prism);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    p.lead{font-size:18px;color:var(--sec);margin-bottom:34px}
-    .stores{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
-    .store{display:inline-flex;align-items:center;gap:12px;padding:14px 24px;border-radius:15px;background:#0b0c15;border:1px solid var(--border);transition:transform .15s ease,border-color .15s ease}
-    .store:hover{transform:translateY(-2px);border-color:var(--magenta)}
-    .store svg{width:28px;height:28px;flex:none}
-    .store .s1{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;line-height:1.1;text-align:left}
-    .store .s2{font-size:18px;font-weight:600;line-height:1.2;text-align:left}
-    .hl{outline:2px solid transparent;border-image:var(--prism) 1}
-    .web{margin-top:30px;font-size:15px;color:var(--muted)}
-    .web a{color:var(--cyan);font-weight:600}
-    footer{text-align:center;padding:24px;color:var(--muted);font-size:13px;border-top:1px solid var(--border)}
-    footer a:hover{color:var(--cyan)}
-  </style>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="/assets/seo.css?v=20260929s" />
+  <script src="/assets/seo.js?v=20260929s" defer></script>
 </head>
-<body>
-  <div class="prism-top"></div>
-  <header><a class="brand" href="/"><span class="dot"></span> GigBridge</a></header>
-  <main>
-    <div class="box">
-      <div class="eyebrow">Ücretsiz İndir</div>
-      <h1>Canlı müzik, <em>cebinde.</em></h1>
-      <p class="lead">Yakınındaki konserleri, DJ setlerini ve akustik geceleri keşfet. Sanatçıysan sahne bul; mekansan sanatçı bul.</p>
-      <div class="stores">
-        <a class="store" id="ios" href="#" aria-label="App Store'dan indir">
-          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>
-          <span><span class="s1">İndir</span><br><span class="s2">App Store</span></span>
-        </a>
-        <a class="store" id="android" href="#" aria-label="Google Play'den indir">
-          <svg viewBox="0 0 24 24"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#22D3EE"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#E23FA9"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#F5B301"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#22D3EE"/></svg>
-          <span><span class="s1">İndir</span><br><span class="s2">Google Play</span></span>
-        </a>
+<body class="gb gb-pg-indir">
+  <a class="gb-skip" href="#icerik">İçeriğe geç</a>
+  <header class="gb-hd">
+    <div class="gb-hd-in">
+      <a class="gb-logo" href="/" aria-label="GigBridge ana sayfa"><span class="gb-logo-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"/><path d="M3 17h18"/></svg></span><span class="gb-logo-word">GigBridge</span></a>
+      <details class="gb-menu" data-gb-pop>
+        <summary class="gb-burger gb-press" aria-label="Menü"><svg class="gb-ic-menu" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="gb-ic-x" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></summary>
+        <div class="gb-menu-panel">
+          <nav class="gb-menu-nav" aria-label="Ana menü (mobil)">
+            <a class="gb-menu-link" href="/#/kesfet">Keşfet</a>
+            <a class="gb-menu-link" href="/#/etkinlikler">Etkinlikler</a>
+            <a class="gb-menu-link" href="/#/harita">Harita</a>
+            <a class="gb-menu-link" href="/#/akis">Akış</a>
+            <a class="gb-menu-link" href="/#/top10">Top 10</a>
+          </nav>
+          <div class="gb-menu-cities">
+            <span class="gb-menu-h">CANLI MÜZİK · ŞEHİRLER</span>
+            <div class="gb-menu-citylist">
+            <a class="gb-menu-city" href="/canli-muzik/istanbul/" data-city="İstanbul">İstanbul</a>
+            <a class="gb-menu-city" href="/canli-muzik/izmir/" data-city="İzmir">İzmir</a>
+            <a class="gb-menu-city" href="/canli-muzik/ankara/" data-city="Ankara">Ankara</a>
+            <a class="gb-menu-city" href="/canli-muzik/antalya/" data-city="Antalya">Antalya</a>
+            <a class="gb-menu-city" href="/canli-muzik/bodrum/" data-city="Bodrum">Bodrum</a>
+            <a class="gb-menu-city" href="/canli-muzik/kusadasi/" data-city="Kuşadası">Kuşadası</a>
+            </div>
+          </div>
+          <div class="gb-menu-auth">
+            <a class="gb-btn gb-btn-outline gb-press" href="/#/login">Giriş yap</a>
+            <a class="gb-btn gb-btn-light gb-press" href="/#/register">Hesap oluştur</a>
+          </div>
+        </div>
+      </details>
+      <nav class="gb-hd-nav" aria-label="Ana menü">
+        <a class="gb-link" href="/#/kesfet">Keşfet</a>
+        <a class="gb-link" href="/#/etkinlikler">Etkinlikler</a>
+        <a class="gb-link" href="/#/harita">Harita</a>
+        <a class="gb-link" href="/#/akis">Akış</a>
+        <a class="gb-link" href="/#/top10">Top 10</a>
+      </nav>
+      <div class="gb-hd-right">
+        <details class="gb-city" data-gb-pop data-gb-city>
+          <summary class="gb-city-btn gb-press" aria-label="Şehir seç, şu an İstanbul"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span class="gb-city-l">İstanbul</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <div class="gb-city-menu">
+          <span class="gb-city-h">CANLI MÜZİK SAYFALARI</span>
+          <a class="gb-city-opt" href="/canli-muzik/istanbul/" data-city="İstanbul"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>İstanbul</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/izmir/" data-city="İzmir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>İzmir</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/ankara/" data-city="Ankara"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Ankara</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/antalya/" data-city="Antalya"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Antalya</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/bodrum/" data-city="Bodrum"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Bodrum</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/kusadasi/" data-city="Kuşadası"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Kuşadası</span></a>
+          </div>
+        </details>
+        <a class="gb-hd-login gb-press" href="/#/login">Giriş yap</a>
+        <a class="gb-hd-reg gb-press" href="/#/register">Hesap oluştur</a>
+        <a class="gb-hd-get gb-press" href="/indir/">İndir</a>
       </div>
-      <p class="web">Uygulama mağazan yok mu? <a href="https://gigbridges.com/#/kesfet">Web'de keşfet →</a></p>
     </div>
-  </main>
-  <footer>
-    <a href="/">Ana Sayfa</a> &nbsp;·&nbsp; <a href="/canli-muzik/istanbul/">İstanbul Canlı Müzik</a> &nbsp;·&nbsp; <a href="/gizlilik.html">Gizlilik</a>
-  </footer>
+  </header>
 
+  <main class="gb-main" id="icerik" tabindex="-1">
+    <section class="gb-dl-hero" aria-labelledby="h-indir">
+      <div class="gb-dl-l gb-rise">
+        <span class="gb-eyebrow gb-acc-green">ÜCRETSİZ İNDİR</span>
+        <h1 class="gb-h1 gb-dl-h1" id="h-indir">Canlı müzik, <br><em>cebinde.</em></h1>
+        <p class="gb-lead gb-dl-lead">Yakınındaki konserleri, DJ setlerini ve akustik geceleri keşfet. Sanatçıysan sahne bul; mekansan sanatçı bul.</p>
+        <ul class="gb-feats">
+          <li><span class="gb-feat-ic gb-feat-magenta"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/></svg></span>E-biletin</li>
+          <li><span class="gb-feat-ic gb-feat-violet"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span>Favori sanatçılarının yeni etkinlik bildirimleri</li>
+          <li><span class="gb-feat-ic gb-feat-cyan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg></span>Yakınındaki sahneler — tek uygulamada</li>
+        </ul>
+        <div class="gb-dl-block" data-gb-plat-root>
+          <div class="gb-seg" role="group" aria-label="Cihazın">
+            <button type="button" class="gb-seg-b gb-press is-on" aria-pressed="true" data-gb-plat="ios">iPhone</button>
+            <button type="button" class="gb-seg-b gb-press" aria-pressed="false" data-gb-plat="android">Android</button>
+          </div>
+          <div class="gb-dl-stores">
+            <a class="gb-lstore gb-press is-hi" id="ios" href="/#/kesfet" aria-label="App Store'dan indir" data-gb-store="ios"><svg width="26" height="26" viewBox="0 0 24 24" fill="#F2F1EE" aria-hidden="true"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg><span class="gb-lstore-t"><span class="gb-lstore-s">İndir</span><span class="gb-lstore-n">App Store</span></span></a>
+            <a class="gb-lstore gb-press" id="android" href="https://play.google.com/store/apps/details?id=com.erberkay.gigbridge" aria-label="Google Play'den indir" data-gb-store="android"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#4ED8FF"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#FF4FA3"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#FFD700"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#4ED8FF"/></svg><span class="gb-lstore-t"><span class="gb-lstore-s">İndir</span><span class="gb-lstore-n">Google Play</span></span></a>
+          </div>
+          <p class="gb-dl-web">Uygulama mağazan yok mu? <a href="/#/kesfet">Web'de keşfet →</a></p>
+        </div>
+      </div>
+      <div class="gb-dl-r" aria-hidden="false">
+        <span class="gb-dl-glow" aria-hidden="true"></span>
+        <div class="gb-phone gb-float" role="img" aria-label="GigBridge mobil uygulaması Keşfet ekranı">
+          <div class="gb-ph-screen" aria-hidden="true">
+            <div class="gb-ph-status"><span>9:41</span><span class="gb-ph-notch"></span><span class="gb-ph-bat"><span></span></span></div>
+            <div class="gb-ph-top">
+              <div class="gb-ph-row"><span class="gb-ph-city"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg>İstanbul</span><span class="gb-ph-icons"><span class="gb-ph-bell"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2F1EE" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2h-15z"/></svg><span></span></span><span class="gb-ph-av"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19.5a6.5 6.5 0 0 1 13 0"/></svg></span></span></div>
+              <div class="gb-ph-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A8E97" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>Etkinlik, mekan veya sanatçı ara...</div>
+              <div class="gb-ph-tabs"><span class="is-on">TÜMÜ</span><span>ETKİNLİKLER</span><span>MEKANLAR</span><span>SANATÇILAR</span><span class="gb-prism gb-ph-tabbar"></span></div>
+            </div>
+            <div class="gb-ph-body">
+              <div class="gb-ph-h"><span>Bu Gece</span><span class="gb-ph-date">CMT · 26 EYL</span></div>
+              <div class="gb-ph-hero">
+                <img class="gb-kb" src="/assets/web/venue-jazz-club.jpg" alt="" width="1000" height="545" decoding="async">
+                <span class="gb-ph-shade"></span>
+                <span class="gb-ph-live"><span class="gb-live-dot gb-live-dot-5"><span class="gb-ping"></span><span></span></span>BU GECE · 21:00</span>
+                <span class="gb-ph-cap"><span class="gb-ph-tag">JAZZ · BABYLON CLUB</span><span class="gb-ph-title">Jazz Gecesi</span><span class="gb-ph-art">Kerem Görsev<span class="gb-ph-buy"><span class="gb-mono">₺150</span>Bilet al</span></span></span>
+              </div>
+              <div class="gb-ph-h gb-ph-h2"><span>Yaklaşan</span><span class="gb-ph-all">Tümü</span></div>
+              <div class="gb-ph-mini"><img src="/assets/seo/ph-electronic.jpg" alt="" width="46" height="46" loading="lazy" decoding="async"><span class="gb-ph-mt"><span class="gb-ph-mtag" style="color:#A78BFA">ELECTRONIC · YARIN 22:00</span><span class="gb-ph-mtitle">Electronic Night</span><span class="gb-ph-mven">Zorlu PSM</span></span><span class="gb-ph-mprice">₺250</span></div>
+              <div class="gb-ph-mini"><img src="/assets/seo/ph-acoustic.jpg" alt="" width="46" height="46" loading="lazy" decoding="async"><span class="gb-ph-mt"><span class="gb-ph-mtag" style="color:#7CE0B0">AKUSTİK · SAL 20:30</span><span class="gb-ph-mtitle">Akustik Akşam</span><span class="gb-ph-mven">Nardis Jazz</span></span><span class="gb-ph-mprice">Ücretsiz</span></div>
+              <div class="gb-ph-mini"><img src="/assets/seo/ph-electronic.jpg" alt="" width="46" height="46" loading="lazy" decoding="async"><span class="gb-ph-mt"><span class="gb-ph-mtag" style="color:#FF5A6E">ROCK · ÇAR 21:00</span><span class="gb-ph-mtitle">Rock Partisi</span><span class="gb-ph-mven">IF Performance</span></span><span class="gb-ph-mprice">₺200</span></div>
+            </div>
+            <div class="gb-ph-nav">
+              <span class="gb-ph-tab is-on"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>Keşfet</span>
+              <span class="gb-ph-tab"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg>Harita</span>
+              <span class="gb-ph-tab"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Akış</span>
+              <span class="gb-ph-tab"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>Mesajlar</span>
+              <span class="gb-ph-tab"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19.5a6.5 6.5 0 0 1 13 0"/></svg>Profil</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gb-qr" aria-labelledby="h-qr">
+      <span class="gb-prism gb-cta-bar" aria-hidden="true"></span>
+      <div class="gb-qr-tile" role="img" aria-label="gigbridges.com/indir adresine giden QR kod">
+        <svg width="152" height="152" viewBox="-1 -1 27 27" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h7v1h-7zM8 0h2v1h-2zM12 0h2v1h-2zM15 0h2v1h-2zM18 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h3v1h-3zM14 1h1v1h-1zM16 1h1v1h-1zM18 1h1v1h-1zM24 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM8 2h1v1h-1zM10 2h1v1h-1zM12 2h1v1h-1zM14 2h2v1h-2zM18 2h1v1h-1zM20 2h3v1h-3zM24 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM8 3h2v1h-2zM13 3h1v1h-1zM15 3h2v1h-2zM18 3h1v1h-1zM20 3h3v1h-3zM24 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM11 4h2v1h-2zM14 4h3v1h-3zM18 4h1v1h-1zM20 4h3v1h-3zM24 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM12 5h1v1h-1zM16 5h1v1h-1zM18 5h1v1h-1zM24 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h7v1h-7zM9 7h1v1h-1zM0 8h2v1h-2zM4 8h3v1h-3zM19 8h1v1h-1zM21 8h4v1h-4zM5 9h1v1h-1zM8 9h4v1h-4zM13 9h4v1h-4zM20 9h2v1h-2zM23 9h1v1h-1zM2 10h3v1h-3zM6 10h2v1h-2zM11 10h3v1h-3zM15 10h8v1h-8zM0 11h1v1h-1zM2 11h1v1h-1zM4 11h1v1h-1zM7 11h2v1h-2zM10 11h2v1h-2zM14 11h2v1h-2zM19 11h1v1h-1zM22 11h2v1h-2zM0 12h2v1h-2zM3 12h2v1h-2zM6 12h1v1h-1zM10 12h3v1h-3zM17 12h3v1h-3zM21 12h4v1h-4zM0 13h3v1h-3zM7 13h1v1h-1zM9 13h1v1h-1zM11 13h1v1h-1zM14 13h3v1h-3zM20 13h1v1h-1zM23 13h1v1h-1zM2 14h1v1h-1zM6 14h1v1h-1zM10 14h2v1h-2zM13 14h3v1h-3zM19 14h4v1h-4zM2 15h1v1h-1zM5 15h1v1h-1zM8 15h1v1h-1zM10 15h3v1h-3zM14 15h3v1h-3zM18 15h3v1h-3zM22 15h2v1h-2zM0 16h2v1h-2zM3 16h2v1h-2zM6 16h5v1h-5zM12 16h1v1h-1zM15 16h8v1h-8zM8 17h2v1h-2zM11 17h1v1h-1zM14 17h1v1h-1zM16 17h1v1h-1zM20 17h1v1h-1zM0 18h7v1h-7zM10 18h2v1h-2zM14 18h1v1h-1zM16 18h1v1h-1zM18 18h1v1h-1zM20 18h1v1h-1zM0 19h1v1h-1zM6 19h1v1h-1zM8 19h2v1h-2zM12 19h1v1h-1zM14 19h1v1h-1zM16 19h1v1h-1zM20 19h3v1h-3zM0 20h1v1h-1zM2 20h3v1h-3zM6 20h1v1h-1zM8 20h5v1h-5zM14 20h1v1h-1zM16 20h8v1h-8zM0 21h1v1h-1zM2 21h3v1h-3zM6 21h1v1h-1zM9 21h3v1h-3zM14 21h1v1h-1zM16 21h4v1h-4zM22 21h3v1h-3zM0 22h1v1h-1zM2 22h3v1h-3zM6 22h1v1h-1zM10 22h9v1h-9zM21 22h1v1h-1zM23 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM8 23h4v1h-4zM14 23h1v1h-1zM17 23h1v1h-1zM19 23h5v1h-5zM0 24h7v1h-7zM8 24h2v1h-2zM11 24h2v1h-2zM15 24h1v1h-1zM22 24h3v1h-3z" fill="#06070A"/></svg>
+      </div>
+      <div class="gb-qr-t">
+        <span class="gb-sh-k">QR İLE İNDİR</span>
+        <h2 class="gb-h2 gb-h2-44" id="h-qr">Telefonunun kamerasıyla <em>okut</em></h2>
+        <p class="gb-sh-p">Kod, gigbridges.com/indir sayfasını açar; iPhone'da App Store'a, Android'de Google Play'e yönlendirilirsin.</p>
+      </div>
+      <div class="gb-qr-dev">
+        <span class="gb-qr-dev-k">SEÇİLİ CİHAZ</span>
+        <span class="gb-qr-dev-v" data-gb-plat-label>iPhone</span>
+        <span class="gb-qr-dev-s" data-gb-plat-store>App Store açılır</span>
+      </div>
+    </section>
+
+    <section class="gb-sec gb-how-sec gb-dl-how" aria-labelledby="h-how">
+      <div class="gb-sh">
+        <span class="gb-sh-k">UYGULAMADA</span>
+        <h2 class="gb-h2" id="h-how">GigBridge <em>nasıl çalışır?</em></h2>
+        <p class="gb-sh-p">GigBridge sadece bir etkinlik listesi değil — sanatçıları, mekanları ve dinleyicileri buluşturan iki taraflı bir sahne.</p>
+      </div>
+      <div class="gb-how-grid">
+          <div class="gb-how gb-bar-cyan">
+            <span class="gb-how-n">01</span>
+            <h3>Dinleyiciysen</h3>
+            <p>Yakınındaki canlı müzik etkinliklerini keşfet, bu akşam nereye gideceğine haritadan karar ver.</p>
+            <a class="gb-how-link" href="/canli-muzik/istanbul/">İstanbul Canlı Müzik<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+          <div class="gb-how gb-bar-magenta">
+            <span class="gb-how-n">02</span>
+            <h3>Sanatçı / DJ isen</h3>
+            <p>Profilini oluştur, mekanlarda sahne bul, teklif al ve takvimini yönet.</p>
+            <a class="gb-how-link" href="/rehber/sahne-bulma/">Sahne bulma rehberi<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+          <div class="gb-how gb-bar-orange">
+            <span class="gb-how-n">03</span>
+            <h3>Mekan / Organizatörsen</h3>
+            <p>Sanatçı bul, etkinlik oluştur ve dinleyicilere ulaş.</p>
+            <a class="gb-how-link" href="/rehber/mekana-sanatci-bulma/">Mekana sanatçı bulma<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+        </div>
+    </section>
+  </main>
+
+  <footer class="gb-ft">
+    <div class="gb-ft-in">
+      <div class="gb-ft-grid">
+        <div class="gb-ft-brand">
+          <span class="gb-logo gb-logo-sm"><span class="gb-logo-tile"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"/><path d="M3 17h18"/></svg></span><span class="gb-logo-word">GigBridge</span></span>
+          <p>Dinleyicileri, sanatçıları ve mekanları canlı müzikte buluşturan platform.</p>
+        </div>
+        <nav class="gb-ft-col" aria-label="Keşfet">
+          <span class="gb-ft-h">KEŞFET</span>
+          <a class="gb-link" href="/#/etkinlikler">Etkinlikler</a>
+          <a class="gb-link" href="/#/kesfet?kategori=mekanlar">Mekanlar</a>
+          <a class="gb-link" href="/#/kesfet?kategori=sanatcilar">Sanatçılar</a>
+          <a class="gb-link" href="/#/harita">Harita</a>
+          <a class="gb-link" href="/rehber/canli-muzik/">Canlı müzik rehberi</a>
+        </nav>
+        <nav class="gb-ft-col" aria-label="Katıl">
+          <span class="gb-ft-h">KATIL</span>
+          <a class="gb-link" href="/#/register?rol=artist">Sanatçı ol</a>
+          <a class="gb-link" href="/#/register?rol=venue">Mekan ekle</a>
+          <a class="gb-link" href="/#/register?rol=organizer">Organizatör ol</a>
+          <a class="gb-link" href="/#/login">Giriş yap</a>
+          <a class="gb-link" href="/indir/">Uygulamayı indir</a>
+        </nav>
+        <nav class="gb-ft-col" aria-label="Yasal">
+          <span class="gb-ft-h">YASAL</span>
+          <a class="gb-link" href="/gizlilik.html">Gizlilik</a>
+          <a class="gb-link" href="/kullanim-kosullari.html">Kullanım koşulları</a>
+          <a class="gb-link" href="/gizlilik.html#kvkk">KVKK aydınlatma metni</a>
+          <a class="gb-link" href="/hesap-sil.html">Hesap silme</a>
+        </nav>
+      </div>
+      <div class="gb-ft-bottom"><span>© 2026 GigBridge</span><span>gigbridges.com</span></div>
+    </div>
+  </footer>
   <script>
     // ⚠️ MAĞAZA LİNKLERİ — tek kaynak. Gerçek ID'ler netleşince BURAYI güncelle:
     //   - iOS: App Store Connect'te uygulama yayınlanınca gerçek "id##########" ile değiştir.
     //   - Android: paket adı com.erberkay.gigbridge (Play'de yayınlanınca aktif olur).
     var IOS_URL = "https://apps.apple.com/tr/app/gigbridge/id0000000000";      // TODO: gerçek App Store ID
     var ANDROID_URL = "https://play.google.com/store/apps/details?id=com.erberkay.gigbridge";
-    var WEB_FALLBACK = "https://gigbridges.com/#/kesfet";
+    var WEB_FALLBACK = "/#/kesfet";
     // iOS linki hâlâ placeholder ise (id0000000000), 404 yerine web keşfete düşür.
     var iosHref = IOS_URL.indexOf("id0000000000") === -1 ? IOS_URL : WEB_FALLBACK;
     document.getElementById("ios").href = iosHref;
     document.getElementById("android").href = ANDROID_URL;
-    // Mobil ziyaretçiyi kendi mağazasına doğru yönlendir (vurgula).
-    var ua = navigator.userAgent || "";
-    if (/iPhone|iPad|iPod/i.test(ua)) document.getElementById("ios").classList.add("hl");
-    else if (/Android/i.test(ua)) document.getElementById("android").classList.add("hl");
+    // Cihaz seçici + mağaza vurgusu (yönlendirme YOK — yalnız vurgu). UA: iPhone/iPad (+ iPadOS masaüstü UA) → iOS, Android → Android.
+    (function () {
+      var root = document.querySelector("[data-gb-plat-root]");
+      if (!root) return;
+      var ua = navigator.userAgent || "";
+      var plat = /Android/i.test(ua) ? "android" : "ios";
+      var isMobile = /Android/i.test(ua) || /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+      var LABEL = { ios: ["iPhone", "App Store açılır"], android: ["Android", "Google Play açılır"] };
+      function set(p) {
+        plat = p;
+        root.querySelectorAll("[data-gb-plat]").forEach(function (b) { var on = b.getAttribute("data-gb-plat") === p; b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+        root.querySelectorAll("[data-gb-store]").forEach(function (a) { a.classList.toggle("is-hi", a.getAttribute("data-gb-store") === p); });
+        var l = document.querySelector("[data-gb-plat-label]"), s = document.querySelector("[data-gb-plat-store]");
+        if (l) l.textContent = LABEL[p][0];
+        if (s) s.textContent = LABEL[p][1];
+        document.documentElement.setAttribute("data-gb-platform", p);
+      }
+      root.addEventListener("click", function (e) { var b = e.target.closest("[data-gb-plat]"); if (b) set(b.getAttribute("data-gb-plat")); });
+      if (isMobile) document.documentElement.classList.add("gb-mobile-ua");
+      set(plat);
+    })();
   </script>
 </body>
 </html>

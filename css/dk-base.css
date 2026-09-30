@@ -1,0 +1,368 @@
+/* ============================================================
+   dk-base.css — MASAÜSTÜ (≥769 px) TEMEL KATMAN
+   Sahibi: foundation (adım 1). Her masaüstü görünümünden ÖNCE yüklenir (js/desktop/css.js → ensureCss).
+   KURALLAR
+   - Her kural .dk kökü altında ya da html[data-dk] bayrağına bağlı: mobil/legacy arayüze SIZMAZ.
+     (html[data-dk] yalnız bir masaüstü görünümü mount edilince app.js tarafından konur.)
+   - style.css + aether.css'in global eleman kuralları (* reset, input/textarea/select kutusu, a rengi,
+     h1-h3 font, input:focus !important) .dk içinde NÖTRLENİR → tasarım artboard'larındaki inline
+     stiller birebir kopyalanabilir (tarayıcı varsayılanı + artboard stili = tasarım).
+     DİKKAT: box-sizing .dk içinde tarayıcı varsayılanına (content-box) döner — artboard'lar da
+     öyle; border-box gereken yerde tasarımdaki gibi açıkça yaz.
+   - .dk-legacy alt ağacı (legacy-in-shell) bu nötrlemeden MUAF: orada legacy stiller aynen çalışır.
+   - Sınıf ad alanı: dk-*. Legacy sınıfları (.page/.has-nav/.content/.btn/.card/.chip…) kullanma.
+   - Hareket sınıfları artboard <helmet> CSS'inden birebir (gb-* → dk-*). Artboard'lar arası süre/mesafe
+     farkları CSS değişkeniyle ayarlanır (varsayılan = en yaygın değer; tablo: specs/foundation.md §5).
+   ============================================================ */
+
+/* ---------- 1. Tasarım token'ları ---------- */
+:root {
+  /* zemin / yüzey */
+  --dk-void: #06070A;       /* sayfa zemini */
+  --dk-void-2: #0A0B0F;     /* ray/aside, popover, kenar çubuğu */
+  --dk-stratum: #0E1014;    /* kart, input, başlık butonları */
+  --dk-stratum-2: #111318;  /* nav hover (sanatçı) */
+  --dk-strata: #14171D;     /* hover/aktif, ince ayraç */
+  --dk-strata-2: #1C2029;   /* seçili segment/çip */
+  --dk-map: #0A0C10;        /* harita tuvali */
+  --dk-row-hover: #0C0E12;  /* satır hover (en yaygın) */
+  /* çizgiler */
+  --dk-hair-soft: #14171D;  /* başlık alt çizgisi, liste ayraçları */
+  --dk-hair: #1F232B;       /* varsayılan 1px kenar */
+  --dk-hair-strong: #2C303A;/* hover kenar, outline buton, kesikli boş durum */
+  /* metin */
+  --dk-ink: #F2F1EE;
+  --dk-ink-2: #E4E3E0;
+  --dk-ink-3: #C9CACD;
+  --dk-vapor-1: #A3A7AF;
+  --dk-vapor-2: #8A8E97;
+  --dk-vapor-3: #7D818B;    /* placeholder */
+  --dk-vapor-4: #5E636D;
+  /* aksanlar */
+  --dk-magenta: #FF4FA3;
+  --dk-magenta-hover: #FF8AC4;
+  --dk-cyan: #4ED8FF;       /* odak halkası, konum */
+  --dk-amber: #FF8A2A;
+  --dk-gold: #FFD700;
+  --dk-green: #7CE0B0;
+  --dk-red: #FF5A6E;
+  --dk-violet: #A78BFA;
+  --dk-prism: linear-gradient(90deg, #4ED8FF, #FF4FA3, #FF8A2A, #FF4FA3, #4ED8FF);
+  /* rol renkleri (MASAÜSTÜ; legacy ui.js ROLE mobilde aynen kalır) */
+  --dk-role-customer: #4ED8FF;
+  --dk-role-artist: #FF4FA3;
+  --dk-role-venue: #FF8A2A;
+  --dk-role-organizer: #FF4FA3;
+  --dk-role-admin: #A78BFA;
+  /* yazı aileleri */
+  --dk-font-sans: "Space Grotesk", system-ui, sans-serif;
+  --dk-font-serif: "Instrument Serif", Georgia, serif;
+  --dk-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* yarıçaplar */
+  --dk-r-4: 4px; --dk-r-6: 6px; --dk-r-8: 8px; --dk-r-10: 10px; --dk-r-12: 12px; --dk-r-14: 14px;
+  /* hareket */
+  --dk-ease: cubic-bezier(.2, .7, .2, 1);
+  --dk-ease-out: cubic-bezier(.4, 0, 1, 1);
+}
+
+/* ---------- 2. Masaüstü görünümü mount'luyken sayfa geneli (html[data-dk]) ---------- */
+/* aether body'ye !important halftone basıyor; tasarım body'si düz void. */
+html[data-dk] body { background: #06070A !important; }
+/* Sayfa kaydırma çubuğu (koyu). Chrome ≥121 standart özelliği, Safari -webkit- sözde öğeyi kullanır. */
+html[data-dk] { scrollbar-color: #2C303A #06070A; }
+html[data-dk]::-webkit-scrollbar { width: 10px; height: 10px; background: #06070A; }
+html[data-dk]::-webkit-scrollbar-thumb { background: #2C303A; border-radius: 6px; border: 2px solid #06070A; }
+html[data-dk]::-webkit-scrollbar-track { background: transparent; }
+/* Legacy toast kabı 769–899 px'te mobil alt çubuk için 90px yukarıda; masaüstünde alt çubuk yok. */
+html[data-dk] #toasts { bottom: 32px; }
+
+/* ---------- 3. Kök ---------- */
+.dk {
+  --dk-gutter: 80px;               /* yan boşluk (1440 artboard); 1279/1023 kırılımlarında küçülür */
+  --dk-accent: var(--dk-magenta);  /* serif başlık italik vurgusu; alan kökünde değiştirilebilir */
+  --dk-role: var(--dk-magenta);
+  --dk-focus-ring: #4ED8FF;        /* odak halkası (focus-visible) */
+  --dk-focus-border: #4ED8FF;      /* kenarlı input odak kenarı (aether !important'ını ezer) */
+  --dk-a: #FF4FA3;                 /* <a> varsayılan rengi (admin: #A78BFA) */
+  --dk-a-hover: #FF8AC4;           /* <a>:hover (admin: #C4B1FF) */
+  position: relative;
+  min-height: 100vh;
+  background: #06070A;
+  color: #F2F1EE;
+  font-family: var(--dk-font-sans);
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;              /* yerel tarih/saat seçicileri + form kontrolleri koyu */
+}
+.dk[data-role="customer"]  { --dk-role: var(--dk-role-customer); }
+.dk[data-role="artist"]    { --dk-role: var(--dk-role-artist); }
+.dk[data-role="venue"]     { --dk-role: var(--dk-role-venue); }
+.dk[data-role="organizer"] { --dk-role: var(--dk-role-organizer); }
+.dk[data-role="admin"]     { --dk-role: var(--dk-role-admin); --dk-a: #A78BFA; --dk-a-hover: #C4B1FF; }
+@media (max-width: 1279px) { .dk { --dk-gutter: 40px; } }
+@media (max-width: 1023px) { .dk { --dk-gutter: 32px; } }
+
+/* ---------- 4. Legacy global kuralların nötrlenmesi (.dk-legacy HARİÇ) ----------
+   :where() ile özgüllük sıfır/tek-eleman tutulur → dk-* sınıf kuralların HER ZAMAN kazanır. */
+/* style.css `* { box-sizing:border-box; margin:0; padding:0 }` → tarayıcı varsayılanı */
+:where(.dk) :where(*:not(.dk-legacy, .dk-legacy *)) {
+  box-sizing: revert;
+  margin: revert;
+  padding: revert;
+}
+/* style.css:79-90 input/textarea/select kutusu + odak glow → tarayıcı varsayılanı */
+:where(.dk) :is(input, textarea, select):where(:not(.dk-legacy *)) {
+  width: revert; min-height: revert; background: revert; border: revert; border-radius: revert;
+  padding: revert; color: revert; font-size: revert; transition: revert; resize: revert;
+  box-shadow: none; outline: revert; font-family: inherit;
+}
+:where(.dk) :is(input, textarea, select):focus:where(:not(.dk-legacy *)) { outline: revert; }
+/* aether.css:241 `input:focus { box-shadow:none !important; border-color:#FF4FA3 !important }`
+   → kenarlı inputlarda odak kenarı --dk-focus-border (tasarımın .gb-in:focus rengi; alan/eleman bazında ayarla).
+   Kenarsız (border:0) inputlarda etkisizdir. */
+:where(.dk) :is(input, textarea, select):focus:where(:not(.dk-legacy *)) {
+  border-color: var(--dk-focus-border) !important;
+  box-shadow: var(--dk-focus-shadow, none) !important;
+}
+/* aether.css:52 h1-h3 { font-family; letter-spacing:-0.02em; font-weight:700 } → varsayılan */
+:where(.dk) :is(h1, h2, h3, h4, h5, h6):where(:not(.dk-legacy *)) {
+  font-family: revert; letter-spacing: revert; font-weight: revert;
+}
+/* ---------- 5. Artboard temel CSS'i (helmet) ---------- */
+:where(.dk) a:where(:not(.dk-legacy *)) { color: var(--dk-a); text-decoration: none; }
+:where(.dk) a:hover:where(:not(.dk-legacy *)) { color: var(--dk-a-hover); }
+:where(.dk) button:where(:not(.dk-legacy *)) { font-family: inherit; cursor: pointer; margin: 0; }
+:where(.dk) button:disabled:where(:not(.dk-legacy *)) { cursor: default; }
+:where(.dk) :is(input, textarea):where(:not(.dk-legacy *))::placeholder { color: #7D818B; opacity: 1; }
+:where(.dk) select:where(:not(.dk-legacy *)) option { background: #0E1014; color: #F2F1EE; }
+/* Odak halkası: 2px cyan, offset 2 (tüm artboard'lar) */
+:where(.dk) :is(a, button, input, select, textarea, summary):focus-visible:where(:not(.dk-legacy *)),
+:where(.dk) :where([tabindex]):focus-visible:where(:not(.dk-legacy *)) {
+  outline: 2px solid var(--dk-focus-ring); outline-offset: 2px;
+}
+.dk ::selection { background: #FF4FA3; color: #06070A; }
+
+/* ---------- 6. Tipografi ---------- */
+.dk-sans  { font-family: var(--dk-font-sans); }
+.dk-serif { font-family: var(--dk-font-serif); font-weight: 400; }
+.dk-mono  { font-family: var(--dk-font-mono); }
+/* Eyebrow: bölüm/sayfa üst etiketi — mono 11/700/0.18em #8A8E97 */
+.dk-eyebrow {
+  font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
+  color: #8A8E97; text-transform: uppercase;
+}
+/* Label: fieldset/alan etiketi — mono 10.5/700/0.14em #8A8E97 */
+.dk-label {
+  display: block; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em;
+  color: #8A8E97; text-transform: uppercase;
+}
+/* MonoLabel: kart başlığı ("PROFİL TAMAMLAMA") — mono 11/700/0.16em #A3A7AF */
+.dk-monolabel {
+  font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+  color: #A3A7AF; text-transform: uppercase;
+}
+/* Serif başlık ölçeği — Instrument Serif 400, lh 1.02, -0.01em; <em> = italik aksan (--dk-accent) */
+.dk-display { margin: 0; font-family: var(--dk-font-serif); font-weight: 400; line-height: 1.02; letter-spacing: -0.01em; color: #F2F1EE; }
+.dk-display em, .dk-em { font-style: italic; color: var(--dk-accent); }
+.dk-display em.dk-gold, .dk-em.dk-gold { color: #FFD700; }
+.dk-t80 { font-size: 80px; } .dk-t76 { font-size: 76px; } .dk-t72 { font-size: 72px; }
+.dk-t64 { font-size: 64px; } .dk-t56 { font-size: 56px; } .dk-t52 { font-size: 52px; }
+.dk-t48 { font-size: 48px; } .dk-t44 { font-size: 44px; } .dk-t40 { font-size: 40px; }
+.dk-t38 { font-size: 38px; } .dk-t32 { font-size: 32px; }
+.dk-accent-bar { display: flex; align-items: center; gap: 10px; }
+.dk-accent-bar::before { content: ""; width: 3px; height: 18px; border-radius: 2px; background: var(--dk-accent); flex-shrink: 0; }
+.dk-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dk-tnum { font-variant-numeric: tabular-nums; }
+
+/* ---------- 7. Yerleşim ---------- */
+/* İçerik: max 1280 + yanlarda --dk-gutter (1440 → 80px; ≤1279 → 40px; ≤1023 → 32px) */
+.dk-container {
+  box-sizing: border-box; width: 100%;
+  max-width: calc(1280px + 2 * var(--dk-gutter));
+  margin-left: auto; margin-right: auto;
+  padding-left: var(--dk-gutter); padding-right: var(--dk-gutter);
+}
+/* 12 kolon / 24 px gutter */
+.dk-grid-12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; }
+.dk-span-1 { grid-column: span 1; } .dk-span-2 { grid-column: span 2; } .dk-span-3 { grid-column: span 3; }
+.dk-span-4 { grid-column: span 4; } .dk-span-5 { grid-column: span 5; } .dk-span-6 { grid-column: span 6; }
+.dk-span-7 { grid-column: span 7; } .dk-span-8 { grid-column: span 8; } .dk-span-9 { grid-column: span 9; }
+.dk-span-10 { grid-column: span 10; } .dk-span-11 { grid-column: span 11; } .dk-span-12 { grid-column: span 12; }
+/* Duyarlı kart ızgarası: kolon sayısı değişkenle (≥1280 / 1024–1279 / 769–1023) */
+.dk-grid {
+  display: grid; gap: var(--dk-grid-gap, 24px);
+  grid-template-columns: repeat(var(--dk-cols, 4), minmax(0, 1fr));
+}
+.dk-grid-ev  { --dk-cols: 4; --dk-cols-md: 3; --dk-cols-sm: 2; }   /* etkinlik kartları (kanvas notu) */
+.dk-grid-art { --dk-cols: 5; --dk-cols-md: 4; --dk-cols-sm: 2; --dk-grid-gap: 20px; }   /* sanatçı kartları: WebKesfet/WebSanatciKesfet 5 kolon gap 20 (kart 240 @1280); kanvas notu 1024–1279 4 */
+@media (min-width: 900px) and (max-width: 1023px) { .dk-grid-art { --dk-cols-sm: 3; } }   /* public-a §1.10 "artists 2–3" */
+@media (max-width: 1279px) {
+  .dk-grid { grid-template-columns: repeat(var(--dk-cols-md, var(--dk-cols, 4)), minmax(0, 1fr)); }
+  .dk-hide-lt1280 { display: none !important; }
+}
+@media (max-width: 1023px) {
+  .dk-grid { grid-template-columns: repeat(var(--dk-cols-sm, 2), minmax(0, 1fr)); }
+  .dk-hide-lt1024 { display: none !important; }
+}
+@media (min-width: 1024px) { .dk-show-lt1024 { display: none !important; } }
+@media (min-width: 1280px) { .dk-show-lt1280 { display: none !important; } }
+.dk-sr {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+.dk-hidden { display: none !important; }
+
+/* ---------- 8. Etkileşim sınıfları (artboard helmet'lerinden birebir; gb-* → dk-*) ---------- */
+/* Buton basma: hover parlaklık + basınca küçülme. Keşfet/Etkinlik/HesapSil opaklık geçişini de ekler → .dk-press-o */
+.dk-press { transition: transform 120ms ease, filter 180ms ease, background-color 200ms ease, border-color 200ms ease, color 200ms ease; }
+.dk-press.dk-press-o { transition: transform 120ms ease, filter 180ms ease, background-color 200ms ease, border-color 200ms ease, color 200ms ease, opacity 200ms ease; }
+.dk-press:hover { filter: brightness(var(--dk-press-bright, 1.15)); }         /* AdminGiris: 1.12 */
+.dk-press:active { transform: scale(var(--dk-press-scale, .985)); }           /* Favoriler kalp: .94 */
+.dk-press:disabled:hover { filter: none; }
+/* Kart kaldırma + görsel yakınlaşma */
+.dk-card { transition: transform 260ms var(--dk-ease), border-color 200ms ease; }
+.dk-card:hover { transform: translateY(-4px); border-color: #2C303A; }
+.dk-card img { transition: transform 600ms var(--dk-ease); }
+.dk-card:hover img { transform: scale(1.05); }
+/* Metin bağlantı */
+.dk-link, .dk-crumb { color: #8A8E97; transition: color 160ms ease; }
+.dk-link:hover, .dk-crumb:hover { color: #F2F1EE; }
+.dk-tab { transition: color 160ms ease; }
+.dk-tab:hover { color: #F2F1EE; }
+/* Satır / nav / kenar menü hover (renk artboard'a göre değişir → değişken) */
+.dk-row { transition: background-color 160ms ease; }
+.dk-row:hover { background-color: var(--dk-row-hover-bg, #0C0E12); }         /* 0C0E13 org/admin · 0E1014 Akış/Harita · 12141A Profil/Bildirim · 14171D Etkinlikler · 101217 Mesajlar */
+.dk-nav { transition: background-color 160ms ease, color 160ms ease; }
+.dk-nav:hover { background-color: var(--dk-nav-hover-bg, #111318); color: #F2F1EE; }   /* 101217 org/admin/hesap · 12141A mekan */
+.dk-side { transition: background-color 160ms ease, color 160ms ease; }
+.dk-side:hover { background-color: #0E1014; color: #F2F1EE; }
+/* Alan sarmalayıcı (label içinde input): odakta kenar rengi */
+.dk-field { transition: border-color 160ms ease; }
+.dk-field:focus-within { border-color: var(--dk-field-focus, #FF4FA3); }     /* HesapSil: #4ED8FF */
+/* Kenarlı input: geçiş. Odak kenar rengi --dk-focus-border ile (bkz. §4); odak zemini (örn. #10131A) alan CSS'inde. */
+.dk-in { transition: border-color 160ms ease, background-color 160ms ease; }
+/* Yıldız puanlama */
+.dk-star { transition: transform 160ms cubic-bezier(.3, 1.6, .5, 1); }
+.dk-star:hover { transform: scale(1.15); }
+/* İnce kaydırma çubuğu (iç kaydırıcılar) */
+.dk-scroll { scrollbar-width: thin; scrollbar-color: var(--dk-scroll-thumb, #2C303A) transparent; }
+.dk-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.dk-scroll::-webkit-scrollbar-thumb { background: var(--dk-scroll-thumb, #2C303A); border-radius: 3px; }
+
+/* ---------- 9. Animasyonlar ---------- */
+/* Sayfa girişi (rise): varsayılan 600ms/14px. Varyantlar: 700ms/16px (Keşfet, Landing…), 520ms/12px (org/admin/hesap), 500ms (Etkinlik) */
+@keyframes dkRise { from { opacity: 0; transform: translateY(var(--dk-rise-y, 14px)); } to { opacity: 1; transform: none; } }
+.dk-rise { animation: dkRise var(--dk-rise-dur, 600ms) var(--dk-ease) both; }
+/* İçerik değişimi (fa/fb): iki özdeş keyframe; sınıf takası animasyonu yeniden oynatır → js: replayAnim(el) */
+@keyframes dkFadeA { from { opacity: 0; transform: translateY(var(--dk-swap-y, 10px)); } to { opacity: 1; transform: none; } }
+@keyframes dkFadeB { from { opacity: 0; transform: translateY(var(--dk-swap-y, 10px)); } to { opacity: 1; transform: none; } }
+.dk-fa { animation: dkFadeA var(--dk-swap-dur, 420ms) var(--dk-ease) both; }   /* 380ms/8px hesap/org · 360ms Katılımcılar */
+.dk-fb { animation: dkFadeB var(--dk-swap-dur, 420ms) var(--dk-ease) both; }
+/* Yatay kayma (Keşfet kategori değişimi) */
+@keyframes dkSlideA { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes dkSlideB { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+.dk-sa { animation: dkSlideA 340ms var(--dk-ease) both; }
+.dk-sb { animation: dkSlideB 340ms var(--dk-ease) both; }
+/* Açılır kart/diyalog (pop): varsayılan 260ms/12px. 320ms/14px mekan · 260ms/8px org · 420ms Giriş */
+@keyframes dkPop { from { opacity: 0; transform: translateY(var(--dk-pop-y, 12px)) scale(.98); } to { opacity: 1; transform: none; } }
+.dk-pop { animation: dkPop var(--dk-pop-dur, 260ms) var(--dk-ease) both; }
+/* Opaklık (overlay) */
+@keyframes dkFade { from { opacity: 0; } to { opacity: 1; } }
+.dk-fade { animation: dkFade var(--dk-fade-dur, 220ms) ease both; }             /* 200 sanatçı · 240 mekan · 260 mesaj · 280/300 */
+/* Modal (hesap grubu) */
+@keyframes dkModal { from { opacity: 0; transform: translateY(16px) scale(.97); } to { opacity: 1; transform: none; } }
+.dk-modal { animation: dkModal 320ms var(--dk-ease) both; }
+/* Çekmece (sağdan) */
+@keyframes dkDrawer { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.dk-drawer { animation: dkDrawer 360ms var(--dk-ease) both; }
+/* Popover (Keşfet şehir seçici; artboard adı gbDrop 200ms) */
+@keyframes dkPopIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.dk-popin { animation: dkPopIn 200ms var(--dk-ease) both; }
+/* Akordeon/menü açılışı (SEO) */
+@keyframes dkOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.dk-open { animation: dkOpen 320ms var(--dk-ease) both; }
+/* Harita pini düşme (artboard adı gbDrop 520ms, aşım) */
+@keyframes dkPinDrop { 0% { opacity: 0; transform: translateY(-18px); } 70% { opacity: 1; transform: translateY(2px); } 100% { opacity: 1; transform: none; } }
+.dk-pindrop { animation: dkPinDrop 520ms var(--dk-ease) both; }
+/* Toast girişi (panel) */
+@keyframes dkToast { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.dk-toast { animation: dkToast 260ms var(--dk-ease) both; }
+/* Toast yaşam döngüsü (hesap grubu: gir-bekle-çık; süre 2.8s / 3.6s) */
+@keyframes dkToastLife { 0% { opacity: 0; transform: translateY(-16px); } 10% { opacity: 1; transform: none; } 88% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-8px); } }
+.dk-toastlife { animation: dkToastLife var(--dk-toast-life, 2.8s) var(--dk-ease) both; }
+/* Satır/kart çıkışı (sil/takipten çık) */
+@keyframes dkOutX { to { opacity: 0; transform: translateX(var(--dk-out-x, 48px)); } }   /* Bildirimler: 64px/320ms */
+@keyframes dkOutScale { to { opacity: 0; transform: scale(.94); } }
+.dk-out { animation: dkOutX var(--dk-out-dur, 360ms) var(--dk-ease-out) forwards; }
+.dk-out-scale { animation: dkOutScale 360ms var(--dk-ease-out) forwards; }
+/* Mesaj/satır içi uyarı girişi */
+@keyframes dkMsg { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.dk-msg { animation: dkMsg 260ms ease both; }
+/* Sohbet balonu girişi + yazıyor noktaları + teklif kenar parıltısı */
+@keyframes dkInMsg { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+.dk-inmsg { animation: dkInMsg 280ms var(--dk-ease) both; }
+@keyframes dkDot { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
+.dk-dot { animation: dkDot 1.2s ease-in-out infinite; }
+@keyframes dkGlow { 0%, 100% { border-color: rgba(255,79,163,0.35); } 50% { border-color: rgba(255,79,163,0.75); } }
+.dk-glow { animation: dkGlow 2.4s ease-in-out infinite; }
+/* Prizma şerit (aktif gösterge, promo çizgileri) */
+@keyframes dkPrism { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+.dk-prism { background-image: linear-gradient(90deg, #4ED8FF, #FF4FA3, #FF8A2A, #FF4FA3, #4ED8FF); background-size: 200% 100%; animation: dkPrism 4s linear infinite; }
+/* Ken Burns (hero görselleri): 18s 1.03→1.1 · Etkinlik: 20s 1.02→1.08 */
+@keyframes dkKb { from { transform: scale(var(--dk-kb-from, 1.03)); } to { transform: scale(var(--dk-kb-to, 1.1)) translate(-1%, -1%); } }
+.dk-kb { animation: dkKb var(--dk-kb-dur, 18s) ease-in-out infinite alternate; }
+/* Canlı nokta halkası: 1.4s ×2.8 · Doğrula 1.6s ×2.4 · Onay 1.6s ×2.2/.7 */
+@keyframes dkPing { from { transform: scale(1); opacity: var(--dk-ping-op, .75); } to { transform: scale(var(--dk-ping-scale, 2.8)); opacity: 0; } }
+.dk-ping { animation: dkPing var(--dk-ping-dur, 1.4s) cubic-bezier(0, 0, .2, 1) infinite; }
+/* Yükleniyor */
+@keyframes dkSpin { to { transform: rotate(360deg); } }
+.dk-spin { animation: dkSpin 800ms linear infinite; }
+/* Grafik: sütun büyüme / yatay çubuk / çizgi çizimi */
+@keyframes dkGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.dk-grow { transform-origin: bottom; animation: dkGrow 700ms var(--dk-ease) both; }
+@keyframes dkBar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.dk-bar { transform-origin: left; animation: dkBar 700ms var(--dk-ease) both; }
+@keyframes dkDraw { from { stroke-dashoffset: 1600; } to { stroke-dashoffset: 0; } }
+.dk-draw { stroke-dasharray: 1600; animation: dkDraw 1.2s var(--dk-ease) both; }
+/* Harita/rota kesik çizgi akışı, ekolayzer, dalga, beğeni */
+@keyframes dkDash { to { stroke-dashoffset: -24; } }
+.dk-dash { animation: dkDash 1.6s linear infinite; }
+@keyframes dkEq { 0%, 100% { transform: scaleY(.55); } 50% { transform: scaleY(1); } }
+.dk-eq { transform-origin: 50% 100%; animation: dkEq 900ms ease-in-out infinite; }
+@keyframes dkWave { from { transform: translateX(0); } to { transform: translateX(-18px); } }
+.dk-wave { animation: dkWave 5s ease-in-out infinite alternate; }
+@keyframes dkLike { 0% { transform: scale(1); } 40% { transform: scale(1.28); } 100% { transform: scale(1); } }
+.dk-like { animation: dkLike 360ms var(--dk-ease); }
+/* Zil sallanma (bildirim açıldı) + yıldız pıt */
+@keyframes dkBell { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(16deg); } 30% { transform: rotate(-14deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-4deg); } 75% { transform: rotate(0); } }
+.dk-bell { transform-origin: 50% 12%; animation: dkBell 900ms ease-in-out both; }
+@keyframes dkStarPop { 0% { transform: scale(.6); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+.dk-starpop { animation: dkStarPop 360ms var(--dk-ease) both; }
+/* Bildirim "tümünü okundu" süpürme */
+@keyframes dkSweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.dk-sweep { animation: dkSweep 900ms cubic-bezier(.4, 0, .2, 1) both; }
+/* Gecikmeli giriş için yardımcı: style="--dk-delay:120ms" */
+.dk-rise, .dk-fa, .dk-fb, .dk-pop, .dk-grow, .dk-bar, .dk-pindrop { animation-delay: var(--dk-delay, 0ms); }
+
+/* ---------- 10. Hareket azaltma (tüm artboard'lar: animasyon + geçiş kapalı) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .dk, .dk :where(*:not(.dk-legacy, .dk-legacy *)),
+  .dk :where(*:not(.dk-legacy, .dk-legacy *))::before,
+  .dk :where(*:not(.dk-legacy, .dk-legacy *))::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .dk .dk-draw { stroke-dashoffset: 0; }
+}
+
+/* ---------- 11. Legacy-in-shell uyumluluğu ----------
+   Tasarımı olmayan panel sekmeleri yeni PanelShell'in içerik alanında şu yapıyla çizilir:
+     .dk-legacy > .page.has-nav[--role] > .content  (legacy renderTab(root) buraya yazar)
+   .page.has-nav, legacy "TEK STANDART" (.page.has-nav …) kurallarının çalışması için korunur; ızgara/kenar
+   çubuğu/alt boşluk davranışı burada kapatılır (yönetici Keşfet önizlemesi .km-body ile aynı yöntem). */
+.dk-legacy { min-width: 0; position: relative; }
+.dk-legacy > .page.has-nav { display: block; max-width: none; min-height: 0; padding: 0; margin: 0; }
+.dk-legacy > .page.has-nav > .content { max-width: none; width: auto; margin: 0; padding: 0; }

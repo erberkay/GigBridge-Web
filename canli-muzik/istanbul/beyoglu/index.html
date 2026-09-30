@@ -27,113 +27,322 @@
   <meta name="twitter:image" content="https://gigbridges.com/assets/og-cover.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="/assets/landing.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="/assets/seo.css?v=20260929s" />
+  <script src="/assets/seo.js?v=20260929s" defer></script>
 </head>
-<body>
-  <div class="prism-top"></div>
-  <header>
-    <div class="wrap">
-      <a class="brand" href="/"><span class="dot"></span> GigBridge</a>
-      <a class="nav-cta" href="/indir/">Uygulamayı İndir</a>
+<body class="gb gb-pg-ilce">
+  <a class="gb-skip" href="#icerik">İçeriğe geç</a>
+  <header class="gb-hd">
+    <div class="gb-hd-in">
+      <a class="gb-logo" href="/" aria-label="GigBridge ana sayfa"><span class="gb-logo-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"/><path d="M3 17h18"/></svg></span><span class="gb-logo-word">GigBridge</span></a>
+      <details class="gb-menu" data-gb-pop>
+        <summary class="gb-burger gb-press" aria-label="Menü"><svg class="gb-ic-menu" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="gb-ic-x" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></summary>
+        <div class="gb-menu-panel">
+          <nav class="gb-menu-nav" aria-label="Ana menü (mobil)">
+            <a class="gb-menu-link" href="/#/kesfet">Keşfet</a>
+            <a class="gb-menu-link" href="/#/etkinlikler">Etkinlikler</a>
+            <a class="gb-menu-link" href="/#/harita">Harita</a>
+            <a class="gb-menu-link" href="/#/akis">Akış</a>
+            <a class="gb-menu-link" href="/#/top10">Top 10</a>
+          </nav>
+          <div class="gb-menu-cities">
+            <span class="gb-menu-h">CANLI MÜZİK · ŞEHİRLER</span>
+            <div class="gb-menu-citylist">
+            <a class="gb-menu-city" href="/canli-muzik/istanbul/" data-city="İstanbul" aria-current="page">İstanbul</a>
+            <a class="gb-menu-city" href="/canli-muzik/izmir/" data-city="İzmir">İzmir</a>
+            <a class="gb-menu-city" href="/canli-muzik/ankara/" data-city="Ankara">Ankara</a>
+            <a class="gb-menu-city" href="/canli-muzik/antalya/" data-city="Antalya">Antalya</a>
+            <a class="gb-menu-city" href="/canli-muzik/bodrum/" data-city="Bodrum">Bodrum</a>
+            <a class="gb-menu-city" href="/canli-muzik/kusadasi/" data-city="Kuşadası">Kuşadası</a>
+            </div>
+          </div>
+          <div class="gb-menu-auth">
+            <a class="gb-btn gb-btn-outline gb-press" href="/#/login">Giriş yap</a>
+            <a class="gb-btn gb-btn-light gb-press" href="/#/register">Hesap oluştur</a>
+          </div>
+        </div>
+      </details>
+      <nav class="gb-hd-nav" aria-label="Ana menü">
+        <a class="gb-link" href="/#/kesfet">Keşfet</a>
+        <a class="gb-link" href="/#/etkinlikler">Etkinlikler</a>
+        <a class="gb-link" href="/#/harita">Harita</a>
+        <a class="gb-link" href="/#/akis">Akış</a>
+        <a class="gb-link" href="/#/top10">Top 10</a>
+      </nav>
+      <div class="gb-hd-right">
+        <details class="gb-city" data-gb-pop data-gb-city>
+          <summary class="gb-city-btn gb-press" aria-label="Şehir seç, şu an İstanbul"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span class="gb-city-l">İstanbul</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <div class="gb-city-menu">
+          <span class="gb-city-h">CANLI MÜZİK SAYFALARI</span>
+          <a class="gb-city-opt" href="/canli-muzik/istanbul/" data-city="İstanbul" aria-current="page"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>İstanbul</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/izmir/" data-city="İzmir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>İzmir</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/ankara/" data-city="Ankara"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Ankara</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/antalya/" data-city="Antalya"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Antalya</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/bodrum/" data-city="Bodrum"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Bodrum</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/kusadasi/" data-city="Kuşadası"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Kuşadası</span></a>
+          </div>
+        </details>
+        <a class="gb-hd-login gb-press" href="/#/login">Giriş yap</a>
+        <a class="gb-hd-reg gb-press" href="/#/register">Hesap oluştur</a>
+        <a class="gb-hd-get gb-press" href="/indir/">İndir</a>
+      </div>
     </div>
   </header>
 
-  <div class="wrap">
-    <nav class="crumb" aria-label="breadcrumb">
-      <a href="/">Ana Sayfa</a> &nbsp;›&nbsp; <a href="/rehber/canli-muzik/">Canlı Müzik</a> &nbsp;›&nbsp; <a href="/canli-muzik/istanbul/">İstanbul</a> &nbsp;›&nbsp; <span>Beyoğlu</span>
+  <main class="gb-main" id="icerik" tabindex="-1">
+    <section class="gb-hero gb-ilce-hero" aria-labelledby="h-ilce">
+      <nav class="gb-crumbs" aria-label="Sayfa konumu"><a class="gb-crumb" href="/">Ana Sayfa</a><svg class="gb-crumb-sep" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><a class="gb-crumb" href="/rehber/canli-muzik/">Canlı Müzik</a><svg class="gb-crumb-sep" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><a class="gb-crumb" href="/canli-muzik/istanbul/">İstanbul</a><svg class="gb-crumb-sep" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span aria-current="page" class="gb-crumb-cur">Beyoğlu</span></nav>
+      <div class="gb-hero-grid">
+        <div class="gb-hero-l gb-rise">
+          <a class="gb-backpill gb-press" href="/canli-muzik/istanbul/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>İstanbul geneli</a>
+          <span class="gb-eyebrow gb-acc-cyan">BEYOĞLU · İSTANBUL · CANLI MÜZİK</span>
+          <h1 class="gb-h1" id="h-ilce">Beyoğlu'nda bu akşam <em>nereye gidilir?</em></h1>
+          <p class="gb-lead">İstiklal Caddesi'nden Asmalımescit'e, Nevizade'nin meyhane sıralarından Cihangir'in sakin barlarına — Beyoğlu, İstanbul gece hayatının tarihi kalbi ve her müzik türünün buluştuğu yer. Jazz barı mı, rock sahnesi mi, gece boyu DJ seti mi? Statik "en iyi mekanlar" listeleri değil; <strong>bu akşam ve bu hafta</strong> gerçekten kim çalıyor, GigBridge'de.</p>
+          <div class="gb-btns">
+            <a class="gb-btn gb-btn-primary gb-press" href="/#/kesfet">Etkinlikleri Keşfet<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            <a class="gb-btn gb-btn-outline gb-press" href="/indir/">Uygulamayı İndir</a>
+          </div>
+          <div class="gb-stores">
+            <a class="gb-store gb-press" href="/indir/" aria-label="App Store'dan indir"><svg width="22" height="22" viewBox="0 0 24 24" fill="#F2F1EE" aria-hidden="true"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg><span class="gb-store-t"><span class="gb-store-n">App Store</span><span class="gb-store-s">iPhone için</span></span></a>
+            <a class="gb-store gb-press" href="/indir/" aria-label="Google Play'den indir"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#4ED8FF"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#FF4FA3"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#FFD700"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#4ED8FF"/></svg><span class="gb-store-t"><span class="gb-store-n">Google Play</span><span class="gb-store-s">Android için</span></span></a>
+          </div>
+        </div>
+        <aside class="gb-sum gb-rise gb-d120" aria-label="Beyoğlu özeti">
+          <div class="gb-sum-blk">
+            <span class="gb-sum-k">AĞIRLIKTA OLAN TÜRLER</span>
+            <div class="gb-sum-chips">
+              <span class="gb-gchip" style="--c:#FF8A2A;--bd:rgba(255,138,42,0.4);--bg:rgba(255,138,42,0.078)"><span class="gb-dot"></span>Jazz</span>
+              <span class="gb-gchip" style="--c:#FF5A6E;--bd:rgba(255,90,110,0.4);--bg:rgba(255,90,110,0.078)"><span class="gb-dot"></span>Rock</span>
+              <span class="gb-gchip" style="--c:#A78BFA;--bd:rgba(167,139,250,0.4);--bg:rgba(167,139,250,0.078)"><span class="gb-dot"></span>DJ seti</span>
+              <span class="gb-gchip gb-gchip-min">Fasıl</span>
+              <span class="gb-gchip gb-gchip-min">Akustik</span>
+              <span class="gb-gchip gb-gchip-min">Indie</span>
+              <span class="gb-gchip gb-gchip-min">Alternatif</span>
+            </div>
+          </div>
+          <div class="gb-sum-div" aria-hidden="true"></div>
+          <div class="gb-sum-blk gb-sum-semts">
+            <span class="gb-sum-k">SEMTLER</span>
+            <a class="gb-sum-semt gb-link" href="#sokaklar" data-gb-semt-link="istiklal"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg>İstiklal Caddesi</a>
+            <a class="gb-sum-semt gb-link" href="#sokaklar" data-gb-semt-link="asmalimescit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg>Asmalımescit</a>
+            <a class="gb-sum-semt gb-link" href="#sokaklar" data-gb-semt-link="nevizade"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg>Nevizade</a>
+            <a class="gb-sum-semt gb-link" href="#sokaklar" data-gb-semt-link="cihangir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg>Cihangir &amp; Galata</a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="gb-sec" id="sokaklar" aria-labelledby="h-semt" data-gb-semts data-sel="istiklal">
+      <div class="gb-sh gb-sh-800">
+          <span class="gb-sh-k" data-gb-num="SOKAKLAR">01 · SOKAKLAR</span>
+          <h2 class="gb-h2" id="h-semt">Beyoğlu'nda <em>sokak sokak</em> canlı müzik</h2>
+          <p class="gb-sh-p">Beyoğlu tek bir sahne değil; birbirine dakikalar uzaklıkta onlarca sahnenin sıralandığı bir müzik mahallesi. GigBridge'de konumuna göre filtrele, bu akşam yürüme mesafendeki sanatçıları ve mekanları gör.</p>
+        </div>
+      <div class="gb-semt-grid">
+        <ul class="gb-semt-list">
+          <li class="gb-semt gb-semt-hasgo">
+            <button type="button" class="gb-semt-btn gb-press is-on" aria-pressed="true" data-gb-semt="istiklal">
+              <span class="gb-semt-n">01</span>
+              <span class="gb-semt-t"><span class="gb-semt-name">İstiklal Caddesi</span><span class="gb-semt-p">Şehrin en işlek yaya arteri. Sokak müzisyenlerinden büyük sahnelere, pasaj içi barlardan rock kulüplerine kadar her adımda başka bir ses. Gece geç saatlere kadar canlı.</span></span>
+            </button>
+            <a class="gb-semt-go" href="/#/kesfet">İstiklal'de bu akşam<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </li>
+          <li class="gb-semt gb-semt-hasgo">
+            <button type="button" class="gb-semt-btn gb-press" aria-pressed="false" data-gb-semt="asmalimescit">
+              <span class="gb-semt-n">02</span>
+              <span class="gb-semt-t"><span class="gb-semt-name">Asmalımescit</span><span class="gb-semt-p">Jazz'ın ve bağımsız müziğin kalbi. Dar sokaklara sıkışmış caz kulüpleri, canlı sahneli barlar ve konser mekanlarıyla Beyoğlu'nun en yoğun müzik dokusu burada.</span></span>
+            </button>
+            <a class="gb-semt-go" href="/#/kesfet">Asmalımescit programı<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </li>
+          <li class="gb-semt gb-semt-hasgo">
+            <button type="button" class="gb-semt-btn gb-press" aria-pressed="false" data-gb-semt="nevizade">
+              <span class="gb-semt-n">03</span>
+              <span class="gb-semt-t"><span class="gb-semt-name">Nevizade</span><span class="gb-semt-p">Meyhane kültürünün ve canlı fasıl geleneğinin merkezi. Masaların arasında dolaşan müzisyenler, akordeon ve keman eşliğinde tipik İstanbul geceleri.</span></span>
+            </button>
+            <a class="gb-semt-go" href="/#/kesfet">Nevizade'de kim çalıyor<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </li>
+          <li class="gb-semt gb-semt-hasgo">
+            <button type="button" class="gb-semt-btn gb-press" aria-pressed="false" data-gb-semt="cihangir">
+              <span class="gb-semt-n">04</span>
+              <span class="gb-semt-t"><span class="gb-semt-name">Cihangir &amp; Galata</span><span class="gb-semt-p">Daha sakin, butik bir sahne. Cihangir'in samimi barlarında akustik geceler, Galata çevresinde tarihî atmosferde jazz ve indie performansları.</span></span>
+            </button>
+            <a class="gb-semt-go" href="/#/kesfet">Cihangir & Galata<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </li>
+        </ul>
+        <div class="gb-map" role="group" aria-label="Beyoğlu semt haritası">
+          <svg class="gb-map-svg" width="100%" height="100%" viewBox="0 0 616 508" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <path d="M0 400 C 90 392, 170 424, 240 458 C 300 486, 340 500, 376 508 L 0 508 Z" fill="#0B1824"/>
+            <path d="M540 0 C 520 80, 500 160, 488 240 C 474 320, 452 400, 410 450 C 392 470, 380 490, 376 508 L 616 508 L 616 0 Z" fill="#0B1824"/>
+            <g fill="none" stroke="#161A22" stroke-width="1.2" stroke-linecap="round">
+              <path d="M0 90 C 140 100, 300 80, 470 96"/>
+              <path d="M0 200 C 120 196, 220 214, 330 206"/>
+              <path d="M40 330 C 150 322, 250 340, 360 320"/>
+              <path d="M120 0 C 128 120, 110 260, 124 400"/>
+              <path d="M250 0 C 240 110, 262 180, 250 300"/>
+              <path d="M330 300 C 380 330, 420 360, 440 400"/>
+              <path d="M400 120 C 410 170, 400 220, 412 270"/>
+            </g>
+            <g fill="none" stroke="#1D222C" stroke-width="3.4" stroke-linecap="round">
+              <path d="M430 70 C 380 150, 300 230, 190 380"/>
+              <path d="M430 70 C 446 150, 452 220, 470 300"/>
+            </g>
+            <g font-family="JetBrains Mono, monospace" font-size="9.5" font-weight="600" letter-spacing="2.4" fill="#2F5673">
+              <text x="112" y="476">HALİÇ</text>
+              <text x="524" y="300" transform="rotate(-80 524 300)">BOĞAZ</text>
+            </g>
+            <g font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" letter-spacing="1.6" fill="#5E636D">
+              <text x="446" y="56">TAKSİM</text>
+              <text x="276" y="452">KARAKÖY</text>
+            </g>
+          </svg>
+          <button type="button" class="gb-pin gb-press is-on" style="--x:332;--y:199" aria-label="İstiklal Caddesi" aria-pressed="true" data-gb-semt="istiklal"><span></span></button>
+          <span class="gb-pin-l is-on" style="--x:332;--y:199" data-gb-pin-l="istiklal" aria-hidden="true">İSTİKLAL CADDESİ</span>
+          <button type="button" class="gb-pin gb-press" style="--x:250;--y:350" aria-label="Asmalımescit" aria-pressed="false" data-gb-semt="asmalimescit"><span></span></button>
+          <span class="gb-pin-l" style="--x:250;--y:350" data-gb-pin-l="asmalimescit" aria-hidden="true">ASMALIMESCİT</span>
+          <button type="button" class="gb-pin gb-press" style="--x:236;--y:236" aria-label="Nevizade" aria-pressed="false" data-gb-semt="nevizade"><span></span></button>
+          <span class="gb-pin-l" style="--x:236;--y:236" data-gb-pin-l="nevizade" aria-hidden="true">NEVİZADE</span>
+          <button type="button" class="gb-pin gb-press" style="--x:400;--y:304" aria-label="Cihangir &amp; Galata" aria-pressed="false" data-gb-semt="cihangir"><span></span></button>
+          <span class="gb-pin-l" style="--x:400;--y:304" data-gb-pin-l="cihangir" aria-hidden="true">CİHANGİR &amp; GALATA</span>
+          <span class="gb-map-legend" aria-live="polite"><span class="gb-dot"></span><span data-gb-legend>İstiklal Caddesi</span> · haritada seçili</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="gb-sec gb-band" id="karakter" aria-labelledby="h-char">
+      <div class="gb-sh gb-sh-800">
+          <span class="gb-sh-k" data-gb-num="KARAKTER">02 · KARAKTER</span>
+          <h2 class="gb-h2" id="h-char">Neden <em>Beyoğlu</em>?</h2>
+          <p class="gb-sh-p">İstanbul'un müzik hafızası büyük ölçüde burada yazıldı. Taksim'den Şişhane'ye uzanan hat, onlarca yıldır her tarzın aynı geceye sığdığı bir sahne.</p>
+        </div>
+      <div class="gb-chars">
+          <div class="gb-char">
+            <span class="gb-char-n gb-c-cyan">♪</span>
+            <h3>Her tür bir arada</h3>
+            <p>Nardis'in cazından İstiklal'in rock kulüplerine, Nevizade'nin fasılından Asmalımescit'in elektronik gecelerine — tek bir mahallede birbirinden bağımsız onlarca sahne akşamı paylaşıyor.</p>
+          </div>
+          <div class="gb-char">
+            <span class="gb-char-n gb-c-magenta">◷</span>
+            <h3>Gece boyu açık</h3>
+            <p>Beyoğlu erken kapanmaz. İlk konser biter, ikinci mekânın DJ seti başlar. GigBridge'de saat saat programı görüp gecene rota çizersin.</p>
+          </div>
+          <div class="gb-char">
+            <span class="gb-char-n gb-c-orange">↔</span>
+            <h3>Yürüme mesafesinde</h3>
+            <p>Bir sahneden diğerine geçmek çoğu zaman birkaç dakika. Bu yoğunluk Beyoğlu'nu tek gecede birkaç konser dinlemek için İstanbul'un en verimli semti yapıyor.</p>
+          </div>
+        </div>
+    </section>
+
+    <section class="gb-sec gb-how-sec" id="nasil" aria-labelledby="h-how">
+      <div class="gb-sh">
+          <span class="gb-sh-k" data-gb-num="NASIL ÇALIŞIR">03 · NASIL ÇALIŞIR</span>
+          <h2 class="gb-h2" id="h-how">GigBridge <em>nasıl çalışır?</em></h2>
+          <p class="gb-sh-p">GigBridge sadece bir etkinlik listesi değil — sanatçıları, mekanları ve dinleyicileri buluşturan iki taraflı bir sahne.</p>
+        </div>
+      <div class="gb-how-grid">
+          <div class="gb-how gb-bar-cyan">
+            <span class="gb-how-n">01</span>
+            <h3>Dinleyiciysen</h3>
+            <p>Beyoğlu'nda bu akşam çalan sanatçıları haritadan gör, İstiklal'den Cihangir'e nereye gideceğine anında karar ver.</p>
+          </div>
+          <div class="gb-how gb-bar-magenta">
+            <span class="gb-how-n">02</span>
+            <h3>Sanatçı / DJ isen</h3>
+            <p>Profilini oluştur, Beyoğlu'ndaki jazz barlarında, rock sahnelerinde ve barlarda sahne bul, teklif al ve takvimini yönet.</p>
+            <a class="gb-how-link" href="/rehber/sahne-bulma/">Sahne bulma rehberi<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+          <div class="gb-how gb-bar-orange">
+            <span class="gb-how-n">03</span>
+            <h3>Mekan / Organizatörsen</h3>
+            <p>Beyoğlu'ndaki mekânın için sanatçı bul, etkinlik oluştur ve dinleyicilere ulaş.</p>
+            <a class="gb-how-link" href="/rehber/mekana-sanatci-bulma/">Mekana sanatçı bulma<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+        </div>
+    </section>
+
+    <section class="gb-sec gb-faq-sec" id="sss" aria-labelledby="h-faq">
+      <div class="gb-faq-head">
+        <div class="gb-sh">
+          <span class="gb-sh-k" data-gb-num="SSS">04 · SSS</span>
+          <h2 class="gb-h2" id="h-faq">Sık sorulan <em>sorular</em></h2>
+          <p class="gb-sh-p">Beyoğlu canlı müzik etkinlikleri hakkında en çok merak edilenler.</p>
+        </div>
+      </div>
+      <div class="gb-faq-list">
+          <details class="gb-faq" name="sss" open>
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Beyoğlu'nda bu akşam nerede canlı müzik var?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">GigBridge uygulamasında konumuna göre filtreleyerek İstiklal Caddesi, Asmalımescit, Nevizade, Cihangir ve Galata başta olmak üzere bu akşam çalan sanatçıları ve mekanları gerçek zamanlı görebilirsin. Statik listeler yerine güncel program sunar.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Beyoğlu'nda hangi tür müzik dinlenebilir?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Beyoğlu her tarzın buluştuğu yer: Asmalımescit çevresinde jazz, İstiklal'de rock ve alternatif konserler, Nevizade'de meyhane fasılı, Cihangir ve Galata'da akustik ve indie geceler, ayrıca gece boyu süren DJ setleri bulabilirsin.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Sanatçıysam Beyoğlu'nda nasıl sahne bulurum?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">GigBridge'e sanatçı olarak kaydol, profilini ve müzik türünü ekle. Beyoğlu'ndaki mekanlar seni keşfeder, sana teklif gönderir; sen de açık etkinliklere başvurabilirsin.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Mekanım için nasıl sanatçı/DJ bulurum?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Mekan veya organizatör olarak üye ol, GigBridge web panelinden veya uygulamadan sanatçı ara, davet gönder ya da etkinliğini yayınla. Düğün değil, düzenli canlı müzik ve gece programı için tasarlandı.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Beyoğlu'nda geç saatte hâlâ program bulur muyum?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Evet. Beyoğlu İstanbul'un en geç kapanan bölgelerinden biri; ilk konser bittikten sonra bile DJ setleri ve canlı sahneler devam eder. GigBridge'de saat saat programı görüp gecene göre plan yapabilirsin.</p>
+          </details>
+        </div>
+    </section>
+
+      <section class="gb-cta gb-cta-64" aria-labelledby="h-band">
+        <span class="gb-prism gb-cta-bar" aria-hidden="true"></span>
+        <h2 class="gb-cta-h" id="h-band">Beyoğlu'nun sahnesi <em>cebinde</em></h2>
+        <p class="gb-cta-p">Uygulamayı indir, bu akşam İstiklal ve Asmalımescit'te çalan canlı müziği keşfet.</p>
+        <div class="gb-cta-btns">
+          <a class="gb-btn gb-btn-primary gb-press" href="/indir/">Uygulamayı İndir</a>
+          <a class="gb-btn gb-btn-outline gb-btn-p22 gb-press" href="/#/kesfet">Web'de Keşfet</a>
+        </div>
+      </section>
+
+    <nav class="gb-pills" aria-label="İstanbul'da devam et">
+      <span class="gb-pills-l">İSTANBUL'DA DEVAM ET</span>
+      <a class="gb-pill gb-pill-hi gb-press" href="/canli-muzik/istanbul/"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>İstanbul geneli</a>
+      <a class="gb-pill gb-press" href="/canli-muzik/istanbul/kadikoy/">Kadıköy</a>
+      <a class="gb-pill gb-press" href="/rehber/canli-muzik/">Canlı Müzik Rehberi</a>
     </nav>
+  </main>
 
-    <div class="hero">
-      <div class="eyebrow">Beyoğlu · İstanbul · Canlı Müzik</div>
-      <h1>Beyoğlu'nda bu akşam <em>nereye gidilir?</em></h1>
-      <p class="lead">İstiklal Caddesi'nden Asmalımescit'e, Nevizade'nin meyhane sıralarından Cihangir'in sakin barlarına — Beyoğlu, İstanbul gece hayatının tarihi kalbi ve her müzik türünün buluştuğu yer. Jazz barı mı, rock sahnesi mi, gece boyu DJ seti mi? Statik "en iyi mekanlar" listeleri değil; <strong>bu akşam ve bu hafta</strong> gerçekten kim çalıyor, GigBridge'de.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="https://gigbridges.com/#/kesfet">Etkinlikleri Keşfet →</a>
-        <a class="btn btn-ghost" href="/indir/">Uygulamayı İndir</a>
+  <footer class="gb-ft">
+    <div class="gb-ft-in">
+      <div class="gb-ft-grid">
+        <div class="gb-ft-brand">
+          <span class="gb-logo gb-logo-sm"><span class="gb-logo-tile"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"/><path d="M3 17h18"/></svg></span><span class="gb-logo-word">GigBridge</span></span>
+          <p>Dinleyicileri, sanatçıları ve mekanları canlı müzikte buluşturan platform.</p>
+        </div>
+        <nav class="gb-ft-col" aria-label="Keşfet">
+          <span class="gb-ft-h">KEŞFET</span>
+          <a class="gb-link" href="/#/etkinlikler">Etkinlikler</a>
+          <a class="gb-link" href="/#/kesfet?kategori=mekanlar">Mekanlar</a>
+          <a class="gb-link" href="/#/kesfet?kategori=sanatcilar">Sanatçılar</a>
+          <a class="gb-link" href="/#/harita">Harita</a>
+          <a class="gb-link" href="/rehber/canli-muzik/">Canlı müzik rehberi</a>
+        </nav>
+        <nav class="gb-ft-col" aria-label="Katıl">
+          <span class="gb-ft-h">KATIL</span>
+          <a class="gb-link" href="/#/register?rol=artist">Sanatçı ol</a>
+          <a class="gb-link" href="/#/register?rol=venue">Mekan ekle</a>
+          <a class="gb-link" href="/#/register?rol=organizer">Organizatör ol</a>
+          <a class="gb-link" href="/#/login">Giriş yap</a>
+          <a class="gb-link" href="/indir/">Uygulamayı indir</a>
+        </nav>
+        <nav class="gb-ft-col" aria-label="Yasal">
+          <span class="gb-ft-h">YASAL</span>
+          <a class="gb-link" href="/gizlilik.html">Gizlilik</a>
+          <a class="gb-link" href="/kullanim-kosullari.html">Kullanım koşulları</a>
+          <a class="gb-link" href="/gizlilik.html#kvkk">KVKK aydınlatma metni</a>
+          <a class="gb-link" href="/hesap-sil.html">Hesap silme</a>
+        </nav>
       </div>
-      <div class="store-row">
-        <a class="store" href="/indir/" aria-label="App Store'dan indir">
-          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>
-          <span><span class="s1">App Store</span><br><span class="s2">iPhone için</span></span>
-        </a>
-        <a class="store" href="/indir/" aria-label="Google Play'den indir">
-          <svg viewBox="0 0 24 24"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#22D3EE"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#E23FA9"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#F5B301"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#22D3EE"/></svg>
-          <span><span class="s1">Google Play</span><br><span class="s2">Android için</span></span>
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <div class="wrap">
-    <section id="sokaklar">
-      <h2>Beyoğlu'nda <span class="em">sokak sokak</span> canlı müzik</h2>
-      <p class="sub">Beyoğlu tek bir sahne değil; birbirine dakikalar uzaklıkta onlarca sahnenin sıralandığı bir müzik mahallesi. GigBridge'de konumuna göre filtrele, bu akşam yürüme mesafendeki sanatçıları ve mekanları gör.</p>
-      <div class="grid">
-        <a class="card" href="https://gigbridges.com/#/kesfet"><h3><span class="pin"></span>İstiklal Caddesi</h3><p>Şehrin en işlek yaya arteri. Sokak müzisyenlerinden büyük sahnelere, pasaj içi barlardan rock kulüplerine kadar her adımda başka bir ses. Gece geç saatlere kadar canlı.</p><span class="go">İstiklal'de bu akşam →</span></a>
-        <a class="card" href="https://gigbridges.com/#/kesfet"><h3><span class="pin"></span>Asmalımescit</h3><p>Jazz'ın ve bağımsız müziğin kalbi. Dar sokaklara sıkışmış caz kulüpleri, canlı sahneli barlar ve konser mekanlarıyla Beyoğlu'nun en yoğun müzik dokusu burada.</p><span class="go">Asmalımescit programı →</span></a>
-        <a class="card" href="https://gigbridges.com/#/kesfet"><h3><span class="pin"></span>Nevizade</h3><p>Meyhane kültürünün ve canlı fasıl geleneğinin merkezi. Masaların arasında dolaşan müzisyenler, akordeon ve keman eşliğinde tipik İstanbul geceleri.</p><span class="go">Nevizade'de kim çalıyor →</span></a>
-        <a class="card" href="https://gigbridges.com/#/kesfet"><h3><span class="pin"></span>Cihangir & Galata</h3><p>Daha sakin, butik bir sahne. Cihangir'in samimi barlarında akustik geceler, Galata çevresinde tarihî atmosferde jazz ve indie performansları.</p><span class="go">Cihangir & Galata →</span></a>
-      </div>
-    </section>
-
-    <section id="karakter">
-      <h2>Neden <span class="em">Beyoğlu</span>?</h2>
-      <p class="sub">İstanbul'un müzik hafızası büyük ölçüde burada yazıldı. Taksim'den Şişhane'ye uzanan hat, onlarca yıldır her tarzın aynı geceye sığdığı bir sahne.</p>
-      <div class="roles">
-        <div class="role"><div class="n">♪</div><h3>Her tür bir arada</h3><p>Nardis'in cazından İstiklal'in rock kulüplerine, Nevizade'nin fasılından Asmalımescit'in elektronik gecelerine — tek bir mahallede birbirinden bağımsız onlarca sahne akşamı paylaşıyor.</p></div>
-        <div class="role"><div class="n">◷</div><h3>Gece boyu açık</h3><p>Beyoğlu erken kapanmaz. İlk konser biter, ikinci mekânın DJ seti başlar. GigBridge'de saat saat programı görüp gecene rota çizersin.</p></div>
-        <div class="role"><div class="n">↔</div><h3>Yürüme mesafesinde</h3><p>Bir sahneden diğerine geçmek çoğu zaman birkaç dakika. Bu yoğunluk Beyoğlu'nu tek gecede birkaç konser dinlemek için İstanbul'un en verimli semti yapıyor.</p></div>
-      </div>
-    </section>
-
-    <section id="nasil">
-      <h2>GigBridge <span class="em">nasıl çalışır?</span></h2>
-      <p class="sub">GigBridge sadece bir etkinlik listesi değil — sanatçıları, mekanları ve dinleyicileri buluşturan iki taraflı bir sahne.</p>
-      <div class="roles">
-        <div class="role"><div class="n">01</div><h3>Dinleyiciysen</h3><p>Beyoğlu'nda bu akşam çalan sanatçıları haritadan gör, İstiklal'den Cihangir'e nereye gideceğine anında karar ver.</p></div>
-        <div class="role"><div class="n">02</div><h3>Sanatçı / DJ isen</h3><p>Profilini oluştur, Beyoğlu'ndaki jazz barlarında, rock sahnelerinde ve barlarda sahne bul, teklif al ve takvimini yönet. <a href="/rehber/sahne-bulma/" style="color:var(--cyan)">Sahne bulma rehberi →</a></p></div>
-        <div class="role"><div class="n">03</div><h3>Mekan / Organizatörsen</h3><p>Beyoğlu'ndaki mekânın için sanatçı bul, etkinlik oluştur ve dinleyicilere ulaş. <a href="/rehber/mekana-sanatci-bulma/" style="color:var(--cyan)">Mekana sanatçı bulma →</a></p></div>
-      </div>
-    </section>
-
-    <section id="sss">
-      <h2>Sık sorulan <span class="em">sorular</span></h2>
-      <div class="sub">Beyoğlu canlı müzik etkinlikleri hakkında en çok merak edilenler.</div>
-      <details open><summary>Beyoğlu'nda bu akşam nerede canlı müzik var?</summary><p>GigBridge uygulamasında konumuna göre filtreleyerek İstiklal Caddesi, Asmalımescit, Nevizade, Cihangir ve Galata başta olmak üzere bu akşam çalan sanatçıları ve mekanları gerçek zamanlı görebilirsin. Statik listeler yerine güncel program sunar.</p></details>
-      <details><summary>Beyoğlu'nda hangi tür müzik dinlenebilir?</summary><p>Beyoğlu her tarzın buluştuğu yer: Asmalımescit çevresinde jazz, İstiklal'de rock ve alternatif konserler, Nevizade'de meyhane fasılı, Cihangir ve Galata'da akustik ve indie geceler, ayrıca gece boyu süren DJ setleri bulabilirsin.</p></details>
-      <details><summary>Sanatçıysam Beyoğlu'nda nasıl sahne bulurum?</summary><p>GigBridge'e sanatçı olarak kaydol, profilini ve müzik türünü ekle. Beyoğlu'ndaki mekanlar seni keşfeder, sana teklif gönderir; sen de açık etkinliklere başvurabilirsin.</p></details>
-      <details><summary>Mekanım için nasıl sanatçı/DJ bulurum?</summary><p>Mekan veya organizatör olarak üye ol, GigBridge web panelinden veya uygulamadan sanatçı ara, davet gönder ya da etkinliğini yayınla. Düğün değil, düzenli canlı müzik ve gece programı için tasarlandı.</p></details>
-      <details><summary>Beyoğlu'nda geç saatte hâlâ program bulur muyum?</summary><p>Evet. Beyoğlu İstanbul'un en geç kapanan bölgelerinden biri; ilk konser bittikten sonra bile DJ setleri ve canlı sahneler devam eder. GigBridge'de saat saat programı görüp gecene göre plan yapabilirsin.</p></details>
-    </section>
-
-    <div class="band">
-      <h2>Beyoğlu'nun sahnesi <span class="em">cebinde</span></h2>
-      <p class="sub">Uygulamayı indir, bu akşam İstiklal ve Asmalımescit'te çalan canlı müziği keşfet.</p>
-      <div class="cta-row" style="justify-content:center">
-        <a class="btn btn-primary" href="/indir/">Uygulamayı İndir</a>
-        <a class="btn btn-ghost" href="https://gigbridges.com/#/kesfet">Web'de Keşfet</a>
-      </div>
-    </div>
-
-    <div class="chip-row" style="margin-top:26px">
-      <span class="chip" style="color:var(--muted)">İstanbul'da devam et:</span>
-      <a class="chip" href="/canli-muzik/istanbul/">İstanbul geneli</a>
-      <a class="chip" href="/canli-muzik/istanbul/kadikoy/">Kadıköy</a>
-      <a class="chip" href="/rehber/canli-muzik/">Canlı Müzik Rehberi</a>
-    </div>
-  </div>
-
-  <footer>
-    <div class="wrap">
-      <div class="links">
-        <a href="/">Ana Sayfa</a>
-        <a href="/rehber/canli-muzik/">Canlı Müzik Rehberi</a>
-        <a href="/indir/">Uygulamayı İndir</a>
-        <a href="/kullanim-kosullari.html">Kullanım Koşulları</a>
-        <a href="/gizlilik.html">Gizlilik</a>
-      </div>
-      <div>© 2026 GigBridge — Canlı müzik etkinlikleri, sanatçılar ve mekanlar.</div>
+      <div class="gb-ft-bottom"><span>© 2026 GigBridge</span><span>gigbridges.com</span></div>
     </div>
   </footer>
 

@@ -1,0 +1,204 @@
+/* dk-mekan-etkinlik-olustur.css — WebMekanEtkinlikOlustur masaüstü görünümü (venueOlustur).
+   SAHİBİ: js/desktop/venue/etkinlik-olustur.js uygulayıcısı (specs/foundation.md §3). Spec: specs/mekan.md WebMekanEtkinlikOlustur (#/venue/duzenle/:id = düzenleme modu, YENİ rota)
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-mekan-etkinlik-olustur (ve alt sınıfları .dk-mekan-etkinlik-olustur-*) altında; portal
+   katmanları (sanatçı seçici) yalnız .dk-mekan-etkinlik-olustur-pk-* ad alanlı sınıflarla. Ölçüler artboard inline stillerinden birebir. */
+
+.dk-mekan-etkinlik-olustur { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+
+/* ═════════ mod satırı ═════════ */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-moderow { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-seg { display: flex; padding: 4px; border: 1px solid #1F232B; border-radius: 8px; background: #0E1014; min-width: 0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-segb { height: 36px; box-sizing: border-box; padding: 0 16px; border: 0; border-radius: 5px; background: transparent; color: #8A8E97; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-segb.is-on { background: #1C2029; color: #F2F1EE; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-note { font-size: 13px; color: #8A8E97; text-align: right; }
+
+/* ═════════ iki kolon ═════════ */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 32px; align-items: start; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-form { margin: 0; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+
+/* FormSection */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-sec { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-sechead { display: flex; align-items: center; gap: 12px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-num { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #FF8A2A; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-sect { margin: 0; font-size: 16px; font-weight: 600; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-secr { margin-left: auto; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-secrt { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
+/* Label / alan */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-fld { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-fld[hidden] { display: none; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-lbl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-help { font-size: 12.5px; line-height: 1.45; color: #8A8E97; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-help.is-ok { color: #7CE0B0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-help.dk-mekan-etkinlik-olustur-helpn { line-height: normal; } /* 03 sanatçı ipucu: artboard satır yüksekliği vermez */
+/* .gb-in */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-in { width: 100%; height: 44px; box-sizing: border-box; margin: 0; padding: 0 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14.5px; transition: border-color 160ms ease; }
+.dk-mekan-etkinlik-olustur textarea.dk-mekan-etkinlik-olustur-in { height: auto; padding: 12px 14px; line-height: 1.5; resize: none; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-in[type="date"], .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-in[type="time"] { color-scheme: dark; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-in:disabled { opacity: .55; cursor: not-allowed; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-in.is-off:disabled { opacity: .45; cursor: default; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-mono { font-family: var(--dk-font-mono); }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-g2t { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+/* 01 Kapak */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-sec:first-child { container-type: inline-size; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-covergrid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-cover { position: relative; width: 320px; height: 180px; border-radius: 10px; overflow: hidden; border: 1px solid #1F232B; background: #0A0B0F; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-coverimg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-ph { display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-serif); font-size: 64px; color: rgba(242,241,238,0.5); }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-covertag { position: absolute; left: 10px; bottom: 10px; height: 22px; padding: 0 8px; display: flex; align-items: center; border-radius: 4px; background: rgba(6,7,10,0.8); font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #A3A7AF; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-covercol { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-tile { position: relative; height: 60px; padding: 0; border-radius: 8px; overflow: hidden; border: 2px solid transparent; background: #0A0B0F; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-tile.is-on { border-color: #FF8A2A; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-upload { height: 60px; padding: 0; border-radius: 8px; border: 1px dashed #2C303A; background: transparent; color: #A3A7AF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11.5px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-upload.is-on { border: 1px solid #FF8A2A; color: #FF8A2A; background: rgba(255,138,42,0.08); }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-tile:disabled, .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-upload:disabled { opacity: .55; }
+@container (max-width: 600px) {
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-covergrid { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-cover { width: auto; height: auto; aspect-ratio: 16 / 9; }
+}
+
+/* 03 Sanatçı */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-selrow { display: flex; gap: 8px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-sel { flex-grow: 1; min-width: 0; height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; color: #7D818B; display: flex; align-items: center; gap: 10px; font-size: 14.5px; text-align: left; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-sel.is-set { color: #F2F1EE; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-selav { display: flex; flex-shrink: 0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-selav[hidden] { display: none; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-selimg { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; object-position: center 25%; display: block; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-selname { flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pick { flex-shrink: 0; height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(255,138,42,0.5); background: rgba(255,138,42,0.1); color: #FF8A2A; display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-clear { flex-shrink: 0; width: 44px; height: 44px; padding: 0; border-radius: 8px; border: 1px solid #1F232B; background: transparent; color: #8A8E97; display: flex; align-items: center; justify-content: center; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pick[hidden], .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-clear[hidden] { display: none; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-sel:disabled, .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pick:disabled, .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-clear:disabled { opacity: .55; }
+
+/* 04 süre */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-durcell { display: flex; align-items: flex-end; padding-bottom: 12px; min-width: 0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-dur { font-family: var(--dk-font-mono); font-size: 11px; color: #A3A7AF; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-dur.is-err { color: #FF5A6E; }
+
+/* 05 Tür */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-chip { height: 30px; box-sizing: border-box; padding: 0 11px; border-radius: 15px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF; font-size: 12.5px; font-weight: 500; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-chip.is-on { border-color: #FF8A2A; background: rgba(255,138,42,0.12); color: #FF8A2A; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-chip:disabled { opacity: .55; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-genrein { max-width: 360px; }
+
+/* 06 Bilet & Kontenjan */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pricerow { display: flex; gap: 8px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pricerow .dk-mekan-etkinlik-olustur-in { min-width: 0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-free { flex-shrink: 0; height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-free.is-on { border-color: rgba(124,224,176,0.5); background: rgba(124,224,176,0.08); color: #7CE0B0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-free:disabled { opacity: .55; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-track { width: 28px; height: 16px; box-sizing: border-box; border-radius: 8px; background: #2C303A; padding: 2px; display: flex; justify-content: flex-start; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-free.is-on .dk-mekan-etkinlik-olustur-track { background: #7CE0B0; justify-content: flex-end; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-knob { width: 12px; height: 12px; border-radius: 50%; background: #F2F1EE; display: block; }
+
+/* 07 VIP */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipb { height: 44px; border-radius: 8px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipb.is-on { border-color: #F2F1EE; background: #1C2029; color: #F2F1EE; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipb.is-vip.is-on { border-color: #FF8A2A; background: rgba(255,138,42,0.12); color: #FF8A2A; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipb:disabled { opacity: .55; }
+
+/* hata + kilit + eylem çubuğu */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-err { padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(255,90,110,0.45); background: rgba(255,90,110,0.08); display: flex; align-items: center; gap: 10px; font-size: 14px; color: #FF5A6E; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-err[hidden] { display: none; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-err svg { flex-shrink: 0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-errt { flex-grow: 1; min-width: 0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-locfix, .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-locfix:hover { color: #06070A; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-locfix { flex-shrink: 0; height: 34px; box-sizing: border-box; padding: 0 14px; border-radius: 6px; background: #FF8A2A; display: flex; align-items: center; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-lock { padding: 12px 16px; border-radius: 8px; border: 1px solid #2C303A; background: #0E1014; display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: #C9CACD; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-lock[hidden] { display: none; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-lock svg { flex-shrink: 0; color: #8A8E97; margin-top: 1px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-lockcol { display: flex; flex-direction: column; gap: 4px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-locknext { font-family: var(--dk-font-mono); font-size: 12px; color: #8A8E97; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 4px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-cancel { height: 44px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-actr { display: flex; gap: 12px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-draft { height: 44px; padding: 0 18px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 500; white-space: nowrap; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pub { height: 44px; padding: 0 22px; border-radius: 6px; border: 0; background: #FF8A2A; color: #06070A; display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 600; white-space: nowrap; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pub.is-busy { opacity: .7; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-draft:disabled, .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pub:disabled:not(.is-busy) { opacity: .45; }
+
+/* ═════════ önizleme (aside) ═════════ */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; position: sticky; top: 96px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pvhead { display: flex; align-items: center; justify-content: space-between; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pvl { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pvr { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #7CE0B0; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pvdot { width: 6px; height: 6px; border-radius: 50%; background: #7CE0B0; display: block; }
+/* Keşfet kartı (cards.eventCard) önizleme farkları: gövde→alt satır boşluğu 6 (tasarım) + yer tutucu başlık rengi */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-card .dk-ecd-foot { margin-top: 6px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-card .dk-ecd-t { overflow-wrap: anywhere; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-card .dk-ecd-t.dk-mekan-etkinlik-olustur-phtext { color: #5E636D; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-card, .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-card:hover { color: #F2F1EE; cursor: default; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipbadge { position: absolute; top: 12px; right: 12px; height: 24px; padding: 0 9px; display: flex; align-items: center; gap: 5px; border-radius: 4px; background: #FF8A2A; color: #06070A; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; }
+/* PublishChecklist */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-checkcard { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-checks { display: flex; flex-direction: column; gap: 12px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-chk { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; line-height: 1.4; color: #C9CACD; overflow-wrap: anywhere; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-chk.is-warn { color: #FFD700; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-chkic { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; border: 1px solid rgba(124,224,176,0.4); background: rgba(124,224,176,0.1); color: #7CE0B0; display: flex; align-items: center; justify-content: center; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-chk.is-warn .dk-mekan-etkinlik-olustur-chkic { border-color: rgba(255,215,0,0.45); background: transparent; color: transparent; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-locnote { padding: 14px 16px; border-radius: 10px; border: 1px solid #1F232B; display: flex; gap: 10px; font-size: 12.5px; line-height: 1.5; color: #8A8E97; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-locnote svg { flex-shrink: 0; }
+
+/* yükleniyor / bulunamadı */
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-loading { display: flex; flex-direction: column; gap: 28px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-skgrid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 32px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-skcol { display: flex; flex-direction: column; gap: 20px; }
+.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-notfound { min-height: 360px; }
+
+/* ═════════ sanatçı seçici (portal; ad alanlı) ═════════ */
+.dk-mdl.dk-mekan-etkinlik-olustur-pk-modal { padding: 24px; gap: 14px; }
+.dk-mdl.dk-mekan-etkinlik-olustur-pk-modal .dk-mdl-body { gap: 14px; }
+.dk-mekan-etkinlik-olustur-pk-search { height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; display: flex; align-items: center; gap: 10px; }
+.dk-mekan-etkinlik-olustur-pk-search svg { flex-shrink: 0; }
+.dk-mdl .dk-mekan-etkinlik-olustur-pk-in { flex-grow: 1; min-width: 0; padding: 0; background: none; border: 0; outline: none; color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14.5px; }
+/* tek odak göstergesi: turuncu kenar (artboard alanı düz gösterir; görünür odak değişimi için kenar yeterli) */
+.dk-mekan-etkinlik-olustur-pk-search:focus-within { border-color: #FF8A2A; }
+.dk-mekan-etkinlik-olustur-pk-list { display: flex; flex-direction: column; gap: 4px; max-height: min(420px, 55vh); overflow-y: auto; }
+.dk-mekan-etkinlik-olustur-pk-row { flex-shrink: 0; height: 56px; box-sizing: border-box; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: #F2F1EE; display: flex; align-items: center; gap: 12px; text-align: left; }
+.dk-mekan-etkinlik-olustur-pk-row:focus-visible { outline-offset: -2px; }
+.dk-mekan-etkinlik-olustur-pk-av { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; object-fit: cover; object-position: center 25%; display: block; }
+.dk-mekan-etkinlik-olustur-pk-avi { display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: #F2F1EE; }
+.dk-mekan-etkinlik-olustur-pk-col { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-mekan-etkinlik-olustur-pk-name { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-etkinlik-olustur-pk-meta { font-size: 12.5px; color: #8A8E97; }
+.dk-mekan-etkinlik-olustur-pk-on { color: #FF8A2A; display: flex; }
+.dk-mekan-etkinlik-olustur-pk-empty { height: 80px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #8A8E97; }
+
+/* ═════════ duyarlı (spec §10) ═════════ */
+/* 1280–1439: önizleme 340, boşluk 24; eşli satırlar tek kolon */
+@media (max-width: 1439px) {
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-grid { grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pair { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-skgrid { grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; }
+}
+/* ≤1279: tek kolon; önizleme 07'den sonra (JS taşır) iki kolonlu blok: kart | kontrol listesi + konum notu */
+@media (max-width: 1279px) {
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-grid { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-aside { position: static; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto auto auto 1fr; column-gap: 20px; row-gap: 16px; align-items: start; }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pvhead { grid-column: 1 / -1; }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-cardslot { grid-column: 1; grid-row: 2 / span 3; }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-checkcard { grid-column: 2; grid-row: 2; }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-locnote { grid-column: 2; grid-row: 3; }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-skgrid { grid-template-columns: minmax(0, 1fr); }
+}
+/* 769–1023: kapak ızgarası tek kolon (önizleme tam genişlik 16:9, döşemeler altta), eşli satırlar tek kolon */
+@media (max-width: 1023px) {
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-covergrid { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-cover { width: auto; height: auto; aspect-ratio: 16 / 9; }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pair { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-moderow { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-note { text-align: left; }
+}
+@media (max-width: 860px) {
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-aside { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-cardslot, .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-checkcard, .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-locnote { grid-column: 1; grid-row: auto; }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-g2 { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-actions { flex-wrap: wrap; }
+}

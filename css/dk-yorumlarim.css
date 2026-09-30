@@ -1,0 +1,99 @@
+/* dk-yorumlarim.css — WebYorumlarim masaüstü görünümü (yorumlarim).
+   SAHİBİ: js/desktop/account/yorumlarim.js uygulayıcısı (specs/foundation.md §3). Spec: specs/hesap.md WebYorumlarim
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-yorumlarim (ve alt sınıfları .dk-yorumlarim-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan.
+   Ölçüler: design/WebYorumlarim.dc.html (1440 artboard). Portal içindeki modallar .dk-yorumlarim-ed / .dk-yorumlarim-del, geri al
+   toast'u .dk-yorumlarim-tst sınıfını taşır. */
+
+.dk-yorumlarim { min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+.dk-yorumlarim .dk-ph { margin-bottom: 0; }
+
+/* ── KPIStat satırı ── */
+.dk-yorumlarim-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.dk-yorumlarim-kpi { box-sizing: border-box; min-width: 0; padding: 18px 20px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; display: flex; flex-direction: column; gap: 8px; }
+.dk-yorumlarim-kl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-yorumlarim-kv { font-size: 32px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; }
+.dk-yorumlarim-kavg { display: flex; align-items: center; gap: 8px; }
+.dk-yorumlarim-kavg svg { flex-shrink: 0; }
+.dk-yorumlarim-dist { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 16px; font-size: 15px; color: #A3A7AF; }
+.dk-yorumlarim-dist b { font-size: 32px; line-height: 1; font-weight: 600; }
+.dk-yorumlarim-dart b { color: #FF4FA3; }
+.dk-yorumlarim-dven b { color: #FF8A2A; }
+
+/* ── SegmentedTabs ── */
+.dk-yorumlarim-seg { align-self: flex-start; }
+
+/* ── liste + ReviewCard ── */
+.dk-yorumlarim-list { display: flex; flex-direction: column; gap: 16px; }
+.dk-yorumlarim-skel { display: flex; flex-direction: column; gap: 16px; }
+.dk-yorumlarim-card { box-sizing: border-box; padding: 20px 22px; border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; display: flex; flex-direction: column; gap: 14px; }
+.dk-yorumlarim-rv { transition: border-color 200ms ease; }
+.dk-yorumlarim-rv:hover { border-color: #2C303A; }
+.dk-yorumlarim-card.dk-out { pointer-events: none; }
+.dk-yorumlarim-top { display: flex; align-items: center; gap: 16px; }
+.dk-yorumlarim-av { width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; overflow: hidden; display: block; background: #14171D; color: #F2F1EE; }
+.dk-yorumlarim-av.is-venue { border-radius: 12px; }
+.dk-yorumlarim-avimg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-yorumlarim-avini { width: 100%; height: 100%; background: linear-gradient(135deg, #EC4899, #BE185D); display: flex; align-items: center; justify-content: center; font-size: 21px; font-weight: 600; color: #F2F1EE; }
+.dk-yorumlarim-avini.is-venue { background: linear-gradient(135deg, #FF8A2A, #B45309); }
+.dk-yorumlarim-tcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.dk-yorumlarim-namerow { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dk .dk-yorumlarim-name, .dk .dk-yorumlarim-name:hover { min-width: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: #F2F1EE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-yorumlarim-chip { height: 22px; box-sizing: border-box; padding: 0 8px; flex-shrink: 0; display: flex; align-items: center; border-radius: 4px; border: 1px solid; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; }
+.dk-yorumlarim-chip.is-venue { color: #FF8A2A; background: rgba(255,138,42,0.1); border-color: rgba(255,138,42,0.45); }
+.dk-yorumlarim-chip.is-artist { color: #FF4FA3; background: rgba(255,79,163,0.1); border-color: rgba(255,79,163,0.45); }
+.dk-yorumlarim-meta { display: flex; align-items: center; gap: 12px; min-width: 0; font-size: 13px; color: #8A8E97; }
+.dk-yorumlarim-ev { display: flex; align-items: center; gap: 6px; min-width: 0; color: #A3A7AF; }
+.dk-yorumlarim-ev svg { flex-shrink: 0; }
+.dk-yorumlarim-evt { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-yorumlarim-date { flex-shrink: 0; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; white-space: nowrap; }
+.dk-yorumlarim-ib {
+  width: 40px; height: 40px; flex-shrink: 0; box-sizing: border-box; padding: 0; margin: 0; border-radius: 6px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF;
+  display: flex; align-items: center; justify-content: center; transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.dk-yorumlarim-ib:hover { background-color: #14171D; border-color: #2C303A; }
+.dk-yorumlarim-ib.is-del { color: #FF5A6E; }
+.dk-yorumlarim-body { padding-left: 68px; display: flex; flex-direction: column; gap: 10px; }
+.dk-yorumlarim-rstars { display: flex; gap: 3px; }
+.dk-yorumlarim-comment { margin: 0; max-width: 760px; font-size: 15px; line-height: 1.6; color: #C9CACD; overflow-wrap: anywhere; white-space: pre-line; }
+.dk-yorumlarim-empty.dk-empty-dashed { gap: 12px; }
+
+/* ── Düzenle modalı (portal; dkModal cls) ── */
+.dk-yorumlarim-ed .dk-mdl-headrow { align-items: flex-start; }
+.dk-yorumlarim-ed .dk-mdl-tcol { gap: 4px; }
+.dk-yorumlarim-ed .dk-mdl-sub { font-size: 14px; line-height: normal; color: #8A8E97; }
+.dk-yorumlarim-ed .dk-mdl-body { gap: 18px; }
+.dk-yorumlarim-fld { display: flex; flex-direction: column; gap: 8px; }
+.dk-yorumlarim-lbl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; line-height: normal; }
+.dk-yorumlarim-stars { display: flex; gap: 4px; }
+.dk-yorumlarim-starbtn { width: 44px; height: 44px; padding: 0; margin: 0; border: 0; background: none; display: flex; align-items: center; justify-content: center; }
+.dk-yorumlarim-ed .dk-ta { font-size: 14.5px; }
+.dk-yorumlarim-ed .dk-ta:hover:not(:focus) { border-color: #1F232B; }
+.dk-yorumlarim-ed .dk-ta[aria-invalid="true"] { border-color: rgba(255,90,110,0.6) !important; }
+.dk-yorumlarim-row2 { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; }
+.dk-yorumlarim-err { color: #FF5A6E; }
+.dk-yorumlarim-count { margin-left: auto; font-family: var(--dk-font-mono); font-size: 10.5px; color: #8A8E97; }
+
+/* ── Sil onayı (alertdialog; ikon dairesi + başlık + metin, kapat düğmesi yok) ── */
+.dk-mdl.dk-yorumlarim-del { gap: 14px; }
+.dk-yorumlarim-del .dk-mdl-x { display: none; }
+.dk-yorumlarim-delic { width: 44px; height: 44px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(255,90,110,0.45); background: rgba(255,90,110,0.10); color: #FF5A6E; display: flex; align-items: center; justify-content: center; }
+.dk-yorumlarim-delp { margin: 0; font-size: 14.5px; line-height: 1.55; color: #A3A7AF; }
+.dk-yorumlarim-del .dk-mdl-acts { margin-top: 6px; }
+.dk-yorumlarim-del .dk-btn-danger { padding: 0 20px; }
+/* Overlay üst boşluğu: artboard 220. dk-ui.css .dk-ovl-top min(top, 20vh) ile 900 px yükseklikte 180'e indiriyor; bu kutu (~240)
+   sığdığı sürece 220'de kalır, kısa ekranlarda (vh − 280) küçülür. SHARED-CANDIDATE (yorumlarim.js delReview). */
+.dk-ovl-top.dk-yorumlarim-delovl { padding-top: max(96px, min(220px, calc(100vh - 280px))); }
+
+/* ── Geri al toast'u (portal) — tasarım: ikon 12 · metin (sağ 8) · GERİ AL ── */
+.dk-tst.dk-yorumlarim-tst { gap: 12px; }
+.dk-yorumlarim-tst .dk-tst-m { padding-right: 8px; }
+
+/* ── duyarlı ── */
+/* 769–1023: KPI değerleri 26px; kart gövdesi tüm satır genişliğinde (padding-left 0) */
+@media (max-width: 1023px) {
+  .dk-yorumlarim-kv, .dk-yorumlarim-dist b { font-size: 26px; }
+  .dk-yorumlarim-kpi { padding: 16px 18px; }
+  .dk-yorumlarim-body { padding-left: 0; }
+  .dk-yorumlarim-dist { column-gap: 12px; font-size: 14px; }
+}

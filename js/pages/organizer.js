@@ -51,7 +51,7 @@ export function organizerPage() {
 
 function tabFromHash() { const p = (location.hash || "").split("/"); return p[2] || "home"; }
 
-async function renderTab(tab, root) {
+export async function renderTab(tab, root) {
   if (tab === "profil") return renderProfile(root);
   if (tab === "home") return renderHome(root);
   if (tab === "etkinlik") return renderEvents(root);

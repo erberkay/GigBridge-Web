@@ -1,0 +1,172 @@
+/* dk-panel-shell.css — PanelShell (256px kenar çubuğu + 72px üst bar) + legacy-in-shell uyumluluğu.
+   JS: js/desktop/shared/panel-shell.js (+ legacy-in-shell.js). Kaynak: WebSanatciPanel 48–118, WebMekanPanel 43–83,
+   WebOrgPanel 44–60, WebAdmin 47–63. Rol farkları: mekan §0.8 ve org-admin F6 tabloları (bilerek korunur).
+   SAHİBİ: foundation adım 2. */
+
+/* ---------- rol değişkenleri (foundation §2.4) — data-area/data-role ile: kabuk kökü + overlay portalı (portal bu öznitelikleri kopyalar) ---------- */
+.dk[data-area="panel"][data-role="artist"] { --dk-nav-hover-bg: #111318; --dk-row-hover-bg: #0C0E12; --dk-fade-dur: 200ms; --dk-focus-border: #FF4FA3; --dk-ps-tint: rgba(255,79,163,0.10); --dk-ps-count: rgba(255,79,163,0.16); }
+.dk[data-area="panel"][data-role="venue"] { --dk-nav-hover-bg: #12141A; --dk-row-hover-bg: #0C0E12; --dk-rise-dur: 600ms; --dk-rise-y: 12px; --dk-swap-dur: 380ms; --dk-swap-y: 8px; --dk-pop-dur: 320ms; --dk-pop-y: 14px; --dk-fade-dur: 240ms; --dk-focus-border: #FF8A2A; --dk-ps-tint: rgba(255,138,42,0.10); --dk-ps-count: rgba(255,138,42,0.16); }
+.dk[data-area="panel"][data-role="organizer"] { --dk-nav-hover-bg: #101217; --dk-row-hover-bg: #0C0E13; --dk-rise-dur: 520ms; --dk-rise-y: 12px; --dk-pop-dur: 260ms; --dk-pop-y: 8px; --dk-focus-border: #4ED8FF; --dk-ps-tint: rgba(255,79,163,0.1); --dk-ps-count: rgba(255,79,163,0.16); }
+.dk[data-area="panel"][data-role="admin"] { --dk-nav-hover-bg: #101217; --dk-row-hover-bg: #0C0E13; --dk-rise-dur: 520ms; --dk-rise-y: 12px; --dk-pop-dur: 260ms; --dk-pop-y: 8px; --dk-focus-border: #4ED8FF; --dk-ps-tint: rgba(167,139,250,0.10); --dk-ps-count: rgba(167,139,250,0.16); }
+
+/* ---------- çerçeve ---------- */
+/* Dolgular değişkenle (üst bar yatay + içerik): artist 32/40/40 · venue 32/40/48 · org/admin 32/40/32 (≤1279 org/admin 32) ·
+   ≤1023 hepsi 24 (spec: sanatci §10 "content padding 24", org-admin §10 "topbar 0 24"). Görünüm ezmek isterse kendi kök
+   sınıfında --dk-ps-padx/-padt/-padb'yi ya da .dk-ps-content padding'ini ezer (!important YOK). */
+.dk-ps { --dk-ps-padx: 40px; --dk-ps-padt: 32px; --dk-ps-padb: 40px; display: grid; grid-template-columns: 256px minmax(0, 1fr); min-height: 100vh; background: #06070A; }
+.dk-ps-venue { --dk-ps-padb: 48px; }
+.dk-ps-organizer, .dk-ps-admin { --dk-ps-padb: 32px; }
+.dk-ps-main { min-width: 0; display: flex; flex-direction: column; position: relative; }
+.dk-ps-scrim { display: none; }
+
+/* ---------- kenar çubuğu ---------- */
+.dk-ps-aside { position: sticky; top: 0; height: 100vh; overflow-y: auto; box-sizing: border-box; padding: 24px 16px; background: #0A0B0F; border-right: 1px solid #14171D; display: flex; flex-direction: column; min-width: 0; scrollbar-width: none; }
+.dk-ps-aside::-webkit-scrollbar { display: none; }
+.dk-ps-artist .dk-ps-aside { gap: 28px; }
+.dk-ps-venue .dk-ps-aside { gap: 24px; }
+.dk-ps-brand { display: flex; flex-direction: column; gap: 14px; padding: 0 8px; }
+.dk .dk-ps-logo, .dk .dk-ps-logo:hover { color: #F2F1EE; }
+.dk-ps-rolebadge { align-self: flex-start; height: 24px; box-sizing: border-box; padding: 0 9px; display: flex; align-items: center; border-radius: 4px; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: var(--dk-role); white-space: nowrap; }
+.dk-ps-artist .dk-ps-rolebadge { gap: 7px; border: 1px solid rgba(255,79,163,0.5); background: rgba(255,79,163,0.06); }
+.dk-ps-rolebadge-dot { width: 6px; height: 6px; border-radius: 50%; background: #FF4FA3; display: block; }
+.dk-ps-venue .dk-ps-rolebadge { border: 1px solid rgba(255,138,42,0.5); background: rgba(255,138,42,0.08); }
+.dk-ps-organizer .dk-ps-rolebadge { border: 1px solid rgba(255,79,163,0.55); }
+.dk-ps-admin .dk-ps-rolebadge { border: 1px solid rgba(167,139,250,0.55); }
+/* mekan CTA */
+.dk-ps-cta { box-sizing: border-box; height: 44px; padding: 0 16px; border-radius: 6px; background: #FF8A2A; border: 1px solid #FF8A2A; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14.5px; font-weight: 600; white-space: nowrap; }
+.dk .dk-ps-cta, .dk .dk-ps-cta:hover { color: #06070A; }
+.dk .dk-ps-cta.is-on, .dk .dk-ps-cta.is-on:hover { background: rgba(255,138,42,0.14); color: #FF8A2A; border-color: rgba(255,138,42,0.6); }
+/* nav */
+.dk-ps-nav { display: flex; flex-direction: column; gap: 4px; }
+.dk-ps-venue .dk-ps-nav { gap: 2px; }
+.dk-ps-organizer .dk-ps-nav { margin-top: 32px; }
+.dk-ps-sec { margin: 32px 12px 8px; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-ps-sec.is-next { margin-top: 24px; }
+.dk-ps-item {
+  position: relative; box-sizing: border-box; width: 100%; height: 44px; padding: 0 12px; margin: 0; border: 0; border-radius: 6px; background: transparent;
+  display: flex; align-items: center; gap: 12px; font-family: var(--dk-font-sans); font-size: 14.5px; font-weight: 500; text-align: left; cursor: pointer;
+}
+.dk-ps-artist .dk-ps-item { padding: 0 12px 0 14px; }
+.dk .dk-ps-item { color: #A3A7AF; }
+.dk .dk-ps-item:hover { color: #F2F1EE; }
+.dk .dk-ps-item.is-on { background: var(--dk-ps-tint); color: #F2F1EE; }
+.dk-ps-artist .dk-ps-item.is-on { font-weight: 600; }
+.dk-ps-item.is-on .dk-ps-ic { stroke: var(--dk-role); }
+.dk-ps-ic { flex-shrink: 0; }
+.dk-ps-bar { position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 2px 2px 0; background: var(--dk-role); display: none; }
+.dk-ps-organizer .dk-ps-bar, .dk-ps-admin .dk-ps-bar { border-radius: 2px; }
+.dk-ps-item.is-on .dk-ps-bar { display: block; }
+.dk-ps-lbl { flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-ps-count { min-width: 22px; height: 20px; box-sizing: border-box; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-mono); font-weight: 700; flex-shrink: 0; }
+.dk-ps-count[hidden] { display: none; }
+.dk-ps-count.is-filled { padding: 0 6px; background: var(--dk-role); color: #06070A; font-size: 11px; }
+.dk-ps-count.is-tint { padding: 0 7px; background: var(--dk-ps-count); color: var(--dk-role); font-size: 10.5px; }
+/* alt blok */
+.dk-ps-bottom { margin-top: auto; display: flex; flex-direction: column; gap: 6px; }
+.dk-ps-artist .dk-ps-bottom { gap: 4px; }
+.dk-ps-user { padding: 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #14171D; border-radius: 10px; background: #0E1014; min-width: 0; }
+.dk-ps-artist .dk-ps-user { margin-bottom: 8px; }
+.dk-ps-venue .dk-ps-user { border-color: #1F232B; }
+.dk-ps-usercol { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-ps-u1 { font-size: 14px; font-weight: 600; color: #F2F1EE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-ps-organizer .dk-ps-u1, .dk-ps-admin .dk-ps-u1 { font-size: 13.5px; }
+.dk-ps-u2 { font-size: 12px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-ps-foot { box-sizing: border-box; width: 100%; height: 40px; padding: 0 12px; margin: 0; border: 0; border-radius: 6px; background: transparent; display: flex; align-items: center; gap: 12px; font-family: var(--dk-font-sans); font-size: 14px; font-weight: 400; text-align: left; cursor: pointer; }
+.dk .dk-ps-foot { color: #A3A7AF; }
+.dk .dk-ps-foot:hover { color: #F2F1EE; }
+.dk-ps-foot[hidden] { display: none; }
+.dk-ps-artist .dk-ps-foot { padding: 0 14px; font-weight: 500; }
+.dk-ps-organizer .dk-ps-user + .dk-ps-foot, .dk-ps-admin .dk-ps-user + .dk-ps-foot { margin-top: 6px; }
+
+/* ---------- üst bar ---------- */
+/* sağ dolgu: içerik en çok 1360 geniş ve sola hizalı → geniş ekranda (>1616) arama/zil/avatar içerik kenarında hizalı kalır */
+.dk-ps-top { position: sticky; top: 0; z-index: 30; height: 72px; flex-shrink: 0; box-sizing: border-box; padding: 0 max(var(--dk-ps-padx), calc(100% - 1360px + var(--dk-ps-padx))) 0 var(--dk-ps-padx); border-bottom: 1px solid #14171D; background: #06070A; display: flex; align-items: center; gap: 24px; }
+.dk-ps-head { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-ps-head-crumb { gap: 4px; }
+.dk-ps-title { margin: 0; font-family: var(--dk-font-sans); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: #F2F1EE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: normal; }
+.dk-ps-sub { font-size: 12.5px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-ps-sub[hidden] { display: none; }
+.dk-ps-crumb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-ps-bc { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8A8E97; white-space: nowrap; min-width: 0; }
+.dk-ps-bc > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+.dk-ps-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.dk-ps-bell { position: relative; width: 40px; height: 40px; box-sizing: border-box; padding: 0; border-radius: 6px; border: 1px solid #1F232B; background: #0E1014; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+.dk .dk-ps-bell, .dk .dk-ps-bell:hover { color: #F2F1EE; }
+.dk-ps-bell.is-open { background: #14171D; }
+.dk-ps-belldot { position: absolute; top: 8px; right: 9px; width: 8px; height: 8px; box-sizing: border-box; border-radius: 50%; background: var(--dk-role); border: 2px solid #0E1014; display: block; }
+.dk-ps-belldot[hidden] { display: none; }
+/* mekan: <a> r8, nokta 7 + 2px kenar (content-box → 11) top 9 right 10 */
+.dk-ps-venue .dk-ps-bell { border-radius: 8px; }
+.dk-ps-venue .dk-ps-belldot, .dk-ps-organizer .dk-ps-belldot, .dk-ps-admin .dk-ps-belldot { box-sizing: content-box; width: 7px; height: 7px; top: 9px; right: 10px; }
+.dk-ps-av { display: block; border-radius: 50%; flex-shrink: 0; }
+.dk-ps-av40 { width: 40px; height: 40px; box-sizing: border-box; overflow: hidden; border: 1px solid #2C303A; }
+.dk-ps-av40 > .dk-av { width: 100% !important; height: 100% !important; }
+/* arama kutusu + ≤1023 katlanmış ikon düğmesi */
+.dk-ps-srch { display: flex; align-items: center; min-width: 0; }
+.dk-ps-srch[hidden] { display: none; }
+.dk-ps .dk-ps-search { width: 320px; }
+.dk-ps-searchbtn { display: none; box-sizing: border-box; width: 40px; height: 40px; padding: 0; margin: 0; border-radius: 6px; border: 1px solid #1F232B; background: #0E1014; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
+.dk .dk-ps-searchbtn { color: #F2F1EE; }
+.dk-ps-venue .dk-ps-searchbtn { border-radius: 8px; }
+.dk-ps-burger { display: none; box-sizing: border-box; width: 40px; height: 40px; padding: 0; border-radius: 6px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; align-items: center; justify-content: center; flex-shrink: 0; }
+/* bildirim popover (org-admin F4): içerik 380 + kenar 2 = 382 (artboard content-box) */
+.dk-ps-notifpop { width: 382px; }
+.dk-ps-npanel { border-radius: 12px; border: 1px solid #1F232B; background: #0A0B0F; overflow: hidden; }
+.dk-ps-nhead { height: 48px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #14171D; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-ps-nclose { width: 32px; height: 32px; padding: 0; border: 0; background: none; color: #8A8E97; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.dk-ps-nlist { max-height: 420px; overflow-y: auto; }
+.dk-ps-nrow { padding: 14px 16px; display: flex; gap: 12px; border-bottom: 1px solid #14171D; text-decoration: none; }
+.dk-ps-nrow:focus-visible { outline-offset: -2px; } /* kaydırma kabında halka kırpılmasın */
+.dk .dk-ps-nrow, .dk .dk-ps-nrow:hover { color: #F2F1EE; }
+.dk-ps-ntile { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.dk-ps-ncol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-ps-nt { font-size: 13.5px; font-weight: 600; color: #F2F1EE; }
+.dk-ps-nb { font-size: 12.5px; line-height: 1.45; color: #A3A7AF; }
+.dk-ps-ntime { font-family: var(--dk-font-mono); font-size: 10px; letter-spacing: 0.1em; color: #8A8E97; }
+.dk-ps-nunread { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; display: block; }
+.dk-ps-nempty { padding: 32px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 13.5px; color: #8A8E97; }
+.dk-ps-nall { height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13.5px; font-weight: 500; }
+
+/* ---------- içerik ---------- */
+.dk-ps-content { flex-grow: 1; box-sizing: border-box; width: 100%; max-width: 1360px; padding: var(--dk-ps-padt) var(--dk-ps-padx) var(--dk-ps-padb); display: flex; flex-direction: column; min-width: 0; outline: none; }
+
+/* ---------- duyarlı ---------- */
+@media (max-width: 1279px) {
+  .dk-ps .dk-ps-search { width: 240px; }
+  .dk-ps-organizer, .dk-ps-admin { --dk-ps-padx: 32px; --dk-ps-padt: 32px; --dk-ps-padb: 32px; } /* org-admin §10: main padding 32 */
+}
+@media (max-width: 1023px) {
+  .dk-ps { grid-template-columns: minmax(0, 1fr); }
+  .dk-ps-aside { position: fixed; top: 0; left: 0; bottom: 0; width: 256px; z-index: 80; transform: translateX(-100%); visibility: hidden; transition: transform 280ms var(--dk-ease), visibility 0s linear 280ms; }
+  .dk-ps.is-nav-open .dk-ps-aside { transform: none; visibility: visible; transition: transform 280ms var(--dk-ease); box-shadow: 24px 0 48px rgba(0,0,0,0.45); }
+  .dk-ps-scrim { display: block; position: fixed; inset: 0; z-index: 79; background: rgba(6,7,10,0.62); opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
+  .dk-ps.is-nav-open .dk-ps-scrim { opacity: 1; pointer-events: auto; }
+  .dk-ps-burger { display: flex; }
+  .dk-ps { --dk-ps-padx: 24px; --dk-ps-padt: 24px; --dk-ps-padb: 32px; }
+  .dk-ps-top { gap: 16px; }
+  /* arama → 40×40 ikon düğmesi; tıklayınca / "/" ile başlığın yerine genişler */
+  .dk-ps-searchbtn { display: flex; }
+  .dk-ps .dk-ps-search { display: none; }
+  .dk-ps.is-search-open .dk-ps-searchbtn { display: none; }
+  .dk-ps.is-search-open .dk-ps-head { display: none; }
+  .dk-ps.is-search-open .dk-ps-right { flex-grow: 1; flex-shrink: 1; min-width: 0; }
+  .dk-ps.is-search-open .dk-ps-srch { flex-grow: 1; }
+  .dk-ps.is-search-open .dk-ps-search { display: flex; width: auto; flex-grow: 1; }
+}
+
+/* =====================================================================
+   LEGACY-IN-SHELL — tasarımı olmayan panel sekmeleri (legacy-in-shell.js):
+   .dk-ps-content > .dk-legacy > .page.has-nav > .content  (legacy renderTab çıktısı)
+   Legacy stiller .dk-legacy altında AYNEN çalışır (dk-base nötrlemesinden muaf). Burada yalnız kabukla çakışan
+   parçalar gizlenir/uyarlanır: legacy üst bar/alt nav (kabukta zaten var), tam ekran yükseklikleri, yan boşluklar.
+   ===================================================================== */
+.dk-ps .dk-legacy { flex-grow: 1; min-width: 0; font-family: var(--dk-font-sans); }
+.dk-ps .dk-legacy > .page.has-nav { background: transparent; }
+.dk-ps .dk-legacy .bottomnav,
+.dk-ps .dk-legacy > .page > .topbar,
+.dk-ps .dk-legacy > .page > .content > .topbar { display: none !important; }
+.dk-ps .dk-legacy > .page.has-nav > .content { animation: none; }
+/* legacy kartları kabuk yüzeyleriyle aynı tonda okunaklı kalsın */
+.dk-ps .dk-legacy .card, .dk-ps .dk-legacy .form-card { background: #0E1014; border-color: #1F232B; }
+.dk-ps .dk-legacy .empty { padding: 56px 20px; }
+.dk-ps .dk-legacy .loading { min-height: 240px; }

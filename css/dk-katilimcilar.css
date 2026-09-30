@@ -1,0 +1,105 @@
+/* dk-katilimcilar.css — WebKatilimcilar masaüstü görünümü (katilimcilar).
+   SAHİBİ: js/desktop/public/katilimcilar.js uygulayıcısı (specs/foundation.md §3). Spec: specs/public-b.md WebKatilimcilar
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-katilimcilar (ve alt sınıfları .dk-katilimcilar-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan. */
+
+/* ---------- kök: 1440'ta 80 kenar, >1440 içerik 1280 ortalı; gb-fa/fb 360ms/8px (foundation §2.4) ---------- */
+.dk-katilimcilar {
+  --dk-swap-dur: 360ms; --dk-swap-y: 8px;
+  box-sizing: border-box; width: 100%; max-width: calc(1280px + 2 * var(--dk-gutter)); margin: 0 auto; padding: 0 var(--dk-gutter);
+}
+
+/* ---------- breadcrumb (h64, 13px, "/" #5E636D) ---------- */
+.dk-katilimcilar-bc { height: 64px; box-sizing: border-box; min-width: 0; white-space: nowrap; }
+.dk-katilimcilar-bc > a:nth-child(5) { max-width: 420px; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- etkinlik özet kartı (h≈114) ---------- */
+.dk-katilimcilar-evw[hidden] { display: none; }
+.dk-katilimcilar-ev {
+  box-sizing: border-box; padding: 14px; border-radius: 12px; border: 1px solid #1F232B; background: #0E1014;
+  display: flex; align-items: center; gap: 20px; transition: border-color 200ms ease, background-color 200ms ease;
+}
+.dk .dk-katilimcilar-ev, .dk .dk-katilimcilar-ev:hover { color: #F2F1EE; }
+.dk-katilimcilar-ev:hover { border-color: #2C303A; background: #111318; }
+.dk-katilimcilar-thumb { width: 132px; height: 84px; flex-shrink: 0; border-radius: 8px; object-fit: cover; display: block; }
+.dk-katilimcilar-evt { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.dk-katilimcilar-evk { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; }
+.dk-katilimcilar-evn { font-size: 20px; font-weight: 600; letter-spacing: -0.015em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-katilimcilar-evs { font-size: 14px; color: #8A8E97; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-katilimcilar-back {
+  height: 40px; box-sizing: border-box; padding: 0 16px; margin-right: 6px; border-radius: 6px; border: 1px solid #2C303A;
+  display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; flex-shrink: 0; white-space: nowrap;
+}
+.dk-katilimcilar-evsk { display: block; height: 114px; box-sizing: border-box; border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; }
+
+/* ---------- ana bölüm: pad 48 0 88, gap 24 ---------- */
+.dk-katilimcilar-main { padding: 48px 0 88px; display: flex; flex-direction: column; gap: 24px; }
+.dk-katilimcilar-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
+.dk-katilimcilar-headl { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dk-katilimcilar-h1 { font-size: 64px; }
+.dk-katilimcilar-sub { font-size: 16px; color: #A3A7AF; min-height: 1.2em; }
+.dk-srch.dk-katilimcilar-q { width: 380px; height: 48px; padding: 0 14px; flex-shrink: 0; }
+.dk-katilimcilar-q .dk-srch-inp { font-size: 15px; }
+.dk-katilimcilar-info { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.dk-katilimcilar-note {
+  height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(255,138,42,0.3); background: rgba(255,138,42,0.06);
+  display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: #C9CACD;
+}
+.dk-katilimcilar-note[hidden], .dk-srch.dk-katilimcilar-q[hidden], .dk-katilimcilar-info[hidden] { display: none; }
+.dk-katilimcilar-rl { margin-left: auto; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: #8A8E97; }
+
+/* ---------- ızgara (3 × 416 @1440, gap 16) + PersonCard (h78) ---------- */
+.dk-katilimcilar-grid { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.dk-katilimcilar-grid[hidden], .dk-katilimcilar-empty[hidden], .dk-katilimcilar-more[hidden] { display: none; }
+.dk-katilimcilar-p {
+  box-sizing: border-box; min-width: 0; padding: 14px 14px 14px 16px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014;
+  display: flex; align-items: center; gap: 14px; transition: border-color 200ms ease, background-color 200ms ease;
+}
+.dk-katilimcilar-p:hover { border-color: #2C303A; background: #111318; }
+.dk-katilimcilar-p.is-me, .dk-katilimcilar-p.is-me:hover { border-color: rgba(78,216,255,0.35); }
+.dk-katilimcilar-av { width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; object-fit: cover; display: block; }
+.dk-katilimcilar-anon { box-sizing: border-box; border: 1px dashed #2C303A; background: #14171D; color: #A78BFA; display: flex; align-items: center; justify-content: center; }
+.dk-katilimcilar-ini { color: #06070A; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; }
+.dk-katilimcilar-pt { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-katilimcilar-pn { font-size: 15.5px; font-weight: 600; color: #F2F1EE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-katilimcilar-pn.is-anon { color: #A3A7AF; }
+.dk-katilimcilar-ps { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-katilimcilar-ps.is-me { color: #4ED8FF; }
+.dk-katilimcilar-ps.is-genre { color: #FF4FA3; }
+.dk-katilimcilar-msg {
+  width: 40px; height: 40px; flex-shrink: 0; box-sizing: border-box; padding: 0; border-radius: 8px; border: 1px solid #1F232B;
+  background: transparent; color: #A3A7AF; display: flex; align-items: center; justify-content: center;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.dk-katilimcilar-msg:hover { color: #F2F1EE; border-color: #4ED8FF; }
+.dk-katilimcilar-sk { display: block; height: 78px; box-sizing: border-box; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; }
+
+/* ---------- boş durum (artboard: içerik kutusu 280 + 1px kesikli kenar = 282) + hata ---------- */
+.dk-katilimcilar-empty {
+  box-sizing: border-box; height: 282px; padding: 0 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  border: 1px dashed #2C303A; border-radius: 12px; color: #8A8E97; font-size: 15px; text-align: center;
+}
+.dk-katilimcilar-retry { margin-top: 4px; height: 40px; box-sizing: border-box; padding: 0 16px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-size: 13.5px; display: inline-flex; align-items: center; }
+
+/* ---------- LoadMore ---------- */
+.dk-katilimcilar-more { margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.dk-katilimcilar-morecap { font-size: 13px; color: #8A8E97; }
+.dk-katilimcilar-morebtn {
+  height: 44px; box-sizing: border-box; padding: 0 22px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE;
+  display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 500;
+}
+
+/* ---------- duyarlı ---------- */
+/* 1024–1279: kenar 40 (header ile hizalı kök değişkeni), ızgara 3, arama 320 */
+@media (max-width: 1279px) {
+  .dk-srch.dk-katilimcilar-q { width: 320px; }
+}
+/* 769–1023: başlık satırı alt alta (arama tam genişlik), ızgara 2 */
+@media (max-width: 1023px) {
+  .dk-katilimcilar-head { flex-direction: column; align-items: stretch; gap: 20px; }
+  .dk-srch.dk-katilimcilar-q { width: 100%; }
+  .dk-katilimcilar-h1 { font-size: 56px; }
+  .dk-katilimcilar-main { padding-top: 40px; }
+  .dk-katilimcilar-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-katilimcilar-bc > a:nth-child(5) { max-width: 240px; }
+}

@@ -1,0 +1,183 @@
+/* dk-org-mekan-sec.css — WebOrgMekanSec masaüstü görünümü (orgMekan, #/organizer/mekan).
+   SAHİBİ: js/desktop/organizer/mekan-sec.js uygulayıcısı (specs/foundation.md §3). Spec: specs/org-admin.md WebOrgMekanSec
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-org-mekan-sec (kabuğun <main>'i) ya da portal istek modalının .dk-org-mekan-sec-rq
+   sınıfı altında. Ölçüler artboard inline stillerinden (1440 × 1620). */
+
+.dk-org-mekan-sec svg { flex-shrink: 0; }
+
+/* ---------- Filtre kartı ---------- */
+.dk-org-mekan-sec-filters { border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+.dk-org-mekan-sec-frow1 { display: flex; align-items: center; gap: 12px; }
+.dk-org-mekan-sec-search { width: 340px; height: 42px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 1px solid #1F232B; background: #0E1014;
+  display: flex; align-items: center; gap: 10px; color: #8A8E97; transition: border-color 160ms ease; }
+.dk-org-mekan-sec .dk-org-mekan-sec-qin { flex-grow: 1; min-width: 0; background: none; border: 0; outline: none; padding: 1px 2px; color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14px; }
+.dk-org-mekan-sec .dk-org-mekan-sec-qin:focus { outline: none; }
+/* artboard: yardımcı stil girdilere color-scheme:dark verir → yerel temizle (×) glifi beyaz */
+.dk-org-mekan-sec .dk-org-mekan-sec-qin { color-scheme: dark; }
+.dk-org-mekan-sec-citybox { height: 42px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 1px solid #1F232B; background: #0E1014;
+  display: flex; align-items: center; gap: 8px; color: #8A8E97; transition: border-color 160ms ease; }
+/* artboard alanlarında odak göstergesi yok → erişilebilirlik için kenar odak rengi (org .gb-in:focus = #4ED8FF) */
+.dk-org-mekan-sec-search:focus-within, .dk-org-mekan-sec-citybox:focus-within { border-color: #4ED8FF; }
+.dk-org-mekan-sec-flabel, .dk-org-mekan-sec-glabel { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-org-mekan-sec .dk-org-mekan-sec-city { height: 40px; background: none; border: 0; outline: none; color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14px; font-weight: 500; cursor: pointer; }
+.dk-org-mekan-sec .dk-org-mekan-sec-city:focus { outline: none; }
+.dk-org-mekan-sec-count { margin-left: auto; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; white-space: nowrap; }
+.dk-org-mekan-sec-reset { height: 36px; border: 0; background: none; font-family: var(--dk-font-sans); font-size: 13.5px; font-weight: 500; padding: 0 4px; }
+.dk-org-mekan-sec-frow2 { display: flex; align-items: center; gap: 24px; }
+.dk-org-mekan-sec-group { display: flex; align-items: center; gap: 8px; }
+.dk-org-mekan-sec-group[hidden], .dk-org-mekan-sec-divider[hidden] { display: none; }
+.dk-org-mekan-sec-glabel { margin-right: 4px; }
+.dk-org-mekan-sec-chip { height: 34px; box-sizing: border-box; padding: 0 12px; border-radius: 17px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF;
+  font-family: var(--dk-font-sans); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.dk-org-mekan-sec-chip[aria-pressed="true"] { border-color: #F2F1EE; background: #1C2029; color: #F2F1EE; }
+/* ayırıcı artboard'daki gibi daralabilir: 1440'ta 5 tür çipiyle satır ~4 px taşar ve ayırıcı 0'a iner (tasarımda görünmez) */
+.dk-org-mekan-sec-divider { width: 1px; height: 24px; background: #1F232B; display: block; }
+.dk-org-mekan-sec-group { flex-shrink: 0; }
+/* verideki ek türler (sabit 5'in dışında) satırı taşırırsa: tür grubu alt satıra iner */
+.dk-org-mekan-sec-frow2.has-extra { flex-wrap: wrap; row-gap: 10px; }
+.dk-org-mekan-sec-frow2.has-extra .dk-org-mekan-sec-divider { display: none; }
+.dk-org-mekan-sec-frow2.has-extra .dk-org-mekan-sec-group { flex-wrap: wrap; row-gap: 8px; flex-shrink: 1; }
+
+/* ---------- İki kolon ---------- */
+.dk-org-mekan-sec-cols { display: grid; grid-template-columns: minmax(0, 1fr) 480px; gap: 24px; align-items: start; }
+.dk-org-mekan-sec-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; min-width: 0; }
+.dk-org-mekan-sec-aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* VenueCard ("select") */
+.dk-org-mekan-sec-card { border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.dk-org-mekan-sec-card.is-on { border-color: rgba(78,216,255,0.55); }
+/* artboard: kenar satır içi → .gb-card:hover kenar rengi uygulanmaz (yalnız yükselme); görsel yakınlaşması yok */
+.dk-org-mekan-sec-card.dk-card:hover { border-color: #1F232B; }
+.dk-org-mekan-sec-card.dk-card.is-on:hover { border-color: rgba(78,216,255,0.55); }
+.dk-org-mekan-sec-card.dk-card:hover .dk-org-mekan-sec-img { transform: none; }
+.dk-org-mekan-sec-media { position: relative; height: 132px; width: 100%; padding: 0; border: 0; display: block; overflow: hidden; cursor: pointer; flex-shrink: 0; }
+.dk-org-mekan-sec-media:focus-visible { outline-offset: -3px; }
+.dk-org-mekan-sec-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-org-mekan-sec-ini { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 56px; font-family: var(--dk-font-serif); color: rgba(6,7,10,0.55); }
+.dk-org-mekan-sec-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,7,10,0) 40%, rgba(6,7,10,0.7) 100%); display: block; }
+.dk-org-mekan-sec-tag { position: absolute; top: 12px; left: 12px; height: 22px; box-sizing: border-box; padding: 0 8px; display: flex; align-items: center; border-radius: 4px;
+  background: rgba(6,7,10,0.74); border: 1px solid rgba(255,138,42,0.5); font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #FF8A2A; }
+.dk-org-mekan-sec-ontag { position: absolute; top: 12px; right: 12px; height: 22px; box-sizing: border-box; padding: 0 8px; display: flex; align-items: center; gap: 5px; border-radius: 4px;
+  background: #4ED8FF; color: #06070A; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; }
+.dk-org-mekan-sec-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.dk-org-mekan-sec-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dk-org-mekan-sec-info h3 { margin: 0; font-family: var(--dk-font-sans); font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: #F2F1EE; overflow-wrap: anywhere; }
+.dk-org-mekan-sec-meta { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #A3A7AF; min-width: 0; }
+.dk-org-mekan-sec-acts { display: flex; gap: 8px; }
+.dk-org-mekan-sec-msg { width: 40px; height: 40px; flex-shrink: 0; box-sizing: border-box; border-radius: 6px; border: 1px solid #2C303A; color: #F2F1EE; display: flex; align-items: center; justify-content: center; }
+.dk-org-mekan-sec-msg:hover { color: #F2F1EE; }
+.dk-org-mekan-sec-req { flex-grow: 1; height: 40px; border-radius: 6px; border: 0; background: #FF4FA3; color: #06070A; font-family: var(--dk-font-sans); font-size: 13.5px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; min-width: 0; }
+/* artboard: yan dolgu yok, metin anonim esnek öğe (sola hizalı, kendiliğinden kırılır). Dar kartlarda 3 satıra inerse taşmasın → min-height */
+.dk-org-mekan-sec-pill { flex-grow: 1; height: auto; min-height: 40px; box-sizing: border-box; border-radius: 6px; border: 1px solid rgba(255,215,0,0.4); background: rgba(255,215,0,0.06); color: #FFD700;
+  font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
+.dk-org-mekan-sec-pill44 { height: 44px; min-height: 0; flex-grow: 0; }
+/* Boş / hata durumu (dashed EmptyState, 2 kolon) */
+.dk-org-mekan-sec-empty { grid-column: span 2; padding: 64px 20px; border-radius: 12px; border: 1px dashed #1F232B; display: flex; flex-direction: column; align-items: center; gap: 10px; color: #8A8E97; text-align: center; }
+.dk-org-mekan-sec-et { font-size: 15px; font-weight: 600; color: #F2F1EE; }
+.dk-org-mekan-sec-es { font-size: 13.5px; }
+.dk-org-mekan-sec-empty .dk-btn { margin-top: 6px; }
+/* İskelet kart */
+.dk-org-mekan-sec-skcard { border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; overflow: hidden; display: flex; flex-direction: column; }
+.dk-org-mekan-sec-skbody { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ---------- MapPanel ("preview") ---------- */
+.dk-org-mekan-sec-mapcard { border-radius: 12px; border: 1px solid #1F232B; background: #0A0B0F; overflow: hidden; }
+.dk-org-mekan-sec-maphead { height: 52px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #14171D; }
+.dk-org-mekan-sec-maptitle { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-org-mekan-sec-pins { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap; }
+.dk-org-mekan-sec-mapbody { position: relative; width: 100%; height: 560px; overflow: hidden; background: #0C0E13; }
+.dk-org-mekan-sec-map { position: absolute; inset: 0; background: #0C0E13; outline: none; }
+.dk-org-mekan-sec-map:focus-visible { box-shadow: inset 0 0 0 2px #4ED8FF; }
+.dk-org-mekan-sec-mapnote { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13.5px; color: #8A8E97; }
+.dk-org-mekan-sec-mapnote[hidden] { display: none; }
+/* Leaflet: koyu döşeme (WebHarita ile aynı filtre) + sade atıf */
+.dk-org-mekan-sec .dk-org-mekan-sec-map.leaflet-container { background: #0C0E13; font-family: var(--dk-font-sans); }
+.dk-org-mekan-sec .dk-org-mekan-sec-map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.28) contrast(.95) saturate(1.25); opacity: .8; }
+.dk-org-mekan-sec .dk-org-mekan-sec-map .leaflet-control-attribution { background: rgba(6,7,10,0.7); color: #5E636D; font-size: 10px; padding: 0 6px; border-top-left-radius: 4px; }
+.dk-org-mekan-sec .dk-org-mekan-sec-map .leaflet-control-attribution a { color: #8A8E97; }
+/* Pin (L.divIcon): 44 isabet alanı, 24 daire #FF8A2A + #0C0E13 halka; seçili #4ED8FF + #F2F1EE halka, ×1.3 */
+.dk-org-mekan-sec .leaflet-marker-icon.dk-org-mekan-sec-mk { background: none; border: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.dk-org-mekan-sec .leaflet-marker-icon.dk-org-mekan-sec-mk:focus-visible { outline: 2px solid #4ED8FF; outline-offset: -6px; }
+.dk-org-mekan-sec-pin { width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; background: #FF8A2A; border: 2px solid #0C0E13; display: flex; align-items: center; justify-content: center;
+  transition: transform 300ms cubic-bezier(.2,.7,.2,1); }
+.dk-org-mekan-sec-pin.is-on { background: #4ED8FF; border-color: #F2F1EE; transform: scale(1.3); }
+.dk-org-mekan-sec .leaflet-marker-icon.dk-org-mekan-sec-tipmk { background: none; border: 0; pointer-events: none; }
+.dk-org-mekan-sec-tip { position: absolute; left: 0; top: 0; height: 32px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; background: #F2F1EE; color: #06070A;
+  display: flex; align-items: center; gap: 6px; font-family: var(--dk-font-sans); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.dk-org-mekan-sec-tipcap { font-family: var(--dk-font-mono); font-size: 10px; color: #5E636D; }
+
+/* ---------- Seçili mekan kartı ---------- */
+.dk-org-mekan-sec-sel { border-radius: 12px; border: 1px solid rgba(78,216,255,0.35); background: rgba(78,216,255,0.04); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dk-org-mekan-sec-sel[hidden] { display: none; }
+.dk-org-mekan-sec-shead { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.dk-org-mekan-sec-sav { width: 44px; height: 44px; flex-shrink: 0; border-radius: 8px; color: #06070A; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; }
+.dk-org-mekan-sec-savimg { object-fit: cover; display: block; }
+.dk-org-mekan-sec-scol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-org-mekan-sec-seb { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #4ED8FF; }
+.dk-org-mekan-sec-sname { font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
+.dk-org-mekan-sec-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.dk-org-mekan-sec-stile { padding: 10px; border-radius: 8px; background: #0E1014; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.dk-org-mekan-sec-sl { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
+.dk-org-mekan-sec-sv { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.dk-org-mekan-sec-route { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.dk-org-mekan-sec-dir { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.dk-org-mekan-sec-dist { color: #8A8E97; font-size: 12.5px; }
+.dk-org-mekan-sec .dk-org-mekan-sec-cta { justify-content: flex-start; }   /* artboard: display:flex, içerik sola hizalı */
+.dk-org-mekan-sec-pend { display: flex; flex-direction: column; gap: 10px; }
+.dk-org-mekan-sec-again { align-self: flex-start; padding: 0; border: 0; background: none; font-family: var(--dk-font-sans); font-size: 13px; font-weight: 500; }
+.dk-org-mekan-sec-nopin { font-size: 12.5px; color: #8A8E97; }
+
+/* ---------- Portal: istek modalı (form, 560, top 120) ---------- */
+.dk-org-mekan-sec-rq .dk-mdl-head { height: 76px; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-mhcol { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-meb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #FF4FA3; }
+.dk-org-mekan-sec-rq .dk-mdl-t { overflow-wrap: anywhere; }
+.dk-org-mekan-sec-rq .dk-mdl-body { gap: 16px; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-photo { position: relative; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-pick { width: 100%; height: 120px; box-sizing: border-box; border-radius: 10px; border: 1px dashed #2C303A; background: #0E1014; color: #A3A7AF;
+  display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-sans); font-size: 14px; padding: 0; position: relative; overflow: hidden; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-plabel { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-pick.has-img .dk-org-mekan-sec-plabel { display: none; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-ppv { position: absolute; inset: 0; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-ppv[hidden] { display: none; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-ppv img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-unpick { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; box-sizing: border-box; border-radius: 6px; border: 1px solid rgba(242,241,238,0.18);
+  background: rgba(6,7,10,0.72); color: #F2F1EE; display: flex; align-items: center; justify-content: center; padding: 0; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-unpick[hidden] { display: none; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-tawrap > .dk-ta { display: inline-block; vertical-align: baseline; }
+.dk-org-mekan-sec-rq .dk-org-mekan-sec-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+/* =====================================================================
+   DUYARLI (spec §10) — 1440: artboard (sağ kolon 480, kart ızgarası 600). 1440'ın altında sağ kolon akışkan daralır ve ızgara 600'de
+   kalır (kartlar artboard genişliği 292) → kolon 400'e ~1360'ta iner; 1180–1359: 400 (spec 1180–1279 = 400; 1280–1359 ölçülmüş sapma:
+   480'de kartlar 212 px'e iner ve "İstek gönderildi · Onay bekliyor" hapı 3 satıra taşar). ≤1179: harita üstte tam genişlik
+   (harita 320 + seçili kart 320 yan yana). ≤1023: harita (280) + seçili kart üst üste, arama kendi satırında, ızgara 2 kolon.
+   Filtre 2. satır ≤1279'da gruplar alt alta, çipler yatay kaydırılır.
+   ===================================================================== */
+@media (max-width: 1439px) {
+  .dk-org-mekan-sec-cols { grid-template-columns: minmax(0, 1fr) clamp(400px, calc(100% - 624px), 480px); }
+}
+@media (max-width: 1279px) {
+  .dk-org-mekan-sec-frow2 { flex-direction: column; align-items: stretch; gap: 10px; }
+  .dk-org-mekan-sec-divider { display: none; }
+  .dk-org-mekan-sec-group { overflow-x: auto; scrollbar-width: none; padding: 1px 0; }
+  .dk-org-mekan-sec-group::-webkit-scrollbar { display: none; }
+  .dk-org-mekan-sec-glabel { min-width: 72px; }
+}
+@media (max-width: 1179px) {
+  .dk-org-mekan-sec-cols { grid-template-columns: minmax(0, 1fr); }
+  .dk-org-mekan-sec-aside { order: -1; display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+  .dk-org-mekan-sec-mapbody { height: 320px; }
+}
+@media (max-width: 1023px) {
+  .dk-org-mekan-sec-frow1 { flex-wrap: wrap; }
+  .dk-org-mekan-sec-search { width: 100%; flex: 1 1 100%; }
+  .dk-org-mekan-sec-aside { display: flex; align-items: stretch; }
+  .dk-org-mekan-sec-mapbody { height: 280px; }
+  .dk-org-mekan-sec-rq .dk-org-mekan-sec-two { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .dk-org-mekan-sec-grid { gap: 12px; }
+  .dk-org-mekan-sec-pill { font-size: 12px; }
+}

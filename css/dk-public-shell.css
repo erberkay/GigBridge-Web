@@ -1,0 +1,85 @@
+/* dk-public-shell.css — PublicHeader + PublicFooter + AccountFooter + publicShell kökü.
+   JS: js/desktop/shared/public-shell.js. Kaynak: WebKesfet 55–78 (header), 511–547 (footer); WebProfil 53–84 (girişli header),
+   319–327 (kompakt footer); WebMesajlar 72–80 (Mesajlar ikonu aktif). Spec: public-a §0.3–0.4, public-b "PublicHeader", hesap §0.1/0.4.
+   SAHİBİ: foundation adım 2. Kapsam: .dk kökü altında. */
+
+/* ---------- kök ---------- */
+.dk-pub { display: flex; flex-direction: column; min-height: 100vh; }
+.dk-pub-main { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; outline: none; }
+.dk-pub-full { height: 100vh; min-height: 0; overflow: hidden; }
+.dk-pub-full .dk-pub-main { min-height: 0; }
+
+/* ---------- PublicHeader ---------- */
+.dk-hd { position: sticky; top: 0; z-index: 50; background: rgba(6,7,10,0.92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.dk-hd-in {
+  box-sizing: border-box; height: 76px; border-bottom: 1px solid #14171D;
+  /* 1440'ta 80px; >1440'ta içerik 1280'de ortalanır; zemin/çizgi tam genişlik */
+  padding: 0 max(var(--dk-gutter), calc((100% - 1280px) / 2));
+  display: flex; align-items: center; gap: 40px;
+}
+.dk-hd-nav { display: flex; align-items: center; gap: 28px; font-size: 14.5px; font-weight: 500; }
+.dk-hd-link { position: relative; padding: 27px 0; white-space: nowrap; }
+.dk-hd-link.is-on { color: #F2F1EE; }
+.dk-hd-bar { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; display: none; }
+.dk-hd-link.is-on .dk-hd-bar { display: block; }
+.dk-hd-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.dk-hd-login, .dk-hd-reg { box-sizing: border-box; height: 40px; padding: 0 16px; border-radius: 6px; display: flex; align-items: center; gap: 8px; font-size: 14px; white-space: nowrap; }
+.dk .dk-hd-login { color: #F2F1EE; font-weight: 500; }
+.dk .dk-hd-reg { background: #F2F1EE; color: #06070A; font-weight: 600; }
+.dk .dk-hd-login:hover { color: #F2F1EE; }
+.dk .dk-hd-reg:hover { color: #06070A; }
+.dk-hd-ic { position: relative; width: 40px; height: 40px; box-sizing: border-box; border-radius: 6px; border: 1px solid #1F232B; background: #0E1014; display: flex; align-items: center; justify-content: center; }
+.dk .dk-hd-ic, .dk .dk-hd-ic:hover { color: #F2F1EE; }
+.dk .dk-hd-ic.is-muted, .dk .dk-hd-ic.is-muted:hover { color: #A3A7AF; }
+.dk .dk-hd-ic.is-active, .dk .dk-hd-ic.is-active:hover { border-color: rgba(78,216,255,0.55); background: rgba(78,216,255,0.1); color: #4ED8FF; }
+.dk-hd-dot { position: absolute; top: 7px; right: 8px; width: 8px; height: 8px; box-sizing: border-box; border-radius: 50%; background: #FF4FA3; border: 2px solid #0E1014; display: block; }
+.dk-hd-ic.is-muted .dk-hd-dot, .dk-hd-ic.is-active .dk-hd-dot { top: 8px; right: 9px; }
+.dk-hd-dot[hidden], .dk-hd-badge[hidden] { display: none; }
+.dk-hd-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; box-sizing: border-box; padding: 0 5px; border-radius: 9px; background: #FF4FA3; border: 2px solid #06070A; color: #06070A; display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; }
+.dk-hd-icbar { position: absolute; left: 6px; right: 6px; bottom: -19px; height: 2px; display: block; }
+.dk-hd-av { width: 40px; height: 40px; box-sizing: border-box; border-radius: 50%; overflow: hidden; border: 1px solid #2C303A; display: block; flex-shrink: 0; }
+.dk-hd-av > .dk-av { width: 100% !important; height: 100% !important; font-size: 15px !important; }
+.dk-hd-back { box-sizing: border-box; height: 40px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--dk-hd-role-bd); background: var(--dk-hd-role-bg); display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.dk .dk-hd-back, .dk .dk-hd-back:hover { color: #F2F1EE; }
+/* hamburger + açılır menü (769–1023) */
+.dk-hd-burger { display: none; box-sizing: border-box; width: 40px; height: 40px; padding: 0; border-radius: 6px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; align-items: center; justify-content: center; flex-shrink: 0; }
+/* açılır panel başlığın ALTINDA sayfanın üstüne biner (public-a §0.3 "drop-down panel under the header"): sayfayı itmez */
+.dk-hd-menu { position: absolute; top: 100%; left: 0; right: 0; box-sizing: border-box; padding: 8px var(--dk-gutter) 16px; border-bottom: 1px solid #14171D; background: rgba(6,7,10,0.97); box-shadow: 0 18px 40px rgba(0,0,0,0.45); animation: dkPopIn 200ms var(--dk-ease) both; }
+.dk-hd-menu[hidden] { display: none; }
+.dk-hd-mnav { display: flex; flex-direction: column; gap: 2px; }
+.dk-hd-mlink { box-sizing: border-box; height: 44px; padding: 0 12px; border-radius: 6px; display: flex; align-items: center; font-size: 15px; font-weight: 500; transition: background-color 160ms ease, color 160ms ease; }
+.dk .dk-hd-mlink { color: #A3A7AF; }
+.dk .dk-hd-mlink:hover { background: #111318; color: #F2F1EE; }
+.dk .dk-hd-mlink.is-on { background: #14171D; color: #F2F1EE; box-shadow: inset 2px 0 0 #FF4FA3; }
+
+@media (max-width: 1279px) {
+  .dk-hd-in { gap: 24px; }
+  .dk-hd-nav { gap: 22px; }
+}
+@media (max-width: 1023px) {
+  .dk-hd-nav { display: none; }
+  .dk-hd-burger { display: flex; }
+  .dk-hd-in { gap: 16px; }
+  .dk-hd-in .dk-logo { order: -1; }
+  .dk-citybtn-l { max-width: 96px; }
+}
+@media (min-width: 1024px) { .dk-hd-menu { display: none !important; } }
+
+/* ---------- PublicFooter (tam) ---------- */
+.dk-ft { flex-shrink: 0; border-top: 1px solid #14171D; }
+.dk-ft-in { box-sizing: border-box; width: 100%; max-width: calc(1280px + 2 * var(--dk-gutter)); margin: 0 auto; padding: 64px var(--dk-gutter) 48px; display: flex; flex-direction: column; gap: 48px; }
+.dk-ft-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; }
+.dk-ft-brand { display: flex; flex-direction: column; gap: 14px; }
+.dk-ft-brand p { margin: 0; max-width: 320px; font-size: 14px; line-height: 1.6; color: #8A8E97; }
+.dk-ft-col { display: flex; flex-direction: column; gap: 12px; font-size: 14px; }
+.dk-ft-h { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #F2F1EE; }
+.dk-ft-bottom { padding-top: 24px; border-top: 1px solid #14171D; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #8A8E97; }
+@media (max-width: 1023px) {
+  .dk-ft-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } /* public-a §1.10: 1fr 1fr, marka tam genişlik üstte */
+  .dk-ft-brand { grid-column: 1 / -1; }
+}
+
+/* ---------- AccountFooter (kompakt) ---------- */
+.dk-aft { flex-shrink: 0; border-top: 1px solid #14171D; }
+.dk-aft-in { box-sizing: border-box; min-height: 63px; padding: 12px max(var(--dk-gutter), calc((100% - 1280px) / 2)); display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; font-size: 13px; color: #7D818B; }
+.dk-aft-nav { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }

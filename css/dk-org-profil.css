@@ -1,0 +1,134 @@
+/* dk-org-profil.css — WebOrgProfil masaüstü görünümü (orgProfil, #/organizer/profil).
+   SAHİBİ: js/desktop/organizer/profil.js uygulayıcısı (specs/foundation.md §3). Spec: specs/org-admin.md WebOrgProfil
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-org-profil (kabuğun <main>'i) ya da portal diyaloglarının .dk-org-profil-mdl sınıfı
+   altında. Ölçüler artboard inline stillerinden (1440 × 1500). */
+
+.dk-org-profil svg { flex-shrink: 0; }
+
+/* ---------- İki kolon ---------- */
+.dk-org-profil-cols { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.dk-org-profil-left { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.dk-org-profil-aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* SectionCard (head 60, pad 0 24) */
+.dk-org-profil-card { border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; overflow: hidden; }
+.dk-org-profil-shead { height: 60px; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #14171D; }
+.dk-org-profil-shead h2, .dk-org-profil-phl h2 { margin: 0; font-family: var(--dk-font-sans); font-size: 17px; font-weight: 600; letter-spacing: normal; color: #F2F1EE; }
+.dk-org-profil-snum { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+
+/* ---------- 01 form ---------- */
+.dk-org-profil-form { margin: 0; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+.dk-org-profil-logorow { display: flex; align-items: center; gap: 20px; }
+.dk-org-profil-logo { width: 88px; height: 88px; flex-shrink: 0; border-radius: 50%; display: block; }
+.dk-org-profil-logo > .dk-av { display: block; object-fit: cover; }
+.dk-org-profil-logofb { width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #FF4FA3, #FF8A2A); color: #06070A; display: flex; align-items: center; justify-content: center; }
+.dk-org-profil-logocol { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dk-org-profil-logot { font-size: 15px; font-weight: 600; }
+.dk-org-profil-logos { font-size: 13px; color: #8A8E97; }
+.dk-org-profil-logobtns { display: flex; gap: 8px; }
+.dk-org-profil-upbtn { height: 38px; box-sizing: border-box; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE;
+  font-size: 13.5px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.dk-org-profil-rmbtn { height: 38px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 0; background: transparent; color: #8A8E97; font-size: 13.5px; font-weight: 500; }
+.dk-org-profil-rmbtn[hidden] { display: none; }
+.dk-org-profil-fld { display: block; min-width: 0; }
+.dk-org-profil-fld > .dk-lbl { margin-bottom: 8px; }
+.dk-org-profil-hint { margin-top: 8px; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #8A8E97; }
+.dk-org-profil-help { margin-top: 8px; display: block; font-size: 12.5px; color: #8A8E97; }
+/* artboard <textarea> varsayılan inline-block (satır kutusu altında ~5px boşluk) — ölçüler birebir kalsın */
+.dk-org-profil-fld > .dk-ta { display: inline-block; vertical-align: baseline; }
+.dk-org-profil-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.dk-org-profil-foot { display: flex; align-items: center; gap: 12px; padding-top: 4px; }
+.dk-org-profil-err { flex-grow: 1; min-width: 0; font-size: 13.5px; font-weight: 500; color: #FF5A6E; }
+
+/* ---------- 02 sosyal ---------- */
+.dk-org-profil-socgrid { padding: 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.dk-org-profil-iconin { position: relative; }
+.dk-org-profil-inico { position: absolute; left: 14px; top: 15px; display: flex; pointer-events: none; }
+.dk-org-profil .dk-org-profil-socin { padding-left: 42px; }
+
+/* ---------- 03 geçmiş etkinlikler (EventCardPoster, küçük) ---------- */
+.dk-org-profil-past { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.dk-org-profil-phead { display: flex; align-items: center; justify-content: space-between; }
+.dk-org-profil-phl { display: flex; align-items: center; gap: 12px; }
+.dk-org-profil-all { display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 500; }
+.dk-org-profil-pastgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.dk-org-profil-pcard { position: relative; height: 180px; border-radius: 12px; overflow: hidden; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; display: block; }
+.dk-org-profil-pcard:hover { color: #F2F1EE; border-color: #1F232B; }   /* artboard: satır içi kenar .gb-card:hover kenarını ezer → yalnız yükselme */
+.dk-org-profil-pimg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(0.35); }
+.dk-org-profil-pcard:hover .dk-org-profil-pimg { transform: none; }   /* .dk-card img yakınlaştırması artboard'da yok */
+.dk-org-profil-pfb { position: absolute; inset: 0; background: linear-gradient(135deg, #1C2029, #0E1014); display: flex; align-items: flex-start; justify-content: center; padding-top: 52px; box-sizing: border-box; }
+.dk-org-profil-pscrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,7,10,0.1) 0%, rgba(6,7,10,0.92) 100%); display: block; }
+.dk-org-profil-pbadge { position: absolute; top: 14px; left: 14px; }
+.dk-org-profil-ptext { position: absolute; left: 18px; right: 18px; bottom: 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dk-org-profil-ptitle { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-org-profil-pmeta { font-size: 13px; color: #C9CACD; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-org-profil-pempty { grid-column: 1 / -1; margin: 0; box-sizing: border-box; min-height: 88px; padding: 20px; border-radius: 12px; border: 1px dashed #1F232B;
+  display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13.5px; color: #8A8E97; }
+
+/* ---------- Kimlik kartı ---------- */
+.dk-org-profil-id { border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; min-width: 0; }
+.dk-org-profil-idav { width: 88px; height: 88px; border-radius: 50%; display: block; flex-shrink: 0; }
+.dk-org-profil-idav > .dk-av { display: block; object-fit: cover; }
+.dk-org-profil-idfb { width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #A855F7, #7C3AED); display: flex; align-items: center; justify-content: center; }
+.dk-org-profil-idname { margin-top: 4px; font-size: 19px; font-weight: 600; max-width: 100%; overflow-wrap: anywhere; }
+.dk-org-profil-idmail { font-size: 13.5px; color: #8A8E97; max-width: 100%; overflow-wrap: anywhere; }
+.dk-org-profil-idmail[hidden] { display: none; }
+.dk-org-profil-orgbadge { margin-top: 6px; max-width: 100%; height: 34px; box-sizing: border-box; padding: 0 12px; border-radius: 17px; border: 1px solid #1F232B; background: #0E1014;
+  display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.dk-org-profil-orgname { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-org-profil-rolepill { flex-shrink: 0; height: 20px; box-sizing: border-box; padding: 0 7px; border-radius: 10px; background: rgba(255,79,163,0.12); color: #FF4FA3;
+  display: flex; align-items: center; gap: 4px; font-size: 11.5px; }
+.dk-org-profil-rolepill.is-staff { background: rgba(78,216,255,0.12); color: #4ED8FF; }
+.dk-org-profil-stats { margin-top: 12px; width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.dk-org-profil-stat { padding: 10px 6px; border-radius: 8px; background: #0E1014; display: flex; flex-direction: column; gap: 3px; }
+.dk-org-profil-statv { font-size: 20px; font-weight: 600; }
+.dk-org-profil-statl { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
+
+/* ---------- HESAP menüsü (MenuList) ---------- */
+.dk-org-profil-menu { border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; overflow: hidden; }
+.dk-org-profil-mhead { height: 48px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; border-bottom: 1px solid #14171D;
+  font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+.dk-org-profil-mrow { width: 100%; height: 52px; box-sizing: border-box; padding: 0 16px; border: 0; border-bottom: 1px solid #14171D; background: transparent; color: #F2F1EE;
+  display: flex; align-items: center; gap: 12px; font-family: var(--dk-font-sans); font-size: 14.5px; font-weight: 500; text-align: left; text-decoration: none; cursor: pointer; }
+.dk-org-profil-mrow:hover { color: #F2F1EE; }
+.dk-org-profil-mrow.is-danger, .dk-org-profil-mrow.is-danger:hover { color: #FF5A6E; }
+.dk-org-profil-mrow:focus-visible { outline-offset: -2px; }
+.dk-org-profil-mtile { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; background: #14171D; display: flex; align-items: center; justify-content: center; }
+.dk-org-profil-mrow.is-danger .dk-org-profil-mtile { background: rgba(255,90,110,0.1); }
+.dk-org-profil-mchev { margin-left: auto; color: #8A8E97; display: flex; }
+
+/* ---------- Portal: hesap modalları (form F5) + onaylar ---------- */
+.dk-org-profil-mdl .dk-mdl-body { gap: 16px; }
+.dk-org-profil-mdl .dk-org-profil-ok[hidden] { display: none; }
+.dk-org-profil-mdl .dk-org-profil-mnote { margin: 0; text-align: center; font-size: 13px; color: #8A8E97; }
+.dk-org-profil-mdl .dk-org-profil-reset { padding: 0; border: 0; background: none; font: inherit; color: #4ED8FF; cursor: pointer; }
+.dk-org-profil-mdl .dk-org-profil-reset:hover { color: #F2F1EE; }
+.dk-org-profil-mdl .dk-org-profil-cbody { display: flex; flex-direction: column; gap: 10px; }
+.dk-org-profil-cfm .dk-btn-danger.dk-btn-44 { padding: 0 16px; }
+.dk-ovl:has(.dk-org-profil-cfm) > .dk-ovl-bg { background: rgba(6,7,10,0.72); }
+
+/* =====================================================================
+   DUYARLI (spec §10) — ≥1280 artboard düzeni. 1180–1279: aside 320. 1024–1179: aside formun ÜSTÜNDE 2 kolon (kimlik | hesap).
+   769–1023: tek kolon — kimlik, form, sosyal (1 kolon), geçmiş (2 kolon), hesap menüsü.
+   ===================================================================== */
+@media (max-width: 1279px) {
+  .dk-org-profil-cols { grid-template-columns: minmax(0, 1fr) 320px; }
+}
+@media (max-width: 1179px) {
+  .dk-org-profil-cols { grid-template-columns: minmax(0, 1fr); }
+  .dk-org-profil-aside { order: -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+@media (max-width: 1023px) {
+  .dk-org-profil-hero { flex-wrap: wrap; }
+  .dk-org-profil-cols { display: flex; flex-direction: column; align-items: stretch; gap: 24px; }
+  .dk-org-profil-left, .dk-org-profil-aside { display: contents; }
+  .dk-org-profil-id { order: 1; }
+  .dk-org-profil-left > .dk-org-profil-card:first-child { order: 2; }
+  .dk-org-profil-left > .dk-org-profil-card:nth-child(2) { order: 3; }
+  .dk-org-profil-past { order: 4; }
+  .dk-org-profil-menu { order: 5; }
+  .dk-org-profil-socgrid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .dk-org-profil-two { grid-template-columns: minmax(0, 1fr); }
+}

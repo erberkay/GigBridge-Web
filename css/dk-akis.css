@@ -1,0 +1,246 @@
+/* dk-akis.css — WebAkis masaüstü görünümü (akis).
+   SAHİBİ: js/desktop/public/akis.js uygulayıcısı (specs/foundation.md §3). Spec: specs/public-a.md §5
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-akis (ve alt sınıfları .dk-akis-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan.
+   Ölçüler artboard'un satır içi stillerinden birebir (design/WebAkis.dc.html). */
+
+/* ══════════ Kök + ızgara ══════════ */
+.dk-akis {
+  --dk-row-hover-bg: #0E1014;               /* artboard .gb-row:hover */
+  --dk-rise-dur: 700ms; --dk-rise-y: 16px;  /* foundation §2.4 WebAkis */
+  box-sizing: border-box; width: 100%;
+  padding: 40px max(var(--dk-gutter), calc((100% - 1280px) / 2)) 96px;
+}
+/* 1440: 280 / 640 / 312 (gap 24 → 1280). 1280–1439: header hizası (kenar 80) korunur; raylar en çok 32 px verir, orta kolon
+   en az 528 (başlık + sekmeler tek satır). 1280'de ≈ 253 / 533 / 285; ≥1440'ta birebir 280 / 640 / 312. */
+.dk-akis-grid {
+  display: grid; grid-template-columns: minmax(248px, 280px) minmax(528px, 640px) minmax(280px, 312px); gap: 24px; align-items: start; justify-content: center;
+}
+.dk-akis .dk-row { transition: background-color 180ms ease; }  /* artboard .gb-row 180ms */
+.dk-akis-slot:empty { display: none; }
+
+/* ══════════ Sol ray ══════════ */
+.dk-akis-left { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+/* AKIŞA KATIL (misafir) */
+.dk-akis-join { position: relative; overflow: hidden; box-sizing: border-box; padding: 24px; border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; display: flex; flex-direction: column; gap: 14px; }
+.dk-akis-join-bar { position: absolute; left: 0; right: 0; top: 0; height: 2px; display: block; }
+.dk-akis-join-eb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #FF4FA3; }
+.dk-akis-join-t { font-family: var(--dk-font-serif); font-size: 32px; line-height: 1.02; color: #F2F1EE; }
+.dk-akis-join-t em { font-style: italic; color: #FF4FA3; }
+.dk-akis-join-p { margin: 0; font-size: 14px; line-height: 1.55; color: #A3A7AF; }
+.dk-akis .dk-akis-join-reg, .dk-akis .dk-akis-join-login {
+  height: 44px; box-sizing: border-box; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14.5px; font-weight: 600;
+}
+.dk-akis .dk-akis-join-reg, .dk-akis .dk-akis-join-reg:hover { margin-top: 4px; background: #F2F1EE; color: #06070A; }
+.dk-akis .dk-akis-join-login, .dk-akis .dk-akis-join-login:hover { border: 1px solid #2C303A; color: #F2F1EE; }
+
+/* Kaynak menüsü */
+.dk-akis-src { box-sizing: border-box; padding: 10px; border-radius: 12px; border: 1px solid #1F232B; display: flex; flex-direction: column; gap: 2px; }
+.dk-akis-src-h { padding: 8px 10px 10px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-akis-src-b {
+  position: relative; height: 44px; box-sizing: border-box; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: #A3A7AF;
+  display: flex; align-items: center; gap: 12px; font-size: 14.5px; font-weight: 500; text-align: left;
+}
+.dk-akis-src-b.is-on { background: #14171D; color: #F2F1EE; }
+.dk-akis-src-bar { position: absolute; left: 0; top: 10px; bottom: 10px; width: 2px; background: #4ED8FF; display: block; opacity: 0; }
+.dk-akis-src-b.is-on .dk-akis-src-bar { opacity: 1; }
+.dk-akis-src-l { flex-grow: 1; }
+.dk-akis-src-n { font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; }
+
+/* Tür lejantı */
+.dk-akis-legend { box-sizing: border-box; padding: 20px 20px 12px; border-radius: 12px; border: 1px solid #1F232B; display: flex; flex-direction: column; gap: 4px; }
+.dk-akis-legend-h { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; margin-bottom: 8px; }
+.dk-akis-legend-r { min-height: 52px; display: flex; align-items: center; gap: 12px; border-top: 1px solid #14171D; }
+.dk-akis-legend-ic { width: 30px; height: 30px; flex-shrink: 0; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.dk-akis-legend-c { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.dk-akis-legend-l { font-size: 14px; font-weight: 600; }
+.dk-akis-legend-d { font-size: 12.5px; color: #8A8E97; }
+
+/* ══════════ Orta ══════════ */
+.dk-akis-center { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.dk-akis-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; padding-bottom: 4px; }
+.dk-akis-head-l { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dk-akis-eb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+.dk-akis .dk-akis-h1 { margin: 0; font-family: var(--dk-font-serif); font-size: 56px; font-weight: 400; line-height: 1; letter-spacing: -0.01em; color: #F2F1EE; }
+.dk-akis-h1 em { font-style: italic; color: #FF4FA3; }
+
+/* Segmented sekmeler */
+.dk-akis-tabs { display: flex; flex-shrink: 0; padding: 4px; border: 1px solid #1F232B; border-radius: 8px; background: #0E1014; }
+.dk-akis-tab { height: 36px; box-sizing: border-box; padding: 0 14px; border: 0; border-radius: 5px; background: transparent; color: #A3A7AF; display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 500; white-space: nowrap; }
+.dk-akis-tab.is-on { background: #1C2029; color: #F2F1EE; }
+
+/* ══════════ Composer ══════════ */
+.dk-akis-comp { box-sizing: border-box; padding: 18px 20px; border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; display: flex; flex-direction: column; gap: 14px; }
+.dk-akis-comp-row { display: flex; align-items: center; gap: 14px; }
+.dk-akis-pill {
+  flex-grow: 1; min-width: 0; height: 44px; box-sizing: border-box; padding: 0 16px; border-radius: 22px; border: 1px solid #1F232B; background: #0A0B0F; color: #8A8E97;
+  text-align: left; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dk-akis-cta { height: 44px; flex-shrink: 0; box-sizing: border-box; padding: 0 16px; border: 0; border-radius: 6px; background: #FF4FA3; color: #06070A; display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; }
+.dk-akis-new { display: flex; flex-direction: column; gap: 12px; padding-top: 14px; border-top: 1px solid #1F232B; }
+.dk-akis-new[hidden] { display: none; }
+.dk-akis-new-eb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-akis-sel { height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; color: #8A8E97; display: flex; align-items: center; gap: 10px; font-size: 14px; text-align: left; }
+.dk-akis-sel.is-set { color: #F2F1EE; }
+.dk-akis-sel-l { flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-akis-sel-chev { display: flex; }
+.dk-akis-evlist { border-radius: 8px; border: 1px solid #1F232B; overflow: hidden auto; max-height: 264px; }
+.dk-akis-evlist[hidden] { display: none; }
+.dk-akis-ev {
+  width: 100%; min-height: 52px; box-sizing: border-box; padding: 8px 14px; border: 0; border-bottom: 1px solid #14171D; background: transparent; color: #F2F1EE;
+  display: flex; align-items: center; gap: 12px; text-align: left;
+}
+.dk-akis-ev.is-on { background: rgba(255,79,163,0.06); }
+/* tam genişlik satır kaydırma kabının içinde: halka kırpılmasın (dk-ui .dk-cp-opt ile aynı çözüm) */
+.dk-akis .dk-akis-ev:focus-visible { outline-offset: -2px; }
+.dk-akis-ev-dot { width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; border: 2px solid #FF4FA3; background: transparent; display: block; flex-shrink: 0; }
+.dk-akis-ev.is-on .dk-akis-ev-dot { background: #FF4FA3; }
+.dk-akis-ev-c { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dk-akis-ev-t { font-size: 14px; font-weight: 600; }
+.dk-akis-ev-v { font-size: 12.5px; color: #8A8E97; }
+.dk-akis-ev-msg { box-sizing: border-box; min-height: 52px; padding: 14px; display: flex; align-items: center; font-size: 13.5px; line-height: 1.5; color: #8A8E97; }
+.dk-akis-ta-l { display: flex; flex-direction: column; gap: 6px; }
+.dk-akis .dk-akis-ta {
+  box-sizing: border-box; width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; color: #F2F1EE;
+  font-family: var(--dk-font-sans); font-size: 14.5px; line-height: 1.55; resize: none; outline: none; margin: 0;
+}
+.dk-akis-new-f { display: flex; align-items: center; justify-content: space-between; }
+.dk-akis-count { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 600; color: #8A8E97; }
+.dk-akis-new-b { display: flex; gap: 8px; }
+.dk-akis-cancel { height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-size: 14px; font-weight: 500; }
+.dk-akis-submit { height: 40px; box-sizing: border-box; padding: 0 16px; border: 0; border-radius: 6px; background: #FF4FA3; color: #06070A; display: flex; align-items: center; font-size: 14px; font-weight: 600; }
+.dk-akis-submit[aria-disabled="true"], .dk-akis-cancel[aria-disabled="true"] { opacity: .6; cursor: progress; }
+
+/* Avatarlar */
+.dk-akis-av { flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #F2F1EE; line-height: 1; user-select: none; }
+.dk-akis-av-44 { width: 44px; height: 44px; font-size: 17px; }
+.dk-akis-av-40 { width: 40px; height: 40px; font-size: 16px; }
+.dk-akis-av-32 { width: 32px; height: 32px; font-size: 13px; }
+.dk-akis-ghost { flex-shrink: 0; box-sizing: border-box; border-radius: 50%; background: #14171D; border: 1px solid #2C303A; color: #8A8E97; display: flex; align-items: center; justify-content: center; }
+.dk-akis-ghost-40 { width: 40px; height: 40px; }
+.dk-akis-ghost-32 { width: 32px; height: 32px; }
+
+/* ══════════ PostCard ══════════ */
+.dk-akis-feed { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dk-akis-post { position: relative; overflow: hidden; border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; }
+.dk-akis-post-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; display: block; }
+.dk-akis-post-body { padding: 20px 24px 6px 27px; display: flex; flex-direction: column; gap: 14px; }
+.dk-akis-post-head { display: flex; align-items: center; gap: 12px; }
+.dk-akis-post-who { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-akis-post-author { font-size: 15.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-akis-post-meta { font-size: 13px; color: #8A8E97; }
+.dk-akis-badge {
+  height: 24px; flex-shrink: 0; box-sizing: border-box; padding: 0 9px; display: flex; align-items: center; gap: 5px; border-radius: 12px; border: 1px solid;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.dk-akis .dk-akis-post-text { margin: 0; font-size: 16px; line-height: 1.62; color: #E4E3E0; white-space: pre-line; overflow-wrap: anywhere; }
+.dk-akis-stars { display: flex; gap: 3px; }
+
+/* Etkinlik eki */
+/* hover: artboard'da satır içi border .gb-card:hover'ı ezer → kenar #1F232B kalır; yalnız -4px + görsel 1.05 (dk-card) */
+.dk-akis .dk-akis-att, .dk-akis .dk-akis-att:hover { display: flex; align-items: center; gap: 14px; padding: 8px; border-radius: 10px; border: 1px solid #1F232B; background: #0A0B0F; color: #F2F1EE; }
+.dk-akis-att-th { width: 84px; height: 72px; flex-shrink: 0; border-radius: 6px; overflow: hidden; display: block; }
+.dk-akis-att-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-akis-att-th .dk-skel { width: 100%; height: 100%; }
+.dk-akis-att-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-serif); font-size: 34px; color: rgba(6,7,10,0.72); }
+.dk-akis-att-c { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-akis-att-eb { display: flex; align-items: center; gap: 6px; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #FF8AC4; }
+.dk-akis-att-t { font-size: 15.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-akis-att-m { font-size: 13px; color: #8A8E97; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-akis-att-go { margin-right: 8px; flex-shrink: 0; }
+
+/* Mekan / etkinlik metin çipleri */
+.dk-akis-tags { display: flex; flex-wrap: wrap; gap: 8px; align-self: flex-start; }
+.dk-akis .dk-akis-chip, .dk-akis a.dk-akis-chip:hover {
+  height: 28px; box-sizing: border-box; padding: 0 10px; display: flex; align-items: center; gap: 6px; border-radius: 14px; border: 1px solid #2C303A; color: #C9CACD; font-size: 12.5px;
+}
+
+/* Aksiyonlar */
+.dk-akis-actions { margin: 8px 24px 0 27px; height: 52px; border-top: 1px solid #1F232B; display: flex; align-items: center; gap: 6px; }
+.dk-akis-act { height: 40px; box-sizing: border-box; padding: 0 12px 0 8px; border: 0; border-radius: 6px; background: transparent; color: #A3A7AF; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.dk-akis-heart { display: flex; }
+/* Sahibin notu + legacy: "begenide #EF4444" (artboard #FF5A6E idi; public-a Q21) */
+.dk-akis-like.is-on { background: rgba(239,68,68,0.10); color: #EF4444; }
+.dk-akis-cmt.is-on { background: #14171D; color: #F2F1EE; }
+.dk-akis-share { margin-left: auto; padding: 0 10px; font-weight: 500; }
+.dk-akis-share.is-copied { color: #7CE0B0; }
+
+/* Satır içi yorumlar */
+.dk-akis-thread { padding: 16px 24px 20px 27px; background: #0A0B0F; border-top: 1px solid #1F232B; display: flex; flex-direction: column; gap: 14px; }
+.dk-akis-th-eb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-akis-cm-list { display: flex; flex-direction: column; gap: 14px; }
+.dk-akis-cm-row { display: flex; gap: 12px; }
+.dk-akis-cm-b { flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 10px 14px; border-radius: 4px 12px 12px 12px; background: #14171D; display: flex; flex-direction: column; gap: 4px; }
+.dk-akis-cm-top { display: flex; align-items: baseline; gap: 8px; }
+.dk-akis-cm-a { font-size: 13.5px; font-weight: 600; }
+.dk-akis-cm-time { font-size: 12px; color: #8A8E97; }
+.dk-akis-cm-x { font-size: 14.5px; line-height: 1.5; color: #E4E3E0; white-space: pre-line; overflow-wrap: anywhere; }
+.dk-akis .dk-akis-cm-none { margin: 0; font-size: 14px; line-height: 1.5; color: #8A8E97; }
+.dk-akis-cin { display: flex; align-items: center; gap: 10px; padding-top: 4px; }
+.dk-akis-cin-l { flex-grow: 1; min-width: 0; height: 42px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; border-radius: 21px; border: 1px solid #1F232B; background: #0E1014; transition: border-color 160ms ease; }
+/* artboard'da input outline:none — erişilebilirlik için odak, hap kenarında gösterilir */
+.dk-akis-cin-l:focus-within { border-color: var(--dk-focus-border, #4ED8FF); }
+.dk-akis .dk-akis-cin-i { width: 100%; padding: 0; margin: 0; border: 0; outline: none; background: none; color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14px; min-height: 0; }
+.dk-akis-send { width: 42px; height: 42px; flex-shrink: 0; padding: 0; border: 0; border-radius: 50%; background: #FF4FA3; color: #06070A; display: flex; align-items: center; justify-content: center; }
+
+/* Boş durum + daha eski */
+.dk-akis-empty { height: 240px; box-sizing: border-box; border: 1px dashed #2C303A; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 0 60px; text-align: center; }
+.dk-akis-empty-t { font-size: 16px; font-weight: 600; }
+.dk-akis-empty-s { font-size: 14px; line-height: 1.55; color: #8A8E97; }
+.dk-akis-more { align-self: center; margin-top: 8px; height: 44px; box-sizing: border-box; padding: 0 20px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-size: 14px; font-weight: 500; }
+.dk-akis-more[hidden] { display: none; }
+.dk-akis-more[aria-disabled="true"] { opacity: .6; cursor: progress; }
+.dk-akis-skel .dk-akis-post-body { gap: 12px; padding-bottom: 12px; }
+.dk-akis-skel .dk-akis-post-who { gap: 8px; }
+.dk-akis-skel .dk-akis-actions { gap: 20px; }
+
+/* ══════════ Sağ ray ══════════ */
+.dk-akis-right { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dk-akis-right > [hidden] { display: none; }
+.dk-akis-sug { box-sizing: border-box; padding: 20px; border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; display: flex; flex-direction: column; gap: 4px; }
+.dk-akis-week { box-sizing: border-box; padding: 20px; border-radius: 12px; border: 1px solid #1F232B; display: flex; flex-direction: column; gap: 4px; }
+.dk-akis-card-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.dk-akis-card-eb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-akis-card-a { font-size: 12.5px; }
+.dk-akis-sug-list, .dk-akis-week-list { display: flex; flex-direction: column; gap: 4px; }
+.dk-akis-sug-r { min-height: 60px; display: flex; align-items: center; gap: 12px; border-top: 1px solid #14171D; }
+.dk-akis .dk-akis-sug-a, .dk-akis .dk-akis-sug-a:hover { display: flex; align-items: center; gap: 12px; flex-grow: 1; min-width: 0; color: #F2F1EE; }
+.dk-akis-sug-img { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; object-fit: cover; display: block; }
+.dk-akis-sug-c { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-akis-sug-n { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-akis-sug-s { font-size: 12px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-akis-skrow { min-height: 60px; display: flex; align-items: center; gap: 12px; border-top: 1px solid #14171D; }
+.dk-akis-week-list .dk-akis-skrow { min-height: 64px; }
+/* BU HAFTA (artboard): başlık KIRILIR (nowrap yok) — paylaşılan eventRowMini .dk-truncate'ini yerelde ez, en çok 2 satır.
+   Alt satır: yalnız mekan adı kısalır, "· Bugün 19:15" küçülmez.  SHARED-CANDIDATE: cards.eventRowMini (başlık kırılımı + gün etiketi). */
+.dk-akis-week-list .dk-erm-t { align-items: center; }
+.dk-akis-week-list .dk-erm-t .dk-truncate { white-space: normal; text-overflow: clip; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.dk-akis-week-list .dk-erm-s { display: flex; min-width: 0; }
+.dk-akis-wk-v { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-akis-wk-w { flex-shrink: 0; white-space: pre; }
+.dk-akis-skrow-c { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+
+/* Harita tanıtımı */
+.dk-akis .dk-akis-map, .dk-akis .dk-akis-map:hover { position: relative; display: block; height: 150px; border-radius: 12px; overflow: hidden; border: 1px solid #1F232B; background: #0C0E13; color: #F2F1EE; }
+.dk-akis-map-svg { position: absolute; top: 0; left: 0; display: block; }
+.dk-akis .dk-akis-map:hover .dk-akis-map-svg { transform: none; }
+.dk-akis-map-t { position: absolute; left: 16px; bottom: 14px; right: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; }
+.dk-akis-map-go { color: #4ED8FF; }
+
+/* ══════════ Duyarlı ══════════
+   1024–1279: sol ray yok (AKIŞA KATIL sağ rayın üstüne), orta akışkan (en çok 640) + sağ 300; kaynak yalnız orta sekmeler.
+   769–1023: tek kolon (en çok 640, ortalı); AKIŞA KATIL composer'ın üstünde; sağ ray gizli.  (spec §5.10) */
+@media (max-width: 1279px) {
+  /* orta kolon sol oluğa (logo hizası), sağ ray sağ oluğa (header eylemleri hizası) yaslanır — 1440 ve 1024'teki gibi */
+  .dk-akis-grid { grid-template-columns: minmax(0, 640px) 300px; justify-content: space-between; }
+  .dk-akis-left { display: none; }
+}
+@media (max-width: 1023px) {
+  .dk-akis { padding-top: 32px; padding-bottom: 72px; }
+  .dk-akis-grid { grid-template-columns: minmax(0, 640px); justify-content: center; }
+  .dk-akis-right { display: none; }
+}
+@media (max-width: 860px) {
+  .dk-akis .dk-akis-h1 { font-size: 48px; }
+}

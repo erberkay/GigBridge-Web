@@ -1,0 +1,330 @@
+/* dk-mekan-profil.css — WebMekanProfil masaüstü görünümü (venueProfil, #/venue/profil).
+   SAHİBİ: js/desktop/venue/profil.js uygulayıcısı (specs/foundation.md §3). Spec: specs/mekan.md § WebMekanProfil
+   KAPSAM: görünüm kökü .dk-mekan-profil (PanelShell içerik alanında); portal modalları .dk-mekan-profil-mdl.
+   Tüm sınıflar .dk-mekan-profil-* ad alanında; çıplak eleman seçicisi / legacy sınıfı YOK.
+   Ölçüler artboard satır içi stillerinden birebir (design/WebMekanProfil.dc.html). dk-base kutuları tarayıcı varsayılanına
+   döndürdüğü için (content-box, h/p kenar boşlukları) artboard'daki box-sizing / margin:0 açıkça yazıldı. */
+
+.dk-mekan-profil { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.dk-mekan-profil-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
+.dk-mekan-profil [hidden], .dk-mekan-profil-mdl [hidden] { display: none !important; }
+
+/* ═════════ ortak parçalar (portal modallarında da kullanılır) ═════════ */
+.dk-mekan-profil-in {
+  width: 100%; height: 44px; box-sizing: border-box; margin: 0; padding: 0 14px; border-radius: 8px; border: 1px solid #1F232B;
+  background: #0A0B0F; color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14.5px; outline: none; transition: border-color 160ms ease;
+}
+.dk-mekan-profil-in:focus { border-color: #FF8A2A; }
+textarea.dk-mekan-profil-in { display: block; height: auto; padding: 12px 14px; line-height: 1.5; resize: none; }
+input[type="time"].dk-mekan-profil-in { color-scheme: dark; }
+.dk-mekan-profil-mono { font-family: var(--dk-font-mono); }
+.dk-mekan-profil-fld { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dk-mekan-profil-lbl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-mekan-profil-help { font-size: 12.5px; line-height: 1.45; color: #8A8E97; }
+.dk-mekan-profil-alert {
+  padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,90,110,0.45); background: rgba(255,90,110,0.08);
+  display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #FF5A6E;
+}
+.dk-mekan-profil-alert > svg { flex-shrink: 0; }
+.dk-mekan-profil-alert.is-ok { border-color: rgba(124,224,176,0.45); background: rgba(124,224,176,0.08); color: #7CE0B0; line-height: 1.45; }
+.dk-mekan-profil-reset { padding: 0; border: 0; background: none; color: #FF8A2A; font-size: 12.5px; font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
+
+/* ═════════ 1 · üst satır ═════════ */
+.dk-mekan-profil-top { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; }
+
+/* Galeri (GalleryHero) — content-box: 312 + 2×1 kenar = 314 (artboard ile aynı) */
+.dk-mekan-profil-gal { position: relative; height: 312px; border-radius: 12px; overflow: hidden; border: 1px solid #1F232B; background: #0E1014; min-width: 0; }
+.dk-mekan-profil-gimg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-mekan-profil-gempty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #5E636D; padding-bottom: 40px; box-sizing: border-box; }
+.dk-mekan-profil-gshade { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(6,7,10,0) 40%, rgba(6,7,10,0.85) 100%); pointer-events: none; }
+.dk-mekan-profil-gcount {
+  position: absolute; left: 20px; top: 18px; height: 24px; padding: 0 9px; display: flex; align-items: center; border-radius: 4px;
+  background: rgba(6,7,10,0.74); font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #F2F1EE;
+}
+/* Galeriden kaldır (tasarımda yok — kaldırma yolu olmadan galeri yalnız büyüyebilirdi; sayaç rozetinin karşısında, aynı zemin) */
+.dk-mekan-profil-gdel {
+  position: absolute; right: 18px; top: 14px; width: 32px; height: 32px; box-sizing: border-box; padding: 0; border: 0; border-radius: 50%;
+  background: rgba(6,7,10,0.74); color: #F2F1EE; display: flex; align-items: center; justify-content: center;
+}
+.dk-mekan-profil-gdel:hover { color: #FF5A6E; }
+.dk-mekan-profil-gbar { position: absolute; left: 20px; right: 20px; bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.dk-mekan-profil-gcap { font-size: 13px; color: #C9CACD; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-profil-gright { display: flex; gap: 8px; flex-shrink: 0; }
+.dk-mekan-profil-thumbs { display: flex; gap: 8px; }
+.dk-mekan-profil-thumb {
+  width: 72px; height: 48px; padding: 0; border-radius: 6px; overflow: hidden; border: 2px solid rgba(242,241,238,0.2); background: #0A0B0F; flex-shrink: 0;
+}
+.dk-mekan-profil-thumb[aria-checked="true"] { border-color: #FF8A2A; }
+.dk-mekan-profil-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-mekan-profil-gadd {
+  width: 72px; height: 48px; border-radius: 6px; border: 1px dashed rgba(242,241,238,0.35); background: rgba(6,7,10,0.6); color: #F2F1EE;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+/* Profil özeti */
+.dk-mekan-profil-sum { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; padding: 22px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.dk-mekan-profil-sumhead { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.dk-mekan-profil-av { position: relative; flex-shrink: 0; width: 58px; height: 58px; padding: 0; border: 0; border-radius: 50%; background: none; color: #F2F1EE; }
+.dk-mekan-profil-av .dk-av { display: block; }
+.dk-mekan-profil-av .dk-av-ini { display: flex; font-weight: 600; }
+.dk-mekan-profil-avov {
+  position: absolute; inset: 0; border-radius: 50%; background: rgba(6,7,10,0.66); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.02em; opacity: 0; transition: opacity 160ms ease;
+}
+.dk-mekan-profil-av:hover .dk-mekan-profil-avov, .dk-mekan-profil-av:focus-visible .dk-mekan-profil-avov { opacity: 1; }
+.dk-mekan-profil-sumcol { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-mekan-profil-name { margin: 0; font-size: 30px; font-family: var(--dk-font-serif); font-weight: 400; letter-spacing: -0.01em; line-height: 1.02; overflow-wrap: anywhere; }
+.dk-mekan-profil-type { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #FF8A2A; }
+.dk-mekan-profil-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: #A3A7AF; }
+.dk-mekan-profil-rt { display: flex; align-items: center; gap: 5px; color: #F2F1EE; font-weight: 600; }
+.dk-mekan-profil-stats {
+  margin-top: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: #1F232B; border: 1px solid #1F232B; border-radius: 8px; overflow: hidden;
+}
+.dk-mekan-profil-stat { padding: 12px 14px; background: #0E1014; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dk-mekan-profil-static { color: #FF8A2A; display: flex; }
+.dk-mekan-profil-statcol { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dk-mekan-profil-statv { font-size: 18px; font-weight: 600; }
+.dk-mekan-profil-statl { font-size: 11.5px; color: #8A8E97; }
+
+/* ═════════ 2 · ana satır ═════════ */
+.dk-mekan-profil-main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
+.dk-mekan-profil-form { margin: 0; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dk-mekan-profil-stack { display: flex; flex-direction: column; gap: 20px; }
+.dk-mekan-profil-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.dk-mekan-profil-card { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; min-width: 0; }
+.dk-mekan-profil-fcard { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.dk-mekan-profil-info { gap: 18px; }
+
+/* SectionHead (form + kart başlıkları) */
+.dk-mekan-profil-sh { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.dk-mekan-profil-shcol { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.dk-mekan-profil-eb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+.dk-mekan-profil-h3 { margin: 0; font-size: 18px; font-weight: 600; }
+
+/* 01 · BİLGİLER */
+.dk-mekan-profil-nm { display: flex; flex-direction: column; gap: 8px; }
+.dk-mekan-profil-nmrow { display: flex; gap: 8px; }
+.dk-mekan-profil-nmbox {
+  flex-grow: 1; min-width: 0; height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F;
+  display: flex; align-items: center; gap: 10px; font-size: 14.5px;
+}
+.dk-mekan-profil-nmtext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-profil-nmlock { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8A8E97; flex-shrink: 0; white-space: nowrap; }
+.dk-mekan-profil-nmbtn {
+  height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE;
+  display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 500; flex-shrink: 0; white-space: nowrap;
+}
+.dk-mekan-profil-nc {
+  padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,138,42,0.45); background: rgba(255,138,42,0.06);
+  display: flex; align-items: center; gap: 10px; font-size: 13.5px;
+}
+.dk-mekan-profil-nc > svg { flex-shrink: 0; }
+.dk-mekan-profil-nctext { flex-grow: 1; min-width: 0; }
+.dk-mekan-profil-ncbtn { height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-size: 13px; flex-shrink: 0; }
+.dk-mekan-profil-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.dk-mekan-profil-fld.is-span2 { grid-column: span 2; }
+.dk-mekan-profil-help2 { display: flex; align-items: flex-end; }
+
+/* 02 · TÜRLER — Chip 32 */
+.dk-mekan-profil-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dk-mekan-profil-chip {
+  height: 32px; box-sizing: border-box; padding: 0 12px; border-radius: 16px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF;
+  display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; white-space: nowrap;
+}
+.dk-mekan-profil-chip[aria-pressed="true"] { border-color: #FF8A2A; background: rgba(255,138,42,0.12); color: #FF8A2A; }
+.dk-mekan-profil-div { height: 1px; background: #14171D; display: block; }
+
+/* 03 · SAATLER — DayToggle */
+.dk-mekan-profil-open { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; color: #7CE0B0; white-space: nowrap; }
+.dk-mekan-profil-open.is-zero { color: #8A8E97; }
+.dk-mekan-profil-hgrid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: end; }
+.dk-mekan-profil-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.dk-mekan-profil-day {
+  height: 56px; box-sizing: border-box; border-radius: 8px; border: 1px solid #1F232B; background: transparent; color: #8A8E97; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 13px; font-weight: 600;
+}
+.dk-mekan-profil-day[aria-pressed="true"] { border-color: rgba(124,224,176,0.5); background: rgba(124,224,176,0.08); color: #7CE0B0; }
+.dk-mekan-profil-daystate { font-family: var(--dk-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; }
+.dk-mekan-profil-times { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+/* 04 · KONUM (MapPanel, düzenleme) */
+.dk-mekan-profil-loc { padding: 20px 24px 24px; }
+.dk-mekan-profil-locin { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 24px; }
+.dk-mekan-profil-map { position: relative; height: 220px; border-radius: 10px; overflow: hidden; border: 1px solid #1F232B; background: #0C0E13; min-width: 0; isolation: isolate; }
+.dk-mekan-profil-leaf { position: absolute; inset: 0; background: #0C0E13; outline-offset: -2px; }
+.dk-mekan-profil-leaf .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.72) contrast(0.88) saturate(0.3); opacity: 0.55; }
+.dk-mekan-profil-leaf.leaflet-container { background: #0C0E13; font-family: var(--dk-font-sans); cursor: crosshair; }
+.dk-mekan-profil-map .dk-mekan-profil-leaf .leaflet-control-attribution { background: rgba(6,7,10,0.72); color: #8A8E97; font-size: 10px; line-height: 1.5; padding: 0 5px; border-top-left-radius: 4px; }
+.dk-mekan-profil-map .dk-mekan-profil-leaf .leaflet-control-attribution a { color: #A3A7AF; }
+.dk-mekan-profil-map .dk-mekan-profil-leaf .leaflet-bar { border: 1px solid #2C303A; border-radius: 6px; box-shadow: none; overflow: hidden; }
+.dk-mekan-profil-map .dk-mekan-profil-leaf .leaflet-bar a { background: #0E1014; color: #F2F1EE; border-bottom-color: #2C303A; width: 28px; height: 28px; line-height: 28px; }
+.dk-mekan-profil-map .dk-mekan-profil-leaf .leaflet-bar a:hover { background: #14171D; color: #F2F1EE; }
+.dk-mekan-profil-pinic { background: none; border: 0; }
+.dk-mekan-profil-pinsvg { position: absolute; left: 0; top: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #FF8A2A; }
+.dk-mekan-profil-pindot { position: absolute; left: 13px; top: 34px; width: 10px; height: 10px; border-radius: 50%; background: rgba(255,138,42,0.4); display: block; }
+.dk-mekan-profil-pindot > .dk-ping { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,138,42,0.5); display: block; }
+.dk-mekan-profil-nopin {
+  position: absolute; left: 16px; right: 16px; top: 16px; z-index: 900; padding: 10px 12px; border-radius: 8px; background: rgba(6,7,10,0.85);
+  border: 1px solid rgba(255,90,110,0.4); font-size: 12.5px; color: #FF5A6E; pointer-events: none;
+}
+.dk-mekan-profil-mapmsg { position: absolute; inset: 0; z-index: 800; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #8A8E97; }
+.dk-mekan-profil-locside { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.dk-mekan-profil-pininfo { font-family: var(--dk-font-mono); font-size: 12px; color: #8A8E97; }
+.dk-mekan-profil-pininfo.is-on { color: #4ED8FF; }
+.dk-mekan-profil-locbtn {
+  margin-top: auto; height: 40px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE;
+  display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13.5px;
+}
+.dk-mekan-profil-locbtn:disabled { opacity: .6; }
+.dk-mekan-profil-clrpin { height: 32px; border: 0; background: none; font-size: 13px; }
+.dk-mekan-profil-clrpin:disabled { opacity: .5; }
+.dk-mekan-profil-clrpin:disabled:hover { color: #8A8E97; }
+
+/* Kaydet satırı */
+.dk-mekan-profil-saverow { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.dk-mekan-profil-dirty { font-size: 13px; color: #8A8E97; }
+.dk-mekan-profil-dirty.is-err { color: #FF5A6E; }
+.dk-mekan-profil-save {
+  height: 44px; padding: 0 22px; border-radius: 6px; border: 0; background: #FF8A2A; color: #06070A;
+  display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 600; flex-shrink: 0; white-space: nowrap;
+}
+.dk-mekan-profil-save.is-busy { opacity: .7; }
+
+/* ═════════ sağ kolon kartları ═════════ */
+.dk-mekan-profil-scard { padding: 20px; display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 96px; } /* ?bolum= kaydırması yapışkan üst barın (72) altında kalsın */
+.dk-mekan-profil-scard.is-rev { gap: 14px; }
+.dk-mekan-profil-add { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; color: #FF8A2A; flex-shrink: 0; }
+.dk-mekan-profil-add:hover { color: #FF8A2A; }
+.dk-mekan-profil-sub { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #8A8E97; }
+.dk-mekan-profil-sub > svg { flex-shrink: 0; }
+.dk-mekan-profil-rows { display: flex; flex-direction: column; gap: 12px; }
+.dk-mekan-profil-skel { height: 60px; box-sizing: border-box; border-radius: 10px; border: 1px solid #1F232B; background: #0A0B0F; }
+.dk-mekan-profil-empty { padding: 16px; border-radius: 10px; border: 1px dashed #2C303A; font-size: 13px; line-height: 1.5; color: #8A8E97; }
+.dk-mekan-profil-avwrap { display: flex; flex-shrink: 0; border-radius: 50%; }
+.dk-mekan-profil-avwrap .dk-av-ini { font-weight: 600; }
+
+/* ArtistRow (kompakt) */
+.dk-mekan-profil-frow {
+  height: 60px; box-sizing: border-box; padding: 0 10px; border-radius: 10px; border: 1px solid #1F232B; background: #0A0B0F;
+  display: flex; align-items: center; gap: 12px;
+}
+.dk-mekan-profil-fcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-mekan-profil-fname { font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-profil-fgenre { font-size: 12px; color: #8A8E97; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-profil-perf {
+  height: 32px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; background: rgba(255,138,42,0.1); color: #FF8A2A;
+  display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; flex-shrink: 0; white-space: nowrap;
+}
+.dk-mekan-profil-perf:hover { color: #FF8A2A; }
+.dk-mekan-profil-rm { width: 32px; height: 32px; border-radius: 6px; border: 0; background: transparent; color: #8A8E97; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dk-mekan-profil-rm:hover { color: #F2F1EE; }
+
+/* RatingSummary */
+.dk-mekan-profil-alink { font-size: 13px; flex-shrink: 0; }
+.dk-mekan-profil-revbody { display: flex; flex-direction: column; gap: 14px; }
+.dk-mekan-profil-score { display: flex; align-items: center; gap: 14px; }
+.dk-mekan-profil-big { font-size: 46px; font-family: var(--dk-font-serif); font-weight: 400; letter-spacing: -0.01em; line-height: 1.02; color: #FF8A2A; }
+.dk-mekan-profil-scol { display: flex; flex-direction: column; gap: 5px; }
+.dk-mekan-profil-stars { display: flex; }
+.dk-mekan-profil-scount { font-size: 12.5px; color: #8A8E97; }
+.dk-mekan-profil-rbox { padding: 12px 14px; border-radius: 10px; border: 1px solid #1F232B; background: #0A0B0F; display: flex; flex-direction: column; gap: 6px; }
+.dk-mekan-profil-rhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dk-mekan-profil-rname { font-size: 13.5px; font-weight: 600; }
+.dk-mekan-profil-rtext { margin: 0; font-size: 13px; line-height: 1.5; color: #C9CACD; overflow-wrap: anywhere; }
+.dk-mekan-profil-rmeta { font-size: 11.5px; color: #8A8E97; }
+.dk-mekan-profil-note { font-size: 12px; line-height: 1.5; color: #8A8E97; }
+
+/* Değerlendirme satırları + haplar (sarmasın: nowrap + flex-shrink 0) */
+.dk-mekan-profil-rrow {
+  min-height: 60px; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1px solid #1F232B; background: #0A0B0F;
+  display: flex; align-items: center; gap: 12px;
+}
+.dk-mekan-profil-rrname { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-profil-rrlast { font-size: 11.5px; color: #8A8E97; }
+.dk-mekan-profil-pill { display: flex; align-items: center; gap: 5px; white-space: nowrap; flex-shrink: 0; box-sizing: border-box; font-family: var(--dk-font-sans); }
+.dk-mekan-profil-pill.is-go { height: 32px; padding: 0 12px; border-radius: 16px; border: 0; background: #FF8A2A; color: #06070A; gap: 6px; font-size: 12.5px; font-weight: 600; }
+.dk-mekan-profil-pill.is-done { height: 28px; padding: 0 10px; border-radius: 14px; background: rgba(124,224,176,0.1); color: #7CE0B0; font-size: 12px; font-weight: 600; }
+.dk-mekan-profil-pill.is-lock { height: 28px; padding: 0 10px; border-radius: 14px; border: 1px solid #1F232B; background: transparent; color: #8A8E97; font-size: 12px; }
+
+/* Menü kartı "HESAP & DESTEK" */
+.dk-mekan-profil-acc { padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+.dk-mekan-profil-acch { margin: 8px 12px 6px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-mekan-profil-mrow {
+  height: 48px; box-sizing: border-box; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: #F2F1EE;
+  display: flex; align-items: center; gap: 12px; font-size: 14px; text-align: left; width: 100%;
+}
+.dk-mekan-profil-mrow > svg { flex-shrink: 0; }
+.dk-mekan-profil-mlabel { flex-grow: 1; }
+.dk-mekan-profil-mchev { color: #8A8E97; } /* artboard: satır içi span (svg taban çizgisinde) */
+.dk-mekan-profil-accnote { margin: 6px 12px 8px; font-size: 12px; line-height: 1.5; color: #8A8E97; }
+
+/* ═════════ modallar (portal: .dk.dk-portal[data-role=venue] > .dk-ovl > .dk-mdl.dk-mekan-profil-mdl) ═════════ */
+.dk-mdl-panel.dk-mekan-profil-mdl { gap: 16px; }
+.dk-mekan-profil-mdl .dk-mdl-body { gap: 16px; }
+.dk-mekan-profil-mdl .dk-btn-outline { font-weight: 400; }
+.dk-mekan-profil-mdl-nox .dk-mdl-x { display: none; }
+.dk-mekan-profil-mp { margin: 0; font-size: 12.5px; line-height: 1.45; color: #8A8E97; }
+.dk-mekan-profil-cur { font-size: 14px; color: #A3A7AF; }
+.dk-mekan-profil-cur > span { color: #F2F1EE; font-weight: 600; }
+/* Değerlendirme modalı */
+.dk-mekan-profil-rmhead { display: flex; align-items: center; gap: 12px; }
+.dk-mekan-profil-rmcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-mekan-profil-rmname { font-size: 17px; font-weight: 600; }
+.dk-mekan-profil-rmsub { font-size: 12.5px; color: #8A8E97; }
+.dk-mekan-profil-ov { height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #1F232B; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #A3A7AF; flex-shrink: 0; white-space: nowrap; }
+.dk-mekan-profil-ovv { font-family: var(--dk-font-mono); font-size: 16px; font-weight: 600; color: #F2F1EE; }
+.dk-mekan-profil-crits { display: flex; flex-direction: column; gap: 8px; }
+.dk-mekan-profil-crit { padding: 12px 14px; border-radius: 10px; border: 1px solid #1F232B; background: #0A0B0F; display: flex; align-items: center; gap: 14px; }
+.dk-mekan-profil-ccol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-mekan-profil-clabel { font-size: 14px; font-weight: 600; }
+.dk-mekan-profil-cdesc { font-size: 12px; color: #8A8E97; }
+.dk-mekan-profil-cright { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.dk-mekan-profil-starin { display: flex; align-items: center; gap: 2px; }
+.dk-mekan-profil-sbtn { width: 30px; height: 30px; padding: 0; border: 0; background: none; color: #5E636D; display: flex; align-items: center; justify-content: center; }
+.dk-mekan-profil-cval { font-family: var(--dk-font-mono); width: 30px; text-align: right; font-size: 12px; color: #A3A7AF; }
+
+/* ═════════ duyarlı ═════════ */
+/* Kart genişliğine göre (kapsayıcı sorgusu): 1280–1439'da sol kolon 540'a iner → 7 gün 300'lük saat kolonunun yanında sığmıyor
+   (artboard yalnız 1440) → günler saatlerin üstüne; harita 206 px'e düşeceği için 04 de alt alta. 1440'ta (iç 650) tasarım aynen. */
+.dk-mekan-profil-hours, .dk-mekan-profil-loc { container-type: inline-size; }
+/* Galeri: 1280–1439'da hero 540 px → 5 küçük resim (72×48) açıklamaya ~90 px bırakıyordu ("Kapak fotoğ…"). Hero 620'den dar
+   olduğunda küçük resimler 56×38 / 6 px aralık (769–1023 kuralıyla aynı ölçü). 1440'ta (700) tasarım aynen. */
+.dk-mekan-profil-gal { container: dkmpgal / inline-size; }
+@container dkmpgal (max-width: 620px) {
+  .dk-mekan-profil-thumb, .dk-mekan-profil-gadd { width: 56px; height: 38px; }
+  .dk-mekan-profil-thumbs, .dk-mekan-profil-gright { gap: 6px; }
+}
+@container (max-width: 600px) {
+  .dk-mekan-profil-hgrid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .dk-mekan-profil-times { max-width: 420px; }
+}
+@container (max-width: 560px) {
+  .dk-mekan-profil-locin { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .dk-mekan-profil-locin .dk-mekan-profil-locbtn { margin-top: 0; align-self: flex-start; padding: 0 16px; }
+  .dk-mekan-profil-locin .dk-mekan-profil-clrpin { align-self: flex-start; padding: 0; }
+}
+/* 1024–1279 (spec §10): üst satır ve ana satır tek kolon; özet 4'lü istatistik; sağ kartlar 2 kolon; 03 günler saatlerin üstünde;
+   04 harita tam genişlik, kontroller altında */
+@media (max-width: 1279px) {
+  .dk-mekan-profil-top, .dk-mekan-profil-main { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-profil-gal { height: 280px; }
+  .dk-mekan-profil-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .dk-mekan-profil-side { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+  .dk-mekan-profil-hgrid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .dk-mekan-profil-times { max-width: 420px; }
+  .dk-mekan-profil-locin { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .dk-mekan-profil-locin .dk-mekan-profil-locbtn { margin-top: 0; align-self: flex-start; padding: 0 16px; }
+  .dk-mekan-profil-locin .dk-mekan-profil-clrpin { align-self: flex-start; padding: 0; }
+}
+/* 769–1023: her şey tek kolon; günler 7'li (min 40); galeri küçük resimleri 56×38; kenar çubuğu çekmece (kabuk) */
+@media (max-width: 1023px) {
+  .dk-mekan-profil-side { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-profil-days { grid-template-columns: repeat(7, minmax(40px, 1fr)); }
+  .dk-mekan-profil-thumb, .dk-mekan-profil-gadd { width: 56px; height: 38px; }
+  .dk-mekan-profil-gal { height: 260px; }
+}
+@media (max-width: 860px) {
+  .dk-mekan-profil-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-mekan-profil-gcap { display: none; }
+  .dk-mekan-profil-gbar { justify-content: flex-end; }
+}

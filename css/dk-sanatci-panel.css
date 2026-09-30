@@ -1,0 +1,209 @@
+/* dk-sanatci-panel.css — WebSanatciPanel masaüstü görünümü (artistPanel, #/artist).
+   SAHİBİ: js/desktop/artist/panel.js uygulayıcısı (specs/foundation.md §3). Spec: specs/sanatci.md WebSanatciPanel
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-sanatci-panel (içerik <main>) ya da .dk-sanatci-panel-* alt sınıfları
+   (portal içindeki onay modalı dahil) altında. Ölçüler artboard'un satır içi stillerinden birebir (1440). */
+
+.dk-sanatci-panel { color: #F2F1EE; }
+.dk-sanatci-panel [hidden] { display: none !important; }
+
+/* ── HERO ── */
+.dk-sanatci-panel-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.dk-sanatci-panel-hcol { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dk-sanatci-panel-eb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+.dk-sanatci-panel-h1 { margin: 0; font-family: var(--dk-font-serif); font-weight: 400; font-size: 48px; letter-spacing: -0.01em; line-height: 1.02; color: #F2F1EE; }
+.dk-sanatci-panel-h1 em { font-style: italic; color: #FF4FA3; }
+.dk-sanatci-panel-sub { margin: 0; font-size: 15px; color: #A3A7AF; }
+.dk-sanatci-panel-hact { display: flex; gap: 10px; flex-shrink: 0; }
+.dk-sanatci-panel-btn { height: 44px; box-sizing: border-box; border-radius: 6px; display: flex; align-items: center; gap: 9px; font-size: 14px; white-space: nowrap; text-decoration: none; }
+.dk-sanatci-panel-btn.is-outline { padding: 0 16px; border: 1px solid #2C303A; color: #F2F1EE; font-weight: 500; }
+.dk-sanatci-panel-btn.is-primary { padding: 0 18px; background: #FF4FA3; color: #06070A; font-weight: 600; }
+.dk-sanatci-panel-btn.is-outline:hover { color: #F2F1EE; }
+.dk-sanatci-panel-btn.is-primary:hover { color: #06070A; }
+
+/* ── KPI ── */
+.dk-sanatci-panel-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.dk-sanatci-panel-kpi { position: relative; box-sizing: border-box; min-width: 0; padding: 20px 20px 18px; border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; display: flex; flex-direction: column; gap: 10px; }
+.dk-sanatci-panel-ktop { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dk-sanatci-panel-kl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-sanatci-panel-kic { width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.dk-sanatci-panel-kv { font-size: 32px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }
+.dk-sanatci-panel-ks { font-size: 13px; color: #8A8E97; }
+
+/* ── ortak ── */
+.dk-sanatci-panel-card { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; }
+.dk-sanatci-panel-offtl { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dk-sanatci-panel-bar { width: 3px; height: 18px; flex-shrink: 0; border-radius: 2px; background: #FF4FA3; display: block; }
+.dk-sanatci-panel-h2 { margin: 0; font-family: var(--dk-font-sans); font-size: 18px; font-weight: 600; letter-spacing: normal; color: #F2F1EE; }
+.dk-sanatci-panel-ml { margin: 0; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: #A3A7AF; }
+.dk-sanatci-panel-p { margin: 0; font-size: 13.5px; line-height: 1.5; color: #A3A7AF; }
+.dk-sanatci-panel-muted13 { font-size: 13px; color: #8A8E97; white-space: nowrap; }
+.dk-sanatci-panel-tbtn { height: 40px; box-sizing: border-box; margin: 0; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-family: var(--dk-font-sans); font-size: 13.5px; white-space: nowrap; text-decoration: none; cursor: pointer; }
+.dk-sanatci-panel-tbtn.is-outline { padding: 0 14px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-weight: 500; }
+.dk-sanatci-panel-tbtn.is-primary { padding: 0 16px; border: 0; background: #FF4FA3; color: #06070A; font-weight: 600; }
+.dk-sanatci-panel-tbtn.is-outline:hover { color: #F2F1EE; }
+.dk-sanatci-panel-tbtn[disabled], .dk-sanatci-panel-tbtn[aria-disabled="true"] { opacity: .5; cursor: default; }
+.dk-sanatci-panel-emptyrow { box-sizing: border-box; padding: 16px; border: 1px solid #1F232B; border-radius: 10px; background: #0E1014; display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: #8A8E97; }
+.dk-sanatci-panel-emptyrow.is-inlist { border: 0; border-radius: 0; background: transparent; }
+.dk-sanatci-panel-emptyrow svg { flex-shrink: 0; }
+
+/* ── ROW 2: teklifler + sağ kolon ── */
+.dk-sanatci-panel-row2 { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.dk-sanatci-panel-offers { overflow: hidden; min-width: 0; }
+.dk-sanatci-panel-offhead { padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid #14171D; }
+.dk-sanatci-panel-pill { height: 22px; box-sizing: border-box; padding: 0 8px; border-radius: 11px; background: rgba(255,79,163,0.12); border: 1px solid rgba(255,79,163,0.45); color: #FF4FA3; display: flex; align-items: center; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.dk-sanatci-panel-hint { font-size: 13px; color: #8A8E97; white-space: nowrap; }
+/* Tablo: artboard'un 5 sütunu (MEKAN ≈50px) 1440'ta üst üste biniyor → spec Q3 varsayılanı: TARİH • SAAT MEKAN hücresinin 2. satırı */
+.dk-sanatci-panel-tr { box-sizing: border-box; padding: 0 24px; display: grid; grid-template-columns: minmax(0, 1fr) 96px 124px 188px; gap: 16px; align-items: center; border-bottom: 1px solid #14171D; }
+.dk-sanatci-panel-th { height: 38px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-sanatci-panel-thr { text-align: right; }
+.dk-sanatci-panel-row { min-height: 76px; padding: 14px 24px; cursor: pointer; }
+.dk-sanatci-panel-row.dk-sanatci-panel-skel { cursor: default; }
+.dk-sanatci-panel-c1 { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.dk-sanatci-panel-l1 { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* artboard'da ad kısaltılmıyor (satır kırılır) → en çok 2 satır, gerekirse 2. satırın sonunda üç nokta; tür çipi yanda sabit */
+.dk-sanatci-panel-vname, .dk-sanatci-panel-vname:hover { min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; font-size: 15px; font-weight: 600; color: #F2F1EE; }
+.dk-sanatci-panel-gchip { height: 20px; box-sizing: border-box; flex-shrink: 0; padding: 0 7px; border-radius: 10px; border: 1px solid; display: flex; align-items: center; font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+.dk-sanatci-panel-when { font-size: 13.5px; color: #C9CACD; }
+.dk-sanatci-panel-msg { font-size: 13px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-sanatci-panel-fee { font-family: var(--dk-font-mono); font-size: 14px; font-weight: 600; color: #F2F1EE; white-space: nowrap; }
+.dk-sanatci-panel-st { height: 24px; box-sizing: border-box; padding: 0 9px; display: inline-flex; align-items: center; gap: 6px; border-radius: 4px; border: 1px solid; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; white-space: nowrap; }
+.dk-sanatci-panel-stdot { width: 6px; height: 6px; border-radius: 50%; display: block; flex-shrink: 0; }
+.dk-sanatci-panel-acts { display: flex; justify-content: flex-end; gap: 8px; }
+.dk-sanatci-panel-offempty { padding: 16px 24px; display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: #8A8E97; }
+
+.dk-sanatci-panel-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.dk-sanatci-panel-comp { box-sizing: border-box; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+.dk-sanatci-panel-comphead { display: flex; align-items: center; justify-content: space-between; }
+.dk-sanatci-panel-pct { font-family: var(--dk-font-mono); font-size: 15px; font-weight: 700; color: #FF4FA3; }
+.dk-sanatci-panel-track { height: 6px; border-radius: 3px; background: #1F232B; overflow: hidden; }
+.dk-sanatci-panel-fill { height: 100%; display: block; border-radius: 3px; }
+.dk-sanatci-panel-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.dk-sanatci-panel-mchip, .dk-sanatci-panel-mchip:hover { height: 32px; box-sizing: border-box; padding: 0 11px; border-radius: 16px; border: 1px solid rgba(255,215,0,0.35); color: #FFD700; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+.dk-sanatci-panel-complete { font-size: 13.5px; font-weight: 600; color: #7CE0B0; }
+.dk-sanatci-panel-rate { box-sizing: border-box; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+.dk-sanatci-panel-rrow { display: flex; align-items: center; gap: 10px; }
+.dk-sanatci-panel-rrow svg { flex-shrink: 0; }
+.dk-sanatci-panel-rv { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.dk-sanatci-panel-rc { font-size: 14px; color: #8A8E97; }
+.dk-sanatci-panel-alink, .dk-sanatci-panel-alink:hover { display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: #FF4FA3; }
+
+/* ── SAHNE TAKVİMİ ── */
+.dk-sanatci-panel-cal { box-sizing: border-box; padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.dk-sanatci-panel-calhead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.dk-sanatci-panel-legend { display: flex; align-items: center; gap: 18px; font-size: 12.5px; color: #A3A7AF; }
+.dk-sanatci-panel-legend > span { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.dk-sanatci-panel-ldot { width: 8px; height: 8px; border-radius: 50%; display: block; }
+.dk-sanatci-panel-days { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 8px; }
+.dk-sanatci-panel-day { height: 88px; min-width: 0; box-sizing: border-box; margin: 0; padding: 10px 0 8px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; color: #F2F1EE; display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: var(--dk-font-sans); cursor: pointer; }
+.dk-sanatci-panel-day.is-today { border-color: #2C303A; }
+.dk-sanatci-panel-day.is-sel { border-color: #FF4FA3; background: rgba(255,79,163,0.10); }
+.dk-sanatci-panel-dow { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #8A8E97; }
+.dk-sanatci-panel-dd { font-size: 22px; font-weight: 600; line-height: 1.1; }
+.dk-sanatci-panel-dots { height: 8px; display: flex; gap: 4px; align-items: center; }
+.dk-sanatci-panel-dot { width: 6px; height: 6px; border-radius: 50%; display: block; }
+.dk-sanatci-panel-daybar { min-height: 56px; box-sizing: border-box; padding: 14px 16px; border-radius: 8px; background: #0A0B0F; border: 1px solid #14171D; display: flex; align-items: center; gap: 20px; }
+.dk-sanatci-panel-daytitle { flex-shrink: 0; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #F2F1EE; }
+.dk-sanatci-panel-daydiv { width: 1px; height: 24px; flex-shrink: 0; background: #1F232B; display: block; }
+.dk-sanatci-panel-dayempty { font-size: 14px; color: #8A8E97; }
+.dk-sanatci-panel-dayents { display: flex; flex-wrap: wrap; gap: 10px; min-width: 0; }
+.dk-sanatci-panel-dayent { height: 32px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 8px; border-radius: 6px; border: 1px solid #1F232B; background: #0E1014; font-size: 13.5px; white-space: nowrap; }
+.dk-sanatci-panel-edot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; display: block; }
+
+/* ── ROW 4 ── */
+.dk-sanatci-panel-row4 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.dk-sanatci-panel-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.dk-sanatci-panel-colhead { height: 32px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dk-sanatci-panel-clink { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.dk-sanatci-panel-stack { display: flex; flex-direction: column; gap: 12px; }
+/* bekleyen rezidans */
+.dk-sanatci-panel-pend { box-sizing: border-box; padding: 16px; border: 1px solid rgba(255,215,0,0.35); border-radius: 10px; background: rgba(255,215,0,0.04); display: flex; flex-direction: column; gap: 12px; }
+.dk-sanatci-panel-pendt { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #FFD700; }
+.dk-sanatci-panel-pendt svg { flex-shrink: 0; }
+.dk-sanatci-panel-pendit { display: flex; flex-direction: column; gap: 12px; }
+.dk-sanatci-panel-pendit + .dk-sanatci-panel-pendit { padding-top: 12px; border-top: 1px solid rgba(255,215,0,0.18); }
+.dk-sanatci-panel-pendb { display: flex; flex-direction: column; gap: 4px; }
+.dk-sanatci-panel-pv { font-size: 15px; font-weight: 600; }
+.dk-sanatci-panel-pm { font-size: 13px; color: #A3A7AF; }
+.dk-sanatci-panel-pp { font-family: var(--dk-font-mono); font-size: 11.5px; color: #8A8E97; }
+.dk-sanatci-panel-pacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dk-sanatci-panel-pacts .dk-sanatci-panel-tbtn { width: 100%; padding: 0; }
+/* aktif rezidans */
+.dk-sanatci-panel-res, .dk-sanatci-panel-res:hover { box-sizing: border-box; padding: 14px 16px; border: 1px solid #1F232B; border-radius: 10px; background: #0E1014; display: flex; align-items: center; gap: 12px; color: #F2F1EE; text-decoration: none; }
+.dk-sanatci-panel-resic { width: 38px; height: 38px; flex-shrink: 0; border-radius: 8px; background: rgba(255,79,163,0.10); color: #FF4FA3; display: flex; align-items: center; justify-content: center; }
+.dk-sanatci-panel-rescol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-sanatci-panel-resm { font-size: 12.5px; color: #8A8E97; }
+.dk-sanatci-panel-aktif { height: 22px; box-sizing: border-box; flex-shrink: 0; padding: 0 8px; border-radius: 4px; background: rgba(124,224,176,0.1); border: 1px solid rgba(124,224,176,0.4); color: #7CE0B0; display: flex; align-items: center; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; }
+/* yaklaşan performanslar */
+.dk-sanatci-panel-list { border: 1px solid #1F232B; border-radius: 10px; background: #0E1014; overflow: hidden; }
+.dk-sanatci-panel-gig { box-sizing: border-box; padding: 14px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #14171D; }
+.dk-sanatci-panel-gdot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: #FF4FA3; display: block; }
+.dk-sanatci-panel-gcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-sanatci-panel-gv { font-size: 15px; font-weight: 600; }
+.dk-sanatci-panel-gd { font-size: 12.5px; color: #8A8E97; }
+.dk-sanatci-panel-gfee { font-family: var(--dk-font-mono); font-size: 13.5px; font-weight: 600; color: #7CE0B0; white-space: nowrap; }
+/* son yorumlar */
+.dk-sanatci-panel-rev { box-sizing: border-box; min-width: 0; padding: 14px 16px; border: 1px solid #1F232B; border-radius: 10px; background: #0E1014; display: flex; flex-direction: column; gap: 8px; }
+.dk-sanatci-panel-revtop { display: flex; align-items: center; gap: 10px; }
+.dk-sanatci-panel-rav { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; color: #06070A; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+.dk-sanatci-panel-revcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.dk-sanatci-panel-revname { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-sanatci-panel-revdate { font-size: 12px; color: #8A8E97; }
+.dk-sanatci-panel-revpill { height: 20px; box-sizing: border-box; flex-shrink: 0; padding: 0 7px; border-radius: 10px; display: flex; align-items: center; font-size: 11px; font-weight: 600; }
+.dk-sanatci-panel-stars { font-size: 13px; letter-spacing: 2px; color: #FFD700; }
+.dk-sanatci-panel-stoff { color: #3A3E48; }
+.dk-sanatci-panel-revtxt { margin: 0; font-size: 13.5px; line-height: 1.5; color: #C9CACD; overflow-wrap: anywhere; }
+
+/* ── onay modalı (portal; dkModal variant confirm + cls) — artboard: 440 pad 28 r12 #2C303A #0E1014 gap 14, h3 20/600, p 15/1.55 ── */
+.dk-sanatci-panel-conf.dk-mdl-confirm { padding: 28px; gap: 14px; border: 1px solid #2C303A; border-radius: 12px; background: #0E1014; }
+.dk-sanatci-panel-conf.dk-mdl-confirm .dk-mdl-t { font-size: 20px; font-weight: 600; }
+.dk-sanatci-panel-conf.dk-mdl-confirm .dk-mdl-p { font-size: 15px; line-height: 1.55; color: #A3A7AF; }
+.dk-sanatci-panel-conf.dk-mdl-confirm .dk-mdl-acts { margin-top: 8px; gap: 10px; }
+.dk-sanatci-panel-conf.dk-mdl-confirm .dk-btn-outline { padding: 0 18px; font-weight: 500; }
+.dk-sanatci-panel-conf.dk-mdl-confirm :is(.dk-btn-primary, .dk-btn-danger) { padding: 0 20px; font-weight: 600; }
+
+/* onay modalı katmanı: artboard padding-top 260 (kısa ekranlarda %28) — yalnız bu diyaloğu içeren katman */
+.dk-ovl.dk-ovl-top:has(> .dk-sanatci-panel-conf) { padding-top: min(260px, 29vh); }
+/* onay katmanı: artboard rgba(6,7,10,0.72) (ortak confirm .70) */
+.dk-ovl:has(> .dk-sanatci-panel-conf) > .dk-ovl-bg { background: rgba(6,7,10,0.72); }
+/* artboard'da katman yalnız <main>'i örter → diyalog içerik kolonunun ortasında (kenar çubuğu 256 görünürken) */
+@media (min-width: 1024px) { .dk-sanatci-panel-conf.dk-mdl-confirm { margin-left: 256px; } }
+
+/* ══════════ DUYARLI ══════════ */
+/* 1280–1399: 360px sağ kolonla tablo MEKAN sütunu <170px kalıyor → teklif tablosu tam genişlik, sağ kolon altta 2 sütun */
+@media (max-width: 1399px) {
+  .dk-sanatci-panel-row2 { grid-template-columns: minmax(0, 1fr); }
+  .dk-sanatci-panel-side { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+@media (max-width: 1279px) {
+  .dk-sanatci-panel-day { height: 76px; }
+  .dk-sanatci-panel-dd { font-size: 18px; }
+  .dk-sanatci-panel-row4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-sanatci-panel-col-rev { grid-column: 1 / -1; }
+  .dk-sanatci-panel-col-rev .dk-sanatci-panel-stack { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); align-items: start; }
+}
+@media (max-width: 1099px) {
+  .dk-sanatci-panel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1023px) {
+  .dk-sanatci-panel-hero { flex-direction: column; align-items: flex-start; }
+  .dk-sanatci-panel-h1 { font-size: 44px; }
+  .dk-sanatci-panel-side { grid-template-columns: minmax(0, 1fr); }
+  .dk-sanatci-panel-row4 { grid-template-columns: minmax(0, 1fr); }
+  .dk-sanatci-panel-offhead { padding: 18px 20px; }
+  .dk-sanatci-panel-hint { display: none; }
+  /* teklifler: yığılmış kartlar (mekan + tür · tarih · mesaj | rozet · ücret · tam genişlik 2'li düğmeler) */
+  .dk-sanatci-panel-th { display: none; }
+  .dk-sanatci-panel-row { padding: 16px 20px; grid-template-columns: minmax(0, 1fr) auto; row-gap: 10px; }
+  .dk-sanatci-panel-row > .dk-sanatci-panel-c1 { grid-column: 1; grid-row: 1; }
+  .dk-sanatci-panel-row > .dk-sanatci-panel-stcell { grid-column: 2; grid-row: 1; align-self: start; }
+  .dk-sanatci-panel-row > .dk-sanatci-panel-fee { grid-column: 1 / -1; grid-row: 2; }
+  .dk-sanatci-panel-row > .dk-sanatci-panel-acts { grid-column: 1 / -1; grid-row: 3; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-sanatci-panel-row > .dk-sanatci-panel-acts > .is-detail { grid-column: 1 / -1; }
+  .dk-sanatci-panel-offempty { padding: 16px 20px; }
+  /* takvim: 7 gün görünür yatay kaydırıcı */
+  .dk-sanatci-panel-cal { padding: 20px; }
+  .dk-sanatci-panel-calhead { flex-wrap: wrap; row-gap: 10px; }
+  .dk-sanatci-panel-days { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: calc((100% - 48px) / 7); overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; scrollbar-width: thin; scrollbar-color: #2C303A transparent; }
+  .dk-sanatci-panel-day { scroll-snap-align: start; }
+  .dk-sanatci-panel-daybar { flex-wrap: wrap; row-gap: 10px; }
+}

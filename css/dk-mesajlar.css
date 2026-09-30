@@ -1,0 +1,232 @@
+/* dk-mesajlar.css — WebMesajlar masaüstü görünümü (mesajlar).
+   SAHİBİ: js/desktop/messages/mesajlar.js (+ chat.js) uygulayıcısı (specs/foundation.md §3). Spec: specs/hesap.md WebMesajlar
+   KAPSAM: tüm seçiciler .dk-mesajlar kökü (ve .dk-mesajlar-* alt sınıfları) altında; çıplak eleman seçicisi / legacy sınıf yok.
+   Ortak sohbet parçaları (js/desktop/messages/chat.js, sınıf ön eki = kök sınıf) iki görünümde aynı kurallarla çizilir; ölçü farkları
+   (WebMesajlar 340/esnek/300 · WebPanelMesajlar 320/esnek/280 …) kökteki --m-* değişkenleriyle. "ORTAK SOHBET" bölümü iki dosyada
+   (dk-mesajlar.css / dk-panel-mesajlar.css) yalnız kök sınıf adı farkıyla BİREBİR aynıdır — birini değiştirirken diğerini de güncelle. */
+
+/* ══════════ ORTAK SOHBET (chat.js) — kök + 3 bölme ══════════ */
+.dk-mesajlar {
+  --dk-fade-dur: 260ms; --dk-row-hover-bg: #101217; --dk-scroll-thumb: #1F232B; --dk-focus-border: #4ED8FF;
+  display: flex; min-width: 0; min-height: 0; background: #06070A; color: #F2F1EE;
+}
+.dk-mesajlar [hidden] { display: none !important; }
+.dk-mesajlar button { font-family: inherit; }
+
+/* ── sol bölme: konuşma listesi ── */
+.dk-mesajlar-list { width: var(--m-lw); flex-shrink: 0; box-sizing: border-box; min-height: 0; border-right: 1px solid #14171D; background: #0A0B0F; display: flex; flex-direction: column; }
+.dk-mesajlar-lhead { flex-shrink: 0; padding: var(--m-lh-pad); display: flex; flex-direction: column; gap: var(--m-lh-gap); }
+.dk-mesajlar-lrow { display: flex; align-items: center; gap: 10px; }
+.dk-mesajlar-h { margin: 0; font-family: var(--dk-font-serif); font-size: 34px; font-weight: 400; line-height: 1.02; letter-spacing: -0.01em; color: #F2F1EE; white-space: nowrap; }
+.dk-mesajlar-h em { font-style: italic; color: #FF4FA3; }
+.dk-mesajlar-pill { flex-shrink: 0; height: 22px; box-sizing: border-box; padding: 0 8px; border-radius: 11px; background: rgba(255,79,163,0.14); color: #FF4FA3; display: flex; align-items: center; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; white-space: nowrap; }
+.dk-mesajlar-icbtn { width: 40px; height: 40px; flex-shrink: 0; box-sizing: border-box; padding: 0; margin: 0; border-radius: 8px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.dk-mesajlar-lrow > .dk-mesajlar-icbtn:last-child { margin-left: auto; }
+.dk-mesajlar-search { position: relative; }
+.dk-mesajlar-sic { position: absolute; left: var(--m-srch-ic); top: var(--m-srch-ic); pointer-events: none; }
+.dk-mesajlar-sin { display: block; width: 100%; height: var(--m-srch-h); box-sizing: border-box; margin: 0; padding: var(--m-srch-pad); border-radius: 8px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; font-family: inherit; font-size: 14px; -webkit-appearance: none; appearance: none; }
+.dk-mesajlar-sin:hover { border-color: #2C303A; }
+.dk-mesajlar-sin:focus { background: #10131A; }
+.dk-mesajlar-sin::placeholder, .dk-mesajlar-cin::placeholder { color: #7D818B; }
+.dk-mesajlar-ul, .dk-mesajlar-cmp-ul { flex-grow: 1; min-height: 0; overflow-y: auto; margin: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.dk-mesajlar-ul { padding: var(--m-ul-pad); }
+.dk-mesajlar-li { display: block; }
+.dk-mesajlar-row { position: relative; width: 100%; height: var(--m-row-h); box-sizing: border-box; margin: 0; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: #F2F1EE; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; }
+.dk-mesajlar-row.is-on, .dk-mesajlar-row.is-on:hover { background: #14171D; }
+/* odak halkası: artboard `outline:2px solid #4ED8FF; outline-offset:2px` — kaydırma kabının (ul) dolgusu halkayı kırpmayacak kadar olduğunda
+   (dinleyici: ul 4px 10px → 2px dış) birebir; panel listesinin 2px üst dolgusunda kırpılmasın diye --m-ring-off 0 */
+.dk-mesajlar-row:focus-visible, .dk-mesajlar-prow:focus-visible { outline-offset: var(--m-ring-off); }
+.dk-mesajlar-bar { position: absolute; left: 0; top: 14px; bottom: 14px; width: var(--m-bar-w); border-radius: var(--m-bar-r); background: transparent; display: block; }
+.dk-mesajlar-row.is-on .dk-mesajlar-bar { background: var(--m-bar-c); }
+.dk-mesajlar-avw { position: relative; width: var(--m-av); height: var(--m-av); flex-shrink: 0; display: block; }
+.dk-mesajlar-av { display: block; flex-shrink: 0; border-radius: 50%; object-fit: cover; object-position: center; }
+.dk-mesajlar-avi { display: flex; align-items: center; justify-content: center; color: #06070A; font-weight: 700; line-height: 1; }
+.dk-mesajlar-avw .dk-mesajlar-avi { font-size: var(--m-avi-fs); }
+.dk-mesajlar-rdot { position: absolute; right: -1px; bottom: -1px; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; border: 3px solid #0A0B0F; display: block; }
+.dk-mesajlar-rcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--m-rcol-gap); }
+.dk-mesajlar-l1, .dk-mesajlar-l2 { display: flex; align-items: center; gap: 8px; }
+.dk-mesajlar-name { flex-grow: 1; min-width: 0; font-size: var(--m-name-fs); line-height: var(--m-name-lh); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mesajlar-time { flex-shrink: 0; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 600; color: #8A8E97; }
+.dk-mesajlar-prev { flex-grow: 1; min-width: 0; font-size: var(--m-prev-fs); line-height: var(--m-prev-lh); color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mesajlar-row.is-unread .dk-mesajlar-name { font-weight: 700; }
+.dk-mesajlar-row.is-unread .dk-mesajlar-time { color: #FF4FA3; }
+.dk-mesajlar-row.is-unread .dk-mesajlar-prev { color: #F2F1EE; }
+.dk-mesajlar-badge { flex-shrink: 0; min-width: 20px; height: 20px; box-sizing: border-box; padding: 0 6px; border-radius: 10px; background: #FF4FA3; color: #06070A; display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; }
+.dk-mesajlar-otag { align-self: flex-start; height: 18px; box-sizing: border-box; padding: 0 6px; border-radius: 3px; border: 1px solid; display: flex; align-items: center; font-family: var(--dk-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; white-space: nowrap; }
+.dk-mesajlar-none { padding: 40px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; color: #8A8E97; font-size: 13.5px; line-height: normal; }
+.dk-mesajlar-none-t { color: #F2F1EE; font-size: 14.5px; font-weight: 500; }
+.dk-mesajlar-skrow { height: var(--m-row-h); box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 12px; }
+.dk-mesajlar-cmp-ul .dk-mesajlar-skrow { height: 60px; }
+.dk-mesajlar-skcol { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+/* yeni mesaj (compose) — WebMesajlar compose paneli */
+.dk-mesajlar-cmp { flex-grow: 1; min-height: 0; display: flex; flex-direction: column; }
+.dk-mesajlar-cmp-eb { flex-shrink: 0; padding: 2px var(--m-cmp-x) 6px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-mesajlar-cmp-ul { padding: 4px var(--m-cmpul-x) 12px; }   /* 4px üst dolgu (başlıktan alındı; konumlar aynı) → ilk satırın odak halkası kırpılmaz */
+.dk-mesajlar-prow { width: 100%; height: 60px; box-sizing: border-box; margin: 0; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: #F2F1EE; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; }
+.dk-mesajlar-prow .dk-mesajlar-avi { font-size: 16px; }
+.dk-mesajlar-pcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-mesajlar-pname2 { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mesajlar-psub { font-size: 12.5px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mesajlar-cmp-foot { flex-shrink: 0; margin: 0; padding: 14px var(--m-cmp-x) 18px; border-top: 1px solid #14171D; font-size: 12.5px; line-height: 1.5; color: #8A8E97; }
+.dk-mesajlar-cmp-foot a, .dk-mesajlar-cmp-foot a:hover { color: #4ED8FF; }   /* artboard: satır içi color → üzerine gelince de camgöbeği */
+
+/* ── orta bölme: sohbet ── */
+.dk-mesajlar-chat { flex-grow: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #06070A; }
+.dk-mesajlar-chead { flex-shrink: 0; height: var(--m-ch-h); box-sizing: border-box; padding: var(--m-ch-pad); border-bottom: 1px solid #14171D; display: flex; align-items: center; gap: var(--m-ch-gap); }
+.dk-mesajlar-chead .dk-mesajlar-avi { font-size: var(--m-hav-fs); }
+.dk-mesajlar-back { display: none; width: 40px; height: 40px; flex-shrink: 0; box-sizing: border-box; margin: 0; padding: 0; border-radius: 6px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; align-items: center; justify-content: center; cursor: pointer; }
+.dk-mesajlar-hcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-mesajlar-hname { margin: 0; font-family: var(--dk-font-sans); font-size: var(--m-hname-fs); font-weight: 600; letter-spacing: -0.01em; line-height: normal; color: #F2F1EE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mesajlar-hst { display: flex; align-items: center; gap: 7px; font-size: 12.5px; white-space: nowrap; overflow: hidden; }
+.dk-mesajlar-hdot { width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; display: block; }
+.dk-mesajlar-obtn { height: 40px; flex-shrink: 0; box-sizing: border-box; margin: 0; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 500; white-space: nowrap; text-decoration: none; cursor: pointer; }
+.dk-mesajlar .dk-mesajlar-obtn, .dk-mesajlar .dk-mesajlar-obtn:hover { color: #F2F1EE; }
+.dk-mesajlar-more { width: 40px; height: 40px; flex-shrink: 0; box-sizing: border-box; margin: 0; padding: 0; border-radius: 6px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.dk-mesajlar-log { flex-grow: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column-reverse; padding: var(--m-log-pad); }
+.dk-mesajlar-logi { display: flex; flex-direction: column; }
+.dk-mesajlar-sep { margin: 22px 0 14px; display: flex; align-items: center; gap: 14px; }
+.dk-mesajlar-sepl { flex-grow: 1; height: 1px; background: #14171D; display: block; }
+.dk-mesajlar-sept { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-mesajlar-msg { display: flex; }
+.dk-mesajlar-them { align-items: flex-end; gap: 10px; }
+.dk-mesajlar-me { justify-content: flex-end; }
+.dk-mesajlar-mav { width: 30px; height: 30px; flex-shrink: 0; display: block; }
+.dk-mesajlar-mav .dk-mesajlar-avi { font-size: 13px; }
+.dk-mesajlar-mcol { min-width: 0; max-width: var(--m-bmax); display: flex; flex-direction: column; gap: 5px; }
+.dk-mesajlar-them .dk-mesajlar-mcol { align-items: flex-start; }
+.dk-mesajlar-me .dk-mesajlar-mcol { align-items: flex-end; }
+.dk-mesajlar-bubble { max-width: 100%; box-sizing: border-box; padding: 11px 15px; font-size: 14.5px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.dk-mesajlar-bthem { border: 1px solid #1F232B; background: #111318; color: #F2F1EE; }
+.dk-mesajlar-bme { background: #FF4FA3; color: #06070A; font-weight: 500; }
+.dk-mesajlar-mtime { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: var(--m-mtime-w); color: #8A8E97; }
+.dk-mesajlar-them .dk-mesajlar-mtime { padding-left: 4px; }
+.dk-mesajlar-me .dk-mesajlar-mtime { padding-right: 4px; }
+.dk-mesajlar-sender { padding-left: 4px; font-size: 12px; font-weight: 600; color: #A3A7AF; }
+.dk-mesajlar-cempty { margin: 0 auto 40px; max-width: 360px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; color: #8A8E97; font-size: 14px; line-height: 1.5; }
+.dk-mesajlar-cempty-t { color: #F2F1EE; font-size: 16px; font-weight: 500; }
+.dk-mesajlar-cempty .dk-mesajlar-obtn { margin-top: 4px; }
+.dk-mesajlar-loading { margin: 0 auto 40px; color: #8A8E97; display: flex; }
+/* konuşma seçili değil (boş gelen kutusu / tek bölmeden dönüş): yer tutucu dikeyde ortada */
+.dk-mesajlar-chat-none .dk-mesajlar-log { justify-content: center; }
+.dk-mesajlar-chat-none .dk-mesajlar-cempty { margin-bottom: 0; }
+/* teklif kartı (WebPanelMesajlar OfferChatCard) */
+.dk-mesajlar-ocol { width: 380px; flex: 0 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.dk-mesajlar-offer { width: 100%; box-sizing: border-box; border-radius: 16px 16px 16px 4px; border: 1px solid #1F232B; background: #0E1014; overflow: hidden; }
+.dk-mesajlar-offer.is-pending { border-color: rgba(255,79,163,0.45); }
+.dk-mesajlar-ohead { padding: 12px 16px; border-bottom: 1px solid #1F232B; background: rgba(255,79,163,0.06); display: flex; align-items: center; gap: 8px; }
+.dk-mesajlar-ohead > svg { flex-shrink: 0; }
+.dk-mesajlar-oeb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #FF4FA3; white-space: nowrap; }
+.dk-mesajlar-ofee { margin-left: auto; font-family: var(--dk-font-mono); font-size: 15px; font-weight: 600; color: #F2F1EE; white-space: nowrap; }
+.dk-mesajlar-obody { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.dk-mesajlar-otext { font-size: 14.5px; line-height: 1.5; color: #F2F1EE; white-space: pre-line; overflow-wrap: anywhere; }
+.dk-mesajlar-otiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.dk-mesajlar-otile { min-width: 0; box-sizing: border-box; padding: 8px 10px; border-radius: 6px; background: #14171D; display: flex; flex-direction: column; gap: 3px; }
+.dk-mesajlar-otl { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
+.dk-mesajlar-otv { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.dk-mesajlar-oact { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dk-mesajlar-oact.is-wait { visibility: hidden; }
+.dk-mesajlar-oact.is-busy { opacity: 0.6; }
+.dk-mesajlar-oyes, .dk-mesajlar-ono { height: 40px; box-sizing: border-box; margin: 0; padding: 0 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.dk-mesajlar-oyes { border: 0; background: #7CE0B0; color: #06070A; }
+.dk-mesajlar-ono { border: 1px solid rgba(255,90,110,0.5); background: transparent; color: #FF8A98; }
+.dk-mesajlar-oyes:disabled, .dk-mesajlar-ono:disabled { cursor: default; }
+.dk-mesajlar-odone { height: 40px; box-sizing: border-box; padding: 0 12px; border-radius: 6px; border: 1px solid; display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; }
+/* yazma kutusu */
+.dk-mesajlar-composer { flex-shrink: 0; box-sizing: border-box; padding: var(--m-cmp-pad); border-top: 1px solid #14171D; display: flex; flex-direction: column; gap: 8px; }
+.dk-mesajlar-crow { display: flex; align-items: center; gap: 10px; }
+.dk-mesajlar-cin { flex-grow: 1; min-width: 0; height: 48px; box-sizing: border-box; margin: 0; padding: 0 16px; border-radius: 8px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; font-family: inherit; font-size: 15px; }
+.dk-mesajlar-cin:hover { border-color: #2C303A; }
+.dk-mesajlar-cin:focus { background: #10131A; }
+.dk-mesajlar-send { width: 48px; height: 48px; flex-shrink: 0; box-sizing: border-box; margin: 0; padding: 0; border: 0; border-radius: 8px; background: #FF4FA3; color: #06070A; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.dk-mesajlar-send:disabled { background: #14171D; color: #8A8E97; cursor: default; }
+.dk-mesajlar-cmeta { display: flex; justify-content: space-between; font-size: 11.5px; color: #8A8E97; }
+.dk-mesajlar-count { font-family: var(--dk-font-mono); }
+.dk-mesajlar-blocked { min-height: 48px; box-sizing: border-box; padding: 12px 16px; border-radius: 8px; border: 1px dashed #2C303A; display: flex; align-items: center; gap: 10px; font-size: 13.5px; line-height: 1.5; color: #8A8E97; }
+.dk-mesajlar-blocked > svg { flex-shrink: 0; }
+
+/* ── sağ bölme: kişi / mekan özeti ── */
+.dk-mesajlar-pane { width: var(--m-pane-w); flex-shrink: 0; box-sizing: border-box; min-height: 0; border-left: 1px solid #14171D; background: #0A0B0F; overflow-y: auto; padding: var(--m-pane-pad); display: flex; flex-direction: column; gap: 20px; }
+.dk-mesajlar-pblock { display: flex; flex-direction: column; gap: var(--m-pblock-gap); }
+.dk-mesajlar-cover { position: relative; flex-shrink: 0; height: var(--m-cover-h); border-radius: 12px; overflow: hidden; border: 1px solid #1F232B; background: #14171D; }
+.dk-mesajlar-cimg { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+.dk-mesajlar-cph { width: 100%; height: 100%; background: linear-gradient(160deg, rgba(255,79,163,0.2), rgba(78,216,255,0.08)); color: #F2F1EE; display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-serif); font-size: var(--m-cph-fs); }
+.dk-mesajlar-scrim { position: absolute; left: 0; right: 0; bottom: 0; height: var(--m-scrim-h); background: linear-gradient(180deg, rgba(6,7,10,0), rgba(6,7,10,0.85)); display: block; }
+.dk-mesajlar-tag { position: absolute; left: var(--m-tag-x); top: var(--m-tag-x); max-width: calc(100% - 2 * var(--m-tag-x)); height: 22px; box-sizing: border-box; padding: 0 8px; border-radius: 4px; border: 1px solid; background: rgba(6,7,10,0.78); display: flex; align-items: center; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mesajlar-pinfo { display: flex; flex-direction: column; gap: 6px; }
+.dk-mesajlar-pname { font-family: var(--dk-font-serif); font-size: var(--m-pname-fs); line-height: 1.02; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.dk-mesajlar-pline { display: flex; align-items: center; gap: 7px; font-size: var(--m-pline-fs); color: #A3A7AF; }
+.dk-mesajlar-pline > svg { flex-shrink: 0; }
+.dk-mesajlar-pbtns { display: grid; gap: 8px; }
+.dk-mesajlar-light { height: 40px; box-sizing: border-box; padding: 0 8px; border-radius: 6px; background: #F2F1EE; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.dk-mesajlar .dk-mesajlar-light, .dk-mesajlar .dk-mesajlar-light:hover { color: #06070A; }
+.dk-mesajlar-follow { height: 40px; box-sizing: border-box; margin: 0; padding: 0 8px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 13.5px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.dk-mesajlar-follow.is-on { border-color: rgba(78,216,255,0.5); background: rgba(78,216,255,0.08); color: #4ED8FF; }
+.dk-mesajlar-follow:disabled { cursor: default; opacity: 0.7; }
+.dk-mesajlar-psec { display: flex; flex-direction: column; gap: 10px; }
+.dk-mesajlar-peb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-mesajlar-next { box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.dk-mesajlar .dk-mesajlar-next, .dk-mesajlar .dk-mesajlar-next:hover { color: #F2F1EE; }
+.dk-mesajlar-nimg { width: 56px; height: 56px; flex-shrink: 0; border-radius: 6px; object-fit: cover; display: block; }
+.dk-mesajlar-nph { display: flex; align-items: center; justify-content: center; color: #06070A; font-family: var(--dk-font-serif); font-size: 26px; }
+.dk-mesajlar-ncol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-mesajlar-nwhen { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; }
+.dk-mesajlar-ntitle { font-size: 14.5px; font-weight: 600; overflow-wrap: anywhere; }
+.dk-mesajlar-nwhere { font-size: 12.5px; color: #8A8E97; }
+.dk-mesajlar-nprice { font-family: var(--dk-font-mono); color: #C9CACD; }
+.dk-mesajlar-dash { box-sizing: border-box; padding: 14px; border-radius: 10px; border: 1px dashed #2C303A; font-size: 13px; line-height: 1.5; color: #8A8E97; }
+.dk-mesajlar-lcard { box-sizing: border-box; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; overflow: hidden; }
+.dk-mesajlar-lhead2 { padding: 12px 14px; border-bottom: 1px solid #1F232B; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dk-mesajlar-lfee { min-width: 0; font-family: var(--dk-font-mono); font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mesajlar-lfee.is-text { font-family: var(--dk-font-sans); font-size: 14px; }
+.dk-mesajlar-lst { flex-shrink: 0; height: 22px; box-sizing: border-box; padding: 0 8px; border-radius: 4px; border: 1px solid; display: flex; align-items: center; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; }
+.dk-mesajlar-dl { margin: 0; padding: 6px 14px 10px; display: flex; flex-direction: column; }
+.dk-mesajlar-dlr { height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid #14171D; font-size: 13px; }
+.dk-mesajlar-dlr:last-child { border-bottom: 0; }
+.dk-mesajlar-dlr dt { color: #8A8E97; }
+.dk-mesajlar-dlr dd { margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-mesajlar-note { margin-top: auto; padding-top: 16px; border-top: 1px solid #14171D; display: flex; gap: 10px; font-size: 12px; line-height: 1.5; color: #8A8E97; }
+.dk-mesajlar-nic { flex-shrink: 0; margin-top: 1px; }
+
+/* "Diğer seçenekler" menüsü (portal içinde; kök dışında → yalnız kendi sınıfları) */
+.dk-mesajlar-menu { box-sizing: border-box; padding: 6px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; box-shadow: 0 16px 40px rgba(0,0,0,0.45); display: flex; flex-direction: column; }
+.dk-mesajlar-mitem { width: 100%; height: 40px; box-sizing: border-box; margin: 0; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: #FF8A98; display: flex; align-items: center; gap: 10px; font-family: var(--dk-font-sans); font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; }
+.dk-mesajlar-mitem:hover { background: #14171D; }
+.dk-mesajlar-mitem:disabled { opacity: 0.45; cursor: default; }
+.dk-mesajlar-mitem:focus-visible { outline-offset: -2px; }
+
+
+/* ══════════ WebMesajlar ölçüleri (artboard 1440×900: 340 / 800 / 300) ══════════ */
+.dk-mesajlar {
+  flex: 1 1 auto;
+  --m-lw: 340px; --m-lw-md: 300px; --m-lh-pad: 22px 20px 14px; --m-lh-gap: 14px;
+  --m-srch-h: 44px; --m-srch-pad: 0 14px 0 40px; --m-srch-ic: 14px; --m-ul-pad: 4px 10px 16px;
+  --m-row-h: 76px; --m-bar-w: 2px; --m-bar-r: 1px; --m-bar-c: #4ED8FF; --m-av: 48px; --m-avi-fs: 19px;
+  --m-rcol-gap: 5px; --m-name-fs: 15px; --m-name-lh: 19px; --m-prev-lh: 17px; --m-prev-fs: 13.5px; --m-cmp-x: 20px; --m-cmpul-x: 10px;
+  --m-ch-h: 76px; --m-ch-pad: 0 24px 0 28px; --m-ch-gap: 14px; --m-hav-fs: 17px; --m-hname-fs: 17px;
+  --m-log-pad: 12px 32px 20px; --m-bmax: 500px; --m-mtime-w: 500; --m-cmp-pad: 14px 28px 20px;
+  --m-pane-w: 300px; --m-pane-pad: 24px 22px; --m-pblock-gap: 16px; --m-cover-h: 188px; --m-tag-x: 12px;
+  --m-scrim-h: 70px; --m-pname-fs: 32px; --m-pline-fs: 13.5px; --m-cph-fs: 72px; --m-ring-off: 2px;
+}
+
+/* ── misafir: legacy messagesView giriş istemi (tasarımda yok; hesap alanı boş durum diliyle) ── */
+.dk-mesajlar-guest { align-items: center; justify-content: center; padding: 48px 24px; box-sizing: border-box; }
+.dk-mesajlar-gate { max-width: 440px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.dk-mesajlar-gring { width: 64px; height: 64px; box-sizing: border-box; margin-bottom: 4px; border-radius: 50%; border: 1px dashed #2C303A; color: #8A8E97; display: flex; align-items: center; justify-content: center; }
+.dk-mesajlar-gt { margin: 0; font-family: var(--dk-font-serif); font-size: 40px; font-weight: 400; line-height: 1.05; letter-spacing: -0.01em; color: #F2F1EE; }
+.dk-mesajlar-gs { margin: 0 0 8px; max-width: 380px; font-size: 15px; line-height: 1.55; color: #A3A7AF; }
+
+/* ── duyarlı: 1024–1279 sağ bölme gizli · ≤1023 tek bölmeli akış (liste → sohbet → geri). Görünüm ölçü bloğundan SONRA gelir
+   (aynı özgüllük → sıra belirler; önce gelirse --m-lw: var(--m-lw-md) ezilir) ── */
+@media (max-width: 1279px) {
+  .dk-mesajlar { --m-lw: var(--m-lw-md); }
+  .dk-mesajlar-pane { display: none !important; }
+}
+@media (max-width: 1023px) {
+  .dk-mesajlar-list { width: 100%; border-right: 0; }
+  .dk-mesajlar.is-single:not(.is-chat) .dk-mesajlar-chat { display: none; }
+  .dk-mesajlar.is-single.is-chat .dk-mesajlar-list { display: none; }
+  .dk-mesajlar-back { display: flex; }
+  .dk-mesajlar-chead { padding: 0 20px 0 16px; gap: 12px; }
+  .dk-mesajlar-log { padding: 12px 24px 20px; }
+  .dk-mesajlar-composer { padding: 14px 24px 18px; }
+}

@@ -109,10 +109,13 @@ export async function recheckEmailVerified() {
   emit();
 }
 
-export async function logout() {
+// target: çıkış sonrası gidilecek rota (varsayılan #/kesfet — eski davranış). Legacy kod logout'u doğrudan
+// olay dinleyicisi olarak bağlar (onclick: logout) → ilk argüman Event gelir; yalnız "#/…" dizgesi hedef sayılır.
+export async function logout(target) {
+  const to = typeof target === "string" && target.startsWith("#/") ? target : "#/kesfet";
   session.reauthing = true;    // anonim (misafir) oturum kurulana kadar landing/giriş ekranı gösterme
   await signOut(auth);
-  location.hash = "#/kesfet";  // çıkışta misafir olarak Keşfet'e in (giriş/kayıt ekranına atma)
+  location.hash = to;          // çıkışta misafir olarak Keşfet'e in (giriş/kayıt ekranına atma)
 }
 
 // Rol + onay durumundan hedef rota

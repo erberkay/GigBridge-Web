@@ -1,0 +1,59 @@
+/* dk-top10.css — dinleyici Top 10 masaüstü görünümü (top10 · #/top10). Artboard YOK → WebSanatciTop10'dan türetildi.
+   SAHİBİ: js/desktop/public/top10.js uygulayıcısı (specs/foundation.md §3). Spec: specs/public-a.md 'Header Top 10 link target' + sanatci.md WebSanatciTop10
+   KAPSAM: .dk-top10 kökü (+ .dk-top10-*). Kürsü/tablo/filtre parçaları (.dk-t10-*) css/dk-sanatci-top10.css'te (top10-parts.js yükler).
+   Kalp/zil düğmeleri design/DinleyiciTop10.dc.html'den (44×40, r6, #2C303A / pembe / camgöbeği; tasarımdaki tek hareket gb-press
+   :active scale(.96) — dk-press ile). */
+
+.dk-top10 {
+  --dk-fade-dur: 200ms;
+  box-sizing: border-box; width: 100%; max-width: calc(1280px + 2 * var(--dk-gutter)); margin: 0 auto;
+  padding: 48px var(--dk-gutter) 96px; display: flex; flex-direction: column; gap: 24px; min-width: 0;
+}
+
+/* ---------- 1. Başlık ---------- */
+.dk-top10-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.dk-top10-hl { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.dk-top10 .dk-top10-eyebrow { color: #FFD700; }
+.dk-top10-sub { margin: 0; max-width: 720px; font-size: 15px; line-height: 1.5; color: #A3A7AF; }
+.dk-top10-hr { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dk-top10-fav {
+  height: 36px; box-sizing: border-box; padding: 0 14px; border-radius: 18px; border: 1px solid rgba(255,79,163,0.4); background: rgba(255,79,163,0.06);
+  color: #FF4FA3; display: flex; align-items: center; gap: 8px; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap;
+}
+.dk-top10-fav[hidden] { display: none; }
+
+/* ---------- 2. Ana ızgara ---------- */
+.dk-top10-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+.dk-top10-aside { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+
+/* ---------- 3. Kalp / zil ---------- */
+.dk-top10-acts { display: flex; gap: 6px; }
+.dk-top10 .dk-top10-heart, .dk-top10 .dk-top10-bell {
+  --dk-press-scale: .96;
+  width: 44px; height: 40px; flex-shrink: 0; box-sizing: border-box; padding: 0; border-radius: 6px; border: 1px solid #2C303A; background: #0E1014;
+  color: #F2F1EE; display: flex; align-items: center; justify-content: center;
+}
+.dk-top10 .dk-top10-heart.is-on { border-color: rgba(255,79,163,0.55); background: rgba(255,79,163,0.12); color: #FF4FA3; }
+.dk-top10 .dk-top10-bell { color: #8A8E97; }
+.dk-top10 .dk-top10-bell.is-on { border-color: rgba(78,216,255,0.45); background: rgba(78,216,255,0.10); color: #4ED8FF; }
+.dk-top10 .dk-top10-bell[hidden], .dk-top10 .dk-top10-spacer[hidden] { display: none; }
+.dk-top10-spacer { width: 44px; height: 40px; flex-shrink: 0; display: block; }
+.dk-top10-noact { width: 94px; height: 40px; display: block; }
+.dk-top10 .dk-top10-heart:disabled, .dk-top10 .dk-top10-bell:disabled { opacity: 0.5; cursor: default; }
+
+/* ---------- 4. Duyarlı ---------- */
+/* ≤1399: yan kolon listenin altına (dk-sanatci-top10.css ile aynı eşik — sol kolon SKOR'lu tabloya yetecek genişlikte kalsın) */
+@media (max-width: 1399px) {
+  .dk-top10-grid { grid-template-columns: minmax(0, 1fr); }
+  .dk-top10-aside { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); align-items: start; }
+}
+@media (max-width: 1279px) {
+  .dk-top10 { padding-top: 40px; }
+}
+@media (max-width: 1023px) {
+  .dk-top10 { padding-top: 32px; padding-bottom: 72px; }
+  .dk-top10-head { flex-direction: column; align-items: flex-start; gap: 16px; }
+}
+/* kürsüde (DinleyiciTop10) favori değilken yalnız kalp — hizalama boşluğu yalnız tablo satırlarında */
+.dk-top10 .dk-t10-pacts .dk-top10-spacer { display: none; }
+.dk-top10 .dk-t10-pacts .dk-top10-noact { width: 0; }

@@ -1,0 +1,280 @@
+/* dk-biletlerim.css — WebBiletlerim masaüstü görünümü (biletlerim).
+   SAHİBİ: js/desktop/account/biletlerim.js uygulayıcısı (specs/foundation.md §3). Spec: specs/hesap.md WebBiletlerim
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-biletlerim (ve alt sınıfları .dk-biletlerim-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan.
+   Kök: sayfada kabuğun içerik kolonu (#dk-main.dk-biletlerim); e-bilet katmanı portalda (div.dk-biletlerim.dk-biletlerim-ovl).
+   @keyframes adları global olduğu için dk-biletlerim- önekli (artboard: gbTicketIn/gbFloat/gbHolo/gbSheen/gbLock/gbBeam/gbPop/
+   gbRing/gbTearOff/gbRecoil/gbStamp/gbBitA-C — değerler birebir). */
+
+.dk-biletlerim [hidden] { display: none !important; }
+
+/* ══════════ Sayfa ══════════ */
+.dk-biletlerim .dk-ph { margin-bottom: 0; }
+.dk-biletlerim .dk-biletlerim-count { flex-shrink: 0; display: flex; align-items: center; gap: 8px; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: #FF4FA3; white-space: nowrap; }
+.dk-biletlerim .dk-biletlerim-dot { width: 7px; height: 7px; border-radius: 50%; background: #FF4FA3; display: block; }
+
+.dk-biletlerim .dk-biletlerim-tabs { display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; }
+.dk-biletlerim .dk-biletlerim-note { font-size: 13px; color: #8A8E97; }
+.dk-biletlerim .dk-biletlerim-panel { min-width: 0; }
+.dk-biletlerim .dk-biletlerim-panel:focus { outline: none; }
+
+/* Yaklaşan ızgara: 3 kolon / 24 (kart ≈ 306.7 @1440). Kartlar subgrid ile 4 satır (görsel · gövde · perforasyon · alt) paylaşır →
+   aynı sıradaki kartlarda perforasyon ve alt satır hizalı kalır (başlık 1–2 satır, kullanılmış biletin alt satırı kırılırsa).
+   Satır arası 24 = sarmalayıcı alt boşluğu (ızgaranın -24 alt boşluğu son sırayı dengeler). */
+.dk-biletlerim .dk-biletlerim-grid-up { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 24px; row-gap: 0; margin-bottom: -24px; }
+.dk-biletlerim .dk-biletlerim-cw { min-width: 0; display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: 0; margin-bottom: 24px; }
+.dk-biletlerim .dk-biletlerim-grid-up > .dk-biletlerim-skel { margin-bottom: 24px; }
+
+/* TicketCard */
+.dk-biletlerim .dk-biletlerim-card {
+  grid-row: 1 / span 4; min-width: 0; position: relative; margin: 0; padding: 0; display: grid; grid-template-rows: subgrid; row-gap: 0; align-items: stretch;
+  border: 1px solid #1F232B; border-radius: 12px; overflow: hidden; background: #0E1014; color: #F2F1EE; text-align: left;
+  font-family: var(--dk-font-sans); cursor: pointer;
+  transition: transform 260ms cubic-bezier(.2,.7,.2,1), border-color 200ms ease;
+}
+.dk-biletlerim .dk-biletlerim-card:hover { transform: translateY(-4px); border-color: #2C303A; }
+.dk-biletlerim .dk-biletlerim-media { position: relative; width: 100%; height: 168px; flex-shrink: 0; overflow: hidden; display: block; }
+.dk-biletlerim .dk-biletlerim-img { width: 100%; height: 100%; object-fit: cover; display: block; filter: none; transition: filter 400ms ease; }
+.dk-biletlerim .dk-biletlerim-card.is-used .dk-biletlerim-img { filter: grayscale(0.6) brightness(0.8); }
+.dk-biletlerim .dk-biletlerim-ph { display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-serif); font-style: italic; color: rgba(242,241,238,0.9); line-height: 1; }
+.dk-biletlerim .dk-biletlerim-img.dk-biletlerim-ph { font-size: 72px; }
+.dk-biletlerim .dk-biletlerim-shade { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(6,7,10,0) 40%, rgba(6,7,10,0.7) 100%); display: block; }
+.dk-biletlerim .dk-biletlerim-dt { position: absolute; top: 12px; left: 12px; }
+.dk-biletlerim .dk-biletlerim-chip {
+  position: absolute; top: 12px; right: 12px; height: 24px; box-sizing: border-box; padding: 0 9px; display: flex; align-items: center;
+  border-radius: 4px; background: rgba(6,7,10,0.8); border: 1px solid #2C303A; color: #A3A7AF;
+  font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap;
+}
+.dk-biletlerim .dk-biletlerim-body { width: 100%; box-sizing: border-box; padding: 18px 20px 0; display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; }
+.dk-biletlerim .dk-biletlerim-kick { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #FF4FA3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-biletlerim .dk-biletlerim-title { font-size: 20px; font-weight: 600; letter-spacing: -0.015em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.dk-biletlerim .dk-biletlerim-sub { font-size: 14px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-biletlerim .dk-biletlerim-meta { margin-top: 4px; display: flex; align-items: center; gap: 14px; font-size: 13px; color: #A3A7AF; min-width: 0; }
+.dk-biletlerim .dk-biletlerim-mi { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.dk-biletlerim .dk-biletlerim-mi svg { flex-shrink: 0; }
+/* Perforasyon + çentikler (16×16 + 1px kenar, içerik kutusu → 18) */
+.dk-biletlerim .dk-biletlerim-perf { position: relative; width: 100%; margin-top: 18px; border-top: 1px dashed #2C303A; display: block; flex-shrink: 0; }
+.dk-biletlerim .dk-biletlerim-notch { position: absolute; top: -9px; width: 16px; height: 16px; border-radius: 50%; background: #06070A; border: 1px solid #1F232B; display: block; }
+.dk-biletlerim .dk-biletlerim-notch.is-l { left: -9px; }
+.dk-biletlerim .dk-biletlerim-notch.is-r { right: -9px; }
+/* Alt satır — kullanılmış etikette satır kırılmaz (nowrap); sütun darsa "BİLETİ GÖR" alt satıra iner (sağa yaslı).
+   align-content:flex-start → aynı sıradaki (subgrid ile uzayan) alt satırlarda fiyat/BİLETİ GÖR perforasyondan 14 px aşağıda
+   kalır; fazla yükseklik altta boşluk olur (varsayılan stretch ortalardı). */
+.dk-biletlerim .dk-biletlerim-foot { width: 100%; box-sizing: border-box; padding: 14px 20px 16px; display: flex; align-items: center; align-content: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px 12px; flex-shrink: 0; }
+.dk-biletlerim .dk-biletlerim-price { font-family: var(--dk-font-mono); font-size: 15px; font-weight: 600; color: #F2F1EE; white-space: nowrap; }
+.dk-biletlerim .dk-biletlerim-price.is-free { color: #7CE0B0; }
+.dk-biletlerim .dk-biletlerim-used { display: flex; align-items: center; gap: 6px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #FF4FA3; white-space: nowrap; }
+.dk-biletlerim .dk-biletlerim-used svg { flex-shrink: 0; }
+.dk-biletlerim .dk-biletlerim-cta {
+  margin-left: auto; height: 34px; padding: 0 12px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; border-radius: 4px;
+  border: 1px solid rgba(255,79,163,0.45); background: rgba(255,79,163,0.10); color: #FF4FA3;
+  font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap;
+}
+
+/* Geçmiş ızgara: 4 kolon / 20 (kart ≈ 227 @1440) */
+.dk-biletlerim .dk-biletlerim-grid-past { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.dk-biletlerim .dk-biletlerim-past { min-width: 0; display: flex; flex-direction: column; border: 1px solid #1F232B; border-radius: 12px; overflow: hidden; background: #0E1014; }
+.dk-biletlerim .dk-biletlerim-pimg { width: 100%; height: 124px; flex-shrink: 0; object-fit: cover; filter: grayscale(0.7) brightness(0.8); display: block; }
+.dk-biletlerim .dk-biletlerim-pimg.dk-biletlerim-ph { font-size: 56px; }
+.dk-biletlerim .dk-biletlerim-pbody { padding: 16px 16px 0; display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 0; }
+.dk-biletlerim .dk-biletlerim-pwhen { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-biletlerim .dk-biletlerim-ptitle { font-size: 16.5px; font-weight: 600; letter-spacing: -0.01em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.dk-biletlerim .dk-biletlerim-psub { font-size: 13px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-biletlerim .dk-biletlerim-pfoot { margin-top: 16px; padding: 12px 16px 14px; border-top: 1px dashed #2C303A; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dk-biletlerim .dk-biletlerim-plbl { min-width: 0; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-biletlerim .dk-biletlerim-rate,
+.dk-biletlerim .dk-biletlerim-rate:hover {
+  height: 34px; padding: 0 10px; box-sizing: border-box; display: flex; align-items: center; gap: 6px; flex-shrink: 0; border-radius: 4px;
+  border: 1px solid rgba(255,138,42,0.45); background: rgba(255,138,42,0.10); color: #FF8A2A;
+  font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap;
+}
+
+/* İskelet (tasarımda yok) */
+.dk-biletlerim .dk-biletlerim-skel { display: flex; flex-direction: column; border: 1px solid #1F232B; border-radius: 12px; overflow: hidden; background: #0E1014; }
+.dk-biletlerim .dk-biletlerim-skelbody { padding: 18px 20px 0; display: flex; flex-direction: column; gap: 10px; }
+.dk-biletlerim .dk-biletlerim-skelfoot { padding: 14px 20px 16px; display: flex; align-items: center; justify-content: space-between; }
+
+/* Girişte nasıl kullanılır */
+.dk-biletlerim .dk-biletlerim-how { margin-top: 16px; display: flex; flex-direction: column; gap: 16px; }
+.dk-biletlerim .dk-biletlerim-how-h { margin: 0; font-family: var(--dk-font-mono); font-size: 11px; line-height: normal; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+.dk-biletlerim .dk-biletlerim-steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.dk-biletlerim .dk-biletlerim-step { box-sizing: border-box; padding: 20px; border-radius: 10px; border: 1px solid #14171D; background: #0A0B0F; display: flex; gap: 14px; min-width: 0; }
+.dk-biletlerim .dk-biletlerim-step-n { font-family: var(--dk-font-mono); font-size: 12px; font-weight: 700; color: #FF4FA3; }
+.dk-biletlerim .dk-biletlerim-step-c { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.dk-biletlerim .dk-biletlerim-step-t { font-size: 15px; font-weight: 600; }
+.dk-biletlerim .dk-biletlerim-step-b { font-size: 13.5px; line-height: 1.5; color: #8A8E97; }
+
+/* ══════════ E-bilet katmanı (portal) — WebBiletlerim 309–416 ══════════ */
+.dk-biletlerim.dk-biletlerim-ovl {
+  --dk-biletlerim-fit: 1;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 50; outline: none;
+  background: rgba(6,7,10,0.86); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  color: #F2F1EE; font-family: var(--dk-font-sans);
+  animation: dk-biletlerim-fade 280ms ease both;
+}
+@keyframes dk-biletlerim-fade { from { opacity: 0; } to { opacity: 1; } }
+.dk-biletlerim .dk-biletlerim-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; margin: 0; padding: 0; border: 0; background: transparent; cursor: default; }
+.dk-biletlerim .dk-biletlerim-bg:focus-visible { outline: none; }
+/* 0.6 ölçekte de sığmayan yükseklik (JS .dk-biletlerim-scroll): üstten başla, kaydır (ortalama taşanı üstten keserdi) */
+.dk-biletlerim.dk-biletlerim-ovl.dk-biletlerim-scroll { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; padding: 16px 0; box-sizing: border-box; }
+/* küçük yüksekliklerde bilet ölçeklenir (app fit) — 292×540 kutu, ölçek var(--dk-biletlerim-fit) */
+.dk-biletlerim .dk-biletlerim-fit { position: relative; flex-shrink: 0; width: calc(292px * var(--dk-biletlerim-fit)); height: calc(540px * var(--dk-biletlerim-fit)); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+@keyframes dk-biletlerim-tin { from { opacity: 0; transform: translateY(48px) scale(.94); } to { opacity: 1; transform: none; } }
+.dk-biletlerim .dk-biletlerim-tin { position: relative; flex-shrink: 0; transform-origin: 50% 50%; scale: var(--dk-biletlerim-fit); animation: dk-biletlerim-tin 620ms cubic-bezier(.2,.7,.2,1) both; pointer-events: auto; }
+@keyframes dk-biletlerim-float {
+  0%, 100% { transform: perspective(1100px) rotateX(3deg) rotateY(-6deg) translateY(0); }
+  50% { transform: perspective(1100px) rotateX(-2deg) rotateY(6deg) translateY(-6px); }
+}
+.dk-biletlerim .dk-biletlerim-float { position: relative; width: 292px; height: 540px; animation: dk-biletlerim-float 7s ease-in-out infinite; }
+
+/* holografik çerçeve + parlama */
+@keyframes dk-biletlerim-holo { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+.dk-biletlerim .dk-biletlerim-holo {
+  position: absolute; left: 0; width: 292px; height: 540px; display: block;
+  background-image: linear-gradient(115deg, #eef0bc, #ff6bfe, #00f9f8, #0081fd, #eef0bc, #ff6bfe, #00f9f8, #0081fd); background-size: 300% 300%;
+  animation: dk-biletlerim-holo 7s ease-in-out infinite alternate;
+}
+@keyframes dk-biletlerim-sheen { 0% { transform: translateX(-160%) skewX(-18deg); } 55%, 100% { transform: translateX(420%) skewX(-18deg); } }
+.dk-biletlerim .dk-biletlerim-sheen {
+  position: absolute; left: 0; width: 34%; height: 580px; display: block; pointer-events: none; mix-blend-mode: soft-light;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.45), rgba(255,255,255,0));
+  animation: dk-biletlerim-sheen 4.6s cubic-bezier(.4,0,.2,1) 1s infinite;
+}
+
+/* yırtık kenar poligonları — WebBiletlerim.dc.html 91–92 (= ETicket.tsx CUT_MAIN / CUT_STUB) BİREBİR */
+.dk-biletlerim .dk-biletlerim-cut-main{clip-path:polygon(0px 0px,292px 0px,292px 306px,288.6px 306.4px,285.5px 307.7px,282.8px 309.8px,280.7px 312.5px,279.4px 315.6px,279px 319px,274.2px 320.3px,270.7px 319.4px,265.4px 321.5px,260.4px 319px,257px 322.9px,253px 319.8px,247.3px 322.3px,244.2px 319.6px,240px 321.8px,235.4px 319.5px,229.9px 322.2px,225.2px 318.5px,221.6px 321.8px,217.6px 318.5px,211.6px 322.8px,207.9px 318.8px,202.9px 322px,198.8px 318.3px,194px 322.2px,190.7px 319.2px,186px 322.1px,181px 317.6px,177.2px 321.9px,172.5px 317.8px,168.5px 320.6px,163.3px 317.6px,159px 320.2px,154.6px 318.4px,150.4px 320.1px,145.4px 317.1px,141.6px 320.9px,136.6px 317.9px,132.4px 321.4px,128.8px 318.1px,123.5px 321px,119.5px 318.1px,115.5px 321px,111.4px 319.1px,107px 320.9px,102px 318.9px,97.3px 321.2px,93.6px 318.2px,88px 322.5px,83.2px 319.1px,79.9px 322.2px,74.8px 318.8px,70.2px 322.5px,67.1px 318.9px,62.7px 321.5px,57.8px 318.9px,53.5px 322.9px,48.6px 319.9px,43.3px 323.1px,40.3px 319.1px,35.7px 321.6px,30.4px 319.1px,25.5px 321.9px,22.7px 319.6px,17.7px 320.5px,13px 319px,12.6px 315.6px,11.3px 312.5px,9.2px 309.8px,6.5px 307.7px,3.4px 306.4px,0px 306px)}
+.dk-biletlerim .dk-biletlerim-cut-stub{clip-path:polygon(0px 18px,3.4px 17.6px,6.5px 16.3px,9.2px 14.2px,11.3px 11.5px,12.6px 8.4px,13px 5px,17.7px 5.5px,22.7px 4.6px,25.5px 6.9px,30.4px 4.1px,35.7px 6.6px,40.3px 4.1px,43.3px 8.1px,48.6px 4.9px,53.5px 7.9px,57.8px 3.9px,62.7px 6.5px,67.1px 3.9px,70.2px 7.5px,74.8px 3.8px,79.9px 7.2px,83.2px 4.1px,88px 7.5px,93.6px 3.2px,97.3px 6.2px,102px 3.9px,107px 5.9px,111.4px 4.1px,115.5px 6px,119.5px 3.1px,123.5px 6px,128.8px 3.1px,132.4px 6.4px,136.6px 2.9px,141.6px 5.9px,145.4px 2.1px,150.4px 5.1px,154.6px 3.4px,159px 5.2px,163.3px 2.6px,168.5px 5.6px,172.5px 2.8px,177.2px 6.9px,181px 2.6px,186px 7.1px,190.7px 4.2px,194px 7.2px,198.8px 3.3px,202.9px 7px,207.9px 3.8px,211.6px 7.8px,217.6px 3.5px,221.6px 6.8px,225.2px 3.5px,229.9px 7.2px,235.4px 4.5px,240px 6.8px,244.2px 4.6px,247.3px 7.3px,253px 4.8px,257px 7.9px,260.4px 4px,265.4px 6.5px,270.7px 4.4px,274.2px 5.3px,279px 5px,279.4px 8.4px,280.7px 11.5px,282.8px 14.2px,285.5px 16.3px,288.6px 17.6px,292px 18px,292px 226px,0px 226px)}
+.dk-biletlerim .dk-biletlerim-cut-main { position: relative; width: 100%; height: 100%; border-radius: 12px 12px 0 0; overflow: hidden; }
+.dk-biletlerim .dk-biletlerim-cut-stub { position: relative; width: 100%; height: 100%; border-radius: 0 0 12px 12px; overflow: hidden; }
+
+/* koçan (önce çizilir; gövde 1px üstüne biner) */
+.dk-biletlerim .dk-biletlerim-stub { position: absolute; top: 314px; left: 0; width: 292px; height: 226px; transform-origin: 279px 5px; }
+.dk-biletlerim .dk-biletlerim-paper-stub {
+  position: absolute; top: 0; left: 7px; right: 7px; bottom: 7px; box-sizing: border-box; padding-top: 5px; border-radius: 0 0 7px 7px;
+  background: rgba(250,250,247,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+}
+.dk-biletlerim .dk-biletlerim-qr { position: relative; width: 125px; height: 125px; border-radius: 2px; display: block; flex-shrink: 0; }
+.dk-biletlerim .dk-biletlerim-qrimg { width: 125px; height: 125px; display: block; opacity: 1; transition: opacity 260ms ease; }
+.dk-biletlerim .dk-biletlerim-qrimg svg { display: block; }
+.dk-biletlerim .dk-biletlerim-qr.is-ok .dk-biletlerim-qrimg { opacity: 0.14; }
+/* QR iskeleti (app QrSkeleton): nabız 0.55↔1, 700 ms ease-in-out alternate + küçük döner */
+@keyframes dk-biletlerim-pulse { from { opacity: 1; } to { opacity: 0.55; } }
+@keyframes dk-biletlerim-spin { to { transform: rotate(360deg); } }
+.dk-biletlerim .dk-biletlerim-qrskel { width: 125px; height: 125px; box-sizing: border-box; border-radius: 2px; background: rgba(17,18,20,0.07); display: flex; align-items: center; justify-content: center; animation: dk-biletlerim-pulse 700ms ease-in-out infinite alternate; }
+.dk-biletlerim .dk-biletlerim-spin { width: 20px; height: 20px; box-sizing: border-box; border-radius: 50%; border: 2px solid rgba(58,61,68,0.25); border-top-color: #3A3D44; display: block; animation: dk-biletlerim-spin 800ms linear infinite; }
+/* QR alınamadı (app qrRetry) */
+.dk-biletlerim .dk-biletlerim-qrretry {
+  width: 125px; height: 125px; box-sizing: border-box; margin: 0; padding: 0; border-radius: 2px; border: 1px dashed rgba(17,18,20,0.25); background: transparent;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #3A3D44; cursor: pointer;
+  font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 1.14px;
+}
+.dk-biletlerim .dk-biletlerim-qrretry:hover { background: rgba(17,18,20,0.04); }
+.dk-biletlerim .dk-biletlerim-qrretry:focus-visible { outline: 2px solid #4ED8FF; outline-offset: 2px; }
+/* kilit köşeleri */
+@keyframes dk-biletlerim-lock { from { opacity: 0; transform: scale(1.18); } to { opacity: 1; transform: scale(1); } }
+.dk-biletlerim .dk-biletlerim-lock { position: absolute; top: -9px; left: -9px; right: -9px; bottom: -9px; display: block; pointer-events: none; animation: dk-biletlerim-lock 260ms cubic-bezier(.2,.7,.2,1) both; }
+.dk-biletlerim .dk-biletlerim-corner { position: absolute; width: 18px; height: 18px; box-sizing: border-box; display: block; }
+.dk-biletlerim .dk-biletlerim-corner.is-tl { top: 0; left: 0; border-top: 3px solid #FF4FA3; border-left: 3px solid #FF4FA3; border-top-left-radius: 5px; }
+.dk-biletlerim .dk-biletlerim-corner.is-tr { top: 0; right: 0; border-top: 3px solid #FF4FA3; border-right: 3px solid #FF4FA3; border-top-right-radius: 5px; }
+.dk-biletlerim .dk-biletlerim-corner.is-bl { bottom: 0; left: 0; border-bottom: 3px solid #FF4FA3; border-left: 3px solid #FF4FA3; border-bottom-left-radius: 5px; }
+.dk-biletlerim .dk-biletlerim-corner.is-br { bottom: 0; right: 0; border-bottom: 3px solid #FF4FA3; border-right: 3px solid #FF4FA3; border-bottom-right-radius: 5px; }
+/* tarama çizgisi */
+@keyframes dk-biletlerim-beam { 0% { opacity: 0; transform: translateY(0); } 12% { opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; transform: translateY(125px); } }
+.dk-biletlerim .dk-biletlerim-beam { position: absolute; top: 0; left: -6px; right: -6px; height: 2px; border-radius: 2px; background: #FF4FA3; box-shadow: 0 0 10px 1px rgba(255,79,163,0.75); display: block; pointer-events: none; animation: dk-biletlerim-beam 900ms cubic-bezier(.45,0,.55,1) both; }
+.dk-biletlerim .dk-biletlerim-trail { position: absolute; left: 6px; right: 6px; bottom: 2px; height: 26px; background: linear-gradient(180deg, rgba(255,79,163,0), rgba(255,79,163,0.22)); display: block; }
+/* onay: halka + tik */
+@keyframes dk-biletlerim-ring { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(2.2); } }
+@keyframes dk-biletlerim-pop { 0% { opacity: 0; transform: scale(.3); } 60% { opacity: 1; transform: scale(1.12); } 100% { opacity: 1; transform: scale(1); } }
+.dk-biletlerim .dk-biletlerim-ring { position: absolute; top: 36.5px; left: 36.5px; width: 52px; height: 52px; box-sizing: border-box; border-radius: 50%; border: 2px solid #FF4FA3; display: block; pointer-events: none; animation: dk-biletlerim-ring 720ms cubic-bezier(.2,.7,.2,1) both; }
+.dk-biletlerim .dk-biletlerim-pop { position: absolute; top: 36.5px; left: 36.5px; width: 52px; height: 52px; border-radius: 50%; background: #111214; color: #FAFAF7; display: flex; align-items: center; justify-content: center; pointer-events: none; animation: dk-biletlerim-pop 420ms cubic-bezier(.2,.7,.2,1) both; }
+.dk-biletlerim .dk-biletlerim-qrlbl { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.16em; color: #3A3D44; }
+.dk-biletlerim .dk-biletlerim-qrlbl.is-strong { font-weight: 700; color: #111214; }
+
+/* gövde */
+.dk-biletlerim .dk-biletlerim-main { position: absolute; top: 0; left: 0; width: 292px; height: 324px; }
+.dk-biletlerim .dk-biletlerim-paper-main { position: absolute; top: 7px; left: 7px; right: 7px; bottom: 0; border-radius: 7px 7px 0 0; overflow: hidden; background: rgba(250,250,247,0.9); display: flex; flex-direction: column; }
+.dk-biletlerim .dk-biletlerim-hero { position: relative; height: 132px; flex-shrink: 0; }
+.dk-biletlerim .dk-biletlerim-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-biletlerim .dk-biletlerim-herofb { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.dk-biletlerim .dk-biletlerim-badge { position: absolute; top: 10px; left: 10px; height: 22px; padding: 0 8px; display: flex; align-items: center; border-radius: 4px; background: rgba(6,7,10,0.78); color: #F2F1EE; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; white-space: nowrap; }
+.dk-biletlerim .dk-biletlerim-head { height: 100px; flex-shrink: 0; box-sizing: border-box; padding: 16px 18px 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dk-biletlerim .dk-biletlerim-egenre { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #5A5E66; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-biletlerim .dk-biletlerim-etitle { display: block; font-size: 27px; line-height: 1.05; font-weight: 700; letter-spacing: -0.03em; color: #111214; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-biletlerim .dk-biletlerim-eartist { font-size: 14px; font-weight: 500; color: #3A3D44; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-biletlerim .dk-biletlerim-info { height: 60px; flex-shrink: 0; box-sizing: border-box; padding: 14px 18px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; gap: 10px; }
+.dk-biletlerim .dk-biletlerim-icol { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dk-biletlerim .dk-biletlerim-ilbl { font-family: var(--dk-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.14em; color: #5A5E66; }
+.dk-biletlerim .dk-biletlerim-ival { font-family: var(--dk-font-mono); font-size: 12.5px; font-weight: 600; color: #111214; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-biletlerim .dk-biletlerim-ival.is-2 { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+
+/* damga */
+@keyframes dk-biletlerim-stamp { 0% { opacity: 0; transform: rotate(-6deg) scale(2.1); } 55% { opacity: 1; transform: rotate(-6deg) scale(.92); } 78% { opacity: 1; transform: rotate(-6deg) scale(1.04); } 100% { opacity: 1; transform: rotate(-6deg) scale(1); } }
+.dk-biletlerim .dk-biletlerim-stamp {
+  position: absolute; top: 206px; right: 24px; box-sizing: border-box; padding: 5px 9px 4px; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  border: 2px solid #C0135F; border-radius: 5px; box-shadow: inset 0 0 0 1px rgba(192,19,95,0.3); color: #C0135F; transform: rotate(-6deg); mix-blend-mode: multiply; pointer-events: none;
+}
+.dk-biletlerim .dk-biletlerim-stamp.dk-biletlerim-stamp-in { animation: dk-biletlerim-stamp 440ms cubic-bezier(.3,.6,.3,1) 760ms both; }
+.dk-biletlerim .dk-biletlerim-stamp-t { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; white-space: nowrap; }
+.dk-biletlerim .dk-biletlerim-stamp-h { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.12em; }
+.dk-biletlerim .dk-biletlerim-stamp-h:empty { display: none; }
+
+/* perforasyon (iki parçanın üstünde ayrı katman) */
+.dk-biletlerim .dk-biletlerim-perfline { position: absolute; top: 318px; left: 21px; right: 21px; border-top: 2px dashed rgba(17,18,20,0.22); opacity: 1; transition: opacity 160ms ease; pointer-events: none; display: block; }
+
+/* yırtılma */
+@keyframes dk-biletlerim-tearoff {
+  0% { opacity: 1; transform: translate(0px,0px) rotate(0deg) scale(1); filter: drop-shadow(0 0 0 rgba(0,0,0,0)); animation-timing-function: cubic-bezier(.4,0,.6,1); }
+  10% { transform: translate(0px,1.5px) rotate(-.5deg) scale(1); }
+  36% { transform: translate(-1px,5px) rotate(-5.5deg) scale(1); animation-timing-function: cubic-bezier(.3,0,.5,1); }
+  44% { opacity: 1; transform: translate(-2px,9px) rotate(-7deg) scale(1); filter: drop-shadow(0 10px 14px rgba(0,0,0,.4)); animation-timing-function: cubic-bezier(.45,0,.85,.55); }
+  100% { opacity: 0; transform: translate(-26px,430px) rotate(-24deg) scale(.96); filter: drop-shadow(0 18px 22px rgba(0,0,0,.5)); }
+}
+.dk-biletlerim .dk-biletlerim-tearoff { animation: dk-biletlerim-tearoff 1200ms both; }
+@keyframes dk-biletlerim-recoil { 0%, 30% { transform: translateY(0px); } 40% { transform: translateY(2px); } 48% { transform: translateY(-5px); } 62% { transform: translateY(1.5px); } 76% { transform: translateY(-.6px); } 100% { transform: translateY(0px); } }
+.dk-biletlerim .dk-biletlerim-recoil { animation: dk-biletlerim-recoil 1200ms cubic-bezier(.3,.7,.4,1) both; }
+@keyframes dk-biletlerim-bit-a { 0% { opacity: 0; transform: translate(0px,0px) rotate(0deg); } 12% { opacity: 1; } 35% { transform: translate(6px,-7px) rotate(80deg); } 100% { opacity: 0; transform: translate(16px,46px) rotate(260deg); } }
+@keyframes dk-biletlerim-bit-b { 0% { opacity: 0; transform: translate(0px,0px) rotate(0deg); } 12% { opacity: 1; } 35% { transform: translate(-5px,-6px) rotate(-70deg); } 100% { opacity: 0; transform: translate(-12px,52px) rotate(-220deg); } }
+@keyframes dk-biletlerim-bit-c { 0% { opacity: 0; transform: translate(0px,0px) rotate(0deg); } 12% { opacity: 1; } 30% { transform: translate(9px,-4px) rotate(120deg); } 100% { opacity: 0; transform: translate(28px,34px) rotate(300deg); } }
+.dk-biletlerim .dk-biletlerim-bit { position: absolute; border-radius: 1px; background: #ECE9E3; box-shadow: 0 0 0 0.5px rgba(17,18,20,0.25); display: block; pointer-events: none; }
+.dk-biletlerim .dk-biletlerim-bit-a { animation: dk-biletlerim-bit-a 760ms cubic-bezier(.3,.2,.6,1) both; }
+.dk-biletlerim .dk-biletlerim-bit-b { animation: dk-biletlerim-bit-b 820ms cubic-bezier(.3,.2,.6,1) both; }
+.dk-biletlerim .dk-biletlerim-bit-c { animation: dk-biletlerim-bit-c 700ms cubic-bezier(.3,.2,.6,1) both; }
+
+/* giriş onayı (koçanın boşalttığı alan) */
+.dk-biletlerim .dk-biletlerim-done { position: absolute; top: 388px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.dk-biletlerim .dk-biletlerim-done-in { --dk-delay: 1050ms; }
+.dk-biletlerim .dk-biletlerim-done-ic { width: 34px; height: 34px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(255,79,163,0.45); background: rgba(255,79,163,0.10); color: #FF4FA3; display: flex; align-items: center; justify-content: center; }
+.dk-biletlerim .dk-biletlerim-done-t { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: #FF4FA3; }
+.dk-biletlerim .dk-biletlerim-done-s { font-size: 13px; color: #8A8E97; }
+
+/* alt satır: ipucu + KAPAT */
+.dk-biletlerim .dk-biletlerim-below { position: relative; display: flex; align-items: center; gap: 16px; max-width: calc(100vw - 32px); }
+.dk-biletlerim .dk-biletlerim-hint { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-biletlerim .dk-biletlerim-hint.is-err { color: #FFB347; }
+.dk-biletlerim .dk-biletlerim-close {
+  flex-shrink: 0; height: 44px; margin: 0; padding: 0 18px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; border-radius: 6px;
+  border: 1px solid #2C303A; background: #0E1014; color: #F2F1EE; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; cursor: pointer;
+}
+
+/* ══════════ Duyarlı (hesap §10) ══════════ */
+/* Geçmiş 4 kolon kart ≥ ~211 px ister (16 + "SÜRESİ DOLDU" 86 + 8 + PUANLA 82 + 16 + kenar 2); hesap içerik kolonu
+   1376 px altında 904 px'ten dar → 1280–1375 arası 3 kolon (1280'de 4 kolon 187 px kartta PUANLA taşıyordu). */
+@media (max-width: 1375px) {
+  .dk-biletlerim .dk-biletlerim-grid-past { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 1279px) {
+  .dk-biletlerim .dk-biletlerim-grid-up { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-biletlerim .dk-biletlerim-grid-past { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dk-biletlerim .dk-biletlerim-step { padding: 16px; }
+}
+@media (max-width: 1023px) {
+  .dk-biletlerim .dk-biletlerim-grid-past { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-biletlerim .dk-biletlerim-steps { grid-template-columns: minmax(0, 1fr); }
+  .dk-biletlerim .dk-ph-row { flex-direction: column; align-items: flex-start; gap: 16px; }
+}
+
+/* Hareket azaltma: dk-base .dk kapsamını tamamlar (portal katmanı da .dk içinde); JS doğrudan son hale geçer */
+@media (prefers-reduced-motion: reduce) {
+  .dk-biletlerim, .dk-biletlerim *, .dk-biletlerim *::before, .dk-biletlerim *::after { animation: none !important; transition: none !important; }
+}

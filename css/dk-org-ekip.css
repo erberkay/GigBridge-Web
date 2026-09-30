@@ -1,0 +1,119 @@
+/* dk-org-ekip.css — WebOrgEkip masaüstü görünümü (orgEkip, #/organizer/ekip).
+   SAHİBİ: js/desktop/organizer/ekip.js uygulayıcısı (specs/foundation.md §3). Spec: specs/org-admin.md WebOrgEkip
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-org-ekip (kabuğun <main>'i) ya da portal diyaloglarının .dk-org-ekip-inv /
+   .dk-org-ekip-rm sınıfları altında. Ölçüler artboard inline stillerinden (1440 × 1140). */
+
+.dk-org-ekip svg { flex-shrink: 0; }
+
+/* ---------- KPI şeridi (F5 KPIStat ×4) ---------- */
+.dk-org-ekip-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+
+/* ---------- İki kolon: tablolar | Yetkiler ---------- */
+.dk-org-ekip-cols { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.dk-org-ekip-left { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.dk-org-ekip-aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* SectionCard (head 60, pad 0 20) */
+.dk-org-ekip-card { border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; overflow: hidden; }
+.dk-org-ekip-card[hidden] { display: none; }
+.dk-org-ekip-shead { height: 60px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #14171D; }
+.dk-org-ekip-shead h2, .dk-org-ekip-phead h2 { margin: 0; font-family: var(--dk-font-sans); font-size: 17px; font-weight: 600; letter-spacing: normal; color: #F2F1EE; }
+.dk-org-ekip-snum { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+
+/* ---------- Tablolar ---------- */
+.dk-org-ekip-tbl[hidden] { display: none; }
+.dk-org-ekip-thead { height: 40px; box-sizing: border-box; padding: 0 20px; display: grid; gap: 16px; align-items: center; border-bottom: 1px solid #14171D;
+  font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-org-ekip-row { height: 64px; box-sizing: border-box; padding: 0 20px; display: grid; gap: 16px; align-items: center; border-bottom: 1px solid #14171D; }
+.dk-org-ekip-irow { height: 56px; }
+.dk-org-ekip-mgrid { grid-template-columns: minmax(0, 1.6fr) 130px minmax(0, 1.4fr) 100px 48px; }
+.dk-org-ekip-igrid { grid-template-columns: minmax(0, 1fr) 160px 120px; }
+.dk-org-ekip-itbl .dk-org-ekip-skrow { height: 56px; }
+
+.dk-org-ekip-who { min-width: 0; display: flex; align-items: center; gap: 12px; }
+.dk-org-ekip-av { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; color: #F2F1EE; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+.dk-org-ekip-wcol { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-org-ekip-nrow { min-width: 0; display: flex; align-items: center; gap: 12px; }
+.dk-org-ekip-name { min-width: 0; font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-org-ekip-me { flex-shrink: 0; height: 20px; box-sizing: border-box; padding: 0 7px; border-radius: 10px; background: #1C2029; color: #A3A7AF;
+  font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; display: flex; align-items: center; }
+.dk-org-ekip-msub { display: none; min-width: 0; font-size: 12.5px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-org-ekip-c-role { min-width: 0; display: flex; align-items: center; }
+.dk-org-ekip-role { justify-self: start; align-self: flex-start; height: 26px; box-sizing: border-box; padding: 0 10px; border-radius: 13px; border: 1px solid;
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.dk-org-ekip-c-role .dk-org-ekip-role { align-self: center; }
+.dk-org-ekip-mail { min-width: 0; font-size: 13.5px; color: #A3A7AF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-org-ekip-c-st { min-width: 0; }
+.dk-org-ekip-c-act { display: flex; justify-content: flex-end; }
+.dk-org-ekip-kebab { width: 36px; height: 36px; box-sizing: border-box; border-radius: 6px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF;
+  display: flex; align-items: center; justify-content: center; padding: 0; }
+.dk-org-ekip-note { padding: 14px 20px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #8A8E97; }
+.dk-org-ekip-empty { margin: 0; padding: 18px 20px; font-size: 13.5px; color: #8A8E97; }
+.dk-org-ekip-mextra .dk-empty-plain { padding: 48px 20px; }
+
+.dk-org-ekip-imail { min-width: 0; display: flex; align-items: center; gap: 12px; font-size: 14px; }
+.dk-org-ekip-itile { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; background: #14171D; color: #A3A7AF; display: flex; align-items: center; justify-content: center; }
+.dk-org-ekip-icol { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-org-ekip-iemail { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-org-ekip-isub { display: none; font-family: var(--dk-font-mono); font-size: 11.5px; color: #8A8E97; white-space: nowrap; }
+.dk-org-ekip-idate { font-family: var(--dk-font-mono); font-size: 11.5px; color: #8A8E97; white-space: nowrap; }
+
+/* ---------- 03 Yetkiler (PermissionList) + bilgi kutusu ---------- */
+.dk-org-ekip-perm { border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+.dk-org-ekip-phead { display: flex; align-items: center; gap: 12px; }
+.dk-org-ekip-pblock { display: flex; flex-direction: column; gap: 12px; }
+.dk-org-ekip-pblock-owner { padding-bottom: 18px; border-bottom: 1px solid #14171D; }
+.dk-org-ekip-plist { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.dk-org-ekip-plist li { display: flex; gap: 10px; font-size: 13.5px; line-height: 1.45; color: #F2F1EE; }
+.dk-org-ekip-plist li.is-no { color: #8A8E97; }
+.dk-org-ekip-callout { border-radius: 12px; border: 1px solid rgba(78,216,255,0.25); background: rgba(78,216,255,0.04); padding: 18px 20px; display: flex; gap: 12px; }
+.dk-org-ekip-callout > span { font-size: 13px; line-height: 1.55; color: #A3A7AF; }
+
+/* ---------- Portal: davet modalı (form, 480, top 180) + çıkarma onayı (420) ---------- */
+.dk-org-ekip-inv .dk-mdl-body { gap: 16px; }
+.dk-org-ekip-inv .dk-org-ekip-rolebox { padding: 12px 14px; border-radius: 8px; background: #0E1014; border: 1px solid #1F232B; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #A3A7AF; }
+.dk-org-ekip-inv .dk-org-ekip-rolebox svg { flex-shrink: 0; }
+.dk-org-ekip-inv .dk-org-ekip-rolebox strong { color: #4ED8FF; font-weight: 600; }
+.dk-org-ekip-rm .dk-btn-danger.dk-btn-44 { padding: 0 16px; }
+.dk-ovl:has(.dk-org-ekip-rm) > .dk-ovl-bg { background: rgba(6,7,10,0.72); }   /* Ekip onayı .72 (Etkinlikler .7) */
+.dk-org-ekip-inv, .dk-org-ekip-rm { max-width: calc(100vw - 32px); }
+
+/* =====================================================================
+   DUYARLI (spec §10) — ≥1280: artboard düzeni (aside 360). 1180–1279: aside 320. 1100–1179: aside tabloların altına (2 kolon),
+   KPI 2×2. <1100: E-POSTA adın altına. 769–1023: tek kolon, yığılmış satırlar; ≤860 davet tarihi e-postanın altına.
+   Ölçülmüş ek kırılım: 5 sütunlu üye tablosunda ad sütunu (avatar + ad + SEN) ~150 px'in altına düştüğünde (sol kolon < ~663 px →
+   <1380 genişlik, aside 360 ile) E-POSTA sütunu adın altına iner; tabloların tam genişlik olduğu 1100–1179'da sütun geri gelir.
+   ===================================================================== */
+@media (max-width: 1379px) {
+  .dk-org-ekip-mgrid { grid-template-columns: minmax(0, 1fr) 130px 100px 48px; }
+  .dk-org-ekip-mtbl .dk-org-ekip-c-mail { display: none; }
+  .dk-org-ekip-mtbl .dk-org-ekip-msub { display: block; }
+}
+@media (max-width: 1279px) {
+  .dk-org-ekip-cols { grid-template-columns: minmax(0, 1fr) 320px; }
+}
+@media (max-width: 1179px) {
+  .dk-org-ekip-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-org-ekip-cols { grid-template-columns: minmax(0, 1fr); }
+  .dk-org-ekip-aside { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+@media (min-width: 1100px) and (max-width: 1179px) {
+  .dk-org-ekip-mgrid { grid-template-columns: minmax(0, 1.6fr) 130px minmax(0, 1.4fr) 100px 48px; }
+  .dk-org-ekip-mtbl .dk-org-ekip-c-mail { display: block; }
+  .dk-org-ekip-mtbl .dk-org-ekip-msub { display: none; }
+}
+@media (max-width: 1023px) {
+  .dk-org-ekip-aside { grid-template-columns: minmax(0, 1fr); }
+  /* yığılmış satırlar: sol ad+e-posta, sağda rol + durum + yönet */
+  .dk-org-ekip-mtbl .dk-org-ekip-thead { display: none; }
+  .dk-org-ekip-mgrid { grid-template-columns: minmax(0, 1fr) auto auto 36px; gap: 12px; }
+  .dk-org-ekip-mtbl .dk-org-ekip-row { height: auto; min-height: 64px; padding: 12px 20px; }
+  .dk-org-ekip-igrid { grid-template-columns: minmax(0, 1fr) 110px 110px; gap: 12px; }
+}
+@media (max-width: 860px) {
+  .dk-org-ekip-kpis { gap: 12px; }
+  .dk-org-ekip-igrid { grid-template-columns: minmax(0, 1fr) auto; }
+  .dk-org-ekip-itbl .dk-org-ekip-thead span:nth-child(2), .dk-org-ekip-itbl .dk-org-ekip-idate { display: none; }
+  .dk-org-ekip-itbl .dk-org-ekip-irow { height: auto; min-height: 56px; padding-top: 10px; padding-bottom: 10px; }
+  .dk-org-ekip-isub { display: block; }
+}

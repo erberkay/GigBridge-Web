@@ -27,172 +27,302 @@
   <meta name="twitter:image" content="https://gigbridges.com/assets/og-cover.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="/assets/landing.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="/assets/seo.css?v=20260929s" />
+  <script src="/assets/seo.js?v=20260929s" defer></script>
 </head>
-<body>
-  <div class="prism-top"></div>
-  <header>
-    <div class="wrap">
-      <a class="brand" href="/"><span class="dot"></span> GigBridge</a>
-      <a class="nav-cta" href="/indir/">Uygulamayı İndir</a>
+<body class="gb gb-pg-guide">
+  <a class="gb-skip" href="#icerik">İçeriğe geç</a>
+  <header class="gb-hd">
+    <div class="gb-hd-in">
+      <a class="gb-logo" href="/" aria-label="GigBridge ana sayfa"><span class="gb-logo-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"/><path d="M3 17h18"/></svg></span><span class="gb-logo-word">GigBridge</span></a>
+      <details class="gb-menu" data-gb-pop>
+        <summary class="gb-burger gb-press" aria-label="Menü"><svg class="gb-ic-menu" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="gb-ic-x" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></summary>
+        <div class="gb-menu-panel">
+          <nav class="gb-menu-nav" aria-label="Ana menü (mobil)">
+            <a class="gb-menu-link" href="/#/kesfet">Keşfet</a>
+            <a class="gb-menu-link" href="/#/etkinlikler">Etkinlikler</a>
+            <a class="gb-menu-link" href="/#/harita">Harita</a>
+            <a class="gb-menu-link" href="/#/akis">Akış</a>
+            <a class="gb-menu-link" href="/#/top10">Top 10</a>
+          </nav>
+          <div class="gb-menu-cities">
+            <span class="gb-menu-h">CANLI MÜZİK · ŞEHİRLER</span>
+            <div class="gb-menu-citylist">
+            <a class="gb-menu-city" href="/canli-muzik/istanbul/" data-city="İstanbul">İstanbul</a>
+            <a class="gb-menu-city" href="/canli-muzik/izmir/" data-city="İzmir">İzmir</a>
+            <a class="gb-menu-city" href="/canli-muzik/ankara/" data-city="Ankara">Ankara</a>
+            <a class="gb-menu-city" href="/canli-muzik/antalya/" data-city="Antalya">Antalya</a>
+            <a class="gb-menu-city" href="/canli-muzik/bodrum/" data-city="Bodrum">Bodrum</a>
+            <a class="gb-menu-city" href="/canli-muzik/kusadasi/" data-city="Kuşadası">Kuşadası</a>
+            </div>
+          </div>
+          <div class="gb-menu-auth">
+            <a class="gb-btn gb-btn-outline gb-press" href="/#/login">Giriş yap</a>
+            <a class="gb-btn gb-btn-light gb-press" href="/#/register">Hesap oluştur</a>
+          </div>
+        </div>
+      </details>
+      <nav class="gb-hd-nav" aria-label="Ana menü">
+        <a class="gb-link" href="/#/kesfet">Keşfet</a>
+        <a class="gb-link" href="/#/etkinlikler">Etkinlikler</a>
+        <a class="gb-link" href="/#/harita">Harita</a>
+        <a class="gb-link" href="/#/akis">Akış</a>
+        <a class="gb-link" href="/#/top10">Top 10</a>
+      </nav>
+      <div class="gb-hd-right">
+        <details class="gb-city" data-gb-pop data-gb-city>
+          <summary class="gb-city-btn gb-press" aria-label="Şehir seç, şu an İstanbul"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span class="gb-city-l">İstanbul</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <div class="gb-city-menu">
+          <span class="gb-city-h">CANLI MÜZİK SAYFALARI</span>
+          <a class="gb-city-opt" href="/canli-muzik/istanbul/" data-city="İstanbul"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>İstanbul</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/izmir/" data-city="İzmir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>İzmir</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/ankara/" data-city="Ankara"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Ankara</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/antalya/" data-city="Antalya"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Antalya</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/bodrum/" data-city="Bodrum"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Bodrum</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/kusadasi/" data-city="Kuşadası"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Kuşadası</span></a>
+          </div>
+        </details>
+        <a class="gb-hd-login gb-press" href="/#/login">Giriş yap</a>
+        <a class="gb-hd-reg gb-press" href="/#/register">Hesap oluştur</a>
+        <a class="gb-hd-get gb-press" href="/indir/">İndir</a>
+      </div>
     </div>
   </header>
 
-  <div class="wrap">
-    <nav class="crumb" aria-label="breadcrumb">
-      <a href="/">Ana Sayfa</a> &nbsp;›&nbsp; <a href="/rehber/canli-muzik/">Rehber</a> &nbsp;›&nbsp; <span>Mekana Sanatçı Bulma</span>
-    </nav>
-
-    <div class="hero">
-      <div class="eyebrow">Rehber · Mekanlar & Organizatörler</div>
-      <h1>Mekanınıza sanatçı ve DJ <em>nasıl bulunur?</em></h1>
-      <p class="lead">Restoran, bar, kafe veya etkinlik mekanınıza doğru müzisyeni bulmak; bir düğün sitesinden "tek gecelik" grup kiralamaktan çok daha fazlası. Bu rehber; <strong>tür seçiminden kaşe ve sözleşmeye, kapora ve MESAM/MSG telifine, ajansa alternatiflerden mekan üyeliğiyle düzenli canlı müzik kurmaya</strong> kadar tüm süreci adım adım anlatır.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="https://gigbridges.com/#/login">Mekan Olarak Üye Ol →</a>
-        <a class="btn btn-ghost" href="/indir/">Uygulamayı İndir</a>
+  <main class="gb-main" id="icerik" tabindex="-1">
+    <section class="gb-hero gb-guide-hero gb-acc-orange" aria-labelledby="h-art">
+      <nav class="gb-crumbs" aria-label="Sayfa konumu"><a class="gb-crumb" href="/">Ana Sayfa</a><svg class="gb-crumb-sep" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><a class="gb-crumb" href="/rehber/canli-muzik/">Rehber</a><svg class="gb-crumb-sep" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span aria-current="page" class="gb-crumb-cur">Mekana Sanatçı Bulma</span></nav>
+      <div class="gb-guide-top gb-rise">
+        <span class="gb-eyebrow gb-acc-orange">REHBER · MEKANLAR &amp; ORGANİZATÖRLER</span>
+        <h1 class="gb-h1 gb-guide-h1" id="h-art">Mekanınıza sanatçı ve DJ <em>nasıl bulunur?</em></h1>
+        <p class="gb-lead gb-guide-lead">Restoran, bar, kafe veya etkinlik mekanınıza doğru müzisyeni bulmak; bir düğün sitesinden "tek gecelik" grup kiralamaktan çok daha fazlası. Bu rehber; <strong>tür seçiminden kaşe ve sözleşmeye, kapora ve MESAM/MSG telifine, ajansa alternatiflerden mekan üyeliğiyle düzenli canlı müzik kurmaya</strong> kadar tüm süreci adım adım anlatır.</p>
+        <div class="gb-btns">
+          <a class="gb-btn gb-btn-primary gb-btn-orange gb-press" href="/#/register?rol=venue">Mekan Olarak Üye Ol<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="gb-btn gb-btn-outline gb-press" href="/indir/">Uygulamayı İndir</a>
+        </div>
+        <div class="gb-stores">
+            <a class="gb-store gb-press" href="/indir/" aria-label="App Store'dan indir"><svg width="22" height="22" viewBox="0 0 24 24" fill="#F2F1EE" aria-hidden="true"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg><span class="gb-store-t"><span class="gb-store-n">App Store</span><span class="gb-store-s">iPhone için</span></span></a>
+            <a class="gb-store gb-press" href="/indir/" aria-label="Google Play'den indir"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#4ED8FF"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#FF4FA3"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#FFD700"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#4ED8FF"/></svg><span class="gb-store-t"><span class="gb-store-n">Google Play</span><span class="gb-store-s">Android için</span></span></a>
+          </div>
       </div>
-      <div class="store-row">
-        <a class="store" href="/indir/" aria-label="App Store'dan indir">
-          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>
-          <span><span class="s1">App Store</span><br><span class="s2">iPhone için</span></span>
-        </a>
-        <a class="store" href="/indir/" aria-label="Google Play'den indir">
-          <svg viewBox="0 0 24 24"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#22D3EE"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#E23FA9"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#F5B301"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#22D3EE"/></svg>
-          <span><span class="s1">Google Play</span><br><span class="s2">Android için</span></span>
-        </a>
-      </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="wrap">
-    <article class="prose">
-      <section id="neden">
-        <h2>Neden mekanınıza <span class="em">düzenli canlı müzik?</span></h2>
-        <p class="sub">Canlı müzik bir "masraf kalemi" değil, doluluk ve gelir aracıdır — özellikle düzenli ve öngörülebilir bir programa dönüştüğünde.</p>
-        <p>Tek seferlik bir konser bir gecelik hareket getirir; ama <strong>her cuma akustik, her cumartesi DJ</strong> gibi düzenli bir program müşteride alışkanlık oluşturur. İnsanlar "bu akşam ne yapsak?" diye düşündüğünde aklına gelen mekan olursunuz. Canlı müziğin mekanınıza kattığı somut faydalar:</p>
-        <ul>
-          <li><strong>Daha uzun oturma süresi:</strong> Sahnede biri çalarken müşteriler daha geç kalır, bir tur daha söyler.</li>
+    <div class="gb-guide gb-acc-orange">
+      <details class="gb-toc-m" data-gb-pop>
+        <summary class="gb-toc-m-s gb-press"><span>BU REHBERDE</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <nav class="gb-toc-m-nav" aria-label="İçindekiler (mobil)">
+          <a href="#neden"><span>01</span>Neden düzenli canlı müzik?</a>
+          <a href="#dogru-sanatci"><span>02</span>Doğru sanatçıyı seçmek</a>
+          <a href="#butce"><span>03</span>Bütçe & kaşe</a>
+          <a href="#sozlesme"><span>04</span>Sözleşme, kapora ve telif</a>
+          <a href="#ajans"><span>05</span>Ajans yerine GigBridge</a>
+          <a href="#nasil-baslarsiniz"><span>06</span>Nasıl başlarsınız?</a>
+          <a href="#sss"><span>07</span>Sık sorulan sorular</a>
+        </nav>
+      </details>
+      <article class="gb-art gb-prose">
+          <section class="gb-art-sec" id="neden" aria-labelledby="h-neden">
+            <span class="gb-art-n">01</span>
+            <h2 class="gb-art-h" id="h-neden">Neden mekanınıza <em>düzenli canlı müzik?</em></h2>
+            <blockquote class="gb-quote">Canlı müzik bir "masraf kalemi" değil, doluluk ve gelir aracıdır — özellikle düzenli ve öngörülebilir bir programa dönüştüğünde.</blockquote>
+            <p>Tek seferlik bir konser bir gecelik hareket getirir; ama <strong>her cuma akustik, her cumartesi DJ</strong> gibi düzenli bir program müşteride alışkanlık oluşturur. İnsanlar "bu akşam ne yapsak?" diye düşündüğünde aklına gelen mekan olursunuz. Canlı müziğin mekanınıza kattığı somut faydalar:</p>
+            <ul><li><strong>Daha uzun oturma süresi:</strong> Sahnede biri çalarken müşteriler daha geç kalır, bir tur daha söyler.</li>
           <li><strong>Sessiz günleri doldurma:</strong> Salı–çarşamba gibi ölü akşamları bir cover grubu veya solo müzisyenle canlandırabilirsiniz.</li>
           <li><strong>Kimlik ve tekrar ziyaret:</strong> Belirli bir tür (jazz gecesi, Türkçe akustik, deep house) mekanınızı hatırlanır kılar.</li>
-          <li><strong>Organik erişim:</strong> Sanatçının ve dinleyicinin paylaşımları, sizin reklam bütçeniz olmadan yeni müşteri getirir.</li>
-        </ul>
-        <p>İşte GigBridge'in düğün/etkinlik sitelerinden ayrıldığı nokta tam da burası: amaç tek gecelik bir kiralama değil, <strong>düzenli program + etkinlik oluşturma + o etkinliği dinleyiciye ulaştırma</strong> döngüsünü birlikte kurmak.</p>
-      </section>
+          <li><strong>Organik erişim:</strong> Sanatçının ve dinleyicinin paylaşımları, sizin reklam bütçeniz olmadan yeni müşteri getirir.</li></ul>
+            <p>İşte GigBridge'in düğün/etkinlik sitelerinden ayrıldığı nokta tam da burası: amaç tek gecelik bir kiralama değil, <strong>düzenli program + etkinlik oluşturma + o etkinliği dinleyiciye ulaştırma</strong> döngüsünü birlikte kurmak.</p>
+          </section>
 
-      <section id="dogru-sanatci">
-        <h2>Doğru sanatçıyı <span class="em">seçmek</span></h2>
-        <p class="sub">"İyi müzisyen" yetmez; mekanınızın türüne, saatine ve enerjisine uyan müzisyen gerekir.</p>
-        <p>Sanatçı ararken önce mekanınızın karakterini netleştirin: akşam yemeği ağırlıklı sakin bir restoran mı, gece geç saatlere uzayan bir bar mı? Buna göre şu uyumlara dikkat edin:</p>
-        <ul>
-          <li><strong>Tür uyumu:</strong> Fine-dining bir restorana solo piyano/gitar veya hafif jazz; öğrenci ağırlıklı bir bara cover grubu ya da rock; şık bir lounge'a deep/house DJ genelde daha oturur.</li>
+          <section class="gb-art-sec" id="dogru-sanatci" aria-labelledby="h-dogru-sanatci">
+            <span class="gb-art-n">02</span>
+            <h2 class="gb-art-h" id="h-dogru-sanatci">Doğru sanatçıyı <em>seçmek</em></h2>
+            <p class="gb-dek">"İyi müzisyen" yetmez; mekanınızın türüne, saatine ve enerjisine uyan müzisyen gerekir.</p>
+            <p>Sanatçı ararken önce mekanınızın karakterini netleştirin: akşam yemeği ağırlıklı sakin bir restoran mı, gece geç saatlere uzayan bir bar mı? Buna göre şu uyumlara dikkat edin:</p>
+            <ul><li><strong>Tür uyumu:</strong> Fine-dining bir restorana solo piyano/gitar veya hafif jazz; öğrenci ağırlıklı bir bara cover grubu ya da rock; şık bir lounge'a deep/house DJ genelde daha oturur.</li>
           <li><strong>Ses seviyesi ve kurulum:</strong> Küçük bir mekanda tam davullu bir grup boğucu olabilir; akustik ikili ya da DJ daha uygun olur. Sanatçının ekipmanı mı geldiğini yoksa sizden ne beklediğini baştan konuşun.</li>
           <li><strong>Saat ve program:</strong> Yemek servisi sırasında arka planda kalacak bir performansla, gece "sahne" olan bir performans farklıdır. Beklentiyi net söyleyin.</li>
-          <li><strong>Repertuvar ve referans:</strong> Karar vermeden önce kısa bir kayıt/video veya daha önce çaldığı mekanları isteyin. GigBridge'de sanatçı profilleri, tür etiketleri ve örnekleriyle birlikte görünür — kör davet göndermezsiniz.</li>
-        </ul>
-        <p>İpucu: İlk seferde uzun vadeli bağlanmak yerine <strong>bir "deneme gecesi"</strong> ayarlayın. Uyum iyiyse düzenli/rezidans programa çevirirsiniz.</p>
-      </section>
+          <li><strong>Repertuvar ve referans:</strong> Karar vermeden önce kısa bir kayıt/video veya daha önce çaldığı mekanları isteyin. GigBridge'de sanatçı profilleri, tür etiketleri ve örnekleriyle birlikte görünür — kör davet göndermezsiniz.</li></ul>
+            <aside class="gb-callout gb-callout-tip" aria-label="İpucu"><span class="gb-callout-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1.1 1.3 1.1 2.2h5c0-.9.5-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg></span><span class="gb-callout-b"><span class="gb-callout-k">İPUCU</span><span class="gb-callout-t">İlk seferde uzun vadeli bağlanmak yerine <strong>bir "deneme gecesi"</strong> ayarlayın. Uyum iyiyse düzenli/rezidans programa çevirirsiniz.</span></span></aside>
+          </section>
 
-      <section id="butce">
-        <h2>Bütçe &amp; <span class="em">kaşe</span></h2>
-        <p class="sub">Kaşe; sanatçının performansı için ödediğiniz ücrettir. Telif ise bambaşka bir kalemdir (aşağıda).</p>
-        <p>Kaşe; sanatçı türüne, kadro sayısına (solo mu, ikili mi, tam grup mu), süreye, güne ve sanatçının deneyimine göre değişir. Kesin rakam vermek yerine, bütçenizi kurarken şu değişkenleri konuşun:</p>
-        <ul>
-          <li><strong>Kadro:</strong> Solo bir müzisyen ile 4-5 kişilik bir grup ya da tam ekipmanlı bir DJ set arasında ciddi fark olur.</li>
+          <section class="gb-art-sec" id="butce" aria-labelledby="h-butce">
+            <span class="gb-art-n">03</span>
+            <h2 class="gb-art-h" id="h-butce">Bütçe &amp; <em>kaşe</em></h2>
+            <p class="gb-dek">Kaşe; sanatçının performansı için ödediğiniz ücrettir. Telif ise bambaşka bir kalemdir (aşağıda).</p>
+            <p>Kaşe; sanatçı türüne, kadro sayısına (solo mu, ikili mi, tam grup mu), süreye, güne ve sanatçının deneyimine göre değişir. Kesin rakam vermek yerine, bütçenizi kurarken şu değişkenleri konuşun:</p>
+            <ul><li><strong>Kadro:</strong> Solo bir müzisyen ile 4-5 kişilik bir grup ya da tam ekipmanlı bir DJ set arasında ciddi fark olur.</li>
           <li><strong>Süre ve set sayısı:</strong> Tek 45 dakikalık set mi, gece boyu 3 set mi? Molalar ve toplam süre kaşeyi doğrudan etkiler.</li>
           <li><strong>Gün:</strong> Cuma–cumartesi genelde hafta içinden yüksektir.</li>
           <li><strong>Ekipman:</strong> Ses sistemi, mikrofon, ışık kimde? Sanatçı kendi ekipmanını getiriyorsa kaşe farklı olabilir.</li>
-          <li><strong>Düzenli iş indirimi:</strong> "Her cuma seni istiyoruz" demek, tek gecelik davete göre çoğu sanatçıda daha uygun bir aylık anlaşma getirir.</li>
-        </ul>
-        <p>GigBridge'de teklif ve pazarlığı sanatçıyla doğrudan, aracı komisyonu olmadan yaparsınız. Böylece bütçenizin büyük kısmı gerçekten sahnedeki performansa gider.</p>
-      </section>
+          <li><strong>Düzenli iş indirimi:</strong> "Her cuma seni istiyoruz" demek, tek gecelik davete göre çoğu sanatçıda daha uygun bir aylık anlaşma getirir.</li></ul>
+            <p>GigBridge'de teklif ve pazarlığı sanatçıyla doğrudan, aracı komisyonu olmadan yaparsınız. Böylece bütçenizin büyük kısmı gerçekten sahnedeki performansa gider.</p>
+          </section>
 
-      <section id="sozlesme">
-        <h2>Sözleşme, kapora ve <span class="em">telif</span></h2>
-        <p class="sub">İki farklı ödemeyi karıştırmayın: <strong>kaşe</strong> sanatçıya, <strong>telif</strong> eser sahiplerine gider.</p>
-        <p>Küçük de olsa yazılı bir anlaşma, hem sizi hem sanatçıyı korur. İyi bir sanatçı sözleşmesinde şunlar bulunmalı:</p>
-        <ul>
-          <li><strong>Tarih, saat ve set planı:</strong> Kaç set, ne kadar süre, molalar.</li>
+          <section class="gb-art-sec" id="sozlesme" aria-labelledby="h-sozlesme">
+            <span class="gb-art-n">04</span>
+            <h2 class="gb-art-h" id="h-sozlesme">Sözleşme, kapora ve <em>telif</em></h2>
+            <p class="gb-dek">İki farklı ödemeyi karıştırmayın: <strong>kaşe</strong> sanatçıya, <strong>telif</strong> eser sahiplerine gider.</p>
+            <p>Küçük de olsa yazılı bir anlaşma, hem sizi hem sanatçıyı korur. İyi bir sanatçı sözleşmesinde şunlar bulunmalı:</p>
+            <ul><li><strong>Tarih, saat ve set planı:</strong> Kaç set, ne kadar süre, molalar.</li>
           <li><strong>Kaşe ve ödeme şekli:</strong> Tutar, ne zaman (gece sonu / ertesi gün) ve nasıl ödeneceği.</li>
           <li><strong>Kapora:</strong> Yeri sağlama almak ve iki tarafı da bağlamak için genelde kaşenin bir kısmı önden kapora olarak verilir; iptal koşulları da yazılır.</li>
           <li><strong>Ekipman ve teknik:</strong> Ses/ışık kimde, sahne/priz durumu, ses seviyesi sınırı.</li>
-          <li><strong>İptal ve mücbir sebep:</strong> Hava, hastalık, beklenmedik kapanma gibi durumlarda ne olur.</li>
-        </ul>
-        <p><strong>Telif konusu ayrı ve önemlidir.</strong> Türkiye'de umuma açık bir mekanda (restoran, bar, kafe vb.) müzik icra edilmesi — canlı ya da kayıttan — telif hakkı doğurur. Kaşe sanatçının performansının karşılığıdır; telif ise icra edilen eserlerin <em>sahiplerine</em> ait bir haktır ve <strong>MESAM</strong> (Türkiye Musiki Eseri Sahipleri Meslek Birliği), <strong>MSG</strong> (Musiki Eseri Sahipleri Grubu Meslek Birliği) ve yapımcı tarafında <strong>MÜYAP</strong> gibi meslek birlikleri üzerinden lisanslanır. Umuma açık işletmeler bu birliklerle lisans sözleşmesi yaparak, mekanda müzik kullanımının telif bedelini öder.</p>
-        <p style="opacity:.85">Not: Telif bir mekanın müzik <em>kullanımıyla</em> ilgilidir; sanatçıya ödediğiniz kaşe bu yükümlülüğü ortadan kaldırmaz. Lisanslama tarifeleri işletmenin türüne ve büyüklüğüne göre belirlenir. Güncel oran ve koşullar için ilgili meslek birliklerinin resmi kaynaklarını esas alın; bu rehber hukuki danışmanlık değildir.</p>
-      </section>
+          <li><strong>İptal ve mücbir sebep:</strong> Hava, hastalık, beklenmedik kapanma gibi durumlarda ne olur.</li></ul>
+            <p><strong>Telif konusu ayrı ve önemlidir.</strong> Türkiye'de umuma açık bir mekanda (restoran, bar, kafe vb.) müzik icra edilmesi — canlı ya da kayıttan — telif hakkı doğurur. Kaşe sanatçının performansının karşılığıdır; telif ise icra edilen eserlerin <em>sahiplerine</em> ait bir haktır ve <strong>MESAM</strong> (Türkiye Musiki Eseri Sahipleri Meslek Birliği), <strong>MSG</strong> (Musiki Eseri Sahipleri Grubu Meslek Birliği) ve yapımcı tarafında <strong>MÜYAP</strong> gibi meslek birlikleri üzerinden lisanslanır. Umuma açık işletmeler bu birliklerle lisans sözleşmesi yaparak, mekanda müzik kullanımının telif bedelini öder.</p>
+            <aside class="gb-callout gb-callout-note" aria-label="Not"><span class="gb-callout-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg></span><span class="gb-callout-b"><span class="gb-callout-k">NOT</span><span class="gb-callout-t">Telif bir mekanın müzik <em>kullanımıyla</em> ilgilidir; sanatçıya ödediğiniz kaşe bu yükümlülüğü ortadan kaldırmaz. Lisanslama tarifeleri işletmenin türüne ve büyüklüğüne göre belirlenir. Güncel oran ve koşullar için ilgili meslek birliklerinin resmi kaynaklarını esas alın; bu rehber hukuki danışmanlık değildir.</span></span></aside>
+          </section>
 
-      <section id="ajans">
-        <h2>Sanatçı ajansı yerine <span class="em">GigBridge</span></h2>
-        <p class="sub">Klasik ajanslar ve düğün siteleri "tek seferlik kiralama" satar. GigBridge düzenli canlı müziği, etkinlik oluşturmayı ve dinleyiciye ulaşmayı tek yerde birleştirir.</p>
-        <div class="table-scroll" style="overflow-x:auto">
-          <table class="cmp">
-            <thead>
-              <tr><th>&nbsp;</th><th>Klasik ajans / düğün sitesi</th><th>GigBridge</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>Ne satar</td><td>Tek seferlik grup/DJ kiralama</td><td>Düzenli / rezidans canlı müzik programı</td></tr>
-              <tr><td>Aracı komisyonu</td><td>Genelde var, kaşenin üstüne biner</td><td>Sanatçıyla doğrudan iletişim</td></tr>
-              <tr><td>Etkinlik oluşturma</td><td>Yok — sadece eşleştirme</td><td>Etkinlik yayınla, takvime ekle</td></tr>
-              <tr><td>Dinleyiciye ulaşma</td><td>Yok</td><td>Etkinliğin GigBridge'de keşfedilir, kitleye ulaşır</td></tr>
-              <tr><td>Sanatçı seçimi</td><td>Ajansın portföyüyle sınırlı</td><td>Tür, konum ve profile göre kendin ara</td></tr>
-              <tr><td>Süreklilik</td><td>Her seferinde yeniden pazarlık</td><td>Sürekli program ve tekrar davet kolay</td></tr>
-            </tbody>
-          </table>
+          <section class="gb-art-sec" id="ajans" aria-labelledby="h-ajans">
+            <span class="gb-art-n">05</span>
+            <h2 class="gb-art-h" id="h-ajans">Sanatçı ajansı yerine <em>GigBridge</em></h2>
+            <p class="gb-dek">Klasik ajanslar ve düğün siteleri "tek seferlik kiralama" satar. GigBridge düzenli canlı müziği, etkinlik oluşturmayı ve dinleyiciye ulaşmayı tek yerde birleştirir.</p>
+            <div class="gb-cmp gb-cmp-hi" role="region" aria-label="Karşılaştırma tablosu" tabindex="0">
+              <table>
+                <thead><tr><th scope="col" class="gb-cmp-c0"><span class="gb-vh">Ölçüt</span></th><th scope="col">KLASİK AJANS / DÜĞÜN SİTESİ</th><th scope="col">GIGBRIDGE</th></tr></thead>
+                <tbody>
+                <tr><th scope="row">Ne satar</th><td>Tek seferlik grup/DJ kiralama</td><td>Düzenli / rezidans canlı müzik programı</td></tr>
+                <tr><th scope="row">Aracı komisyonu</th><td>Genelde var, kaşenin üstüne biner</td><td>Sanatçıyla doğrudan iletişim</td></tr>
+                <tr><th scope="row">Etkinlik oluşturma</th><td>Yok — sadece eşleştirme</td><td>Etkinlik yayınla, takvime ekle</td></tr>
+                <tr><th scope="row">Dinleyiciye ulaşma</th><td>Yok</td><td>Etkinliğin GigBridge'de keşfedilir, kitleye ulaşır</td></tr>
+                <tr><th scope="row">Sanatçı seçimi</th><td>Ajansın portföyüyle sınırlı</td><td>Tür, konum ve profile göre kendin ara</td></tr>
+                <tr><th scope="row">Süreklilik</th><td>Her seferinde yeniden pazarlık</td><td>Sürekli program ve tekrar davet kolay</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>Kısacası: bir ajans size bir grup <em>bulur</em> ve çekilir. GigBridge ise mekanınızın canlı müzik takvimini <strong>kurmanıza, doldurmanıza ve dinleyiciye duyurmanıza</strong> yardım eder.</p>
+          </section>
+
+          <section class="gb-art-sec" id="nasil-baslarsiniz" aria-labelledby="h-nasil-baslarsiniz">
+            <span class="gb-art-n">06</span>
+            <h2 class="gb-art-h" id="h-nasil-baslarsiniz">Nasıl <em>başlarsınız?</em></h2>
+            <p class="gb-dek">Mekan üyeliğiyle sanatçı bulmak birkaç adımda başlar.</p>
+            <ol class="gb-steps">
+              <li><span class="gb-step-n">01</span><span class="gb-step-b"><h3 class="gb-step-t">Mekan olarak üye olun</h3> <span class="gb-step-p">GigBridge'de mekan/organizatör hesabı açın, mekanınızın türünü, konumunu ve müzik tarzını tanımlayın. <a href="/#/register?rol=venue">Üye ol →</a></span></span></li>
+              <li><span class="gb-step-n">02</span><span class="gb-step-b"><h3 class="gb-step-t">Sanatçı arayın veya etkinlik yayınlayın</h3> <span class="gb-step-p">Türe ve konuma göre sanatçı/DJ arayın, profillerini inceleyip davet gönderin; ya da açık bir etkinlik yayınlayıp başvuru toplayın.</span></span></li>
+              <li><span class="gb-step-n">03</span><span class="gb-step-b"><h3 class="gb-step-t">Anlaşın ve düzenli programa çevirin</h3> <span class="gb-step-p">Kaşe, tarih ve koşulları netleştirin, deneme gecesini yapın; uyum iyiyse rezidans/düzenli programa dönüştürün.</span></span></li>
+            </ol>
+            <p>Sanatçı tarafında sürecin nasıl işlediğini merak ediyorsanız — profil, teklif ve sahne bulma akışını — <a href="/rehber/sahne-bulma/">Sanatçılar için sahne bulma rehberine</a> göz atın. Şehir bazında canlı müzik sahnesini görmek için ise <a href="/canli-muzik/istanbul/">İstanbul canlı müzik sayfasına</a> bakabilirsiniz.</p>
+          </section>
+
+          <section class="gb-art-sec" id="sss" aria-labelledby="h-sss">
+            <span class="gb-art-n">07</span>
+            <h2 class="gb-art-h" id="h-sss">Sık sorulan <em>sorular</em></h2>
+            <p class="gb-dek">Mekana sanatçı ve DJ bulma sürecinde en çok merak edilenler.</p>
+            <div class="gb-faq-list gb-faq-sm">
+          <details class="gb-faq" name="sss" open>
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Mekanıma nasıl canlı müzik sanatçısı veya DJ bulurum?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">GigBridge'de mekan veya organizatör olarak üye olun, mekanınızın türünü ve konumunu tanımlayın; ardından türe göre sanatçı/DJ arayıp profillerini inceleyerek davet gönderin ya da açık bir etkinlik yayınlayıp başvuru toplayın. Aracı ajans olmadan sanatçıyla doğrudan anlaşırsınız.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Kaşe ile telif arasındaki fark nedir?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Kaşe, sanatçıya performansı için ödediğiniz ücrettir. Telif ise icra edilen eserlerin sahiplerine ait bir haktır ve umuma açık mekanlarda MESAM, MSG gibi meslek birlikleriyle yapılan lisans sözleşmesiyle ödenir. Kaşeyi ödemeniz telif yükümlülüğünü ortadan kaldırmaz; ikisi ayrı kalemlerdir.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Mekanımda canlı müzik için telif ödemem gerekir mi?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Türkiye'de umuma açık işletmelerde müziğin canlı veya kayıttan icra edilmesi telif hakkı doğurur. İşletmeler MESAM, MSG ve yapımcı tarafında MÜYAP gibi meslek birlikleriyle lisans sözleşmesi yaparak telif bedelini öder. Güncel tarife ve koşullar için ilgili birliklerin resmi kaynaklarını esas alın.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Sanatçı ajansı yerine GigBridge kullanmanın avantajı ne?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Klasik ajanslar ve düğün siteleri genelde tek seferlik kiralama satar ve araya komisyon girer. GigBridge ise düzenli/rezidans canlı müzik programı kurmanızı, etkinlik yayınlamanızı ve etkinliğinizi dinleyiciye ulaştırmanızı tek yerde sağlar; sanatçıyla doğrudan iletişim kurarsınız.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Küçük bir kafe/restoran için hangi format uygun?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Küçük ve yemek ağırlıklı mekanlarda solo müzisyen, akustik ikili ya da hafif bir DJ set genelde en uygun formattır; tam davullu grup küçük alanda boğucu olabilir. Önce bir deneme gecesi yapıp uyumu görmek, sonra düzenli programa çevirmek en güvenli yoldur.</p>
+          </details>
         </div>
-        <p>Kısacası: bir ajans size bir grup <em>bulur</em> ve çekilir. GigBridge ise mekanınızın canlı müzik takvimini <strong>kurmanıza, doldurmanıza ve dinleyiciye duyurmanıza</strong> yardım eder.</p>
-      </section>
+          </section>
 
-      <section id="nasil-baslarsiniz">
-        <h2>Nasıl <span class="em">başlarsınız?</span></h2>
-        <p class="sub">Mekan üyeliğiyle sanatçı bulmak birkaç adımda başlar.</p>
-        <div class="roles">
-          <div class="role"><div class="n">01</div><h3>Mekan olarak üye olun</h3><p>GigBridge'de mekan/organizatör hesabı açın, mekanınızın türünü, konumunu ve müzik tarzını tanımlayın. <a href="https://gigbridges.com/#/login" style="color:var(--cyan)">Üye ol →</a></p></div>
-          <div class="role"><div class="n">02</div><h3>Sanatçı arayın veya etkinlik yayınlayın</h3><p>Türe ve konuma göre sanatçı/DJ arayın, profillerini inceleyip davet gönderin; ya da açık bir etkinlik yayınlayıp başvuru toplayın.</p></div>
-          <div class="role"><div class="n">03</div><h3>Anlaşın ve düzenli programa çevirin</h3><p>Kaşe, tarih ve koşulları netleştirin, deneme gecesini yapın; uyum iyiyse rezidans/düzenli programa dönüştürün.</p></div>
+          <section class="gb-gcta gb-bar3-orange" aria-labelledby="h-gcta">
+            <span class="gb-gcta-k gb-c-orange">MEKANLAR İÇİN</span>
+            <h2 class="gb-gcta-h" id="h-gcta">Mekanınıza doğru sanatçıyı <em>bulun</em></h2>
+            <p class="gb-gcta-p">Mekan olarak üye olun, sanatçı arayın, etkinlik oluşturun ve dinleyiciye ulaşın.</p>
+            <div class="gb-btns">
+              <a class="gb-btn gb-btn-primary gb-btn-orange gb-press" href="/#/register?rol=venue">Mekan Olarak Üye Ol</a>
+              <a class="gb-btn gb-btn-outline gb-press" href="/indir/">Uygulamayı İndir</a>
+            </div>
+          </section>
+      </article>
+
+      <aside class="gb-toc-aside" aria-label="İçindekiler">
+        <nav class="gb-toc" aria-labelledby="h-toc" data-gb-toc>
+          <span class="gb-toc-h" id="h-toc">BU REHBERDE</span>
+          <a class="gb-toc-a is-on" href="#neden" aria-current="true"><span class="gb-toc-n">01</span>Neden düzenli canlı müzik?</a>
+          <a class="gb-toc-a" href="#dogru-sanatci"><span class="gb-toc-n">02</span>Doğru sanatçıyı seçmek</a>
+          <a class="gb-toc-a" href="#butce"><span class="gb-toc-n">03</span>Bütçe & kaşe</a>
+          <a class="gb-toc-a" href="#sozlesme"><span class="gb-toc-n">04</span>Sözleşme, kapora ve telif</a>
+          <a class="gb-toc-a" href="#ajans"><span class="gb-toc-n">05</span>Ajans yerine GigBridge</a>
+          <a class="gb-toc-a" href="#nasil-baslarsiniz"><span class="gb-toc-n">06</span>Nasıl başlarsınız?</a>
+          <a class="gb-toc-a" href="#sss"><span class="gb-toc-n">07</span>Sık sorulan sorular</a>
+        </nav>
+        <div class="gb-toc-cta">
+          <span class="gb-toc-cta-t">Sanatçı bulmaya başlayın</span>
+          <span class="gb-toc-cta-p">Mekan olarak üye olun, sanatçı arayın, etkinlik oluşturun ve dinleyiciye ulaşın.</span>
+          <a class="gb-toc-cta-b gb-btn-orange gb-press" href="/#/register?rol=venue">Mekan Olarak Üye Ol</a>
         </div>
-        <p style="margin-top:20px">Sanatçı tarafında sürecin nasıl işlediğini merak ediyorsanız — profil, teklif ve sahne bulma akışını — <a href="/rehber/sahne-bulma/" style="color:var(--cyan)">Sanatçılar için sahne bulma rehberine</a> göz atın. Şehir bazında canlı müzik sahnesini görmek için ise <a href="/canli-muzik/istanbul/" style="color:var(--cyan)">İstanbul canlı müzik sayfasına</a> bakabilirsiniz.</p>
-      </section>
+      </aside>
+    </div>
 
-      <section id="sss">
-        <h2>Sık sorulan <span class="em">sorular</span></h2>
-        <div class="sub">Mekana sanatçı ve DJ bulma sürecinde en çok merak edilenler.</div>
-        <details open><summary>Mekanıma nasıl canlı müzik sanatçısı veya DJ bulurum?</summary><p>GigBridge'de mekan veya organizatör olarak üye olun, mekanınızın türünü ve konumunu tanımlayın; ardından türe göre sanatçı/DJ arayıp profillerini inceleyerek davet gönderin ya da açık bir etkinlik yayınlayıp başvuru toplayın. Aracı ajans olmadan sanatçıyla doğrudan anlaşırsınız.</p></details>
-        <details><summary>Kaşe ile telif arasındaki fark nedir?</summary><p>Kaşe, sanatçıya performansı için ödediğiniz ücrettir. Telif ise icra edilen eserlerin sahiplerine ait bir haktır ve umuma açık mekanlarda MESAM, MSG gibi meslek birlikleriyle yapılan lisans sözleşmesiyle ödenir. Kaşeyi ödemeniz telif yükümlülüğünü ortadan kaldırmaz; ikisi ayrı kalemlerdir.</p></details>
-        <details><summary>Mekanımda canlı müzik için telif ödemem gerekir mi?</summary><p>Türkiye'de umuma açık işletmelerde müziğin canlı veya kayıttan icra edilmesi telif hakkı doğurur. İşletmeler MESAM, MSG ve yapımcı tarafında MÜYAP gibi meslek birlikleriyle lisans sözleşmesi yaparak telif bedelini öder. Güncel tarife ve koşullar için ilgili birliklerin resmi kaynaklarını esas alın.</p></details>
-        <details><summary>Sanatçı ajansı yerine GigBridge kullanmanın avantajı ne?</summary><p>Klasik ajanslar ve düğün siteleri genelde tek seferlik kiralama satar ve araya komisyon girer. GigBridge ise düzenli/rezidans canlı müzik programı kurmanızı, etkinlik yayınlamanızı ve etkinliğinizi dinleyiciye ulaştırmanızı tek yerde sağlar; sanatçıyla doğrudan iletişim kurarsınız.</p></details>
-        <details><summary>Küçük bir kafe/restoran için hangi format uygun?</summary><p>Küçük ve yemek ağırlıklı mekanlarda solo müzisyen, akustik ikili ya da hafif bir DJ set genelde en uygun formattır; tam davullu grup küçük alanda boğucu olabilir. Önce bir deneme gecesi yapıp uyumu görmek, sonra düzenli programa çevirmek en güvenli yoldur.</p></details>
-      </section>
+    <section class="gb-related" aria-labelledby="h-rel">
+      <div class="gb-sh">
+        <span class="gb-sh-k">İLGİLİ SAYFALAR</span>
+        <h2 class="gb-h2 gb-h2-44" id="h-rel">Okumaya <em>devam et</em></h2>
+      </div>
+      <div class="gb-rel-grid">
+          <a class="gb-rel gb-card gb-bar-magenta" href="/rehber/sahne-bulma/">
+            <span class="gb-rel-k gb-c-magenta">REHBER · SANATÇI &amp; DJ</span>
+            <span class="gb-rel-t">DJ ve müzisyen olarak <em>sahne nasıl bulunur?</em></span>
+            <span class="gb-rel-p">İyi çalıyorsun, seti hazır, mix'in cepte — ama takvim boş.</span>
+            <span class="gb-rel-go gb-c-magenta">Sanatçı: Sahne Bulma<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+          <a class="gb-rel gb-card gb-bar-cyan" href="/canli-muzik/istanbul/">
+            <span class="gb-rel-k gb-c-cyan">İSTANBUL · CANLI MÜZİK</span>
+            <span class="gb-rel-t">İstanbul'da bu akşam <em>kim çalıyor?</em></span>
+            <span class="gb-rel-p">Kadıköy'den Beyoğlu'na, Beşiktaş'tan Nişantaşı'na — canlı müzik tek yerde.</span>
+            <span class="gb-rel-go gb-c-cyan">İstanbul Canlı Müzik<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+          <a class="gb-rel gb-card gb-bar-orange" href="/rehber/canli-muzik/">
+            <span class="gb-rel-k gb-c-orange">TÜRKİYE · CANLI MÜZİK REHBERİ</span>
+            <span class="gb-rel-t">Türkiye'de canlı müzik, <em>şehir şehir</em></span>
+            <span class="gb-rel-p">İstanbul'dan Bodrum'a, İzmir'den Antalya'ya — her şehrin kendi semtleri, kendi sesi.</span>
+            <span class="gb-rel-go gb-c-orange">Canlı Müzik Rehberi<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+      </div>
+    </section>
+  </main>
 
-      <div class="band">
-        <h2>Mekanınıza doğru sanatçıyı <span class="em">bulun</span></h2>
-        <p class="sub">Mekan olarak üye olun, sanatçı arayın, etkinlik oluşturun ve dinleyiciye ulaşın.</p>
-        <div class="cta-row" style="justify-content:center">
-          <a class="btn btn-primary" href="https://gigbridges.com/#/login">Mekan Olarak Üye Ol</a>
-          <a class="btn btn-ghost" href="/indir/">Uygulamayı İndir</a>
+  <footer class="gb-ft">
+    <div class="gb-ft-in">
+      <div class="gb-ft-grid">
+        <div class="gb-ft-brand">
+          <span class="gb-logo gb-logo-sm"><span class="gb-logo-tile"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"/><path d="M3 17h18"/></svg></span><span class="gb-logo-word">GigBridge</span></span>
+          <p>Dinleyicileri, sanatçıları ve mekanları canlı müzikte buluşturan platform.</p>
         </div>
+        <nav class="gb-ft-col" aria-label="Keşfet">
+          <span class="gb-ft-h">KEŞFET</span>
+          <a class="gb-link" href="/#/etkinlikler">Etkinlikler</a>
+          <a class="gb-link" href="/#/kesfet?kategori=mekanlar">Mekanlar</a>
+          <a class="gb-link" href="/#/kesfet?kategori=sanatcilar">Sanatçılar</a>
+          <a class="gb-link" href="/#/harita">Harita</a>
+          <a class="gb-link" href="/rehber/canli-muzik/">Canlı müzik rehberi</a>
+        </nav>
+        <nav class="gb-ft-col" aria-label="Katıl">
+          <span class="gb-ft-h">KATIL</span>
+          <a class="gb-link" href="/#/register?rol=artist">Sanatçı ol</a>
+          <a class="gb-link" href="/#/register?rol=venue">Mekan ekle</a>
+          <a class="gb-link" href="/#/register?rol=organizer">Organizatör ol</a>
+          <a class="gb-link" href="/#/login">Giriş yap</a>
+          <a class="gb-link" href="/indir/">Uygulamayı indir</a>
+        </nav>
+        <nav class="gb-ft-col" aria-label="Yasal">
+          <span class="gb-ft-h">YASAL</span>
+          <a class="gb-link" href="/gizlilik.html">Gizlilik</a>
+          <a class="gb-link" href="/kullanim-kosullari.html">Kullanım koşulları</a>
+          <a class="gb-link" href="/gizlilik.html#kvkk">KVKK aydınlatma metni</a>
+          <a class="gb-link" href="/hesap-sil.html">Hesap silme</a>
+        </nav>
       </div>
-
-      <div class="chip-row" style="margin-top:26px">
-        <span class="chip" style="color:var(--muted)">İlgili sayfalar:</span>
-        <a class="chip" href="/rehber/sahne-bulma/">Sanatçı: Sahne Bulma</a>
-        <a class="chip" href="/canli-muzik/istanbul/">İstanbul Canlı Müzik</a>
-        <a class="chip" href="/rehber/canli-muzik/">Canlı Müzik Rehberi</a>
-        <a class="chip" href="/indir/">Uygulamayı İndir</a>
-      </div>
-    </article>
-  </div>
-
-  <footer>
-    <div class="wrap">
-      <div class="links">
-        <a href="/">Ana Sayfa</a>
-        <a href="/rehber/canli-muzik/">Canlı Müzik Rehberi</a>
-        <a href="/indir/">Uygulamayı İndir</a>
-        <a href="/kullanim-kosullari.html">Kullanım Koşulları</a>
-        <a href="/gizlilik.html">Gizlilik</a>
-      </div>
-      <div>© 2026 GigBridge — Canlı müzik etkinlikleri, sanatçılar ve mekanlar.</div>
+      <div class="gb-ft-bottom"><span>© 2026 GigBridge</span><span>gigbridges.com</span></div>
     </div>
   </footer>
 

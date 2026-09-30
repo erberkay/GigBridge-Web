@@ -203,7 +203,7 @@ export function artistPage() {
   return page;
 }
 
-async function renderTab(tab, root) {
+export async function renderTab(tab, root) {
   if (tab === "kesfet") return renderDiscover(root);
   if (tab === "top10") return renderTop10(root);
   if (tab === "mekanlar") return renderVenueReview(root);
@@ -250,7 +250,7 @@ function homePage() {
   return page;
 }
 
-async function renderHome(root, st) {
+export async function renderHome(root, st) {
   const uid = session.user.uid;
   clear(root);
 
@@ -746,7 +746,7 @@ function artistDetailPage(id) {
   renderArtistDetail(id, content);
   return page;
 }
-async function renderArtistDetail(id, root) {
+export async function renderArtistDetail(id, root) {
   const myUid = session.user?.uid;
   const [a, revs, following, follCount] = await Promise.all([
     userById(id), artistReviews(id).catch(() => []),

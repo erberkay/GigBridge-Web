@@ -27,122 +27,310 @@
   <meta name="twitter:image" content="https://gigbridges.com/assets/og-cover.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="/assets/landing.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="/assets/seo.css?v=20260929s" />
+  <script src="/assets/seo.js?v=20260929s" defer></script>
 </head>
-<body>
-  <div class="prism-top"></div>
-  <header>
-    <div class="wrap">
-      <a class="brand" href="/"><span class="dot"></span> GigBridge</a>
-      <a class="nav-cta" href="/indir/">Uygulamayı İndir</a>
+<body class="gb gb-pg-city">
+  <a class="gb-skip" href="#icerik">İçeriğe geç</a>
+  <header class="gb-hd">
+    <div class="gb-hd-in">
+      <a class="gb-logo" href="/" aria-label="GigBridge ana sayfa"><span class="gb-logo-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"/><path d="M3 17h18"/></svg></span><span class="gb-logo-word">GigBridge</span></a>
+      <details class="gb-menu" data-gb-pop>
+        <summary class="gb-burger gb-press" aria-label="Menü"><svg class="gb-ic-menu" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="gb-ic-x" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></summary>
+        <div class="gb-menu-panel">
+          <nav class="gb-menu-nav" aria-label="Ana menü (mobil)">
+            <a class="gb-menu-link" href="/#/kesfet">Keşfet</a>
+            <a class="gb-menu-link" href="/#/etkinlikler">Etkinlikler</a>
+            <a class="gb-menu-link" href="/#/harita">Harita</a>
+            <a class="gb-menu-link" href="/#/akis">Akış</a>
+            <a class="gb-menu-link" href="/#/top10">Top 10</a>
+          </nav>
+          <div class="gb-menu-cities">
+            <span class="gb-menu-h">CANLI MÜZİK · ŞEHİRLER</span>
+            <div class="gb-menu-citylist">
+            <a class="gb-menu-city" href="/canli-muzik/istanbul/" data-city="İstanbul">İstanbul</a>
+            <a class="gb-menu-city" href="/canli-muzik/izmir/" data-city="İzmir">İzmir</a>
+            <a class="gb-menu-city" href="/canli-muzik/ankara/" data-city="Ankara">Ankara</a>
+            <a class="gb-menu-city" href="/canli-muzik/antalya/" data-city="Antalya">Antalya</a>
+            <a class="gb-menu-city" href="/canli-muzik/bodrum/" data-city="Bodrum">Bodrum</a>
+            <a class="gb-menu-city" href="/canli-muzik/kusadasi/" data-city="Kuşadası" aria-current="page">Kuşadası</a>
+            </div>
+          </div>
+          <div class="gb-menu-auth">
+            <a class="gb-btn gb-btn-outline gb-press" href="/#/login">Giriş yap</a>
+            <a class="gb-btn gb-btn-light gb-press" href="/#/register">Hesap oluştur</a>
+          </div>
+        </div>
+      </details>
+      <nav class="gb-hd-nav" aria-label="Ana menü">
+        <a class="gb-link" href="/#/kesfet">Keşfet</a>
+        <a class="gb-link" href="/#/etkinlikler">Etkinlikler</a>
+        <a class="gb-link" href="/#/harita">Harita</a>
+        <a class="gb-link" href="/#/akis">Akış</a>
+        <a class="gb-link" href="/#/top10">Top 10</a>
+      </nav>
+      <div class="gb-hd-right">
+        <details class="gb-city" data-gb-pop data-gb-city>
+          <summary class="gb-city-btn gb-press" aria-label="Şehir seç, şu an Kuşadası"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span class="gb-city-l">Kuşadası</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <div class="gb-city-menu">
+          <span class="gb-city-h">CANLI MÜZİK SAYFALARI</span>
+          <a class="gb-city-opt" href="/canli-muzik/istanbul/" data-city="İstanbul"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>İstanbul</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/izmir/" data-city="İzmir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>İzmir</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/ankara/" data-city="Ankara"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Ankara</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/antalya/" data-city="Antalya"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Antalya</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/bodrum/" data-city="Bodrum"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Bodrum</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/kusadasi/" data-city="Kuşadası" aria-current="page"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Kuşadası</span></a>
+          </div>
+        </details>
+        <a class="gb-hd-login gb-press" href="/#/login">Giriş yap</a>
+        <a class="gb-hd-reg gb-press" href="/#/register">Hesap oluştur</a>
+        <a class="gb-hd-get gb-press" href="/indir/">İndir</a>
+      </div>
     </div>
   </header>
 
-  <div class="wrap">
-    <nav class="crumb" aria-label="breadcrumb">
-      <a href="/">Ana Sayfa</a> &nbsp;›&nbsp; <a href="/rehber/canli-muzik/">Canlı Müzik</a> &nbsp;›&nbsp; <span>Kuşadası</span>
+  <main class="gb-main" id="icerik" tabindex="-1">
+    <section class="gb-hero gb-city-hero" aria-labelledby="h-city">
+      <nav class="gb-crumbs" aria-label="Sayfa konumu"><a class="gb-crumb" href="/">Ana Sayfa</a><svg class="gb-crumb-sep" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><a class="gb-crumb" href="/rehber/canli-muzik/">Canlı Müzik</a><svg class="gb-crumb-sep" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span aria-current="page" class="gb-crumb-cur">Kuşadası</span></nav>
+      <div class="gb-hero-grid">
+        <div class="gb-hero-l gb-rise">
+          <span class="gb-eyebrow gb-acc-magenta">KUŞADASI · CANLI MÜZİK</span>
+          <h1 class="gb-h1" id="h-city">Kuşadası'nda bu akşam <em>sahne nerede?</em></h1>
+          <p class="gb-lead">Barlar Sokağı'nın gürültüsünden Kaleiçi'nin meyhane fasıllarına, Marina'nın lounge setlerinden Kadınlar Denizi'nin sahil partilerine — Ege'nin en hareketli tatil kasabasındaki canlı müziği tek yerde keşfet. Statik "en iyi mekanlar" listeleri değil; <strong>bu akşam ve bu hafta</strong> gerçekten kim çalıyor, GigBridge'de.</p>
+          <div class="gb-btns">
+            <a class="gb-btn gb-btn-primary gb-press" href="/#/kesfet">Etkinlikleri Keşfet<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            <a class="gb-btn gb-btn-outline gb-press" href="/indir/">Uygulamayı İndir</a>
+          </div>
+          <div class="gb-stores">
+            <a class="gb-store gb-press" href="/indir/" aria-label="App Store'dan indir"><svg width="22" height="22" viewBox="0 0 24 24" fill="#F2F1EE" aria-hidden="true"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg><span class="gb-store-t"><span class="gb-store-n">App Store</span><span class="gb-store-s">iPhone için</span></span></a>
+            <a class="gb-store gb-press" href="/indir/" aria-label="Google Play'den indir"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#4ED8FF"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#FF4FA3"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#FFD700"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#4ED8FF"/></svg><span class="gb-store-t"><span class="gb-store-n">Google Play</span><span class="gb-store-s">Android için</span></span></a>
+          </div>
+        </div>
+        <div class="gb-hero-r gb-rise gb-d120">
+          <a class="gb-wk gb-card" href="/#/etkinlikler?sehir=aydin&amp;tarih=bu-hafta" data-gb-wk>
+            <img class="gb-wk-img gb-kb" src="/assets/web/venue-electronic-night.jpg" alt="" width="1000" height="545" decoding="async">
+            <span class="gb-wk-shade" aria-hidden="true"></span>
+            <span class="gb-live"><span class="gb-live-dot" aria-hidden="true"><span class="gb-ping"></span><span></span></span><span data-gb-wk-badge data-week="BU HAFTA · KUŞADASI">KUŞADASI · CANLI MÜZİK</span></span>
+            <span class="gb-wk-list"><span class="gb-wk-rows" data-gb-wk-rows></span><span class="gb-wk-cta">Uygulamada etkinlikleri gör<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="gb-sec" id="semtler" aria-labelledby="h-semt">
+      <div class="gb-sh-row">
+        <div class="gb-sh">
+          <span class="gb-sh-k" data-gb-num="SEMTLER">01 · SEMTLER</span>
+          <h2 class="gb-h2" id="h-semt">Kuşadası'nda <em>semt semt</em> canlı müzik</h2>
+          <p class="gb-sh-p">Her bölgenin kendi ritmi var: kimi cadde sabaha kadar coşuyor, kimi meyhane fasılla, kimi sahil gün batımı setleriyle. GigBridge'de konumuna göre filtrele, bu akşam yakınında çalan sanatçıları ve mekanları gör.</p>
+        </div>
+        <a class="gb-more gb-link" href="/#/harita">Haritada gör<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="gb-dc-grid">
+          <div class="gb-dc">
+            <span class="gb-dc-n"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg>Barlar Sokağı (Kaleiçi)</span>
+            <span class="gb-dc-p">Kuşadası'nın kalbi ve Ege'nin en yoğun bar caddelerinden biri. Irish pub'lardan cover gruplarına, DJ setlerinden dans müziğine; yaz akşamları sabaha kadar dolu, enerjisi yüksek bir sahne.</span>
+          </div>
+          <div class="gb-dc">
+            <span class="gb-dc-n"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg>Kaleiçi Meyhaneleri</span>
+            <span class="gb-dc-p">Tarihi surların içinde daha samimi bir hava. Fasıl geceleri, Türkçe pop ve akustik performanslar; mezeyle müziğin buluştuğu, otantik ve sıcak bir atmosfer arayanlar için.</span>
+          </div>
+          <div class="gb-dc">
+            <span class="gb-dc-n"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg>Marina / Setur</span>
+            <span class="gb-dc-p">Daha şık ve sakin bir çizgi. Gün ilerledikçe lounge bara dönüşen sahil mekanları, akustik ve chill-out setleri, deniz manzaralı gece programları.</span>
+          </div>
+          <div class="gb-dc">
+            <span class="gb-dc-n"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg>Kadınlar Denizi</span>
+            <span class="gb-dc-p">Plaj ve tatil bölgesinin gündüz beach club enerjisi, gün batımı DJ setleri ve yaz boyu süren sahil partileri. Denize sıfır, pop ve dans ağırlıklı.</span>
+          </div>
+      </div>
+    </section>
+
+    <section class="gb-sec" id="sahne-karakteri" aria-labelledby="h-sahne-karakteri">
+      <div class="gb-sh">
+          <span class="gb-sh-k" data-gb-num="KARAKTER">02 · KARAKTER</span>
+          <h2 class="gb-h2" id="h-sahne-karakteri">Ege'nin en canlı <em>bar caddesi</em></h2>
+          <p class="gb-sh-p">Kuşadası'nın gece hayatını anlamak, sezonunu ve kitlesini anlamaktan geçer.</p>
+        </div>
+      <div class="gb-prose-blk">
+          <p>Kuşadası, yaz turizminin nabzıyla atan bir kasaba. Aydın'ın bu sahil ilçesinde gece hayatı büyük ölçüde tatilci kitlesine göre şekilleniyor: pop, dans ve cover ağırlıklı bir repertuvar, yüksek tempo ve kalabalık caddeler. Haziran'dan eylül'e kadar Barlar Sokağı ve çevresi hemen her akşam hareketli olurken, mekanlar sık sık canlı müzik ve DJ performanslarıyla programını doldurur.</p>
+          <p>Bu yoğunluk, sanatçılar için de bir fırsat demek. Cover grupları, akustik ikili ve solo performanslar, DJ'ler ve dans setleri için sezon boyunca gerçek bir talep var. Ama bu talebin ne zaman, nerede ve kim için olduğunu takip etmek zor — çünkü program günden güne, hatta saatten saate değişebiliyor. İşte GigBridge tam bu noktada devreye giriyor: statik listeler yerine <strong>bu akşam ve bu hafta</strong> gerçekten ne olduğunu gösteriyor.</p>
+        </div>
+    </section>
+
+    <section class="gb-sec" id="ne-bulursun" aria-labelledby="h-ne-bulursun">
+      <div class="gb-sh">
+          <span class="gb-sh-k" data-gb-num="NE BULURSUN">03 · NE BULURSUN</span>
+          <h2 class="gb-h2" id="h-ne-bulursun">Kuşadası'nda <em>ne bulursun?</em></h2>
+          <p class="gb-sh-p">Sahil kasabası ritmine göre şekillenen bir canlı müzik yelpazesi.</p>
+        </div>
+      <div class="gb-how-grid">
+          <div class="gb-how gb-bar-cyan">
+            <h3>Cover &amp; dans geceleri</h3>
+            <p>Barlar Sokağı'nın vazgeçilmezi. Sevilen şarkıları çalan gruplar ve yüksek tempolu dans setleriyle sabaha kadar süren geceler.</p>
+          </div>
+          <div class="gb-how gb-bar-magenta">
+            <h3>Meyhane &amp; fasıl</h3>
+            <p>Kaleiçi'nin otantik yüzü. Türkçe pop, fasıl ve akustik performansların mezelerle buluştuğu daha samimi akşamlar.</p>
+          </div>
+          <div class="gb-how gb-bar-orange">
+            <h3>Sahil &amp; lounge setleri</h3>
+            <p>Marina ve Kadınlar Denizi hattında gün batımı DJ'leri, chill-out ve deniz manzaralı lounge programları.</p>
+          </div>
+        </div>
+    </section>
+
+    <section class="gb-sec gb-band gb-week" id="bu-hafta" aria-labelledby="h-week" hidden data-gb-events data-city="Kuşadası" data-district="Kuşadası">
+      <div class="gb-sh-row">
+        <div class="gb-sh">
+          <span class="gb-sh-k" data-gb-num="BU HAFTA">04 · BU HAFTA</span>
+          <h2 class="gb-h2" id="h-week">Kuşadası'nda <em>bu hafta</em> sahnede</h2>
+        </div>
+        <a class="gb-more gb-link" href="/#/etkinlikler?sehir=aydin&amp;tarih=bu-hafta">Tümünü gör<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="gb-kinds">
+        <span class="gb-kinds-l">Hangi tür etkinlikler var?</span>
+        <span class="gb-kind"><span class="gb-dot" style="background:#FF4FA3"></span>Konser</span>
+        <span class="gb-kind"><span class="gb-dot" style="background:#A78BFA"></span>DJ seti</span>
+        <span class="gb-kind"><span class="gb-dot" style="background:#7CE0B0"></span>Akustik gece</span>
+        <span class="gb-kind"><span class="gb-dot" style="background:#FF8A2A"></span>Jazz</span>
+        <span class="gb-kind"><span class="gb-dot" style="background:#FF5A6E"></span>Rock</span>
+        <span class="gb-kind"><span class="gb-dot" style="background:#A78BFA"></span>Elektronik</span>
+        <span class="gb-kind"><span class="gb-dot" style="background:#EC4899"></span>Cover grupları</span>
+        <span class="gb-kind"><span class="gb-dot" style="background:#4ED8FF"></span>Açık mikrofon</span>
+      </div>
+      <div class="gb-ev-grid" data-gb-ev-grid></div>
+    </section>
+
+    <section class="gb-sec gb-how-sec" id="nasil" aria-labelledby="h-how">
+      <div class="gb-sh">
+          <span class="gb-sh-k" data-gb-num="NASIL ÇALIŞIR">04 · NASIL ÇALIŞIR</span>
+          <h2 class="gb-h2" id="h-how">GigBridge <em>nasıl çalışır?</em></h2>
+          <p class="gb-sh-p">GigBridge sadece bir etkinlik listesi değil — sanatçıları, mekanları ve dinleyicileri buluşturan iki taraflı bir sahne.</p>
+        </div>
+      <div class="gb-how-grid">
+          <div class="gb-how gb-bar-cyan">
+            <span class="gb-how-n">01</span>
+            <h3>Dinleyiciysen</h3>
+            <p>Kuşadası'nda yakınındaki canlı müzik etkinliklerini keşfet, bu akşam Barlar Sokağı'na mı yoksa Marina'ya mı gideceğine haritadan karar ver.</p>
+          </div>
+          <div class="gb-how gb-bar-magenta">
+            <span class="gb-how-n">02</span>
+            <h3>Sanatçı / DJ isen</h3>
+            <p>Profilini oluştur, Kuşadası'ndaki mekanlarda sezonluk sahne bul, teklif al ve takvimini yönet.</p>
+            <a class="gb-how-link" href="/rehber/sahne-bulma/">Sahne bulma rehberi<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+          <div class="gb-how gb-bar-orange">
+            <span class="gb-how-n">03</span>
+            <h3>Mekan / Organizatörsen</h3>
+            <p>Cover grubu, akustik ikili ya da DJ bul; etkinlik oluştur ve tatilci kitlesine ulaş.</p>
+            <a class="gb-how-link" href="/rehber/mekana-sanatci-bulma/">Mekana sanatçı bulma<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+        </div>
+    </section>
+
+    <section class="gb-sec gb-faq-sec" id="sss" aria-labelledby="h-faq">
+      <div class="gb-faq-head">
+        <div class="gb-sh">
+          <span class="gb-sh-k" data-gb-num="SSS">05 · SSS</span>
+          <h2 class="gb-h2" id="h-faq">Sık sorulan <em>sorular</em></h2>
+          <p class="gb-sh-p">Kuşadası canlı müzik etkinlikleri hakkında en çok merak edilenler.</p>
+        </div>
+      </div>
+      <div class="gb-faq-list">
+          <details class="gb-faq" name="sss" open>
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Kuşadası'nda bu akşam nerede canlı müzik var?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">GigBridge uygulamasında konumuna göre filtreleyerek Barlar Sokağı, Kaleiçi, Marina ve Kadınlar Denizi başta olmak üzere bu akşam çalan sanatçıları ve mekanları gerçek zamanlı görebilirsin. Statik listeler yerine güncel program sunar.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Kuşadası gece hayatı hangi tür müzik ağırlıklı?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Yoğun yaz turizmi nedeniyle pop, dans ve cover müziği ön planda. Barlar Sokağı'nda yüksek tempolu geceler, Kaleiçi meyhanelerinde fasıl ve Türkçe pop, Marina ile sahilde ise lounge ve DJ setleri bulabilirsin.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Sanatçıysam Kuşadası'nda nasıl sahne bulurum?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">GigBridge'e sanatçı olarak kaydol, profilini ve müzik türünü ekle. Kuşadası'ndaki mekanlar özellikle yaz sezonunda seni keşfeder, sana teklif gönderir; sen de açık etkinliklere başvurabilirsin.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Mekanım için nasıl sanatçı/DJ bulurum?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Mekan veya organizatör olarak üye ol, GigBridge web panelinden veya uygulamadan sanatçı ara, davet gönder ya da etkinliğini yayınla. Sezonluk canlı müzik ve gece programı için tasarlandı.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Kuşadası'nda canlı müzik en çok ne zaman oluyor?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">En yoğun dönem yaz sezonu, yani haziran ile eylül arası. Bu aylarda Barlar Sokağı ve sahil bölgelerinde hemen her akşam canlı müzik ve DJ programı bulmak mümkün; GigBridge'de güncel takvimi görebilirsin.</p>
+          </details>
+        </div>
+    </section>
+
+      <section class="gb-cta" aria-labelledby="h-band">
+        <span class="gb-prism gb-cta-bar" aria-hidden="true"></span>
+        <h2 class="gb-cta-h" id="h-band">Kuşadası'nın sahnesi <em>cebinde</em></h2>
+        <p class="gb-cta-p">Uygulamayı indir, bu akşam yakınındaki canlı müziği keşfet.</p>
+        <div class="gb-cta-btns">
+          <a class="gb-btn gb-btn-primary gb-press" href="/indir/">Uygulamayı İndir</a>
+          <a class="gb-btn gb-btn-outline gb-btn-p22 gb-press" href="/#/kesfet">Web'de Keşfet</a>
+        </div>
+      </section>
+
+    <nav class="gb-cities" aria-labelledby="h-cities">
+      <h2 class="gb-cities-h" id="h-cities">DİĞER ŞEHİRLER</h2>
+      <div class="gb-cities-grid">
+        <a class="gb-cc gb-card" href="/canli-muzik/istanbul/">
+          <span class="gb-cc-n">İstanbul<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+          <span class="gb-cc-l">İstanbul'da bu akşam kim çalıyor?</span>
+        </a>
+        <a class="gb-cc gb-card" href="/canli-muzik/izmir/">
+          <span class="gb-cc-n">İzmir<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+          <span class="gb-cc-l">İzmir'de bu akşam kim çalıyor?</span>
+        </a>
+        <a class="gb-cc gb-card" href="/canli-muzik/ankara/">
+          <span class="gb-cc-n">Ankara<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+          <span class="gb-cc-l">Ankara'da bu akşam kim çalıyor?</span>
+        </a>
+        <a class="gb-cc gb-card" href="/canli-muzik/antalya/">
+          <span class="gb-cc-n">Antalya<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+          <span class="gb-cc-l">Antalya'da bu akşam kim çalıyor?</span>
+        </a>
+        <a class="gb-cc gb-card" href="/canli-muzik/bodrum/">
+          <span class="gb-cc-n">Bodrum<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+          <span class="gb-cc-l">Bodrum'da bu akşam sahne nerede?</span>
+        </a>
+      </div>
     </nav>
+  </main>
 
-    <div class="hero">
-      <div class="eyebrow">Kuşadası · Canlı Müzik</div>
-      <h1>Kuşadası'nda bu akşam <em>sahne nerede?</em></h1>
-      <p class="lead">Barlar Sokağı'nın gürültüsünden Kaleiçi'nin meyhane fasıllarına, Marina'nın lounge setlerinden Kadınlar Denizi'nin sahil partilerine — Ege'nin en hareketli tatil kasabasındaki canlı müziği tek yerde keşfet. Statik "en iyi mekanlar" listeleri değil; <strong>bu akşam ve bu hafta</strong> gerçekten kim çalıyor, GigBridge'de.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="https://gigbridges.com/#/kesfet">Etkinlikleri Keşfet →</a>
-        <a class="btn btn-ghost" href="/indir/">Uygulamayı İndir</a>
+  <footer class="gb-ft">
+    <div class="gb-ft-in">
+      <div class="gb-ft-grid">
+        <div class="gb-ft-brand">
+          <span class="gb-logo gb-logo-sm"><span class="gb-logo-tile"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"/><path d="M3 17h18"/></svg></span><span class="gb-logo-word">GigBridge</span></span>
+          <p>Dinleyicileri, sanatçıları ve mekanları canlı müzikte buluşturan platform.</p>
+        </div>
+        <nav class="gb-ft-col" aria-label="Keşfet">
+          <span class="gb-ft-h">KEŞFET</span>
+          <a class="gb-link" href="/#/etkinlikler">Etkinlikler</a>
+          <a class="gb-link" href="/#/kesfet?kategori=mekanlar">Mekanlar</a>
+          <a class="gb-link" href="/#/kesfet?kategori=sanatcilar">Sanatçılar</a>
+          <a class="gb-link" href="/#/harita">Harita</a>
+          <a class="gb-link" href="/rehber/canli-muzik/">Canlı müzik rehberi</a>
+        </nav>
+        <nav class="gb-ft-col" aria-label="Katıl">
+          <span class="gb-ft-h">KATIL</span>
+          <a class="gb-link" href="/#/register?rol=artist">Sanatçı ol</a>
+          <a class="gb-link" href="/#/register?rol=venue">Mekan ekle</a>
+          <a class="gb-link" href="/#/register?rol=organizer">Organizatör ol</a>
+          <a class="gb-link" href="/#/login">Giriş yap</a>
+          <a class="gb-link" href="/indir/">Uygulamayı indir</a>
+        </nav>
+        <nav class="gb-ft-col" aria-label="Yasal">
+          <span class="gb-ft-h">YASAL</span>
+          <a class="gb-link" href="/gizlilik.html">Gizlilik</a>
+          <a class="gb-link" href="/kullanim-kosullari.html">Kullanım koşulları</a>
+          <a class="gb-link" href="/gizlilik.html#kvkk">KVKK aydınlatma metni</a>
+          <a class="gb-link" href="/hesap-sil.html">Hesap silme</a>
+        </nav>
       </div>
-      <div class="store-row">
-        <a class="store" href="/indir/" aria-label="App Store'dan indir">
-          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>
-          <span><span class="s1">App Store</span><br><span class="s2">iPhone için</span></span>
-        </a>
-        <a class="store" href="/indir/" aria-label="Google Play'den indir">
-          <svg viewBox="0 0 24 24"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#22D3EE"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#E23FA9"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#F5B301"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#22D3EE"/></svg>
-          <span><span class="s1">Google Play</span><br><span class="s2">Android için</span></span>
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <div class="wrap">
-    <section id="semtler">
-      <h2>Kuşadası'nda <span class="em">semt semt</span> canlı müzik</h2>
-      <p class="sub">Her bölgenin kendi ritmi var: kimi cadde sabaha kadar coşuyor, kimi meyhane fasılla, kimi sahil gün batımı setleriyle. GigBridge'de konumuna göre filtrele, bu akşam yakınında çalan sanatçıları ve mekanları gör.</p>
-      <div class="grid">
-        <a class="card" href="/canli-muzik/istanbul/"><h3><span class="pin"></span>Barlar Sokağı (Kaleiçi)</h3><p>Kuşadası'nın kalbi ve Ege'nin en yoğun bar caddelerinden biri. Irish pub'lardan cover gruplarına, DJ setlerinden dans müziğine; yaz akşamları sabaha kadar dolu, enerjisi yüksek bir sahne.</p><span class="go">Bölge programını gör →</span></a>
-        <a class="card" href="/canli-muzik/izmir/"><h3><span class="pin"></span>Kaleiçi Meyhaneleri</h3><p>Tarihi surların içinde daha samimi bir hava. Fasıl geceleri, Türkçe pop ve akustik performanslar; mezeyle müziğin buluştuğu, otantik ve sıcak bir atmosfer arayanlar için.</p><span class="go">Bölge programını gör →</span></a>
-        <div class="card"><h3><span class="pin"></span>Marina / Setur</h3><p>Daha şık ve sakin bir çizgi. Gün ilerledikçe lounge bara dönüşen sahil mekanları, akustik ve chill-out setleri, deniz manzaralı gece programları.</p></div>
-        <div class="card"><h3><span class="pin"></span>Kadınlar Denizi</h3><p>Plaj ve tatil bölgesinin gündüz beach club enerjisi, gün batımı DJ setleri ve yaz boyu süren sahil partileri. Denize sıfır, pop ve dans ağırlıklı.</p></div>
-      </div>
-    </section>
-
-    <section id="sahne-karakteri">
-      <h2>Ege'nin en canlı <span class="em">bar caddesi</span></h2>
-      <p class="sub">Kuşadası'nın gece hayatını anlamak, sezonunu ve kitlesini anlamaktan geçer.</p>
-      <p>Kuşadası, yaz turizminin nabzıyla atan bir kasaba. Aydın'ın bu sahil ilçesinde gece hayatı büyük ölçüde tatilci kitlesine göre şekilleniyor: pop, dans ve cover ağırlıklı bir repertuvar, yüksek tempo ve kalabalık caddeler. Haziran'dan eylül'e kadar Barlar Sokağı ve çevresi hemen her akşam hareketli olurken, mekanlar sık sık canlı müzik ve DJ performanslarıyla programını doldurur.</p>
-      <p>Bu yoğunluk, sanatçılar için de bir fırsat demek. Cover grupları, akustik ikili ve solo performanslar, DJ'ler ve dans setleri için sezon boyunca gerçek bir talep var. Ama bu talebin ne zaman, nerede ve kim için olduğunu takip etmek zor — çünkü program günden güne, hatta saatten saate değişebiliyor. İşte GigBridge tam bu noktada devreye giriyor: statik listeler yerine <strong>bu akşam ve bu hafta</strong> gerçekten ne olduğunu gösteriyor.</p>
-    </section>
-
-    <section id="ne-bulursun">
-      <h2>Kuşadası'nda <span class="em">ne bulursun?</span></h2>
-      <p class="sub">Sahil kasabası ritmine göre şekillenen bir canlı müzik yelpazesi.</p>
-      <div class="grid">
-        <div class="card"><h3>Cover &amp; dans geceleri</h3><p>Barlar Sokağı'nın vazgeçilmezi. Sevilen şarkıları çalan gruplar ve yüksek tempolu dans setleriyle sabaha kadar süren geceler.</p></div>
-        <div class="card"><h3>Meyhane &amp; fasıl</h3><p>Kaleiçi'nin otantik yüzü. Türkçe pop, fasıl ve akustik performansların mezelerle buluştuğu daha samimi akşamlar.</p></div>
-        <div class="card"><h3>Sahil &amp; lounge setleri</h3><p>Marina ve Kadınlar Denizi hattında gün batımı DJ'leri, chill-out ve deniz manzaralı lounge programları.</p></div>
-      </div>
-    </section>
-
-    <section id="nasil">
-      <h2>GigBridge <span class="em">nasıl çalışır?</span></h2>
-      <p class="sub">GigBridge sadece bir etkinlik listesi değil — sanatçıları, mekanları ve dinleyicileri buluşturan iki taraflı bir sahne.</p>
-      <div class="roles">
-        <div class="role"><div class="n">01</div><h3>Dinleyiciysen</h3><p>Kuşadası'nda yakınındaki canlı müzik etkinliklerini keşfet, bu akşam Barlar Sokağı'na mı yoksa Marina'ya mı gideceğine haritadan karar ver.</p></div>
-        <div class="role"><div class="n">02</div><h3>Sanatçı / DJ isen</h3><p>Profilini oluştur, Kuşadası'ndaki mekanlarda sezonluk sahne bul, teklif al ve takvimini yönet. <a href="/rehber/sahne-bulma/" style="color:var(--cyan)">Sahne bulma rehberi →</a></p></div>
-        <div class="role"><div class="n">03</div><h3>Mekan / Organizatörsen</h3><p>Cover grubu, akustik ikili ya da DJ bul; etkinlik oluştur ve tatilci kitlesine ulaş. <a href="/rehber/mekana-sanatci-bulma/" style="color:var(--cyan)">Mekana sanatçı bulma →</a></p></div>
-      </div>
-    </section>
-
-    <section id="sss">
-      <h2>Sık sorulan <span class="em">sorular</span></h2>
-      <div class="sub">Kuşadası canlı müzik etkinlikleri hakkında en çok merak edilenler.</div>
-      <details open><summary>Kuşadası'nda bu akşam nerede canlı müzik var?</summary><p>GigBridge uygulamasında konumuna göre filtreleyerek Barlar Sokağı, Kaleiçi, Marina ve Kadınlar Denizi başta olmak üzere bu akşam çalan sanatçıları ve mekanları gerçek zamanlı görebilirsin. Statik listeler yerine güncel program sunar.</p></details>
-      <details><summary>Kuşadası gece hayatı hangi tür müzik ağırlıklı?</summary><p>Yoğun yaz turizmi nedeniyle pop, dans ve cover müziği ön planda. Barlar Sokağı'nda yüksek tempolu geceler, Kaleiçi meyhanelerinde fasıl ve Türkçe pop, Marina ile sahilde ise lounge ve DJ setleri bulabilirsin.</p></details>
-      <details><summary>Sanatçıysam Kuşadası'nda nasıl sahne bulurum?</summary><p>GigBridge'e sanatçı olarak kaydol, profilini ve müzik türünü ekle. Kuşadası'ndaki mekanlar özellikle yaz sezonunda seni keşfeder, sana teklif gönderir; sen de açık etkinliklere başvurabilirsin.</p></details>
-      <details><summary>Mekanım için nasıl sanatçı/DJ bulurum?</summary><p>Mekan veya organizatör olarak üye ol, GigBridge web panelinden veya uygulamadan sanatçı ara, davet gönder ya da etkinliğini yayınla. Sezonluk canlı müzik ve gece programı için tasarlandı.</p></details>
-      <details><summary>Kuşadası'nda canlı müzik en çok ne zaman oluyor?</summary><p>En yoğun dönem yaz sezonu, yani haziran ile eylül arası. Bu aylarda Barlar Sokağı ve sahil bölgelerinde hemen her akşam canlı müzik ve DJ programı bulmak mümkün; GigBridge'de güncel takvimi görebilirsin.</p></details>
-    </section>
-
-    <div class="band">
-      <h2>Kuşadası'nın sahnesi <span class="em">cebinde</span></h2>
-      <p class="sub">Uygulamayı indir, bu akşam yakınındaki canlı müziği keşfet.</p>
-      <div class="cta-row" style="justify-content:center">
-        <a class="btn btn-primary" href="/indir/">Uygulamayı İndir</a>
-        <a class="btn btn-ghost" href="https://gigbridges.com/#/kesfet">Web'de Keşfet</a>
-      </div>
-    </div>
-
-    <div class="chip-row" style="margin-top:26px">
-      <span class="chip" style="color:var(--muted)">Diğer şehirler:</span>
-      <a class="chip" href="/canli-muzik/istanbul/">İstanbul</a>
-      <a class="chip" href="/canli-muzik/izmir/">İzmir</a>
-      <a class="chip" href="/canli-muzik/ankara/">Ankara</a>
-      <a class="chip" href="/canli-muzik/antalya/">Antalya</a>
-      <a class="chip" href="/canli-muzik/bodrum/">Bodrum</a>
-    </div>
-  </div>
-
-  <footer>
-    <div class="wrap">
-      <div class="links">
-        <a href="/">Ana Sayfa</a>
-        <a href="/rehber/canli-muzik/">Canlı Müzik Rehberi</a>
-        <a href="/indir/">Uygulamayı İndir</a>
-        <a href="/kullanim-kosullari.html">Kullanım Koşulları</a>
-        <a href="/gizlilik.html">Gizlilik</a>
-      </div>
-      <div>© 2026 GigBridge — Canlı müzik etkinlikleri, sanatçılar ve mekanlar.</div>
+      <div class="gb-ft-bottom"><span>© 2026 GigBridge</span><span>gigbridges.com</span></div>
     </div>
   </footer>
 

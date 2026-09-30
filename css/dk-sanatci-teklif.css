@@ -1,0 +1,161 @@
+/* dk-sanatci-teklif.css — WebSanatciTeklif masaüstü görünümü (artistTeklif, #/artist/teklif/{id}).
+   SAHİBİ: js/desktop/artist/teklif.js uygulayıcısı (specs/foundation.md §3). Spec: specs/sanatci.md WebSanatciTeklif
+   KAPSAM: tüm seçiciler .dk-sanatci-teklif kökü (içerik <main>) ya da .dk-sanatci-teklif-* alt sınıfları altında.
+   Ölçüler artboard'un satır içi stillerinden birebir (1440). */
+
+.dk-sanatci-teklif { --dk-ps-padt: 28px; color: #F2F1EE; }
+.dk-sanatci-teklif [hidden] { display: none !important; }
+
+.dk-sanatci-teklif-back { align-self: flex-start; height: 32px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; text-decoration: none; }
+.dk-sanatci-teklif-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
+.dk-sanatci-teklif-left { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.dk-sanatci-teklif-right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* ── ortak ── */
+.dk-sanatci-teklif-card { box-sizing: border-box; min-width: 0; border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; }
+.dk-sanatci-teklif-pad { padding: 18px 20px 20px; display: flex; flex-direction: column; }
+.dk-sanatci-teklif-ml { margin: 0; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: #A3A7AF; }
+.dk-sanatci-teklif-pad-h { padding: 18px 20px 12px; }
+
+/* ── HERO ── */
+.dk-sanatci-teklif-hero { position: relative; height: 320px; border-radius: 12px; overflow: hidden; border: 1px solid #1F232B; background: #0E1014; }
+.dk-sanatci-teklif-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-sanatci-teklif-ph { position: absolute; inset: 0; display: block; background: linear-gradient(160deg, rgba(255,138,42,0.25), rgba(6,7,10,0.9)); }
+.dk-sanatci-teklif-scrim { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(6,7,10,0.2) 0%, rgba(6,7,10,0.35) 40%, rgba(6,7,10,0.95) 100%); }
+.dk-sanatci-teklif-hbadge { position: absolute; top: 18px; left: 18px; height: 26px; box-sizing: border-box; padding: 0 10px; display: flex; align-items: center; gap: 8px; border-radius: 4px; background: rgba(6,7,10,0.78); border: 1px solid; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; white-space: nowrap; }
+.dk-sanatci-teklif-hdot { width: 6px; height: 6px; border-radius: 50%; display: block; flex-shrink: 0; }
+/* artboard: flex, kırılma YOK → uzun adda başlık satır kırar, harita düğmesi sağ altta kalır (en çok 3 satır; rozetle çakışmaz) */
+.dk-sanatci-teklif-hbot { position: absolute; left: 32px; right: 32px; bottom: 28px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.dk-sanatci-teklif-hcol { flex: 0 1 auto; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.dk-sanatci-teklif-heb { display: flex; align-items: center; gap: 8px; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; }
+.dk-sanatci-teklif-hebdot { width: 7px; height: 7px; border-radius: 50%; display: block; flex-shrink: 0; }
+.dk-sanatci-teklif-h1 { margin: 0; font-family: var(--dk-font-serif); font-weight: 400; font-size: 64px; letter-spacing: -0.01em; line-height: 1.02; color: #F2F1EE; overflow-wrap: break-word; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; padding-bottom: 0.2em; margin-bottom: -0.2em; }
+/* ↑ satır sınırı overflow:hidden ister; line-height 1.02 → alt uzantılar (y, J, ğ) kutu dışına taşar → 0.2em alt dolgu kırpma kutusunu genişletir, eksi kenar boşluğu yerleşimi aynen korur */
+.dk-sanatci-teklif-h1 em { font-style: italic; color: #FF4FA3; }
+.dk-sanatci-teklif-map, .dk-sanatci-teklif-map:hover { flex-shrink: 0; margin-left: auto; height: 44px; box-sizing: border-box; padding: 0 16px; border-radius: 6px; border: 1px solid rgba(242,241,238,0.25); background: rgba(6,7,10,0.7); color: #F2F1EE; display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 500; white-space: nowrap; text-decoration: none; }
+
+/* ── ROW A ── */
+.dk-sanatci-teklif-rowa, .dk-sanatci-teklif-rowb { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.dk-sanatci-teklif-det { overflow: hidden; }
+.dk-sanatci-teklif-dl { margin: 0; }
+.dk-sanatci-teklif-dr { height: 56px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 12px; border-top: 1px solid #14171D; }
+.dk-sanatci-teklif-dr svg { flex-shrink: 0; }
+.dk-sanatci-teklif-dr dt { font-size: 14px; color: #8A8E97; white-space: nowrap; }
+.dk-sanatci-teklif-dr dd { margin: 0 0 0 auto; font-size: 15px; font-weight: 600; text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-sanatci-teklif-dr.is-hl { background: rgba(124,224,176,0.04); }
+.dk-sanatci-teklif-dr.is-hl dd { font-family: var(--dk-font-mono); font-size: 16px; font-weight: 700; color: #7CE0B0; }
+.dk-sanatci-teklif-msg { gap: 14px; }
+.dk-sanatci-teklif-mrow { display: flex; gap: 12px; min-width: 0; }
+.dk-sanatci-teklif-mav { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; background: linear-gradient(135deg, #FF8A2A, #D97706); color: #06070A; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+.dk-sanatci-teklif-quote { margin: 0; min-width: 0; padding: 14px 16px; border-radius: 4px 10px 10px 10px; background: #14171D; font-size: 15px; line-height: 1.6; color: #E4E3E0; overflow-wrap: anywhere; }
+.dk-sanatci-teklif-quote.is-empty { color: #8A8E97; }
+.dk-sanatci-teklif-obtn, .dk-sanatci-teklif-obtn:hover { margin-top: auto; align-self: flex-start; height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; color: #F2F1EE; display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 500; white-space: nowrap; text-decoration: none; }
+
+/* ── ROW B ── */
+.dk-sanatci-teklif-week { gap: 12px; }
+.dk-sanatci-teklif-wl { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.dk-sanatci-teklif-wi { height: 48px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; gap: 12px; border-radius: 8px; border: 1px solid #14171D; background: #0A0B0F; }
+.dk-sanatci-teklif-wi.is-mine { border-color: rgba(255,79,163,0.45); background: rgba(255,79,163,0.06); }
+.dk-sanatci-teklif-wd { width: 58px; flex-shrink: 0; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #A3A7AF; }
+.dk-sanatci-teklif-wdot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; display: block; }
+/* artboard'da metin bu genişlikte kırılıyor → tek satır + üç nokta (spec önerisi) */
+.dk-sanatci-teklif-wt { flex-grow: 1; min-width: 0; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-sanatci-teklif-wk { flex-shrink: 0; font-size: 12px; color: #8A8E97; white-space: nowrap; }
+.dk-sanatci-teklif-wempty { margin: 0; font-size: 13px; color: #8A8E97; }
+.dk-sanatci-teklif-wi.is-rej .dk-sanatci-teklif-wt { color: #8A8E97; text-decoration: line-through; }
+.dk-sanatci-teklif-wi.is-rej .dk-sanatci-teklif-wk { color: #FF5A6E; }
+.dk-sanatci-teklif-ven { gap: 14px; }
+.dk-sanatci-teklif-vrow { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.dk-sanatci-teklif-vimg { width: 56px; height: 56px; flex-shrink: 0; border-radius: 10px; object-fit: cover; display: block; }
+.dk-sanatci-teklif-vimg.is-ini { background: linear-gradient(135deg, #FF8A2A, #D97706); color: #06070A; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }
+.dk-sanatci-teklif-vcol { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dk-sanatci-teklif-vn { font-size: 17px; font-weight: 600; }
+.dk-sanatci-teklif-vm { font-size: 13px; color: #8A8E97; }
+.dk-sanatci-teklif-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.dk-sanatci-teklif-tiles.is-one { grid-template-columns: minmax(0, 1fr); }
+.dk-sanatci-teklif-tile { padding: 12px; border-radius: 8px; background: #0A0B0F; border: 1px solid #14171D; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dk-sanatci-teklif-tl { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-sanatci-teklif-tv { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600; white-space: nowrap; }
+.dk-sanatci-teklif-tc { font-size: 13px; font-weight: 400; color: #8A8E97; }
+.dk-sanatci-teklif-vlink, .dk-sanatci-teklif-vlink:hover { display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: #FF8A2A; text-decoration: none; }
+
+/* ── YANIT KARTI ── */
+.dk-sanatci-teklif-resp { box-sizing: border-box; padding: 24px; border: 1px solid #2C303A; border-radius: 12px; background: #0E1014; display: flex; flex-direction: column; gap: 16px; position: relative; overflow: hidden; min-width: 0; }
+.dk-sanatci-teklif-prism { position: absolute; left: 0; right: 0; top: 0; height: 2px; display: block; }
+.dk-sanatci-teklif-lbl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-sanatci-teklif-resphead { display: flex; flex-direction: column; gap: 16px; }
+.dk-sanatci-teklif-feerow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.dk-sanatci-teklif-fee { font-family: var(--dk-font-mono); font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }
+.dk-sanatci-teklif-fee.is-none { font-size: 24px; letter-spacing: 0; white-space: normal; }
+.dk-sanatci-teklif-sbadge { height: 24px; box-sizing: border-box; flex-shrink: 0; padding: 0 9px; display: flex; align-items: center; gap: 6px; border-radius: 4px; border: 1px solid; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; white-space: nowrap; }
+.dk-sanatci-teklif-line { font-size: 13.5px; color: #A3A7AF; }
+.dk-sanatci-teklif-div { height: 1px; background: #1F232B; display: block; }
+.dk-sanatci-teklif-state { display: flex; flex-direction: column; }
+.dk-sanatci-teklif-state:empty { display: none; }
+.dk-sanatci-teklif-acts { display: flex; flex-direction: column; gap: 10px; }
+.dk-sanatci-teklif-rbtn { height: 48px; box-sizing: border-box; margin: 0; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 9px; font-family: var(--dk-font-sans); font-size: 15px; font-weight: 600; cursor: pointer; }
+.dk-sanatci-teklif-rbtn.is-primary { border: 0; background: #FF4FA3; color: #06070A; }
+.dk-sanatci-teklif-rbtn.is-danger { border: 1px solid rgba(255,90,110,0.5); background: transparent; color: #FF5A6E; }
+.dk-sanatci-teklif-rbtn[disabled], .dk-sanatci-teklif-cbtn[disabled], .dk-sanatci-teklif-bbtn[disabled] { opacity: .5; cursor: default; }
+.dk-sanatci-teklif-note { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: #8A8E97; }
+.dk-sanatci-teklif-confirm { box-sizing: border-box; padding: 16px; border-radius: 10px; border: 1px solid rgba(255,79,163,0.45); background: #0A0B0F; display: flex; flex-direction: column; gap: 12px; }
+.dk-sanatci-teklif-confirm.is-rej { border-color: rgba(255,90,110,0.45); }
+.dk-sanatci-teklif-cft { font-size: 16px; font-weight: 600; }
+.dk-sanatci-teklif-cfb { font-size: 14px; line-height: 1.5; color: #A3A7AF; }
+.dk-sanatci-teklif-cfacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dk-sanatci-teklif-cbtn { height: 44px; margin: 0; border-radius: 6px; font-family: var(--dk-font-sans); font-size: 14px; cursor: pointer; }
+.dk-sanatci-teklif-cbtn.is-outline { border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-weight: 500; }
+.dk-sanatci-teklif-cbtn.is-primary { border: 0; background: #FF4FA3; color: #06070A; font-weight: 600; }
+.dk-sanatci-teklif-cbtn.is-dangersolid { border: 0; background: #FF5A6E; color: #06070A; font-weight: 600; }
+.dk-sanatci-teklif-result { box-sizing: border-box; padding: 16px; border-radius: 10px; border: 1px solid; display: flex; flex-direction: column; gap: 10px; }
+.dk-sanatci-teklif-rt { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 600; }
+.dk-sanatci-teklif-rb { font-size: 13.5px; line-height: 1.5; color: #C9CACD; }
+.dk-sanatci-teklif-racts { display: flex; gap: 8px; }
+.dk-sanatci-teklif-lbtn, .dk-sanatci-teklif-lbtn:hover { height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 6px; background: #F2F1EE; color: #06070A; display: flex; align-items: center; font-size: 13.5px; font-weight: 600; text-decoration: none; }
+
+/* ── DİĞER BEKLEYEN TEKLİFLER ── */
+.dk-sanatci-teklif-others { padding: 18px 20px 8px; }
+.dk-sanatci-teklif-others-h { margin: 0 0 6px; }
+.dk-sanatci-teklif-orow, .dk-sanatci-teklif-orow:hover { min-height: 60px; box-sizing: border-box; padding: 10px 0; display: flex; align-items: center; gap: 12px; border-top: 1px solid #14171D; color: #F2F1EE; text-decoration: none; }
+.dk-sanatci-teklif-orow svg { flex-shrink: 0; }
+.dk-sanatci-teklif-ocol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-sanatci-teklif-ov { font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-sanatci-teklif-ow { font-size: 12.5px; color: #8A8E97; }
+.dk-sanatci-teklif-ofee { font-family: var(--dk-font-mono); font-size: 13px; font-weight: 600; color: #C9CACD; white-space: nowrap; }
+
+/* ── hızlı yanıt çubuğu (yalnız 769–1023, bekleyen teklif) ── */
+.dk-sanatci-teklif-bar { display: none; }
+
+/* bulunamadı durumu: dkEmpty başlığı sayfa h1'i (UA kenar boşluğu sıfır) */
+.dk-sanatci-teklif h1.dk-empty-t { margin: 0; }
+
+/* ══════════ DUYARLI ══════════ */
+/* <1400: 380'lik sağ kolonla sol kartlar <330px kalıyor (1280'de 262) → tek kolon; yanıt kartı + diğer teklifler hero'nun hemen
+   altında (spec 1024–1279 kuralı: yanıt üstte kalsın), 2 sütun. Sıra DOM'da (teklif.js placeAside: aside hero'dan sonra) → sekme
+   sırası = görsel sıra; CSS `order` KULLANILMAZ. */
+@media (max-width: 1399px) {
+  .dk-sanatci-teklif-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .dk-sanatci-teklif-left { display: contents; }
+  .dk-sanatci-teklif-right { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+@media (max-width: 1279px) {
+  .dk-sanatci-teklif-hero { height: 280px; }
+  .dk-sanatci-teklif-h1 { font-size: 52px; }
+}
+@media (max-width: 1023px) {
+  .dk-sanatci-teklif { --dk-ps-padt: 24px; }
+  .dk-sanatci-teklif-hero { height: 240px; }
+  .dk-sanatci-teklif-hbot { left: 24px; right: 24px; bottom: 22px; }
+  .dk-sanatci-teklif-hbadge { top: 16px; left: 16px; }
+  .dk-sanatci-teklif-h1 { font-size: 44px; }
+  .dk-sanatci-teklif-right { grid-template-columns: minmax(0, 1fr); }
+  .dk-sanatci-teklif-rowa, .dk-sanatci-teklif-rowb { grid-template-columns: minmax(0, 1fr); }
+  .dk-sanatci-teklif-msg .dk-sanatci-teklif-obtn { margin-top: 0; }
+  .dk-sanatci-teklif-bar { position: sticky; bottom: 12px; z-index: 5; box-sizing: border-box; padding: 10px 12px 10px 16px; border: 1px solid #2C303A; border-radius: 12px; background: rgba(14,16,20,0.96); box-shadow: 0 10px 30px rgba(0,0,0,0.45); display: flex; align-items: center; gap: 12px; }
+  .dk-sanatci-teklif-bar.is-off { visibility: hidden; }
+  .dk-sanatci-teklif-barfee { flex-grow: 1; min-width: 0; font-family: var(--dk-font-mono); font-size: 18px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dk-sanatci-teklif-barbtns { display: flex; gap: 8px; flex-shrink: 0; }
+  .dk-sanatci-teklif-bbtn { height: 44px; margin: 0; padding: 0 16px; border-radius: 6px; font-family: var(--dk-font-sans); font-size: 14px; font-weight: 600; cursor: pointer; }
+  .dk-sanatci-teklif-bbtn.is-primary { border: 0; background: #FF4FA3; color: #06070A; }
+  .dk-sanatci-teklif-bbtn.is-danger { border: 1px solid rgba(255,90,110,0.5); background: transparent; color: #FF5A6E; }
+}

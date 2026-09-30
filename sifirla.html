@@ -9,82 +9,248 @@
   <link rel="icon" href="favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!--
+    WebSifreSifirla — Firebase e-posta eylem sayfası (mode=resetPassword | verifyEmail | recoverEmail, oobCode).
+    Tasarım: Claude Design WebSifreSifirla (AuthSplit: görsel yan panel + form kolonu); tüm genişliklerde bu düzen
+    (≥1280 çizildiği gibi · 1024–1279 dar yan panel · ≤1023 yan panel gizli + logo satırı · ≤768 tek kolon telefon düzeni).
+    SPA dışı: kendi CSS'i (aşağıda, .as-* ad alanı) + kendi Firebase Auth örneği. Firestore YOK.
+    Yerel test: yalnız localhost/127.0.0.1'de ?emu (ya da aynı sekmede önceden ?emu → sessionStorage gb_emu=1) ile Auth
+    emülatörüne (127.0.0.1:9186, demo-gigbridge) bağlanır — js/firebase.js'teki anahtarla aynı mantık. Üretim yapılandırması DEĞİŞMEDİ.
+  -->
   <style>
     :root {
-      --void: #06070A; --stratum: #0E1014; --hairline: #1F232B; --hairline-2: #2A2F38;
-      --ink: #F2F1EE; --vapor: #8A8E97; --muted: #6E727C;
-      --magenta: #FF4FA3; --cyan: #4ED8FF; --amber: #FF8A2A;
+      --void: #06070A; --abyss: #0A0B0F; --stratum: #0E1014; --strata: #14171D; --hair: #1F232B; --hair-2: #2C303A;
+      --ink: #F2F1EE; --ink-2: #C9CACD; --fog: #A3A7AF; --vapor: #8A8E97; --placeholder: #7D818B;
+      --magenta: #FF4FA3; --cyan: #4ED8FF; --amber: #FF8A2A; --green: #7CE0B0; --red: #FF5A6E; --red-text: #FF8A98;
+      --sans: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --serif: "Instrument Serif", Georgia, serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --ease: cubic-bezier(.2,.7,.2,1);
     }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; height: 100%; }
-    body {
-      background: var(--void); color: var(--ink);
-      font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      display: flex; align-items: center; justify-content: center; padding: 24px;
-      -webkit-font-smoothing: antialiased;
+    html, body { margin: 0; }
+    body { background: var(--void); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    a { color: var(--magenta); text-decoration: none; }
+    a:hover { color: #FF8AC4; }
+    button { font-family: inherit; cursor: pointer; margin: 0; }
+    button:disabled { cursor: default; }
+    input { font-family: inherit; }
+    a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+    input::placeholder { color: var(--placeholder); }
+    .as-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+    /* etkileşim (artboard helmet'i birebir) */
+    .gb-in { transition: border-color 160ms ease, background-color 160ms ease; }
+    .gb-in:hover { border-color: var(--hair-2); }
+    .gb-in:focus { border-color: var(--cyan); background: #10131A; outline: none; }
+    .gb-in:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+    .gb-press { transition: transform 120ms ease, filter 180ms ease, background-color 200ms ease, border-color 200ms ease, color 200ms ease; }
+    .gb-press:hover { filter: brightness(1.15); }
+    .gb-press:active { transform: scale(.985); }
+    .gb-press:disabled:hover { filter: none; }
+    .gb-link { color: var(--vapor); transition: color 160ms ease; }
+    .gb-link:hover { color: var(--ink); }
+    .gb-bar { transition: background-color 260ms ease; }
+    @keyframes gbRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .gb-rise { animation: gbRise 520ms var(--ease) both; }
+    @keyframes gbKb { from { transform: scale(1.03); } to { transform: scale(1.1) translate(-1%, -1%); } }
+    .gb-kb { animation: gbKb 18s ease-in-out infinite alternate; }
+    @keyframes gbSpin { to { transform: rotate(360deg); } }
+    .gb-spin { animation: gbSpin 800ms linear infinite; }
+    @keyframes asBadgePop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+    .gb-pop { animation: asBadgePop 520ms var(--ease) both; }
+    @keyframes gbMsg { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    .gb-msg { animation: gbMsg 260ms ease both; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+    /* ── AuthSplit ── */
+    .as { display: flex; min-height: 100vh; min-height: 100dvh; background: var(--void); }
+    .as-aside {
+      position: sticky; top: 0; align-self: flex-start; flex-shrink: 0; height: 100vh; min-height: 560px;
+      width: min(50%, calc(100% - 561px)); overflow: hidden; border-right: 1px solid var(--strata); background: var(--abyss);
     }
-    .card {
-      width: 100%; max-width: 440px; background: var(--stratum);
-      border: 1px solid var(--hairline); border-radius: 14px; overflow: hidden;
+    .as-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .as-grad { position: absolute; inset: 0; display: block; background: linear-gradient(180deg, rgba(6,7,10,0.72) 0%, rgba(6,7,10,0.15) 26%, rgba(6,7,10,0.5) 55%, rgba(6,7,10,0.97) 86%); }
+    .as-logo { display: flex; align-items: center; gap: 10px; color: var(--ink); }
+    .as-logo:hover { color: var(--ink); }
+    .as-aside .as-logo { position: absolute; top: 40px; left: var(--as-inset, 56px); }
+    .as-tile { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; background: var(--ink); color: var(--void); display: flex; align-items: center; justify-content: center; }
+    .as-word { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; }
+    .as-copy { position: absolute; left: var(--as-inset, 56px); right: var(--as-inset, 56px); bottom: var(--as-inset, 56px); display: flex; flex-direction: column; gap: 28px; }
+    .as-eb { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: var(--magenta); }
+    .as-ebline { width: 24px; height: 2px; background: var(--magenta); display: block; flex-shrink: 0; }
+    .as-stmt { margin: 0; font-family: var(--serif); font-size: clamp(44px, 4.4445vw, 64px); font-weight: 400; line-height: 1.02; letter-spacing: -0.01em; color: var(--ink); }
+    .as-stmt em { font-style: italic; color: var(--magenta); }
+    .as-feats { margin: 0; padding: 22px 0 0; border-top: 1px solid rgba(242,241,238,0.14); list-style: none; display: flex; flex-direction: column; gap: 14px; }
+    .as-feats li { display: flex; align-items: center; gap: 14px; font-size: 15px; color: var(--ink-2); }
+    .as-ftile { width: 34px; height: 34px; flex-shrink: 0; box-sizing: border-box; border-radius: 8px; border: 1px solid rgba(242,241,238,0.16); background: rgba(6,7,10,0.5); display: flex; align-items: center; justify-content: center; }
+
+    .as-main { flex-grow: 1; min-width: 0; min-height: 100vh; min-height: 100dvh; box-sizing: border-box; padding: 36px 64px 32px; display: flex; flex-direction: column; }
+    .as-brand { display: none; height: 40px; margin-bottom: 16px; align-items: center; }
+    .as-top { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+    .as-toplink { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+    .as-topr { font-size: 14px; color: var(--vapor); }
+    .as-topr a { font-weight: 600; }
+    .as-center { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 32px 0; }
+    .as-col { width: min(400px, 100%); display: flex; flex-direction: column; }
+    .as-legal { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--vapor); }
+
+    /* ── Görünümler ── */
+    .as-view { display: flex; flex-direction: column; gap: 20px; }
+    .as-view.is-result { gap: 22px; }
+    .as-badge { width: 56px; height: 56px; box-sizing: border-box; flex-shrink: 0; border-radius: 14px; border: 1px solid rgba(255,79,163,0.4); background: rgba(255,79,163,0.08); color: var(--magenta); display: flex; align-items: center; justify-content: center; }
+    .as-badge.is-ok { width: 64px; height: 64px; border-radius: 50%; border-color: rgba(124,224,176,0.45); background: rgba(124,224,176,0.12); color: var(--green); }
+    .as-badge.is-bad { width: 64px; height: 64px; border-radius: 50%; border-color: rgba(255,90,110,0.45); background: rgba(255,90,110,0.1); color: var(--red); }
+    .as-head { display: flex; flex-direction: column; gap: 10px; }
+    .as-heb { font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: var(--vapor); }
+    .as-heb.is-ok { color: var(--green); }
+    .as-heb.is-bad { color: var(--red); }
+    .as-h1 { margin: 0; font-family: var(--serif); font-size: 52px; font-weight: 400; line-height: 1.02; letter-spacing: -0.01em; color: var(--ink); }
+    .as-h1:focus { outline: none; }
+    .as-h1.is-form { font-size: 50px; }
+    .as-h1 em { font-style: italic; color: var(--magenta); }
+    .as-h1 em.is-ok { color: var(--green); }
+    .as-lead { margin: 0; font-size: 15.5px; line-height: 1.5; color: var(--fog); overflow-wrap: anywhere; }
+    .as-view.is-result .as-lead { line-height: 1.55; }
+    .as-lead b { color: var(--ink); font-weight: 600; }
+
+    .as-form { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+    .as-fld { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .as-lbl { font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: var(--vapor); }
+    .as-pw { position: relative; }
+    .as-inp { width: 100%; height: 48px; box-sizing: border-box; padding: 0 14px; border-radius: 8px; border: 1px solid var(--hair); background: var(--stratum); color: var(--ink); font-size: 15px; margin: 0; }
+    .as-inp.has-eye { padding-right: 76px; }
+    .as-inp.has-mark { padding-right: 44px; }
+    .as-inp.is-soft { border-color: rgba(255,90,110,0.4); }
+    .as-inp.is-bad, .as-inp.is-bad:focus { border-color: rgba(255,90,110,0.55); }
+    .as-eye { position: absolute; top: 4px; right: 4px; height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--fog); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; }
+    .as-strength { display: flex; flex-direction: column; gap: 8px; padding-top: 2px; }
+    .as-bars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .as-bars span { height: 4px; border-radius: 2px; background: var(--hair); display: block; }
+    .as-srow { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; }
+    .as-srow > span:first-child { color: var(--vapor); }
+    .as-level { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--vapor); }
+    .as-rules { margin: 2px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .as-rules li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--fog); }
+    .as-rules li.is-ok { color: var(--ink); }
+    .as-rules .as-tag { color: var(--vapor); }
+    .as-rdot { width: 16px; height: 16px; flex-shrink: 0; box-sizing: border-box; border-radius: 50%; border: 1px solid var(--hair-2); background: transparent; color: var(--void); display: flex; align-items: center; justify-content: center; }
+    .as-rules li.is-ok .as-rdot { border-color: var(--green); background: var(--green); }
+    .as-rules li:not(.is-ok) .as-rdot svg { display: none; }
+    .as-mark { position: absolute; top: 14px; right: 14px; width: 20px; height: 20px; border-radius: 50%; color: var(--void); display: flex; align-items: center; justify-content: center; }
+    .as-mark[hidden] { display: none; }
+    .as-mark.is-ok { background: var(--green); }
+    .as-mark.is-bad { background: var(--red); }
+    .as-match { font-size: 12.5px; color: var(--vapor); }
+    .as-match.is-ok { color: var(--green); }
+    .as-match.is-bad { color: var(--red-text); }
+    .as-status { display: flex; flex-direction: column; }
+    .as-msg { box-sizing: border-box; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,90,110,0.4); background: rgba(255,90,110,0.08); color: var(--red-text); display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.45; }
+    .as-msg svg { flex-shrink: 0; margin-top: 1px; }
+    .as-btn { width: 100%; height: 48px; box-sizing: border-box; border: 0; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 600; }
+    .as-btn-primary, .as-btn-primary:hover { background: var(--magenta); color: var(--void); }
+    .as-btn-outline, .as-btn-outline:hover { border: 1px solid var(--hair-2); background: transparent; color: var(--ink); font-weight: 500; }
+    .as-btn[aria-busy="true"] { opacity: 0.7; }
+    .as-btns { display: flex; flex-direction: column; gap: 12px; }
+    .as-foot { font-size: 12.5px; line-height: 1.5; color: var(--vapor); text-align: center; }
+    .as-loading { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; color: var(--fog); padding: 24px 0; }
+    .as-loading svg { color: var(--magenta); }
+
+    /* ── Duyarlı ── */
+    @media (max-width: 1279px) {
+      .as { --as-inset: 40px; }
+      .as-main { padding: 36px 48px 32px; }
     }
-    .ribbon { height: 4px; background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--amber)); }
-    .pad { padding: 34px 34px 36px; }
-    .brand { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 26px; }
-    h1 { font-size: 23px; font-weight: 700; line-height: 1.2; margin: 0 0 12px; }
-    p { font-size: 15px; line-height: 1.6; color: var(--vapor); margin: 0 0 20px; }
-    label { display: block; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--vapor); margin: 0 0 8px; }
-    .pw-wrap { position: relative; margin-bottom: 6px; }
-    input {
-      width: 100%; background: var(--void); border: 1px solid var(--hairline);
-      border-radius: 8px; color: var(--ink); font: inherit; font-size: 15px;
-      padding: 13px 44px 13px 14px; outline: none; transition: border-color .15s, box-shadow .15s;
+    @media (max-width: 1023px) {
+      .as-aside { display: none; }
+      .as-brand { display: flex; }
+      .as-main { padding: 28px 32px 32px; }
     }
-    input:focus { border-color: var(--magenta); box-shadow: 0 0 0 3px rgba(255,79,163,0.15); }
-    .eye { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 13px; padding: 6px; }
-    .hint { font-size: 12px; color: var(--muted); margin: 0 0 20px; }
-    button.primary {
-      width: 100%; background: var(--magenta); color: #fff; border: 0; border-radius: 8px;
-      font: inherit; font-weight: 700; font-size: 15px; padding: 14px; cursor: pointer;
-      letter-spacing: 0.2px; transition: filter .15s, opacity .15s;
+    /* Telefon (≤768): e-postadaki bağlantı çoğunlukla telefonda açılır → tek kolon, tam genişlik (max 400), başlık 40 */
+    @media (max-width: 768px) {
+      .as-main { padding: 24px 20px 28px; }
+      .as-brand { margin-bottom: 12px; }
+      .as-top { gap: 6px 16px; }
+      .as-center { align-items: flex-start; padding: 28px 0 32px; }
+      .as-h1, .as-h1.is-form { font-size: 40px; }
+      .as-view { gap: 18px; }
+      .as-view.is-result { gap: 20px; }
     }
-    button.primary:hover { filter: brightness(1.06); }
-    button.primary:disabled { opacity: .55; cursor: default; }
-    .msg { font-size: 13px; margin: 14px 0 0; min-height: 18px; }
-    .msg.err { color: #FF6B6B; }
-    .msg.ok { color: #4ADE80; }
-    .link { display: inline-block; margin-top: 22px; color: var(--magenta); text-decoration: none; font-weight: 600; font-size: 14px; }
-    .link:hover { text-decoration: underline; }
-    .center { text-align: center; }
-    .icon-badge { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 18px; }
-    .badge-ok { background: rgba(74,222,128,0.12); }
-    .badge-err { background: rgba(255,107,107,0.12); }
-    .spin { width: 26px; height: 26px; border: 3px solid var(--hairline-2); border-top-color: var(--magenta); border-radius: 50%; margin: 8px auto 0; animation: sp .7s linear infinite; }
-    @keyframes sp { to { transform: rotate(360deg); } }
-    .foot { text-align: center; font-size: 11px; color: #4A4D55; margin: 18px 0 0; }
-    .foot a { color: #4A4D55; }
-    .hidden { display: none; }
+    /* Dar telefonlarda yasal satır kırılınca satır sonunda "·" kalmasın */
+    @media (max-width: 420px) {
+      .as-legal { gap: 6px 16px; }
+      .as-legal > span[aria-hidden="true"] { display: none; }
+    }
   </style>
 </head>
 <body>
-  <div>
-    <div class="card">
-      <div class="ribbon"></div>
-      <div class="pad">
-        <div class="brand">GigBridge</div>
-        <div id="view"><div class="spin"></div><p style="margin-top:16px;text-align:center;">Bağlantı doğrulanıyor…</p></div>
+  <div class="as">
+    <aside class="as-aside" aria-label="GigBridge tanıtım">
+      <img class="as-img gb-kb" src="assets/web/venue-jazz-club.jpg" alt="" decoding="async" />
+      <span class="as-grad" aria-hidden="true"></span>
+      <a class="as-logo" data-home href="https://gigbridges.com/" aria-label="GigBridge ana sayfa">
+        <span class="as-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"></path><path d="M3 17h18"></path></svg></span>
+        <span class="as-word">GigBridge</span>
+      </a>
+      <div class="as-copy">
+        <span class="as-eb"><span class="as-ebline"></span>İSTANBUL · CANLI MÜZİK</span>
+        <p class="as-stmt">Sanatçılar, mekanlar ve müzik severler <em>bir arada</em>.</p>
+        <ul class="as-feats">
+          <li><span class="as-ftile" style="color:#FF4FA3"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></span>Sanatçı profilleri ve portföyler</li>
+          <li><span class="as-ftile" style="color:#FF8A2A"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3"></path></svg></span>Mekanları keşfet ve etkinlikleri takip et</li>
+          <li><span class="as-ftile" style="color:#4ED8FF"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"></path><circle cx="12" cy="10" r="2.3"></circle></svg></span>Yakınındaki etkinlikleri haritada gör</li>
+        </ul>
       </div>
-    </div>
-    <p class="foot">&copy; GigBridge · <a href="https://gigbridges.com">gigbridges.com</a></p>
+    </aside>
+
+    <main class="as-main">
+      <div class="as-brand">
+        <a class="as-logo" data-home href="https://gigbridges.com/" aria-label="GigBridge ana sayfa">
+          <span class="as-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"></path><path d="M3 17h18"></path></svg></span>
+          <span class="as-word">GigBridge</span>
+        </a>
+      </div>
+      <div class="as-top">
+        <a class="as-toplink gb-link" data-home href="https://gigbridges.com/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>gigbridges.com</a>
+        <span class="as-topr" id="topr"><span id="topq">Şifreni hatırladın mı? </span><a data-login href="https://gigbridges.com/#/login">Giriş yap</a></span>
+      </div>
+      <div class="as-center">
+        <div class="as-col" id="view">
+          <p class="as-loading" role="status"><svg class="gb-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9"></path></svg>Bağlantı doğrulanıyor…</p>
+        </div>
+      </div>
+      <nav class="as-legal" aria-label="Yasal">
+        <span>© GigBridge</span><span aria-hidden="true">·</span>
+        <a class="gb-link" href="gizlilik.html">Gizlilik Politikası</a><span aria-hidden="true">·</span>
+        <a class="gb-link" href="kullanim-kosullari.html">Kullanım Koşulları</a>
+      </nav>
+    </main>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import {
-      getAuth, verifyPasswordResetCode, confirmPasswordReset, applyActionCode,
+      getAuth, connectAuthEmulator, verifyPasswordResetCode, confirmPasswordReset, applyActionCode,
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-    const app = initializeApp({
+    // YEREL TEST (emülatör) — js/firebase.js ile aynı mantık: yalnız localhost/127.0.0.1 + ?emu (ya da sessionStorage gb_emu=1).
+    // Üretimde (gigbridges.com) hostname kontrolü ilk koşul → hiçbir ek iş yapılmaz; yapılandırma aynen.
+    const EMU = (() => {
+      const host = location.hostname;
+      if (host !== "127.0.0.1" && host !== "localhost") return false;
+      let on = false;
+      try { on = new URLSearchParams(location.search).has("emu") || sessionStorage.getItem("gb_emu") === "1"; } catch (_) { on = false; }
+      if (on) { try { sessionStorage.setItem("gb_emu", "1"); } catch (_) {} }
+      return on;
+    })();
+
+    const app = initializeApp(EMU ? {
+      projectId: "demo-gigbridge",
+      apiKey: "demo-key",
+      authDomain: "demo-gigbridge.firebaseapp.com",
+      storageBucket: "demo-gigbridge.appspot.com",
+      appId: "1:0:web:0",
+    } : {
       apiKey: "AIzaSyB6nrk5SnXMl51Qdpv_ctdFcWPrisiYbCc",
       authDomain: "djing-ba986.firebaseapp.com",
       projectId: "djing-ba986",
@@ -93,27 +259,50 @@
       appId: "1:70897940978:web:37f6c8f2c36c454d43d36b",
     });
     const auth = getAuth(app);
-    const LOGIN = "https://gigbridges.com/#/login";
-    const HOME = "https://gigbridges.com/";
-    const view = document.getElementById("view");
-    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    if (EMU) connectAuthEmulator(auth, "http://127.0.0.1:9186", { disableWarnings: true });
 
+    // Emülatörde bağlantılar yerel SPA'ya (üretim sitesine test trafiği gitmesin)
+    const HOME = EMU ? `${location.origin}/?emu=1#/` : "https://gigbridges.com/";
+    const LOGIN = EMU ? `${location.origin}/?emu=1#/login` : "https://gigbridges.com/#/login";
+    if (EMU) {
+      document.querySelectorAll("[data-home]").forEach((a) => a.setAttribute("href", HOME));
+      document.querySelectorAll("[data-login]").forEach((a) => a.setAttribute("href", LOGIN));
+    }
+
+    const view = document.getElementById("view");
     const params = new URLSearchParams(location.search);
     const mode = params.get("mode");
     const oobCode = params.get("oobCode");
 
-    function errCard(title, body, showLogin) {
-      view.innerHTML =
-        `<div class="center"><div class="icon-badge badge-err">⚠️</div>
-         <h1>${esc(title)}</h1><p>${esc(body)}</p>
-         ${showLogin ? `<a class="link" href="${LOGIN}">Giriş sayfasına dön</a>` : ""}</div>`;
+    // ── küçük DOM yardımcıları ──
+    function el(tag, attrs, ...kids) {
+      const n = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) {
+        if (v == null || v === false) continue;
+        if (k === "class") n.className = v;
+        else if (k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2), v);
+        else n.setAttribute(k, v === true ? "" : v);
+      }
+      for (const c of kids.flat()) { if (c != null && c !== false) n.append(c instanceof Node ? c : document.createTextNode(String(c))); }
+      return n;
     }
-    function okCard(title, body, linkHref, linkText) {
-      view.innerHTML =
-        `<div class="center"><div class="icon-badge badge-ok">✓</div>
-         <h1>${esc(title)}</h1><p>${esc(body)}</p>
-         <a class="link" href="${linkHref}">${esc(linkText)}</a></div>`;
+    // Sabit (güvenilir) SVG gövdeleri — artboard'dan birebir
+    function svg(inner, size, sw, extra = "") {
+      const t = document.createElement("template");
+      t.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${inner}</svg>`;
+      return t.content.firstElementChild;
     }
+    const I = {
+      lock: '<rect x="4.5" y="10.5" width="15" height="10" rx="2"></rect><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2"></path>',
+      eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="3"></circle>',
+      check: '<path d="m5 12.5 4.5 4.5L19 7.5"></path>',
+      x: '<path d="M7 7l10 10M17 7 7 17"></path>',
+      alert: '<circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.01"></path>',
+      spin: '<path d="M21 12a9 9 0 1 1-9-9"></path>',
+      arrow: '<path d="M5 12h14M13 6l6 6-6 6"></path>',
+      warn: '<path d="M10.3 4.2 2.8 17.5A2 2 0 0 0 4.5 20.5h15a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0zM12 9.5v4.5M12 17.2v.01"></path>',
+    };
+
     const trErr = (code) => ({
       "auth/expired-action-code": "Bağlantının süresi dolmuş. Lütfen yeni bir istek gönder.",
       "auth/invalid-action-code": "Bağlantı geçersiz ya da daha önce kullanılmış. Lütfen yeni bir istek gönder.",
@@ -121,55 +310,181 @@
       "auth/user-not-found": "Hesap bulunamadı.",
       "auth/weak-password": "Şifre en az 6 karakter olmalı.",
     }[code] || "İşlem tamamlanamadı. Lütfen tekrar dene.");
+    const LINK_DEAD = new Set(["auth/expired-action-code", "auth/invalid-action-code", "auth/user-disabled", "auth/user-not-found"]);
 
-    async function handleReset() {
-      let email;
-      try { email = await verifyPasswordResetCode(auth, oobCode); }
-      catch (e) { return errCard("Bağlantı geçersiz", trErr(e && e.code), true); }
-      view.innerHTML = `
-        <h1>Şifre Sıfırlama</h1>
-        <p><b style="color:var(--ink)">${esc(email)}</b> için yeni bir şifre belirle.</p>
-        <label for="pw">Yeni şifre</label>
-        <div class="pw-wrap">
-          <input id="pw" type="password" placeholder="En az 6 karakter" autocomplete="new-password" />
-          <button class="eye" id="eye" type="button">Göster</button>
-        </div>
-        <p class="hint">Uygulamadan ve web'den giriş yaparken bu şifreyi kullanacaksın.</p>
-        <button class="primary" id="save">Şifremi Sıfırla</button>
-        <p class="msg" id="msg"></p>`;
-      const pw = document.getElementById("pw");
-      const msg = document.getElementById("msg");
-      const save = document.getElementById("save");
-      document.getElementById("eye").onclick = () => {
-        pw.type = pw.type === "password" ? "text" : "password";
-        document.getElementById("eye").textContent = pw.type === "password" ? "Göster" : "Gizle";
-      };
-      pw.focus();
-      const submit = async () => {
-        msg.textContent = ""; msg.className = "msg";
-        if (pw.value.length < 6) { msg.textContent = "Şifre en az 6 karakter olmalı."; msg.className = "msg err"; return; }
-        save.disabled = true; save.textContent = "Kaydediliyor…";
-        try {
-          await confirmPasswordReset(auth, oobCode, pw.value);
-          okCard("Şifren güncellendi", "Yeni şifrenle giriş yapabilirsin.", LOGIN, "Giriş Yap");
-        } catch (e) {
-          msg.textContent = trErr(e && e.code); msg.className = "msg err";
-          save.disabled = false; save.textContent = "Şifremi Sıfırla";
-        }
-      };
-      save.onclick = submit;
-      pw.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+    function show(node, { focus = false } = {}) {
+      view.replaceChildren(node);
+      if (focus) { const h = node.querySelector("h1"); if (h) { h.setAttribute("tabindex", "-1"); try { h.focus({ preventScroll: true }); } catch (_) {} } }
+    }
+    function setTopRight(question) {
+      const q = document.getElementById("topq");
+      if (q) q.textContent = question ? question + " " : "";
+    }
+    const heading = (eyebrow, ebCls, a, em, emCls, lead, h1Cls) => el("div", { class: "as-head" },
+      el("span", { class: "as-heb" + (ebCls ? " " + ebCls : "") }, eyebrow),
+      el("h1", { class: "as-h1" + (h1Cls ? " " + h1Cls : "") }, a, el("em", { class: emCls || null }, em)),
+      lead);
+    const linkBtn = (href, label, variant = "primary", arrow = false) =>
+      el("a", { class: `as-btn as-btn-${variant} gb-press`, href }, label, arrow ? svg(I.arrow, 16, 2.2) : null);
+
+    // ── Başarı kartı (resetPassword / verifyEmail / recoverEmail aynı düzen) ──
+    function successView(a, em, body) {
+      show(el("div", { class: "as-view is-result gb-rise" },
+        el("span", { class: "as-badge is-ok gb-pop" }, svg(I.check, 30, 2.4)),
+        el("div", { class: "as-head", role: "status" },
+          el("span", { class: "as-heb is-ok" }, "TAMAMLANDI"),
+          el("h1", { class: "as-h1" }, a, el("em", { class: "is-ok" }, em)),
+          el("p", { class: "as-lead" }, body)),
+        linkBtn(LOGIN, "Giriş yap", "primary", true)), { focus: true });
+    }
+    // ── Geçersiz bağlantı kartı ──
+    // reset: "Yeni sıfırlama bağlantısı iste" (şifremi unuttum girişte) + "Giriş sayfasına dön"; diğerleri yalnız giriş.
+    function invalidView(a, em, body, { resetLink = false } = {}) {
+      show(el("div", { class: "as-view is-result gb-rise" },
+        el("span", { class: "as-badge is-bad" }, svg(I.warn, 30, 2)),
+        el("div", { class: "as-head", role: "alert" },
+          el("span", { class: "as-heb is-bad" }, "BAĞLANTI HATASI"),
+          el("h1", { class: "as-h1" }, a, el("em", {}, em)),
+          el("p", { class: "as-lead" }, body)),
+        el("div", { class: "as-btns" },
+          resetLink ? linkBtn(LOGIN, "Yeni sıfırlama bağlantısı iste") : null,
+          linkBtn(LOGIN, "Giriş sayfasına dön", resetLink ? "outline" : "primary"))), { focus: true });
     }
 
+    // ── Şifre gücü (yalnız öneri; zorunlu kural Firebase ile aynı: ≥6) ──
+    function strength(pw) {
+      const lenOk = pw.length >= 6;
+      const caseOk = /[a-zçğıöşü]/.test(pw) && /[A-ZÇĞİÖŞÜ]/.test(pw);
+      const numOk = /[0-9]/.test(pw) || /[^A-Za-z0-9çğıöşüÇĞİÖŞÜ]/.test(pw);
+      let score = 0;
+      if (pw.length > 0) { score = (lenOk ? 1 : 0) + (pw.length >= 10 ? 1 : 0) + (caseOk ? 1 : 0) + (numOk ? 1 : 0); if (!lenOk) score = Math.min(score, 1); }
+      return { lenOk, caseOk, numOk, score };
+    }
+    const LBL = ["—", "ZAYIF", "ORTA", "İYİ", "GÜÇLÜ"];
+    const COL = ["#2C303A", "#FF5A6E", "#FF8A2A", "#4ED8FF", "#7CE0B0"];
+
+    // ── Form görünümü ──
+    function formView(email) {
+      let busy = false;
+      let show2 = false;
+      const pw = el("input", { id: "sf-pw", class: "as-inp has-eye gb-in", type: "password", autocomplete: "new-password", placeholder: "En az 6 karakter", "aria-describedby": "sf-strength sf-rules" });
+      const pw2 = el("input", { id: "sf-pw2", class: "as-inp has-mark gb-in", type: "password", autocomplete: "new-password", placeholder: "Yeni şifreni tekrar gir", "aria-describedby": "sf-match" });
+      const eyeTxt = el("span", {}, "Göster");
+      const eye = el("button", { type: "button", class: "as-eye gb-press", "aria-controls": "sf-pw sf-pw2", "aria-label": "Şifreyi göster" }, svg(I.eye, 16, 1.9), eyeTxt);
+      eye.addEventListener("click", () => {
+        show2 = !show2;
+        pw.type = pw2.type = show2 ? "text" : "password"; // tek düğme iki alanı birlikte gösterir/gizler
+        eyeTxt.textContent = show2 ? "Gizle" : "Göster";
+        eye.setAttribute("aria-label", show2 ? "Şifreyi gizle" : "Şifreyi göster");
+      });
+      const bars = [0, 1, 2, 3].map(() => el("span", { class: "gb-bar" }));
+      const level = el("span", { class: "as-level" }, "—");
+      const RULES = [["En az 6 karakter", " · zorunlu"], ["Büyük ve küçük harf", " · öneri"], ["Rakam ya da sembol", " · öneri"]];
+      const ruleEls = RULES.map(([l, t]) => el("li", {}, el("span", { class: "as-rdot" }, svg(I.check, 10, 3.4)), l, el("span", { class: "as-tag" }, t)));
+      const mark = el("span", { class: "as-mark", hidden: true, "aria-hidden": "true" });
+      const match = el("span", { id: "sf-match", class: "as-match", "aria-live": "polite" }, "İki alan aynı olmalı.");
+      const status = el("div", { class: "as-status", role: "status", "aria-live": "polite" });
+      const spin = svg(I.spin, 16, 2.4, 'class="gb-spin"');
+      const btnTxt = el("span", {}, "Şifremi sıfırla");
+      const btn = el("button", { type: "submit", class: "as-btn as-btn-primary gb-press" }, btnTxt);
+      let errField = null;
+
+      function paint() {
+        const v = pw.value, v2 = pw2.value;
+        const s = strength(v);
+        bars.forEach((b, i) => { b.style.background = i + 1 <= s.score ? COL[s.score] : "#1F232B"; });
+        level.textContent = LBL[s.score];
+        level.style.color = s.score === 0 ? "#8A8E97" : COL[s.score];
+        [s.lenOk, s.caseOk, s.numOk].forEach((ok, i) => ruleEls[i].classList.toggle("is-ok", ok));
+        const has2 = v2.length > 0, same = has2 && v2 === v;
+        mark.hidden = !has2;
+        mark.className = "as-mark " + (same ? "is-ok" : "is-bad");
+        mark.replaceChildren(svg(same ? I.check : I.x, 12, 3.2));
+        match.textContent = !has2 ? "İki alan aynı olmalı." : same ? "Şifreler eşleşiyor." : "Şifreler uyuşmuyor.";
+        match.className = "as-match" + (!has2 ? "" : same ? " is-ok" : " is-bad");
+        pw.classList.toggle("is-bad", errField === "pw");
+        pw2.classList.toggle("is-bad", errField === "pw2");
+        pw2.classList.toggle("is-soft", errField !== "pw2" && has2 && !same);
+        for (const [inp, f] of [[pw, "pw"], [pw2, "pw2"]]) { if (errField === f) inp.setAttribute("aria-invalid", "true"); else inp.removeAttribute("aria-invalid"); }
+      }
+      function fail(text, field) {
+        errField = field || null;
+        status.replaceChildren(el("div", { class: "as-msg gb-msg" }, svg(I.alert, 17, 2), el("span", {}, text)));
+        paint();
+      }
+      function clearErr() { if (errField || status.firstChild) { errField = null; status.replaceChildren(); } }
+      const onInput = () => { clearErr(); paint(); };
+      pw.addEventListener("input", onInput);
+      pw2.addEventListener("input", onInput);
+
+      function setBusy(on) {
+        busy = on;
+        btn.disabled = on;
+        btn.setAttribute("aria-busy", on ? "true" : "false");
+        if (on) btn.prepend(spin); else spin.remove();
+        btnTxt.textContent = on ? "Kaydediliyor…" : "Şifremi sıfırla";
+      }
+      async function submit(e) {
+        e.preventDefault();
+        if (busy) return;
+        const v = pw.value;
+        if (v.length < 6) { fail("Şifre en az 6 karakter olmalı.", "pw"); pw.focus(); return; }
+        if (v !== pw2.value) { fail("Şifreler uyuşmuyor.", "pw2"); pw2.focus(); return; }
+        clearErr(); paint();
+        setBusy(true);
+        try {
+          await confirmPasswordReset(auth, oobCode, v);
+          successView("Şifren ", "güncellendi", "Yeni şifrenle giriş yapabilirsin. Uygulamada açık oturumların varsa yeni şifreyle tekrar giriş yapman gerekebilir.");
+        } catch (err) {
+          const code = err && err.code;
+          if (LINK_DEAD.has(code)) { invalidView("Bağlantı ", "geçersiz", trErr(code), { resetLink: true }); return; }
+          setBusy(false);
+          fail(trErr(code), code === "auth/weak-password" ? "pw" : null);
+        }
+      }
+
+      const node = el("div", { class: "as-view gb-rise" },
+        el("span", { class: "as-badge" }, svg(I.lock, 26, 1.8)),
+        heading("ŞİFRE SIFIRLAMA", "", "Yeni şifre ", "belirle", "", el("p", { class: "as-lead" }, el("b", {}, email), " için yeni bir şifre belirle."), "is-form"),
+        el("form", { class: "as-form", "aria-label": "Yeni şifre formu", novalidate: true, onsubmit: submit },
+          el("div", { class: "as-fld" },
+            el("label", { class: "as-lbl", for: "sf-pw" }, "YENİ ŞİFRE"),
+            el("div", { class: "as-pw" }, pw, eye),
+            el("div", { id: "sf-strength", class: "as-strength" },
+              el("div", { class: "as-bars", "aria-hidden": "true" }, bars),
+              el("div", { class: "as-srow" }, el("span", {}, "Şifre gücü"), level)),
+            el("ul", { id: "sf-rules", class: "as-rules", "aria-label": "Şifre önerileri" }, ruleEls)),
+          el("div", { class: "as-fld" },
+            el("label", { class: "as-lbl", for: "sf-pw2" }, "YENİ ŞİFRE (TEKRAR)"),
+            el("div", { class: "as-pw" }, pw2, mark),
+            match),
+          status,
+          btn,
+          el("span", { class: "as-foot" }, "Uygulamadan ve web'den giriş yaparken bu şifreyi kullanacaksın.")));
+      paint();
+      show(node);
+      try { pw.focus({ preventScroll: true }); } catch (_) {}
+    }
+
+    // ── Akışlar ──
+    async function handleReset() {
+      document.title = "GigBridge · Şifre Sıfırla";
+      let email;
+      try { email = await verifyPasswordResetCode(auth, oobCode); }
+      catch (e) { return invalidView("Bağlantı ", "geçersiz", trErr(e && e.code), { resetLink: true }); }
+      formView(email);
+    }
     async function handleApply(kind) {
+      document.title = kind === "verify" ? "GigBridge · E-posta Doğrulama" : "GigBridge · Hesap İşlemi";
+      setTopRight("");
       try { await applyActionCode(auth, oobCode); }
-      catch (e) { return errCard("Bağlantı geçersiz", trErr(e && e.code), true); }
-      if (kind === "verify") okCard("E-postan doğrulandı", "Hesabın hazır. Artık giriş yapabilirsin.", LOGIN, "Giriş Yap");
-      else okCard("İşlem tamamlandı", "E-posta değişikliği geri alındı.", LOGIN, "Giriş Yap");
+      catch (e) { return invalidView("Bağlantı ", "geçersiz", trErr(e && e.code)); }
+      if (kind === "verify") successView("E-postan ", "doğrulandı", "Hesabın hazır. Artık giriş yapabilirsin.");
+      else successView("İşlem ", "tamamlandı", "E-posta değişikliği geri alındı.");
     }
 
     if (!oobCode || !mode) {
-      errCard("Geçersiz bağlantı", "Bu bağlantı eksik ya da hatalı görünüyor.", true);
+      invalidView("Geçersiz ", "bağlantı", "Bu bağlantı eksik ya da hatalı görünüyor.");
     } else if (mode === "resetPassword") {
       handleReset();
     } else if (mode === "verifyEmail") {
@@ -177,7 +492,8 @@
     } else if (mode === "recoverEmail") {
       handleApply("recover");
     } else {
-      errCard("Bilinmeyen işlem", "Bu bağlantı türü desteklenmiyor.", true);
+      setTopRight("");
+      invalidView("Bilinmeyen ", "işlem", "Bu bağlantı türü desteklenmiyor.");
     }
   </script>
 </body>

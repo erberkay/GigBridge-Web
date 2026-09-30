@@ -27,156 +27,268 @@
   <meta name="twitter:image" content="https://gigbridges.com/assets/og-cover.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="/assets/landing.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="/assets/seo.css?v=20260929s" />
+  <script src="/assets/seo.js?v=20260929s" defer></script>
 </head>
-<body>
-  <div class="prism-top"></div>
-  <header>
-    <div class="wrap">
-      <a class="brand" href="/"><span class="dot"></span> GigBridge</a>
-      <a class="nav-cta" href="/indir/">Uygulamayı İndir</a>
+<body class="gb gb-pg-guide">
+  <a class="gb-skip" href="#icerik">İçeriğe geç</a>
+  <header class="gb-hd">
+    <div class="gb-hd-in">
+      <a class="gb-logo" href="/" aria-label="GigBridge ana sayfa"><span class="gb-logo-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"/><path d="M3 17h18"/></svg></span><span class="gb-logo-word">GigBridge</span></a>
+      <details class="gb-menu" data-gb-pop>
+        <summary class="gb-burger gb-press" aria-label="Menü"><svg class="gb-ic-menu" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="gb-ic-x" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></summary>
+        <div class="gb-menu-panel">
+          <nav class="gb-menu-nav" aria-label="Ana menü (mobil)">
+            <a class="gb-menu-link" href="/#/kesfet">Keşfet</a>
+            <a class="gb-menu-link" href="/#/etkinlikler">Etkinlikler</a>
+            <a class="gb-menu-link" href="/#/harita">Harita</a>
+            <a class="gb-menu-link" href="/#/akis">Akış</a>
+            <a class="gb-menu-link" href="/#/top10">Top 10</a>
+          </nav>
+          <div class="gb-menu-cities">
+            <span class="gb-menu-h">CANLI MÜZİK · ŞEHİRLER</span>
+            <div class="gb-menu-citylist">
+            <a class="gb-menu-city" href="/canli-muzik/istanbul/" data-city="İstanbul">İstanbul</a>
+            <a class="gb-menu-city" href="/canli-muzik/izmir/" data-city="İzmir">İzmir</a>
+            <a class="gb-menu-city" href="/canli-muzik/ankara/" data-city="Ankara">Ankara</a>
+            <a class="gb-menu-city" href="/canli-muzik/antalya/" data-city="Antalya">Antalya</a>
+            <a class="gb-menu-city" href="/canli-muzik/bodrum/" data-city="Bodrum">Bodrum</a>
+            <a class="gb-menu-city" href="/canli-muzik/kusadasi/" data-city="Kuşadası">Kuşadası</a>
+            </div>
+          </div>
+          <div class="gb-menu-auth">
+            <a class="gb-btn gb-btn-outline gb-press" href="/#/login">Giriş yap</a>
+            <a class="gb-btn gb-btn-light gb-press" href="/#/register">Hesap oluştur</a>
+          </div>
+        </div>
+      </details>
+      <nav class="gb-hd-nav" aria-label="Ana menü">
+        <a class="gb-link" href="/#/kesfet">Keşfet</a>
+        <a class="gb-link" href="/#/etkinlikler">Etkinlikler</a>
+        <a class="gb-link" href="/#/harita">Harita</a>
+        <a class="gb-link" href="/#/akis">Akış</a>
+        <a class="gb-link" href="/#/top10">Top 10</a>
+      </nav>
+      <div class="gb-hd-right">
+        <details class="gb-city" data-gb-pop data-gb-city>
+          <summary class="gb-city-btn gb-press" aria-label="Şehir seç, şu an İstanbul"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ED8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span class="gb-city-l">İstanbul</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <div class="gb-city-menu">
+          <span class="gb-city-h">CANLI MÜZİK SAYFALARI</span>
+          <a class="gb-city-opt" href="/canli-muzik/istanbul/" data-city="İstanbul"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>İstanbul</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/izmir/" data-city="İzmir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>İzmir</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/ankara/" data-city="Ankara"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Ankara</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/antalya/" data-city="Antalya"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Antalya</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/bodrum/" data-city="Bodrum"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Bodrum</span></a>
+          <a class="gb-city-opt" href="/canli-muzik/kusadasi/" data-city="Kuşadası"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Kuşadası</span></a>
+          </div>
+        </details>
+        <a class="gb-hd-login gb-press" href="/#/login">Giriş yap</a>
+        <a class="gb-hd-reg gb-press" href="/#/register">Hesap oluştur</a>
+        <a class="gb-hd-get gb-press" href="/indir/">İndir</a>
+      </div>
     </div>
   </header>
 
-  <div class="wrap">
-    <nav class="crumb" aria-label="breadcrumb">
-      <a href="/">Ana Sayfa</a> &nbsp;›&nbsp; <a href="/rehber/canli-muzik/">Rehber</a> &nbsp;›&nbsp; <span>Sahne Bulma</span>
-    </nav>
-
-    <div class="hero">
-      <div class="eyebrow">Rehber · Sanatçı & DJ</div>
-      <h1>DJ ve müzisyen olarak <em>sahne nasıl bulunur?</em></h1>
-      <p class="lead">İyi çalıyorsun, seti hazır, mix'in cepte — ama takvim boş. Sahne bulmak yetenekten çok <strong>doğru insanla doğru anda</strong> buluşmakla ilgili. Bu rehber, güçlü bir profil kurmaktan adil bir kaşe belirlemeye kadar, DJ booking ve müzisyen mekan bulma sürecinin tamamını 2026 gerçekleriyle adım adım anlatıyor.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="/indir/">Sanatçı Olarak Kaydol →</a>
-        <a class="btn btn-ghost" href="https://gigbridges.com/#/kesfet">Açık İlanları Gör</a>
+  <main class="gb-main" id="icerik" tabindex="-1">
+    <section class="gb-hero gb-guide-hero gb-acc-magenta" aria-labelledby="h-art">
+      <nav class="gb-crumbs" aria-label="Sayfa konumu"><a class="gb-crumb" href="/">Ana Sayfa</a><svg class="gb-crumb-sep" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><a class="gb-crumb" href="/rehber/canli-muzik/">Rehber</a><svg class="gb-crumb-sep" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span aria-current="page" class="gb-crumb-cur">Sahne Bulma</span></nav>
+      <div class="gb-guide-top gb-rise">
+        <span class="gb-eyebrow gb-acc-magenta">REHBER · SANATÇI &amp; DJ</span>
+        <h1 class="gb-h1 gb-guide-h1" id="h-art">DJ ve müzisyen olarak <em>sahne nasıl bulunur?</em></h1>
+        <p class="gb-lead gb-guide-lead">İyi çalıyorsun, seti hazır, mix'in cepte — ama takvim boş. Sahne bulmak yetenekten çok <strong>doğru insanla doğru anda</strong> buluşmakla ilgili. Bu rehber, güçlü bir profil kurmaktan adil bir kaşe belirlemeye kadar, DJ booking ve müzisyen mekan bulma sürecinin tamamını 2026 gerçekleriyle adım adım anlatıyor.</p>
+        <div class="gb-btns">
+          <a class="gb-btn gb-btn-primary gb-btn-magenta gb-press" href="/#/register?rol=artist">Sanatçı Olarak Kaydol<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="gb-btn gb-btn-outline gb-press" href="/#/kesfet">Açık İlanları Gör</a>
+        </div>
+        <div class="gb-stores">
+            <a class="gb-store gb-press" href="/indir/" aria-label="App Store'dan indir"><svg width="22" height="22" viewBox="0 0 24 24" fill="#F2F1EE" aria-hidden="true"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg><span class="gb-store-t"><span class="gb-store-n">App Store</span><span class="gb-store-s">iPhone için</span></span></a>
+            <a class="gb-store gb-press" href="/indir/" aria-label="Google Play'den indir"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#4ED8FF"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#FF4FA3"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#FFD700"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#4ED8FF"/></svg><span class="gb-store-t"><span class="gb-store-n">Google Play</span><span class="gb-store-s">Android için</span></span></a>
+          </div>
       </div>
-      <div class="store-row">
-        <a class="store" href="/indir/" aria-label="App Store'dan indir">
-          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.4 12.7c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-2.9-.8-1.5 0-2.9.9-3.6 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7 1.3 0 1.6.7 2.8.7 1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4-.1 0-2.3-.9-2.3-3.5zM14.2 6.2c.6-.7 1-1.8.9-2.8-.9 0-2 .6-2.6 1.3-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>
-          <span><span class="s1">App Store</span><br><span class="s2">iPhone için</span></span>
-        </a>
-        <a class="store" href="/indir/" aria-label="Google Play'den indir">
-          <svg viewBox="0 0 24 24"><path d="M3.6 2.4 13 12 3.6 21.6c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1z" fill="#22D3EE"/><path d="M16.7 8.7 13 12l-9.4-9.6c.2-.1.5-.1.8.1l12.3 6.2z" fill="#E23FA9"/><path d="M16.7 15.3 4.4 21.5c-.3.2-.6.2-.8.1L13 12l3.7 3.3z" fill="#F5B301"/><path d="m16.7 8.7 3.9 2c.6.3.6 1.3 0 1.6l-3.9 2L13 12l3.7-3.3z" fill="#22D3EE"/></svg>
-          <span><span class="s1">Google Play</span><br><span class="s2">Android için</span></span>
-        </a>
-      </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="wrap">
-    <article class="prose">
-      <section id="neden-zor">
-        <h2>Neden sahne bulmak <span class="em">zor?</span></h2>
-        <p>Çoğu müzisyen ve DJ için asıl engel müzik değil, <strong>görünürlük ve güven</strong>. Mekanlar tanımadıkları birine sahne vermekten çekinir, çünkü boş bir gece onlara para kaybettirir. Sen de kime, nasıl ulaşacağını bilemezsin. İşte sürtünmeyi yaratan üç ana neden:</p>
-        <ul>
-          <li><strong>Kapalı ağ etkisi.</strong> İşlerin çoğu tanıdık üzerinden döner. Doğru mekan yöneticisinin numarası kimdeyse, işi o alır. Ağın dışındaysan davetin bile gelmez.</li>
+    <div class="gb-guide gb-acc-magenta">
+      <details class="gb-toc-m" data-gb-pop>
+        <summary class="gb-toc-m-s gb-press"><span>BU REHBERDE</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <nav class="gb-toc-m-nav" aria-label="İçindekiler (mobil)">
+          <a href="#neden-zor"><span>01</span>Neden sahne bulmak zor?</a>
+          <a href="#adimlar"><span>02</span>Adım adım sahne bulma</a>
+          <a href="#kase"><span>03</span>Kaşe ne kadar olmalı?</a>
+          <a href="#gigbridge"><span>04</span>GigBridge nasıl kolaylaştırır?</a>
+          <a href="#sss"><span>05</span>Sık sorulan sorular</a>
+        </nav>
+      </details>
+      <article class="gb-art gb-prose">
+          <section class="gb-art-sec" id="neden-zor" aria-labelledby="h-neden-zor">
+            <span class="gb-art-n">01</span>
+            <h2 class="gb-art-h" id="h-neden-zor">Neden sahne bulmak <em>zor?</em></h2>
+            <p>Çoğu müzisyen ve DJ için asıl engel müzik değil, <strong>görünürlük ve güven</strong>. Mekanlar tanımadıkları birine sahne vermekten çekinir, çünkü boş bir gece onlara para kaybettirir. Sen de kime, nasıl ulaşacağını bilemezsin. İşte sürtünmeyi yaratan üç ana neden:</p>
+            <ul><li><strong>Kapalı ağ etkisi.</strong> İşlerin çoğu tanıdık üzerinden döner. Doğru mekan yöneticisinin numarası kimdeyse, işi o alır. Ağın dışındaysan davetin bile gelmez.</li>
           <li><strong>Kanıt eksikliği.</strong> Bir mekan seni işe alırken tek sorusu şudur: "Bu kişi salonu doldurur mu, gecemi taşır mı?" Elinde net bir portföy, mix ve referans yoksa bu soruya cevap veremezsin.</li>
-          <li><strong>Dağınık iletişim.</strong> Instagram DM'i, WhatsApp, e-posta derken teklifler kaybolur, kaşe pazarlığı havada kalır, kimin ne söz verdiği belirsizleşir. Tek bir yer olmadan süreç kaosa döner.</li>
-        </ul>
-        <p>İyi haber: bunların üçü de çözülebilir problemler. Aşağıdaki adımlar, seni "tanınmayan bir isim"den mekanların rahatça teklif verdiği bir sanatçıya dönüştürmek için tasarlandı.</p>
-      </section>
+          <li><strong>Dağınık iletişim.</strong> Instagram DM'i, WhatsApp, e-posta derken teklifler kaybolur, kaşe pazarlığı havada kalır, kimin ne söz verdiği belirsizleşir. Tek bir yer olmadan süreç kaosa döner.</li></ul>
+            <p>İyi haber: bunların üçü de çözülebilir problemler. Aşağıdaki adımlar, seni "tanınmayan bir isim"den mekanların rahatça teklif verdiği bir sanatçıya dönüştürmek için tasarlandı.</p>
+          </section>
 
-      <section id="adimlar">
-        <h2>Adım adım <span class="em">sahne bulma</span></h2>
-        <p class="sub">Sırayla ilerle. Her adım bir öncekinin üstüne kurulur; ilk üçünü atlarsan, teklif aşamasında karşılığını alamazsın.</p>
-        <ol>
-          <li>
-            <strong>Güçlü bir profil ve EPK oluştur.</strong>
-            Elektronik basın kiti (EPK) senin dijital vitrinin. En az şunları içersin: 2-3 cümlelik net bir biyografi (kim olduğun, türün, nerede çaldığın), yüksek çözünürlüklü fotoğraflar, sosyal medya ve dinleme linkleri, teknik ihtiyaçların (ekipman, süre). Karışık değil, <em>tarayınca 30 saniyede anlaşılan</em> bir profil hedefle. GigBridge'de profilin bu işi otomatik görür; mekan seni açtığında ne çaldığını, türünü ve geçmişini anında görür.
-          </li>
-          <li>
-            <strong>Portföyünü ve mix'ini hazırla.</strong>
-            Söz kimseyi ikna etmez; ses eder. DJ isen 30-60 dakikalık temiz bir mix, geçişleri ve tarzını gösteren bir set yükle. Müzisyensen 3-5 iyi kaydedilmiş parça veya kısa canlı video koy. Kalite miktardan önemli: iki mükemmel parça, on ortalama kayıttan daha çok iş getirir. Her bağlantının çalıştığından emin ol — kırık bir link, kaybedilmiş bir gecedir.
-          </li>
-          <li>
-            <strong>Doğru mekanı hedefle.</strong>
-            Herkese aynı mesajı atmak zaman kaybı. Müziğinin gerçekten yakıştığı yerleri seç: house çalıyorsan indie akustik barına değil, elektronik geceleri olan mekanlara git. Şehrindeki sahneleri ve türlerine göre nabzı tut — örneğin <a href="/canli-muzik/istanbul/">İstanbul'daki canlı müzik semtlerini</a> incele, hangi bölgenin hangi türü taşıdığını gör. Hedefin dar ve isabetli olsun.
-          </li>
-          <li>
-            <strong>İlk teklifi / başvuruyu yap.</strong>
-            İlk temas kısa, kişisel ve net olmalı: kim olduğun, ne çaldığın, hangi tarihe uygun olduğun ve bir link. Kopyala-yapıştır mesajlar hemen belli olur. GigBridge'de bunu tersine çevirebilirsin: profilini kurarsın, açık <strong>canlı müzik iş ilanlarına</strong> başvurursun ya da mekanlar seni keşfedip doğrudan sana teklif gönderir. Böylece soğuk mesaj atmak yerine gelen tekliflerden seçersin.
-          </li>
-          <li>
-            <strong>Kaşeni belirle.</strong>
-            Rakam söylemekten çekinme; belirsizlik hem seni hem mekanı zorlar. Piyasa aralığını, deneyimini ve gecenin süresini hesaba kat (aşağıdaki bölümde 2026 aralıkları var). Başlangıçta biraz esnek olabilirsin ama bedava çalma alışkanlığına düşme — bir kez ücretsiz çalan sanatçı, sonrasında da ücretsiz beklenir.
-          </li>
-          <li>
-            <strong>Sözleşme ve kaporayı netleştir.</strong>
-            El sıkışma güzel ama yazı korur. Tarih, saat, süre, kaşe, ödeme zamanı ve iptal koşulları yazılı olsun — bir mesaj bile olsa. Mümkünse kaşenin bir kısmını (örneğin %30-50) kapora olarak önden iste; bu hem ciddiyeti test eder hem de son dakika iptallerine karşı seni korur. GigBridge üzerinden anlaştığında teklif, tarih ve şartlar tek yerde kayıtlı kalır.
-          </li>
-        </ol>
-      </section>
+          <section class="gb-art-sec" id="adimlar" aria-labelledby="h-adimlar">
+            <span class="gb-art-n">02</span>
+            <h2 class="gb-art-h" id="h-adimlar">Adım adım <em>sahne bulma</em></h2>
+            <p class="gb-dek">Sırayla ilerle. Her adım bir öncekinin üstüne kurulur; ilk üçünü atlarsan, teklif aşamasında karşılığını alamazsın.</p>
+            <ol class="gb-steps">
+              <li><span class="gb-step-n">01</span><span class="gb-step-b"><span class="gb-step-t">Güçlü bir profil ve EPK oluştur.</span> <span class="gb-step-p">Elektronik basın kiti (EPK) senin dijital vitrinin. En az şunları içersin: 2-3 cümlelik net bir biyografi (kim olduğun, türün, nerede çaldığın), yüksek çözünürlüklü fotoğraflar, sosyal medya ve dinleme linkleri, teknik ihtiyaçların (ekipman, süre). Karışık değil, <em>tarayınca 30 saniyede anlaşılan</em> bir profil hedefle. GigBridge'de profilin bu işi otomatik görür; mekan seni açtığında ne çaldığını, türünü ve geçmişini anında görür.</span></span></li>
+              <li><span class="gb-step-n">02</span><span class="gb-step-b"><span class="gb-step-t">Portföyünü ve mix'ini hazırla.</span> <span class="gb-step-p">Söz kimseyi ikna etmez; ses eder. DJ isen 30-60 dakikalık temiz bir mix, geçişleri ve tarzını gösteren bir set yükle. Müzisyensen 3-5 iyi kaydedilmiş parça veya kısa canlı video koy. Kalite miktardan önemli: iki mükemmel parça, on ortalama kayıttan daha çok iş getirir. Her bağlantının çalıştığından emin ol — kırık bir link, kaybedilmiş bir gecedir.</span></span></li>
+              <li><span class="gb-step-n">03</span><span class="gb-step-b"><span class="gb-step-t">Doğru mekanı hedefle.</span> <span class="gb-step-p">Herkese aynı mesajı atmak zaman kaybı. Müziğinin gerçekten yakıştığı yerleri seç: house çalıyorsan indie akustik barına değil, elektronik geceleri olan mekanlara git. Şehrindeki sahneleri ve türlerine göre nabzı tut — örneğin <a href="/canli-muzik/istanbul/">İstanbul'daki canlı müzik semtlerini</a> incele, hangi bölgenin hangi türü taşıdığını gör. Hedefin dar ve isabetli olsun.</span></span></li>
+              <li><span class="gb-step-n">04</span><span class="gb-step-b"><span class="gb-step-t">İlk teklifi / başvuruyu yap.</span> <span class="gb-step-p">İlk temas kısa, kişisel ve net olmalı: kim olduğun, ne çaldığın, hangi tarihe uygun olduğun ve bir link. Kopyala-yapıştır mesajlar hemen belli olur. GigBridge'de bunu tersine çevirebilirsin: profilini kurarsın, açık <strong>canlı müzik iş ilanlarına</strong> başvurursun ya da mekanlar seni keşfedip doğrudan sana teklif gönderir. Böylece soğuk mesaj atmak yerine gelen tekliflerden seçersin.</span></span></li>
+              <li><span class="gb-step-n">05</span><span class="gb-step-b"><span class="gb-step-t">Kaşeni belirle.</span> <span class="gb-step-p">Rakam söylemekten çekinme; belirsizlik hem seni hem mekanı zorlar. Piyasa aralığını, deneyimini ve gecenin süresini hesaba kat (aşağıdaki bölümde 2026 aralıkları var). Başlangıçta biraz esnek olabilirsin ama bedava çalma alışkanlığına düşme — bir kez ücretsiz çalan sanatçı, sonrasında da ücretsiz beklenir.</span></span></li>
+              <li><span class="gb-step-n">06</span><span class="gb-step-b"><span class="gb-step-t">Sözleşme ve kaporayı netleştir.</span> <span class="gb-step-p">El sıkışma güzel ama yazı korur. Tarih, saat, süre, kaşe, ödeme zamanı ve iptal koşulları yazılı olsun — bir mesaj bile olsa. Mümkünse kaşenin bir kısmını (örneğin %30-50) kapora olarak önden iste; bu hem ciddiyeti test eder hem de son dakika iptallerine karşı seni korur. GigBridge üzerinden anlaştığında teklif, tarih ve şartlar tek yerde kayıtlı kalır.</span></span></li>
+            </ol>
+          </section>
 
-      <section id="kase">
-        <h2>Kaşe <span class="em">ne kadar</span> olmalı?</h2>
-        <p>2026 itibarıyla Türkiye'de canlı müzik ve DJ kaşeleri; şehre, mekanın büyüklüğüne, günün (hafta içi / hafta sonu) ve deneyime göre geniş bir aralıkta değişiyor. Aşağıdaki rakamlar bir <strong>referans noktası</strong>; kendi pazarına, portföyüne ve gecenin süresine göre uyarla.</p>
-        <div style="overflow-x:auto">
-          <table class="cmp">
-            <thead>
-              <tr><th>Seviye</th><th>Tipik iş</th><th>Yaklaşık 2026 aralığı</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>Başlangıç</td><td>Bar / mekan, etkinlik başı</td><td>~1.500 – 3.000 TL / gece</td></tr>
-              <tr><td>Orta seviye DJ</td><td>Düzenli rezidan / haftalık program</td><td>~45.000 – 90.000 TL / ay</td></tr>
-              <tr><td>Deneyimli / talep gören</td><td>Marka etkinliği, özel gece</td><td>Görüşmeye açık, belirgin üstü</td></tr>
-            </tbody>
-          </table>
+          <section class="gb-art-sec" id="kase" aria-labelledby="h-kase">
+            <span class="gb-art-n">03</span>
+            <h2 class="gb-art-h" id="h-kase">Kaşe <em>ne kadar</em> olmalı?</h2>
+            <p>2026 itibarıyla Türkiye'de canlı müzik ve DJ kaşeleri; şehre, mekanın büyüklüğüne, günün (hafta içi / hafta sonu) ve deneyime göre geniş bir aralıkta değişiyor. Aşağıdaki rakamlar bir <strong>referans noktası</strong>; kendi pazarına, portföyüne ve gecenin süresine göre uyarla.</p>
+            <div class="gb-cmp" role="region" aria-label="Karşılaştırma tablosu" tabindex="0">
+              <table>
+                <thead><tr><th scope="col" class="gb-cmp-c0">SEVİYE</th><th scope="col">TİPİK İŞ</th><th scope="col">YAKLAŞIK 2026 ARALIĞI</th></tr></thead>
+                <tbody>
+                <tr><th scope="row">Başlangıç</th><td>Bar / mekan, etkinlik başı</td><td>~1.500 – 3.000 TL / gece</td></tr>
+                <tr><th scope="row">Orta seviye DJ</th><td>Düzenli rezidan / haftalık program</td><td>~45.000 – 90.000 TL / ay</td></tr>
+                <tr><th scope="row">Deneyimli / talep gören</th><td>Marka etkinliği, özel gece</td><td>Görüşmeye açık, belirgin üstü</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>Kaşe belirlerken birkaç prensip: <strong>süreye göre fiyatla</strong> (2 saatlik set ile 5 saatlik rezidan gece aynı değildir), <strong>ulaşım ve ekipmanı ayrı düşün</strong>, ve <strong>düzenli iş için indirim mantıklıdır</strong> — tek seferlik gecede tam kaşe iste, ama aylık sabit program teklif eden bir mekana daha uygun bir toplam sunabilirsin. Rakamı net söyle, pazarlığa açık bir üst-alt aralık ver.</p>
+          </section>
+
+          <section class="gb-art-sec" id="gigbridge" aria-labelledby="h-gigbridge">
+            <span class="gb-art-n">04</span>
+            <h2 class="gb-art-h" id="h-gigbridge">GigBridge sahne bulmayı <em>nasıl kolaylaştırır?</em></h2>
+            <p class="gb-dek">Rehberdeki altı adımın hepsi tek uygulamada toplanır — soğuk mesaj yok, kaybolan teklif yok.</p>
+            <ol class="gb-steps">
+              <li><span class="gb-step-n">01</span><span class="gb-step-b"><h3 class="gb-step-t">Profilin vitrinin olur</h3> <span class="gb-step-p">Biyografin, türün, portföyün ve mix linklerin tek yerde. Mekan seni açtığı an ne yaptığını görür — EPK'nı ayrıca hazırlamana gerek kalmaz.</span></span></li>
+              <li><span class="gb-step-n">02</span><span class="gb-step-b"><h3 class="gb-step-t">Teklif sana gelir</h3> <span class="gb-step-p">Açık canlı müzik iş ilanlarına başvurursun ya da mekanlar seni keşfedip doğrudan DJ booking teklifi gönderir. Ağın dışında olmak artık engel değil.</span></span></li>
+              <li><span class="gb-step-n">03</span><span class="gb-step-b"><h3 class="gb-step-t">Süreç tek yerde kayıtlı</h3> <span class="gb-step-p">Tarih, kaşe ve şartlar dağınık mesajlarda kaybolmaz. Kim ne söz verdi, hangi teklif açık — hepsi düzenli ve takip edilebilir.</span></span></li>
+            </ol>
+            <p>Mekan tarafında çalışan biriysen süreci diğer yönden de görebilirsin: <a href="/rehber/mekana-sanatci-bulma/">mekana sanatçı bulma rehberine</a> göz at. İki taraf da aynı sahnede buluşur.</p>
+          </section>
+
+          <section class="gb-art-sec" id="sss" aria-labelledby="h-sss">
+            <span class="gb-art-n">05</span>
+            <h2 class="gb-art-h" id="h-sss">Sık sorulan <em>sorular</em></h2>
+            <p class="gb-dek">DJ ve müzisyen olarak sahne bulma hakkında en çok merak edilenler.</p>
+            <div class="gb-faq-list gb-faq-sm">
+          <details class="gb-faq" name="sss" open>
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Hiç deneyimim yokken ilk sahnemi nasıl bulurum?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Küçük başla: güçlü bir profil ve 1-2 iyi mix veya kayıtla işe koyul. Müziğinin yakıştığı küçük mekanları hedefle, açık iş ilanlarına başvur. GigBridge'de profilini oluşturup açık ilanlara başvurarak ya da mekanların keşfetmesini bekleyerek deneyimin olmadan da ilk teklifini alabilirsin.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">DJ kaşesi 2026'da ne kadar olmalı?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Başlangıç seviyesinde bar ve mekanlarda etkinlik başı yaklaşık 1.500-3.000 TL, orta seviye düzenli DJ programında aylık yaklaşık 45.000-90.000 TL bir referans aralığıdır. Şehre, mekana, güne ve süreye göre değişir; kendi pazarına ve deneyimine göre uyarla.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">EPK (basın kiti) olmadan sahne bulabilir miyim?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Bulabilirsin ama zorlanırsın. Mekanlar seni işe almadan önce ne yaptığını görmek ister. GigBridge profilin bir EPK işlevi görür: biyografi, tür, portföy ve mix linklerini tek yerde toplar, böylece ayrı bir basın kiti hazırlamadan da net bir vitrinin olur.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Kapora istemek doğru mu, yoksa mekanı kaçırır mıyım?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Kapora istemek profesyonelce ve yaygındır. Kaşenin bir kısmını (örneğin %30-50) önden istemek hem ciddiyeti test eder hem seni son dakika iptallerine karşı korur. Ciddi bir mekan bunu sorun etmez; etmesi zaten uyarı işaretidir.</p>
+          </details>
+          <details class="gb-faq" name="sss">
+            <summary class="gb-faq-q gb-press"><span class="gb-faq-qt">Mekanlara nasıl teklif göndermeliyim?</span><span class="gb-faq-ic" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+            <p class="gb-faq-a">Kısa, kişisel ve net ol: kim olduğun, ne çaldığın, uygun tarihin ve bir dinleme linki. Kopyala-yapıştır mesajlar belli olur. GigBridge'de bunu tersine çevirebilir, açık ilanlara başvurup mekanların sana teklif göndermesini sağlayabilirsin.</p>
+          </details>
         </div>
-        <p>Kaşe belirlerken birkaç prensip: <strong>süreye göre fiyatla</strong> (2 saatlik set ile 5 saatlik rezidan gece aynı değildir), <strong>ulaşım ve ekipmanı ayrı düşün</strong>, ve <strong>düzenli iş için indirim mantıklıdır</strong> — tek seferlik gecede tam kaşe iste, ama aylık sabit program teklif eden bir mekana daha uygun bir toplam sunabilirsin. Rakamı net söyle, pazarlığa açık bir üst-alt aralık ver.</p>
-      </section>
+          </section>
 
-      <section id="gigbridge">
-        <h2>GigBridge sahne bulmayı <span class="em">nasıl kolaylaştırır?</span></h2>
-        <p class="sub">Rehberdeki altı adımın hepsi tek uygulamada toplanır — soğuk mesaj yok, kaybolan teklif yok.</p>
-        <div class="roles">
-          <div class="role"><div class="n">01</div><h3>Profilin vitrinin olur</h3><p>Biyografin, türün, portföyün ve mix linklerin tek yerde. Mekan seni açtığı an ne yaptığını görür — EPK'nı ayrıca hazırlamana gerek kalmaz.</p></div>
-          <div class="role"><div class="n">02</div><h3>Teklif sana gelir</h3><p>Açık canlı müzik iş ilanlarına başvurursun ya da mekanlar seni keşfedip doğrudan DJ booking teklifi gönderir. Ağın dışında olmak artık engel değil.</p></div>
-          <div class="role"><div class="n">03</div><h3>Süreç tek yerde kayıtlı</h3><p>Tarih, kaşe ve şartlar dağınık mesajlarda kaybolmaz. Kim ne söz verdi, hangi teklif açık — hepsi düzenli ve takip edilebilir.</p></div>
+          <section class="gb-gcta gb-bar3-magenta" aria-labelledby="h-gcta">
+            <span class="gb-gcta-k gb-c-magenta">SANATÇILAR İÇİN</span>
+            <h2 class="gb-gcta-h" id="h-gcta">Sahneni <em>bul</em></h2>
+            <p class="gb-gcta-p">Sanatçı olarak kaydol, profilini oluştur, açık ilanlara başvur — teklifler sana gelsin.</p>
+            <div class="gb-btns">
+              <a class="gb-btn gb-btn-primary gb-btn-magenta gb-press" href="/indir/">Uygulamayı İndir</a>
+              <a class="gb-btn gb-btn-outline gb-press" href="/#/kesfet">Açık İlanları Gör</a>
+            </div>
+          </section>
+      </article>
+
+      <aside class="gb-toc-aside" aria-label="İçindekiler">
+        <nav class="gb-toc" aria-labelledby="h-toc" data-gb-toc>
+          <span class="gb-toc-h" id="h-toc">BU REHBERDE</span>
+          <a class="gb-toc-a is-on" href="#neden-zor" aria-current="true"><span class="gb-toc-n">01</span>Neden sahne bulmak zor?</a>
+          <a class="gb-toc-a" href="#adimlar"><span class="gb-toc-n">02</span>Adım adım sahne bulma</a>
+          <a class="gb-toc-a" href="#kase"><span class="gb-toc-n">03</span>Kaşe ne kadar olmalı?</a>
+          <a class="gb-toc-a" href="#gigbridge"><span class="gb-toc-n">04</span>GigBridge nasıl kolaylaştırır?</a>
+          <a class="gb-toc-a" href="#sss"><span class="gb-toc-n">05</span>Sık sorulan sorular</a>
+        </nav>
+        <div class="gb-toc-cta">
+          <span class="gb-toc-cta-t">Sahne bulmaya başlayın</span>
+          <span class="gb-toc-cta-p">Sanatçı olarak kaydol, profilini oluştur, açık ilanlara başvur — teklifler sana gelsin.</span>
+          <a class="gb-toc-cta-b gb-btn-magenta gb-press" href="/#/register?rol=artist">Sanatçı Olarak Kaydol</a>
         </div>
-        <p style="margin-top:20px">Mekan tarafında çalışan biriysen süreci diğer yönden de görebilirsin: <a href="/rehber/mekana-sanatci-bulma/">mekana sanatçı bulma rehberine</a> göz at. İki taraf da aynı sahnede buluşur.</p>
-      </section>
+      </aside>
+    </div>
 
-      <section id="sss">
-        <h2>Sık sorulan <span class="em">sorular</span></h2>
-        <div class="sub">DJ ve müzisyen olarak sahne bulma hakkında en çok merak edilenler.</div>
-        <details open><summary>Hiç deneyimim yokken ilk sahnemi nasıl bulurum?</summary><p>Küçük başla: güçlü bir profil ve 1-2 iyi mix veya kayıtla işe koyul. Müziğinin yakıştığı küçük mekanları hedefle, açık iş ilanlarına başvur. GigBridge'de profilini oluşturup açık ilanlara başvurarak ya da mekanların keşfetmesini bekleyerek deneyimin olmadan da ilk teklifini alabilirsin.</p></details>
-        <details><summary>DJ kaşesi 2026'da ne kadar olmalı?</summary><p>Başlangıç seviyesinde bar ve mekanlarda etkinlik başı yaklaşık 1.500-3.000 TL, orta seviye düzenli DJ programında aylık yaklaşık 45.000-90.000 TL bir referans aralığıdır. Şehre, mekana, güne ve süreye göre değişir; kendi pazarına ve deneyimine göre uyarla.</p></details>
-        <details><summary>EPK (basın kiti) olmadan sahne bulabilir miyim?</summary><p>Bulabilirsin ama zorlanırsın. Mekanlar seni işe almadan önce ne yaptığını görmek ister. GigBridge profilin bir EPK işlevi görür: biyografi, tür, portföy ve mix linklerini tek yerde toplar, böylece ayrı bir basın kiti hazırlamadan da net bir vitrinin olur.</p></details>
-        <details><summary>Kapora istemek doğru mu, yoksa mekanı kaçırır mıyım?</summary><p>Kapora istemek profesyonelce ve yaygındır. Kaşenin bir kısmını (örneğin %30-50) önden istemek hem ciddiyeti test eder hem seni son dakika iptallerine karşı korur. Ciddi bir mekan bunu sorun etmez; etmesi zaten uyarı işaretidir.</p></details>
-        <details><summary>Mekanlara nasıl teklif göndermeliyim?</summary><p>Kısa, kişisel ve net ol: kim olduğun, ne çaldığın, uygun tarihin ve bir dinleme linki. Kopyala-yapıştır mesajlar belli olur. GigBridge'de bunu tersine çevirebilir, açık ilanlara başvurup mekanların sana teklif göndermesini sağlayabilirsin.</p></details>
-      </section>
+    <section class="gb-related" aria-labelledby="h-rel">
+      <div class="gb-sh">
+        <span class="gb-sh-k">İLGİLİ SAYFALAR</span>
+        <h2 class="gb-h2 gb-h2-44" id="h-rel">Okumaya <em>devam et</em></h2>
+      </div>
+      <div class="gb-rel-grid">
+          <a class="gb-rel gb-card gb-bar-orange" href="/rehber/mekana-sanatci-bulma/">
+            <span class="gb-rel-k gb-c-orange">REHBER · MEKANLAR &amp; ORGANİZATÖRLER</span>
+            <span class="gb-rel-t">Mekanınıza sanatçı ve DJ <em>nasıl bulunur?</em></span>
+            <span class="gb-rel-p">Restoran, bar, kafe veya etkinlik mekanınıza doğru müzisyeni bulmak; bir düğün sitesinden "tek gecelik" grup kiralamaktan çok daha fazlası.</span>
+            <span class="gb-rel-go gb-c-orange">Mekana Sanatçı Bulma<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+          <a class="gb-rel gb-card gb-bar-cyan" href="/canli-muzik/istanbul/">
+            <span class="gb-rel-k gb-c-cyan">İSTANBUL · CANLI MÜZİK</span>
+            <span class="gb-rel-t">İstanbul'da bu akşam <em>kim çalıyor?</em></span>
+            <span class="gb-rel-p">Kadıköy'den Beyoğlu'na, Beşiktaş'tan Nişantaşı'na — canlı müzik tek yerde.</span>
+            <span class="gb-rel-go gb-c-cyan">İstanbul Canlı Müzik<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+          <a class="gb-rel gb-card gb-bar-magenta" href="/rehber/canli-muzik/">
+            <span class="gb-rel-k gb-c-magenta">TÜRKİYE · CANLI MÜZİK REHBERİ</span>
+            <span class="gb-rel-t">Türkiye'de canlı müzik, <em>şehir şehir</em></span>
+            <span class="gb-rel-p">İstanbul'dan Bodrum'a, İzmir'den Antalya'ya — her şehrin kendi semtleri, kendi sesi.</span>
+            <span class="gb-rel-go gb-c-magenta">Canlı Müzik Rehberi<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+      </div>
+    </section>
+  </main>
 
-      <div class="band">
-        <h2>Sahneni <span class="em">bul</span></h2>
-        <p class="sub">Sanatçı olarak kaydol, profilini oluştur, açık ilanlara başvur — teklifler sana gelsin.</p>
-        <div class="cta-row" style="justify-content:center">
-          <a class="btn btn-primary" href="/indir/">Uygulamayı İndir</a>
-          <a class="btn btn-ghost" href="https://gigbridges.com/#/kesfet">Açık İlanları Gör</a>
+  <footer class="gb-ft">
+    <div class="gb-ft-in">
+      <div class="gb-ft-grid">
+        <div class="gb-ft-brand">
+          <span class="gb-logo gb-logo-sm"><span class="gb-logo-tile"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6-9 9-9s6 3 9 9"/><path d="M3 17h18"/></svg></span><span class="gb-logo-word">GigBridge</span></span>
+          <p>Dinleyicileri, sanatçıları ve mekanları canlı müzikte buluşturan platform.</p>
         </div>
+        <nav class="gb-ft-col" aria-label="Keşfet">
+          <span class="gb-ft-h">KEŞFET</span>
+          <a class="gb-link" href="/#/etkinlikler">Etkinlikler</a>
+          <a class="gb-link" href="/#/kesfet?kategori=mekanlar">Mekanlar</a>
+          <a class="gb-link" href="/#/kesfet?kategori=sanatcilar">Sanatçılar</a>
+          <a class="gb-link" href="/#/harita">Harita</a>
+          <a class="gb-link" href="/rehber/canli-muzik/">Canlı müzik rehberi</a>
+        </nav>
+        <nav class="gb-ft-col" aria-label="Katıl">
+          <span class="gb-ft-h">KATIL</span>
+          <a class="gb-link" href="/#/register?rol=artist">Sanatçı ol</a>
+          <a class="gb-link" href="/#/register?rol=venue">Mekan ekle</a>
+          <a class="gb-link" href="/#/register?rol=organizer">Organizatör ol</a>
+          <a class="gb-link" href="/#/login">Giriş yap</a>
+          <a class="gb-link" href="/indir/">Uygulamayı indir</a>
+        </nav>
+        <nav class="gb-ft-col" aria-label="Yasal">
+          <span class="gb-ft-h">YASAL</span>
+          <a class="gb-link" href="/gizlilik.html">Gizlilik</a>
+          <a class="gb-link" href="/kullanim-kosullari.html">Kullanım koşulları</a>
+          <a class="gb-link" href="/gizlilik.html#kvkk">KVKK aydınlatma metni</a>
+          <a class="gb-link" href="/hesap-sil.html">Hesap silme</a>
+        </nav>
       </div>
-
-      <div class="chip-row" style="margin-top:26px">
-        <span class="chip" style="color:var(--muted)">İlgili:</span>
-        <a class="chip" href="/rehber/mekana-sanatci-bulma/">Mekana Sanatçı Bulma</a>
-        <a class="chip" href="/canli-muzik/istanbul/">İstanbul Canlı Müzik</a>
-        <a class="chip" href="/rehber/canli-muzik/">Canlı Müzik Rehberi</a>
-        <a class="chip" href="/indir/">Uygulamayı İndir</a>
-      </div>
-    </article>
-  </div>
-
-  <footer>
-    <div class="wrap">
-      <div class="links">
-        <a href="/">Ana Sayfa</a>
-        <a href="/rehber/canli-muzik/">Canlı Müzik Rehberi</a>
-        <a href="/indir/">Uygulamayı İndir</a>
-        <a href="/kullanim-kosullari.html">Kullanım Koşulları</a>
-        <a href="/gizlilik.html">Gizlilik</a>
-      </div>
-      <div>© 2026 GigBridge — Canlı müzik etkinlikleri, sanatçılar ve mekanlar.</div>
+      <div class="gb-ft-bottom"><span>© 2026 GigBridge</span><span>gigbridges.com</span></div>
     </div>
   </footer>
 

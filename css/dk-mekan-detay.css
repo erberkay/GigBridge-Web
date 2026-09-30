@@ -1,0 +1,388 @@
+/* dk-mekan-detay.css — WebMekan masaüstü görünümü (mekan).
+   SAHİBİ: js/desktop/public/mekan.js uygulayıcısı (specs/foundation.md §3). Spec: specs/public-b.md WebMekan
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-mekan-detay (ve alt sınıfları .dk-mekan-detay-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan.
+   Portal katmanları (lightbox, Puan & Yorum modalı) .dk-portal altında çizilir → yalnız .dk-mekan-detay-* adlarıyla hedeflenir.
+   Ölçüler: design/WebMekan.dc.html (1440×3800) satır içi stilleri, birebir. */
+
+/* ═══════════ kök ═══════════ */
+.dk-mekan-detay {
+  --dk-rise-dur: 700ms; --dk-rise-y: 16px;          /* gbRise 700ms / 16px */
+  --dk-row-hover-bg: #0E1014;
+  box-sizing: border-box; width: 100%;
+  max-width: calc(1280px + 2 * var(--dk-gutter));
+  margin: 0 auto; padding: 0 var(--dk-gutter);
+}
+.dk-mekan-detay.is-static .dk-rise { animation: none; }
+.dk-mekan-detay-lbl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+
+/* ═══════════ breadcrumb (nav padding 24 80 0; geri 40×40) ═══════════ */
+.dk-mekan-detay-bc { padding-top: 24px; }
+/* artboard: "KEŞFET / MEKANLAR / AD" boşluk karakterleriyle (mono 11 + .16em → boşluk ≈ 8.4px); ortak dkBreadcrumb .5em (5.5px) kullanıyor.
+   SHARED-CANDIDATE: dk-ui.css .dk-bc-trail gap → calc(0.6em + 0.16em) (WebSanatci mono-overlay da aynı metin düzeninde). */
+.dk-mekan-detay-bc .dk-bc-trail { min-width: 0; gap: 0 calc(0.6em + 0.16em); }
+
+/* ═══════════ galeri mozaiği (margin-top 20, h480, 2fr 1fr, 2 satır, gap 8, r12) ═══════════ */
+.dk-mekan-detay-gal {
+  margin-top: 20px; height: 480px; display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 8px; border-radius: 12px; overflow: hidden;
+}
+.dk-mekan-detay-gal > :first-child { grid-row: span 2; }
+.dk-mekan-detay-gal.is-n0, .dk-mekan-detay-gal.is-n1 { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.dk-mekan-detay-gal.is-n0 > :first-child, .dk-mekan-detay-gal.is-n1 > :first-child { grid-row: auto; }
+.dk-mekan-detay-gal.is-n2 > :nth-child(2) { grid-row: span 2; }
+/* iskelet: aynı mozaik (1. karo 2 satır, 2–3. karolar 424×236), kapsayıcı r12'yi overflow ile devralır */
+.dk-mekan-detay-gal.is-skel > .dk-skel { display: block; width: 100%; height: 100%; min-height: 0; }
+.dk-mekan-detay-gt {
+  position: relative; display: block; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; overflow: hidden;
+  background: #0E1014; cursor: zoom-in;
+}
+.dk-mekan-detay-gcell { position: relative; min-height: 0; }
+.dk-mekan-detay-gimg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-mekan-detay-gscrim { position: absolute; inset: 0; display: block; pointer-events: none; background: linear-gradient(180deg, rgba(6,7,10,0) 55%, rgba(6,7,10,0.7) 100%); }
+.dk-mekan-detay-gtype {
+  position: absolute; top: 18px; left: 18px; height: 26px; box-sizing: border-box; padding: 0 10px; display: flex; align-items: center;
+  border-radius: 4px; background: rgba(6,7,10,0.74); border: 1px solid rgba(255,138,42,0.5);
+  font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #FF8A2A;
+}
+.dk-mekan-detay-gall {
+  position: absolute; right: 16px; bottom: 16px; height: 38px; box-sizing: border-box; margin: 0; padding: 0 14px;
+  display: flex; align-items: center; gap: 8px; border-radius: 6px; background: rgba(6,7,10,0.8); border: 1px solid rgba(242,241,238,0.2);
+  color: #F2F1EE; font-size: 13.5px; font-weight: 500; white-space: nowrap;
+}
+/* fotoğraf yok / yüklenemedi: mekan gradyanı + büyük baş harf (spec §9) */
+.dk-mekan-detay-gph {
+  display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
+  background: linear-gradient(135deg, #0D3B5E, #1A5276);
+  font-family: var(--dk-font-serif); font-size: 160px; line-height: 1; color: rgba(242,241,238,0.55);
+}
+.dk-mekan-detay-gph.is-in { position: absolute; inset: 0; font-size: 96px; }
+
+/* ═══════════ kimlik satırı (pad 40 80 0, alta hizalı, gap 40) ═══════════ */
+.dk-mekan-detay-id { padding-top: 40px; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
+.dk-mekan-detay-idl { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dk-mekan-detay-eyrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dk-mekan-detay-eb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #FF8A2A; }
+.dk-mekan-detay-loc {
+  height: 26px; box-sizing: border-box; padding: 0 10px; display: flex; align-items: center; gap: 6px;
+  border-radius: 13px; border: 1px solid #2C303A; font-size: 13px; color: #C9CACD;
+}
+.dk-mekan-detay-loc svg, .dk-mekan-detay-addr svg { flex-shrink: 0; }
+.dk-mekan-detay .dk-mekan-detay-h1 { font-size: 84px; line-height: 0.95; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.dk-mekan-detay-h1 em { color: #FF4FA3; }
+.dk-mekan-detay-addr { display: flex; align-items: center; gap: 8px; font-size: 14.5px; color: #A3A7AF; }
+.dk-mekan-detay-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.dk-mekan-detay-chip {
+  height: 30px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 7px;
+  border-radius: 15px; border: 1px solid; font-size: 13px; white-space: nowrap;
+}
+.dk-mekan-detay-chipdot { width: 6px; height: 6px; border-radius: 50%; display: block; flex-shrink: 0; }
+.dk-mekan-detay-acts { flex-shrink: 0; padding-bottom: 4px; display: flex; align-items: center; gap: 10px; }
+
+/* Aksiyon düğmeleri: 44 r6 14.5/600 gap 9 (Kaydet/Mesaj pad 0 18 kenar #2C303A · Puan Ver pad 0 20 pembe) */
+.dk-mekan-detay-act {
+  height: 44px; box-sizing: border-box; margin: 0; padding: 0 18px; border-radius: 6px; border: 1px solid #2C303A; background: transparent;
+  color: #F2F1EE; display: inline-flex; align-items: center; gap: 9px; font-family: inherit; font-size: 14.5px; font-weight: 600;
+  line-height: normal; white-space: nowrap; text-decoration: none; cursor: pointer;
+}
+.dk .dk-mekan-detay-act:hover { color: #F2F1EE; }
+.dk-mekan-detay-act svg { flex-shrink: 0; }
+.dk-mekan-detay-act.is-primary { padding: 0 20px; border: 0; background: #FF4FA3; color: #06070A; }
+.dk .dk-mekan-detay-act.is-primary:hover { color: #06070A; }
+.dk-mekan-detay-act.is-sm { font-size: 14px; }
+.dk-mekan-detay-act:disabled { cursor: default; opacity: 0.7; }
+.dk-mekan-detay-save.is-on { background: rgba(124,224,176,0.10); border-color: rgba(124,224,176,0.5); color: #7CE0B0; }
+.dk .dk-mekan-detay-save.is-on:hover { color: #7CE0B0; }
+
+/* ═══════════ istatistik bandı (margin 40 80 0, h104, üst/alt #14171D) ═══════════ */
+.dk-mekan-detay-stats {
+  margin-top: 40px; height: 104px; box-sizing: border-box; border-top: 1px solid #14171D; border-bottom: 1px solid #14171D;
+  display: flex; align-items: center;
+}
+.dk-mekan-detay-st { display: flex; flex-direction: column; gap: 6px; padding: 0 48px; flex-shrink: 0; }
+.dk-mekan-detay-st.is-first { padding: 0 48px 0 0; }
+.dk-mekan-detay-stv { display: flex; align-items: center; gap: 8px; font-size: 32px; font-weight: 600; letter-spacing: -0.02em; }
+.dk-mekan-detay-stl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-mekan-detay-stdiv { width: 1px; height: 48px; background: #1F232B; display: block; flex-shrink: 0; }
+/* TonightChip: h48 pad 0 16 0 8 r8 kenar kırmızı@.35 zemin @.06 gap 14 */
+.dk-mekan-detay-tonight {
+  margin-left: auto; min-width: 0; height: 48px; box-sizing: border-box; padding: 0 16px 0 8px; display: flex; align-items: center; gap: 14px;
+  border-radius: 8px; border: 1px solid rgba(255,90,110,0.35); background: rgba(255,90,110,0.06); color: #F2F1EE; text-decoration: none;
+}
+.dk .dk-mekan-detay-tonight:hover { color: #F2F1EE; }
+.dk-mekan-detay-tonight > svg { flex-shrink: 0; }
+.dk-mekan-detay-tnb {
+  height: 30px; box-sizing: border-box; padding: 0 10px; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  border-radius: 5px; background: rgba(6,7,10,0.6); border: 1px solid rgba(255,90,110,0.5);
+  font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #FF5A6E; white-space: nowrap;
+}
+.dk-mekan-detay-pingw { position: relative; width: 7px; height: 7px; display: block; flex-shrink: 0; }
+.dk-mekan-detay-pingw > span { position: absolute; top: 0; left: 0; width: 7px; height: 7px; border-radius: 50%; background: #FF5A6E; display: block; }
+.dk-mekan-detay-tnt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 500; }
+/* SIRADAKİ varyantı (bugün etkinlik yoksa): pembe kenar @.35, nabız yok */
+.dk-mekan-detay-tonight.is-next { border-color: rgba(255,79,163,0.35); background: rgba(255,79,163,0.06); }
+.dk-mekan-detay-tonight.is-next .dk-mekan-detay-tnb { border-color: rgba(255,79,163,0.5); color: #FF4FA3; }
+
+/* ═══════════ bölüm sekmeleri (h60, gap 36, prizma alt çizgi — dk-utab-anchor) ═══════════ */
+/* odak halkası: galeri (overflow:hidden) ve sekmelerde içeri çekilir → kırpılmaz */
+.dk-mekan-detay-tabs .dk-utab-t:focus-visible { outline-offset: -2px; border-radius: 4px; }
+/* galeri karosu: odak halkası img/scrim/Ken Burns katmanlarının ÜSTÜNDE (::after z 2); outline img'nin altında kalıyordu */
+.dk-mekan-detay-gt::after { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit; }
+.dk-mekan-detay .dk-mekan-detay-gt:focus-visible { outline: none; }
+.dk-mekan-detay .dk-mekan-detay-gt:focus-visible::after { box-shadow: inset 0 0 0 2px var(--dk-focus-ring), inset 0 0 0 4px rgba(6,7,10,0.55); }
+.dk-mekan-detay .dk-mekan-detay-rvgrid:focus-visible { outline-offset: 6px; border-radius: 4px; }
+.dk-mekan-detay .dk-mekan-detay-osm:focus-visible { outline-offset: 0; }
+
+/* ═══════════ ana ızgara (pad 64 80 104; 1fr 380; gap 64) ═══════════ */
+.dk-mekan-detay-grid { padding: 64px 0 104px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 64px; align-items: start; }
+.dk-mekan-detay-col { min-width: 0; display: flex; flex-direction: column; gap: 96px; }
+.dk-mekan-detay-sec { min-width: 0; display: flex; flex-direction: column; gap: 28px; scroll-margin-top: 96px; }
+.dk-mekan-detay-sec h2:focus { outline: none; }
+.dk-mekan-detay-sec h2:focus-visible { outline: 2px solid var(--dk-focus-ring); outline-offset: 4px; border-radius: 2px; }
+.dk-mekan-detay-more {
+  margin: 0; padding: 0; border: 0; background: none; font-family: inherit; font-size: 14px; font-weight: 500;
+  display: flex; align-items: center; gap: 8px; white-space: nowrap; cursor: pointer;
+}
+.dk-mekan-detay-more[hidden] { display: none; }
+.dk-mekan-detay-rvmore { align-self: flex-start; }
+.dk-mekan-detay-empty.dk-empty-compact { min-height: 88px; border: 1px dashed #2C303A; border-radius: 10px; gap: 14px; color: #8A8E97; }
+.dk-mekan-detay-empty .dk-empty-t { font-size: 15px; font-weight: 500; }
+.dk-mekan-detay-empty .dk-empty-s { font-size: 13.5px; max-width: none; text-align: left; }
+
+/* 01 · Hakkında */
+.dk-mekan-detay-bio { margin: 0; max-width: 720px; font-size: 17.5px; line-height: 1.7; color: #C9CACD; overflow-wrap: anywhere; white-space: pre-line; }
+.dk-mekan-detay-bio.is-dim { color: #8A8E97; }
+.dk-mekan-detay-bio.is-sm { font-size: 14.5px; line-height: 1.5; }
+.dk-mekan-detay-feat { display: flex; flex-direction: column; gap: 14px; }
+.dk-mekan-detay-ul {
+  margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 24px;
+  border-top: 1px solid #14171D;
+}
+.dk-mekan-detay-ul > li {
+  min-height: 48px; box-sizing: content-box; padding: 0; border-bottom: 1px solid #14171D; display: flex; align-items: center; gap: 10px;
+  font-size: 14.5px; color: #F2F1EE;
+}
+.dk-mekan-detay-ul > li svg { flex-shrink: 0; }
+.dk-mekan-detay-ul > li span { min-width: 0; overflow-wrap: anywhere; }
+
+/* 02 · Etkinlikler (3 kolon gap 20; kart cards.eventCard görsel 168) */
+.dk-mekan-detay-evgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.dk-mekan-detay-evgrid:not(.is-open) > :nth-child(n+4) { display: none; }   /* 3 kolonda ilk 3 (artboard) */
+.dk-mekan-detay-corner {
+  position: absolute; top: 12px; right: 12px; height: 22px; padding: 0 8px; display: flex; align-items: center; border-radius: 4px;
+  color: #06070A; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em;
+}
+
+/* 03 · Sanatçılar (ArtistTile: 6 kolon gap 16) */
+.dk-mekan-detay-artgrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; }
+.dk-mekan-detay-art {
+  min-width: 0; box-sizing: border-box; padding: 18px 10px 16px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014;
+  color: #F2F1EE; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; text-decoration: none;
+}
+.dk .dk-mekan-detay-art:hover { color: #F2F1EE; }
+.dk-mekan-detay-artav { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; object-position: 50% 25%; display: block; flex-shrink: 0; }
+.dk-mekan-detay-artav.is-ini { display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 600; color: #F2F1EE; }
+.dk-mekan-detay-artnm { max-width: 100%; font-size: 14.5px; font-weight: 600; overflow-wrap: anywhere; }
+.dk-mekan-detay-artg { max-width: 100%; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; overflow-wrap: anywhere; }
+
+/* 04 · Yorumlar — özet satırı (pad 24 0, üst/alt #14171D) */
+.dk-mekan-detay-sum {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px 28px; flex-wrap: wrap;
+  padding: 24px 0; border-top: 1px solid #14171D; border-bottom: 1px solid #14171D;
+}
+.dk-mekan-detay-suml { display: flex; align-items: center; gap: 28px; }
+.dk-mekan-detay-sumn { font-family: var(--dk-font-serif); font-size: 88px; line-height: 0.9; }
+.dk-mekan-detay-sumc { display: flex; flex-direction: column; gap: 8px; }
+.dk-mekan-detay-sumstars { display: flex; gap: 4px; }
+.dk-mekan-detay-sumt { font-size: 14.5px; color: #A3A7AF; }
+.dk-mekan-detay-rtabs .dk-seg-b { font-size: 13.5px; }
+.dk-mekan-detay-rvgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.dk-mekan-detay-rvgrid.is-empty { grid-template-columns: minmax(0, 1fr); }
+.dk-mekan-detay-rv {
+  min-width: 0; box-sizing: border-box; padding: 22px 24px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.dk-mekan-detay-rvtop { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dk-mekan-detay-rvwho { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.dk-mekan-detay-rvav {
+  width: 40px; height: 40px; box-sizing: border-box; border-radius: 50%; flex-shrink: 0; color: #F2F1EE;
+  display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600;
+}
+.dk-mekan-detay-rvav.is-anon { background: rgba(167,139,250,0.14); border: 1px solid rgba(167,139,250,0.4); }
+.dk-mekan-detay-rvcol { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dk-mekan-detay-rvnm { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; min-width: 0; }
+.dk-mekan-detay-rvnm > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-detay-rvbadge {
+  height: 20px; box-sizing: border-box; padding: 0 7px; display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+  border-radius: 10px; border: 1px solid rgba(255,79,163,0.45); color: #FF4FA3;
+  font-family: var(--dk-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+}
+.dk-mekan-detay-rvdt { font-size: 12.5px; color: #8A8E97; }
+.dk-mekan-detay-rvstars { display: flex; gap: 2px; flex-shrink: 0; }
+.dk-mekan-detay-rvtag {
+  align-self: flex-start; max-width: 100%; height: 24px; box-sizing: border-box; padding: 0 9px; display: flex; align-items: center; gap: 6px;
+  border-radius: 4px; background: rgba(255,79,163,0.08); border: 1px solid rgba(255,79,163,0.3); font-size: 12px; color: #FF8AC4;
+}
+.dk-mekan-detay-rvtag svg { flex-shrink: 0; }
+.dk-mekan-detay-rvtag span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-mekan-detay-rvtx { margin: 0; font-size: 15px; line-height: 1.6; color: #C9CACD; overflow-wrap: anywhere; }
+
+/* ═══════════ kenar sütunu (gap 20; yapışkan DEĞİL — artboard) ═══════════ */
+.dk-mekan-detay-aside { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+/* Harita kartı (MapPanel "aside"): r12 kenar zemin #0E1014 */
+.dk-mekan-detay-mapcard { box-sizing: border-box; border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; overflow: hidden; }
+/* isolation: Leaflet panelerinin (z 400) ve pin/atıf katmanlarının (z 500) yapışkan başlığın (z 50) üstüne taşmasını engeller */
+.dk-mekan-detay-mapwrap { position: relative; isolation: isolate; }
+.dk-mekan-detay-map { position: relative; height: 220px; background: #0C0E13; border-bottom: 1px solid #1F232B; overflow: hidden; }
+.dk-mekan-detay-leaf { position: absolute; inset: 0; }
+.dk-mekan-detay .dk-mekan-detay-leaf.leaflet-container { background: #0C0E13; font-family: var(--dk-font-sans); outline: none; cursor: default; }
+/* koyu karolar: OSM karoları CSS filtresiyle (public-a Harita seçenek a) — gri tonlamalı ters çevrim + lacivert ton, #0C0E13 zemine
+   .45 saydamlık → ölçülen ortalama RGB ≈ (18,20,25), parlaklık ≈ 20 (artboard MapPanel: (14,20,26), ≈ 19); sokak etiketleri bastırılır */
+.dk-mekan-detay-leaf .leaflet-tile-pane { filter: invert(1) grayscale(1) brightness(0.5) sepia(0.5) hue-rotate(180deg) saturate(2.4); opacity: 0.45; }
+.dk-mekan-detay-pin {
+  position: absolute; z-index: 500; left: calc(var(--dk-pin-x, 138px) - 20px); top: calc(var(--dk-pin-y, 106px) - 20px);
+  width: 40px; height: 40px; display: block; pointer-events: none;
+}
+.dk-mekan-detay-pin > .dk-ping { position: absolute; top: 10px; left: 10px; width: 20px; height: 20px; border-radius: 50%; background: rgba(255,138,42,0.5); display: block; }
+.dk-mekan-detay-pin > span:nth-child(2) {
+  position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%;
+  background: #FF8A2A; border: 3px solid #0C0E13; display: block;
+}
+.dk-mekan-detay-pinlbl {
+  position: absolute; left: 32px; top: -26px; height: 26px; max-width: 200px; box-sizing: border-box; padding: 0 10px;
+  display: flex; align-items: center; border-radius: 5px; background: rgba(6,7,10,0.92); border: 1px solid #2C303A;
+  font-size: 12.5px; font-weight: 600; color: #F2F1EE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dk-mekan-detay-osm { position: absolute; z-index: 500; right: 10px; bottom: 9px; font-size: 10px; color: #5E636D; text-decoration: none; }
+.dk .dk-mekan-detay-osm:hover { color: #8A8E97; }
+.dk-mekan-detay-mapbody { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.dk-mekan-detay-adr { display: flex; flex-direction: column; gap: 4px; }
+.dk-mekan-detay-adrt { font-size: 14.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.dk-mekan-detay-dir {
+  height: 46px; box-sizing: border-box; border-radius: 6px; border: 1px solid rgba(78,216,255,0.45); background: rgba(78,216,255,0.08);
+  color: #4ED8FF; display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 14.5px; font-weight: 600; text-decoration: none;
+}
+.dk .dk-mekan-detay-dir:hover { color: #4ED8FF; }
+/* MEKAN BİLGİLERİ (FactList): pad 22 24, r12, kenar, zeminsiz; satır min-h 48 pad 10 0 üst çizgi, gap 12, 14px */
+.dk-mekan-detay-facts { box-sizing: border-box; padding: 22px 24px; border-radius: 12px; border: 1px solid #1F232B; display: flex; flex-direction: column; }
+.dk-mekan-detay-lbl.is-head { margin-bottom: 10px; }
+.dk-mekan-detay-fact { min-height: 48px; box-sizing: border-box; padding: 10px 0; border-top: 1px solid #14171D; display: flex; align-items: center; gap: 12px; font-size: 14px; }
+.dk-mekan-detay-fact > svg { flex-shrink: 0; }
+.dk-mekan-detay-fk { flex-grow: 1; color: #8A8E97; white-space: nowrap; }
+.dk-mekan-detay-fv { min-width: 0; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+.dk-mekan-detay-flink { color: #F2F1EE; transition: color 160ms ease; }
+.dk .dk-mekan-detay-flink { color: #F2F1EE; }
+.dk .dk-mekan-detay-flink:hover { color: #FF8AC4; }
+/* "Sanatçılar için" CTA (JoinAsArtistCard): pad 24 r12 zemin #0A0B0F, üstte 2px düz pembe çubuk */
+.dk-mekan-detay-cta {
+  position: relative; overflow: hidden; box-sizing: border-box; padding: 24px; border-radius: 12px; border: 1px solid #1F232B; background: #0A0B0F;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.dk-mekan-detay-ctabar { position: absolute; left: 0; top: 0; right: 0; height: 2px; background: #FF4FA3; display: block; }
+.dk-mekan-detay-ctaeb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #FF4FA3; }
+.dk-mekan-detay-ctat { font-family: var(--dk-font-serif); font-size: 30px; line-height: 1.05; }
+.dk-mekan-detay-ctat em { font-style: italic; color: #FF4FA3; }
+.dk-mekan-detay-ctap { margin: 0; font-size: 14px; line-height: 1.55; color: #A3A7AF; }
+.dk-mekan-detay-ctab {
+  margin-top: 4px; align-self: flex-start; height: 44px; box-sizing: border-box; padding: 0 16px; border-radius: 6px; background: #FF4FA3;
+  color: #06070A; display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 600; text-decoration: none;
+}
+.dk .dk-mekan-detay-ctab:hover { color: #06070A; }
+
+/* ═══════════ yükleniyor / bulunamadı ═══════════ */
+.dk-mekan-detay-skid { padding-top: 40px; display: flex; flex-direction: column; gap: 14px; }
+.dk-mekan-detay-msg { padding: 40px 0 104px; }
+.dk-mekan-detay-msg .dk-empty { min-height: 360px; }
+
+/* ═══════════ PORTAL: lightbox (dkModal "panel" üstünde; tam ekran, zemin rgba(6,7,10,.94)) ═══════════ */
+.dk-ovl.dk-mekan-detay-lbovl { padding: 0; overflow: hidden; }
+.dk-mekan-detay-lbovl > .dk-ovl-bg { background: rgba(6,7,10,0.94); }
+.dk-mdl.dk-mekan-detay-lb {
+  position: static; width: 100% !important; max-width: none; height: 100%; padding: 0; gap: 0; border: 0; border-radius: 0;
+  background: transparent; animation: none; pointer-events: none;
+}
+.dk-mekan-detay-lb .dk-mdl-headrow { position: static; }
+.dk-mekan-detay-lb .dk-mdl-tcol { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.dk-mekan-detay-lb .dk-mdl-x {
+  position: absolute; z-index: 2; top: 28px; right: var(--dk-gutter, 80px); width: 44px !important; height: 44px !important;
+  border-color: #2C303A; background: #0E1014; color: #F2F1EE; pointer-events: auto;
+}
+.dk-mekan-detay-lb .dk-mdl-x svg { width: 18px; height: 18px; }
+.dk-mekan-detay-lb .dk-mdl-body { position: static; width: 100%; height: 100%; }
+.dk-mekan-detay-lbbody { position: static; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.dk-mekan-detay-lbfig { margin: 0; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+.dk-mekan-detay-lbimg {
+  display: block; max-width: min(1100px, calc(100vw - 2 * var(--dk-gutter, 80px) - 120px)); max-height: min(700px, calc(100vh - 180px));
+  border-radius: 10px; animation: dkFade var(--dk-fade-dur, 220ms) ease both;
+}
+.dk-mekan-detay-lbnav {
+  position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; box-sizing: border-box; margin: 0; padding: 0;
+  border-radius: 6px; border: 1px solid #2C303A; background: #0E1014; color: #F2F1EE; display: flex; align-items: center; justify-content: center;
+  pointer-events: auto;
+}
+.dk-mekan-detay-lbnav:active { transform: translateY(-50%) scale(.985); }
+.dk-mekan-detay-lbnav.is-prev { left: var(--dk-gutter, 80px); }
+.dk-mekan-detay-lbnav.is-next { right: var(--dk-gutter, 80px); }
+.dk-mekan-detay-lbn {
+  position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%);
+  font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: #A3A7AF;
+}
+
+/* ═══════════ PORTAL: Puan & Yorum modalı (public-b ReviewModal: 480, pad 28, r14, #2C303A, zemin #0A0B0F) ═══════════ */
+.dk-mdl.dk-mekan-detay-rvm { background: #0A0B0F; }
+.dk-mekan-detay-rvm .dk-mdl-x { width: 40px !important; height: 40px !important; border-color: #1F232B; }
+.dk-mekan-detay-rvbody { display: flex; flex-direction: column; gap: 18px; }
+.dk-mekan-detay-rvpick { display: flex; justify-content: center; gap: 6px; }
+.dk-mekan-detay-rvstar {
+  width: 48px; height: 48px; box-sizing: border-box; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.dk-mekan-detay-rvstar svg { transition: transform 160ms ease; }
+.dk-mekan-detay-rvstar:hover svg { transform: scale(1.08); }
+.dk-mekan-detay-rvfld { display: flex; flex-direction: column; gap: 8px; }
+.dk .dk-mekan-detay-rvta {
+  width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0E1014;
+  color: #F2F1EE; font-family: var(--dk-font-sans); font-size: 14.5px; line-height: 1.5; resize: none;
+}
+.dk-mekan-detay-rvcnt { align-self: flex-end; font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; }
+.dk-mekan-detay-rvcnt.is-warn { color: #FF5A6E; }
+.dk-mekan-detay-rvm .dk-mdl-acts .dk-btn-primary { padding: 0 22px; }
+.dk-mekan-detay-rvm .dk-btn[aria-disabled="true"] { opacity: 0.4; }
+
+/* ═══════════ 1280–1359: sanatçı karoları 5 kolon (avatar 80 sığsın) ═══════════ */
+@media (max-width: 1359px) {
+  .dk-mekan-detay-artgrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+/* ═══════════ 1024–1279 (spec §10) ═══════════ */
+@media (max-width: 1279px) {
+  .dk-mekan-detay-gal { height: 420px; }
+  .dk-mekan-detay .dk-mekan-detay-h1 { font-size: 68px; }
+  .dk-mekan-detay-id { flex-wrap: wrap; row-gap: 24px; }
+  .dk-mekan-detay-acts { width: 100%; padding-bottom: 0; flex-wrap: wrap; }
+  .dk-mekan-detay-grid { grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; }
+  .dk-mekan-detay-ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-mekan-detay-evgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dk-mekan-detay-evgrid:not(.is-open) > :nth-child(4) { display: flex; }        /* 2 kolonda 2×2 */
+  .dk-mekan-detay-more.is-n4 { display: none; }
+  .dk-mekan-detay-artgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .dk-mekan-detay-st { padding: 0 36px; }
+  .dk-mekan-detay-st.is-first { padding: 0 36px 0 0; }
+}
+/* ═══════════ 769–1023: tek kolon, kenar sütunu sekmelerden sonra (harita + bilgiler yan yana, CTA tam genişlik) ═══════════ */
+@media (max-width: 1023px) {
+  .dk-mekan-detay-gal { height: 360px; }
+  .dk-mekan-detay .dk-mekan-detay-h1 { font-size: 56px; }
+  .dk-mekan-detay-stats { height: auto; padding: 22px 0; flex-wrap: wrap; row-gap: 20px; }
+  .dk-mekan-detay-tonight { margin-left: 0; flex-basis: 100%; }
+  .dk-mekan-detay-tonight > svg { margin-left: auto; }
+  .dk-mekan-detay-grid { grid-template-columns: minmax(0, 1fr); gap: 72px; padding-top: 40px; }
+  .dk-mekan-detay-aside { order: -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+  .dk-mekan-detay-cta { grid-column: 1 / -1; }
+  .dk-mekan-detay-col { gap: 72px; }
+  .dk-mekan-detay-sec .dk-sh .dk-display { font-size: 40px !important; }
+  .dk-mekan-detay-artgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dk-mekan-detay-rvgrid { grid-template-columns: minmax(0, 1fr); }
+  .dk-mekan-detay-sumn { font-size: 72px; }
+  .dk-mekan-detay-lbnav.is-prev { left: 16px; }
+  .dk-mekan-detay-lbnav.is-next { right: 16px; }
+}

@@ -1,0 +1,115 @@
+/* dk-org-panel.css — WebOrgPanel masaüstü görünümü (orgPanel).
+   SAHİBİ: js/desktop/organizer/panel.js uygulayıcısı (specs/foundation.md §3). Spec: specs/org-admin.md WebOrgPanel
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-org-panel (kabuğun main.dk-ps-content'i) ve alt sınıfları .dk-org-panel-* altında;
+   çıplak eleman seçicisi ya da legacy sınıf adı YOK. Ölçüler artboard inline stillerinden birebir (design/WebOrgPanel.dc.html). */
+
+/* ---------- hero ---------- */
+.dk-org-panel .dk-org-panel-hero .dk-display { font-size: 52px; }
+.dk-org-panel-meta { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #A3A7AF; }
+.dk-org-panel-role { box-sizing: border-box; height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid rgba(255,79,163,0.45); background: rgba(255,79,163,0.08); color: #FF4FA3; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.dk-org-panel-role.is-staff { border-color: rgba(78,216,255,0.45); background: rgba(78,216,255,0.08); color: #4ED8FF; }
+.dk-org-panel-role svg { flex-shrink: 0; }
+
+/* ---------- KPI ---------- */
+.dk-org-panel-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.dk-org-panel-kpis .dk-kpi-vt .dk-skel { display: inline-block; vertical-align: top; }
+
+/* ---------- kart ızgarası + bölüm kartı ---------- */
+/* 1440'ta sağ kolon tam 440 (artboard); daha dar ekranda orantılı küçülür (1280 → ~375, en az 360), geniş ekranda 440'ta kalır */
+.dk-org-panel-row { display: grid; grid-template-columns: minmax(0, 1fr) clamp(360px, calc((100% - 24px) * 0.4075), 440px); gap: 24px; }
+.dk-org-panel-card { min-width: 0; border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; overflow: hidden; }
+.dk-org-panel-card.is-col { display: flex; flex-direction: column; }
+.dk-org-panel-head { box-sizing: border-box; height: 64px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #14171D; }
+.dk-org-panel-hl { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.dk-org-panel-num { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
+.dk-org-panel .dk-org-panel-h2 { margin: 0; font-family: var(--dk-font-sans); font-size: 17px; font-weight: 600; letter-spacing: normal; line-height: normal; color: #F2F1EE; }
+.dk-org-panel-more { display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 500; white-space: nowrap; }
+.dk-org-panel-more svg { flex-shrink: 0; }
+.dk-org-panel-skrow { box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #14171D; }
+.dk-org-panel-skrow .dk-skel { flex-shrink: 0; }
+.dk-org-panel-skcol { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+
+/* ---------- 01 · yaklaşan etkinlikler ---------- */
+.dk-org-panel .dk-org-panel-ev, .dk-org-panel .dk-org-panel-ev:hover { color: #F2F1EE; }
+.dk-org-panel-ev { box-sizing: border-box; height: 76px; padding: 0 20px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #14171D; text-decoration: none; }
+.dk-org-panel-ev:focus-visible { outline-offset: -2px; }
+.dk-org-panel-evthumb { width: 56px; height: 56px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: #14171D; display: block; }
+.dk-org-panel-evthumb.is-empty { display: flex; align-items: center; justify-content: center; }
+.dk-org-panel-evthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-org-panel-date { width: 52px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.dk-org-panel-dd { font-size: 22px; font-weight: 600; line-height: 1; }
+.dk-org-panel-mm { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-org-panel-info { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-org-panel-evt { font-size: 15.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-org-panel-evm { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; color: #A3A7AF; }
+.dk-org-panel-evm svg { flex-shrink: 0; }
+/* artboard: mekan · saat · sanatçı ayrı flex öğeleri (gap 6) → "·" iki yanında 6px */
+.dk-org-panel-sep { margin: 0 6px; }
+.dk-org-panel-ev .dk-st { flex-shrink: 0; }
+.dk-org-panel-chev { color: #8A8E97; display: flex; flex-shrink: 0; }
+.dk-org-panel-note { padding: 16px 20px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #8A8E97; }
+.dk-org-panel-note svg { flex-shrink: 0; }
+.dk-org-panel-evlist .dk-empty-plain { padding: 40px 20px; border-bottom: 1px solid #14171D; }
+
+/* ---------- 02 · mekan istekleri ---------- */
+.dk-org-panel-seg { margin: 16px 20px 8px; padding: 4px; border-radius: 8px; background: #0E1014; border: 1px solid #14171D; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.dk-org-panel .dk-org-panel-segb { height: 36px; margin: 0; border-radius: 6px; border: 0; background: transparent; color: #8A8E97; font-family: var(--dk-font-sans); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; white-space: nowrap; min-width: 0; }
+.dk-org-panel .dk-org-panel-segb.is-on { background: #1C2029; color: #F2F1EE; }
+.dk-org-panel-segn { font-family: var(--dk-font-mono); font-size: 10.5px; color: #8A8E97; }
+.dk-org-panel-segb.is-on .dk-org-panel-segn { color: #FF4FA3; }
+.dk-org-panel-req { padding: 14px 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #14171D; }
+.dk-org-panel-rav { width: 40px; height: 40px; flex-shrink: 0; border-radius: 8px; color: #06070A; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+.dk-org-panel-rcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-org-panel-rt { font-size: 14.5px; font-weight: 600; }
+.dk-org-panel-rm { font-size: 12.5px; color: #A3A7AF; }
+.dk-org-panel-rb { margin-top: 4px; }
+.dk-org-panel .dk-org-panel-rmsg { box-sizing: content-box; width: 40px; height: 40px; flex-shrink: 0; padding: 0; margin: 0; border-radius: 6px; border: 1px solid #1F232B; background: transparent; color: #F2F1EE; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.dk-org-panel-reqempty { padding: 32px 20px; text-align: center; font-size: 14px; color: #8A8E97; }
+.dk-org-panel-reqfoot { margin-top: auto; padding: 16px 20px; font-size: 12.5px; line-height: 1.5; color: #8A8E97; }
+
+/* ---------- 03 · ekip aktivitesi ---------- */
+.dk-org-panel-act { padding: 16px 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #14171D; }
+.dk-org-panel-act.is-perm { background: rgba(255,79,163,0.04); }
+.dk-org-panel-atile { width: 36px; height: 36px; flex-shrink: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.dk-org-panel-acol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-org-panel-at { font-size: 14.5px; font-weight: 600; }
+.dk-org-panel-ab { font-size: 13px; color: #A3A7AF; }
+.dk-org-panel-atime { font-family: var(--dk-font-mono); font-size: 10.5px; letter-spacing: 0.08em; color: #8A8E97; white-space: nowrap; flex-shrink: 0; }
+.dk-org-panel .dk-org-panel-grant { padding: 0 14px; font-size: 13.5px; gap: 6px; flex-shrink: 0; }
+.dk-org-panel-okchip { box-sizing: border-box; height: 28px; padding: 0 10px; border-radius: 14px; background: rgba(124,224,176,0.1); border: 1px solid rgba(124,224,176,0.4); color: #7CE0B0; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.dk-org-panel-actempty { padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; font-size: 13.5px; line-height: 1.5; color: #8A8E97; }
+.dk-org-panel-actet { font-size: 15px; font-weight: 600; color: #F2F1EE; }
+
+/* ---------- 04 · hızlı erişim ---------- */
+.dk-org-panel-quick { min-width: 0; border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.dk-org-panel-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dk-org-panel .dk-org-panel-tile, .dk-org-panel .dk-org-panel-tile:hover { color: #F2F1EE; }
+.dk-org-panel-tile { box-sizing: border-box; height: 112px; padding: 16px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; min-width: 0; }
+.dk-org-panel-ttile { width: 36px; height: 36px; flex-shrink: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.dk-org-panel-tcol { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dk-org-panel-tl { font-size: 15px; font-weight: 600; }
+.dk-org-panel-ts { font-size: 12.5px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- duyarlı (spec §10) ---------- */
+/* KPI 2×2 ≤1419: 4 kolonda "BEKLEYEN MEKAN İSTEĞİ" (164px mono) kart < 248px'te (≤1375), "Bugünden itibaren, iptal edilmemiş" (217px)
+   kart < 259px'te (≤1419) iki satıra kırılıyor, kartlar 147 → 164 uzuyordu (1280'de ikisi birden). 4 kolon yalnız çizildiği gibi sığdığı
+   yerde (≥1420). Spec 2×2'yi 1024–1279'a koyuyor → sapma (rapor). */
+@media (max-width: 1419px) {
+  .dk-org-panel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* 1024–1279: sağ kolon 360 (≥1180), altında tek kolon */
+@media (max-width: 1279px) {
+  .dk-org-panel-row { grid-template-columns: minmax(0, 1fr) 360px; }
+  /* 360'lık kolonda kutucuk 153 → iç 119 < "E-posta ile personel" 120.2 → yatay dolgu 14 (iç 123) */
+  .dk-org-panel-tile { padding: 16px 14px; }
+  /* hero tek satır; sığmazsa düğmeler başlığın altına sarar (H1 ezilmez) */
+  .dk-org-panel .dk-org-panel-hero { flex-wrap: wrap; row-gap: 20px; }
+}
+@media (max-width: 1179px) {
+  .dk-org-panel-row { grid-template-columns: minmax(0, 1fr); }
+}
+/* 769–1023: hamburger (kabuk) · hero yığılır, H1 40 */
+@media (max-width: 1023px) {
+  .dk-org-panel .dk-org-panel-hero { flex-direction: column; align-items: flex-start; gap: 18px; }
+  .dk-org-panel .dk-org-panel-hero .dk-display { font-size: 40px; }
+}

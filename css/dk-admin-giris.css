@@ -1,0 +1,7 @@
+/* dk-admin-giris.css — WebAdminGiris masaüstü görünümü (admingiris, #/yonetici).
+   SAHİBİ: js/desktop/auth/admin-giris.js uygulayıcısı (specs/foundation.md §3). Spec: specs/auth.md WebAdminGiris
+   KAPSAM: tüm seçiciler .dk-admin-giris (AuthColumn) ve .dk-admin-giris-* altında. Kabuk (AuthSplit admin varyantı: mor tema,
+   gri tonlu görsel + ızgara, odak #A78BFA/#100F18, basma parlaklığı 1.12, rozet tarama efekti, not kutusu) = css/dk-auth-shell.css. */
+
+.dk-admin-giris .dk-admin-giris-form { gap: 16px; }
+.dk-admin-giris-status { display: flex; flex-direction: column; }

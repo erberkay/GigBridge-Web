@@ -1,0 +1,102 @@
+/* dk-kayit.css — WebKayit masaüstü görünümü (kayit, #/register). Kolon kökü: .dk-kayit (AuthSplit kolonu).
+   SAHİBİ: js/desktop/auth/kayit.js uygulayıcısı (specs/foundation.md §3). Spec: specs/auth.md WebKayit
+   KAPSAM: tüm seçiciler .dk-kayit* sınıfları altında; çıplak eleman seçicisi / legacy sınıf adı YOK.
+   Rol tonları öğe başına CSS değişkeni: --rc (renk) + --rc-rgb ("r,g,b") → rgba(var(--rc-rgb), a). */
+
+/* ---------- üst satır (sağ) ---------- */
+.dk-kayit-topr { font-size: 14px; color: #8A8E97; white-space: nowrap; }
+.dk-kayit-topr .dk-kayit-topr-a { font-weight: 600; }
+
+/* ---------- adım başlığı ---------- */
+.dk-kayit-steps { display: flex; align-items: center; gap: 14px; }
+.dk-kayit-back {
+  width: 40px; height: 40px; box-sizing: border-box; padding: 0; flex-shrink: 0;
+  border-radius: 8px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF;
+  display: flex; align-items: center; justify-content: center;
+}
+.dk-kayit-back[hidden] { display: none; }
+.dk-kayit-stepl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-kayit-bars { margin-left: auto; display: flex; gap: 6px; }
+.dk-kayit-bar { width: 28px; height: 3px; border-radius: 2px; background: #1F232B; display: block; }
+.dk-kayit-bar.is-on { background: #FF4FA3; }
+.dk-kayit-body { display: flex; flex-direction: column; }
+
+/* ---------- 1. adım: hesap tipi ---------- */
+.dk-kayit-s1 { display: flex; flex-direction: column; gap: 22px; }
+.dk-kayit-head { display: flex; flex-direction: column; gap: 10px; }
+.dk-kayit-lead { margin: 0; font-size: 15.5px; line-height: 1.5; color: #A3A7AF; }
+.dk-kayit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+/* RoleOption tile (artboard .gb-role: kalkış 220ms; kenar vurgusu yalnız seçili olmayan kartta — spec §4) */
+.dk-kayit-tile {
+  position: relative; min-height: 164px; box-sizing: border-box; padding: 16px; margin: 0;
+  border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px; text-align: left;
+  transition: transform 220ms cubic-bezier(.2,.7,.2,1), border-color 200ms ease, background-color 200ms ease;
+}
+.dk-kayit-tile:hover { transform: translateY(-3px); }
+.dk-kayit-tile[aria-checked="false"]:hover { border-color: #2C303A; }
+.dk-kayit-tile[aria-checked="true"] { border-color: rgba(var(--rc-rgb), 0.6); background: rgba(var(--rc-rgb), 0.07); }
+.dk-kayit-tico {
+  width: 40px; height: 40px; box-sizing: border-box; border-radius: 10px; flex-shrink: 0;
+  background: rgba(var(--rc-rgb), 0.12); color: var(--rc); display: flex; align-items: center; justify-content: center;
+}
+.dk-kayit-ring {
+  position: absolute; top: 16px; right: 16px; width: 18px; height: 18px; box-sizing: border-box;
+  border-radius: 50%; border: 2px solid #2C303A; display: flex; align-items: center; justify-content: center;
+}
+.dk-kayit-dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; display: block; }
+.dk-kayit-tile[aria-checked="true"] .dk-kayit-ring { border-color: var(--rc); }
+.dk-kayit-tile[aria-checked="true"] .dk-kayit-dot { background: var(--rc); }
+.dk-kayit-tl { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.dk-kayit-td { font-size: 13px; line-height: 1.45; color: #A3A7AF; }
+/* "YÖNETİCİ ONAYI GEREKİR" hapı — artboard'da 9.5px/.1em metin 22px kutuya sığmayıp 2 satıra taşıyor (spec §4 "tasarım hatası,
+   taşmayı yayınlama") → tek satır: 9px / .05em, iç boşluk 0 6, aralık 5 (kart iç genişliği 160 px'e sığar) */
+.dk-kayit-pill {
+  margin-top: auto; height: 22px; max-width: 100%; box-sizing: border-box; padding: 0 6px;
+  border-radius: 4px; border: 1px solid rgba(var(--rc-rgb), 0.4); color: var(--rc);
+  display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden;
+  font-family: var(--dk-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+}
+.dk-kayit-pill > svg { flex-shrink: 0; }
+.dk-kayit-info {
+  box-sizing: border-box; padding: 12px 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0E1014;
+  display: flex; gap: 12px; font-size: 13.5px; line-height: 1.5; color: #A3A7AF;
+}
+.dk-kayit-info > svg { flex-shrink: 0; margin-top: 1px; }
+
+/* ---------- 2. adım: bilgiler ---------- */
+.dk-kayit-s2 { display: flex; flex-direction: column; gap: 20px; }
+.dk-kayit-head2 { display: flex; flex-direction: column; gap: 12px; }
+.dk-kayit-rolerow { display: flex; align-items: center; gap: 10px; }
+.dk-kayit-rpill {
+  height: 30px; box-sizing: border-box; padding: 0 11px; border-radius: 15px;
+  border: 1px solid rgba(var(--rc-rgb), 0.4); background: rgba(var(--rc-rgb), 0.1); color: var(--rc);
+  display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600;
+}
+.dk-kayit-change { height: 30px; padding: 0 4px; border: 0; background: none; color: #8A8E97; font-size: 13px; text-decoration: underline; }
+.dk-kayit-form { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.dk-kayit-fld { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dk-kayit-pwgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dk-kayit-hint { margin-top: -4px; font-size: 12.5px; color: #8A8E97; }
+/* IconInput (şehir): pin solda, chevron sağda; Chrome'un datalist oku gizli (çift ok olmasın), tıklanabilir kalır */
+.dk-kayit-city { position: relative; }
+.dk-kayit-form .dk-inp.dk-kayit-cityinp { padding: 0 40px; }
+.dk-kayit-cityinp::-webkit-calendar-picker-indicator { opacity: 0; }
+.dk-kayit-city-pin { position: absolute; left: 14px; top: 16px; pointer-events: none; }
+.dk-kayit-city-chev { position: absolute; right: 14px; top: 16px; pointer-events: none; }
+.dk-kayit-note {
+  box-sizing: border-box; padding: 11px 14px; border-radius: 8px;
+  border: 1px solid rgba(var(--rc-rgb), 0.4); background: rgba(var(--rc-rgb), 0.1);
+  display: flex; gap: 10px; font-size: 13px; line-height: 1.45; color: #C9CACD;
+}
+.dk-kayit-note > svg { flex-shrink: 0; margin-top: 1px; }
+/* CheckboxConsent — yerel onay kutusu artboard'daki gibi açık (color-scheme light) + pembe accent */
+.dk-kayit-consent { display: flex; align-items: flex-start; gap: 12px; padding: 4px 0; font-size: 13.5px; line-height: 1.5; color: #A3A7AF; cursor: pointer; }
+.dk-kayit-chk { width: 18px; height: 18px; flex-shrink: 0; margin: 2px 0 0; accent-color: #FF4FA3; color-scheme: light; cursor: pointer; }
+.dk-kayit-chk[aria-invalid="true"] { outline: 2px solid rgba(255,90,110,0.55); outline-offset: 2px; }
+.dk-kayit-consent .dk-kayit-consent-a, .dk-kayit-consent .dk-kayit-consent-a:hover { color: #F2F1EE; text-decoration: underline; }
+.dk-kayit-status { display: flex; flex-direction: column; }
+
+/* SHARED-CANDIDATE: AuthSplit orta bölgesinin dikey iç boşluğu. Kabuk 32px veriyor (artboard'da yok) → uzun durumlarda (hata/onay
+   notu) kolon 6px aşağı kayıyor ve sayfa 12px kayıyor. Artboard kanıtı: WebKayit 1040'ta kolon üst satırın 20px altında başlıyor. */
+.dk-auth-center:has(> .dk-kayit) { padding: 20px 0; }

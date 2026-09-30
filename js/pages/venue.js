@@ -228,7 +228,7 @@ function vxEmpty(ic, title, sub) {
 }
 
 // ══════════════ ANA SAYFA (app VenueHomeScreen) ══════════════
-async function renderHome(root, hdr) {
+export async function renderHome(root, hdr) {
   try {
     const uid = session.user.uid;
     const p = session.profile || {};
@@ -438,7 +438,7 @@ function suggCard(a) {
 }
 
 // ══════════════ PROFİL (mevcut akış aynen + sanatçı takibi/değerlendirme girişleri) ══════════════
-async function renderProfile(root) {
+export async function renderProfile(root) {
   clear(root);
   const p = session.profile || {};
   const uid = session.user.uid;
@@ -601,7 +601,7 @@ function reportModal() {
 }
 
 // ══════════════ ETKİNLİK OLUŞTUR (app CreateEventScreen alan sırası/tasarımı) ══════════════
-async function renderCreate(root) {
+export async function renderCreate(root) {
   clear(root);
   root.append(h("div", { class: "loading" }, spinner()));
   let artists = [], groups = [], myEvents = [];
@@ -773,7 +773,7 @@ function artistPickerModal({ artists, groups, onSelect }) {
 }
 
 // ══════════════ ANALİTİK (app VenueAnalyticsScreen) ══════════════
-async function renderAnalytics(root) {
+export async function renderAnalytics(root) {
   clear(root);
   root.append(h("div", { class: "loading" }, spinner()));
   try {
@@ -950,7 +950,7 @@ function statCard(ic, val, label) {
 }
 
 // ══════════════ SANATÇI BUL (app FindArtistScreen) ══════════════
-async function renderArtists(root) {
+export async function renderArtists(root) {
   clear(root);
   root.append(h("div", { class: "loading" }, spinner()));
   const uid = session.user.uid;
@@ -1167,7 +1167,7 @@ function inviteModal(x, opts = {}) {
 }
 
 // ══════════════ TAKİP ETTİĞİM SANATÇILAR (app VenueFollowingScreen — watchedArtists) ══════════════
-async function renderFollowing(root, subEl) {
+export async function renderFollowing(root, subEl) {
   clear(root);
   root.append(h("div", { class: "loading" }, spinner()));
   const uid = session.user.uid;
@@ -1209,7 +1209,7 @@ async function renderFollowing(root, subEl) {
 }
 
 // ══════════════ SAHNE PERFORMANSI (app ArtistPerformanceScreen) ══════════════
-async function renderPerformance(root, artistId, titleEl) {
+export async function renderPerformance(root, artistId, titleEl) {
   clear(root);
   root.append(h("div", { class: "loading" }, spinner()));
   if (!artistId) { clear(root); root.append(empty("alert-circle-outline", "Sanatçı bulunamadı")); return; }
@@ -1250,7 +1250,7 @@ async function renderPerformance(root, artistId, titleEl) {
 }
 
 // ══════════════ SANATÇI DEĞERLENDİR (app ArtistReviewScreen — reviews {uid}_{artistId}) ══════════════
-async function renderReview(root) {
+export async function renderReview(root) {
   clear(root);
   root.append(h("div", { class: "loading" }, spinner()));
   const uid = session.user.uid;

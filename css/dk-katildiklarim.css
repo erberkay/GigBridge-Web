@@ -1,0 +1,123 @@
+/* dk-katildiklarim.css — WebKatildiklarim masaüstü görünümü (katildiklarim).
+   SAHİBİ: js/desktop/account/katildiklarim.js uygulayıcısı (specs/foundation.md §3). Spec: specs/hesap.md WebKatildiklarim
+   KAPSAM: tüm seçiciler görünümün kök sınıfı .dk-katildiklarim (ve alt sınıfları .dk-katildiklarim-*) altında olmalı; çıplak eleman
+   seçicisi ya da legacy sınıf adı YOK. Hareket/tipografi/renk için önce dk-base.css sınıflarını kullan.
+   Ölçüler: design/WebKatildiklarim.dc.html (1440 artboard) satır içi stillerinden birebir. Portal içindeki RateModal diyaloğu
+   .dk-katildiklarim-rm sınıfını taşır (dkModal cls). */
+
+.dk-katildiklarim { min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+.dk-katildiklarim .dk-ph { margin-bottom: 0; }
+
+/* ── kontroller: SegmentedTabs + mini ilerleme ── */
+.dk-katildiklarim-ctl { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.dk-katildiklarim-ctl[hidden] { display: none; }
+.dk-katildiklarim-prog { display: flex; align-items: center; gap: 10px; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; white-space: nowrap; }
+.dk-katildiklarim-progtrack { width: 120px; height: 4px; border-radius: 2px; background: #1C2029; overflow: hidden; display: block; flex-shrink: 0; }
+.dk-katildiklarim-progfill { width: 0; height: 100%; background: #FF8A2A; display: block; transition: width 520ms cubic-bezier(.2,.7,.2,1); }
+
+/* ── zaman çizelgesi (ay rayı) ── */
+.dk-katildiklarim-tl { position: relative; display: flex; flex-direction: column; gap: 28px; }
+.dk-katildiklarim-rail { position: absolute; left: 35px; top: 8px; bottom: 8px; width: 1px; background: #1F232B; display: block; }
+.dk-katildiklarim-month { position: relative; display: flex; flex-direction: column; gap: 14px; }
+.dk-katildiklarim-mhead { height: 32px; display: flex; align-items: center; gap: 14px; }
+.dk-katildiklarim-nodecol { width: 72px; flex-shrink: 0; display: flex; justify-content: center; }
+.dk-katildiklarim-node { width: 11px; height: 11px; box-sizing: border-box; border-radius: 50%; border: 2px solid #4ED8FF; background: #06070A; display: block; }
+.dk-katildiklarim-mtitle { margin: 0; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #F2F1EE; line-height: normal; }
+.dk-katildiklarim-mcount { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 600; color: #8A8E97; }
+
+/* ── AttendedRow ── */
+.dk-katildiklarim-row { display: flex; align-items: stretch; gap: 14px; }
+.dk-katildiklarim-row.dk-out { pointer-events: none; }
+.dk-katildiklarim-day { width: 72px; flex-shrink: 0; box-sizing: border-box; padding-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; background: #06070A; }
+.dk-katildiklarim-dd { font-size: 26px; line-height: 1; font-weight: 600; letter-spacing: -0.02em; }
+.dk-katildiklarim-dow { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-katildiklarim-card {
+  flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 14px; display: flex; align-items: center; gap: 18px;
+  border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; transition: border-color 200ms ease, background-color 200ms ease;
+}
+.dk-katildiklarim-card:hover { border-color: #2C303A; background-color: #101217; }
+.dk-katildiklarim-card.is-open, .dk-katildiklarim-card.is-open:hover { border-color: rgba(255,138,42,0.5); }
+.dk-katildiklarim-thumb { width: 132px; height: 84px; flex-shrink: 0; border-radius: 6px; overflow: hidden; display: block; }
+.dk-katildiklarim-thumb .dk-ec-img { width: 100%; height: 100%; object-fit: cover; display: flex; }
+.dk-katildiklarim-info { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.dk .dk-katildiklarim-title, .dk .dk-katildiklarim-title:hover { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: #F2F1EE; overflow-wrap: anywhere; }
+.dk-katildiklarim-sub { font-size: 13.5px; color: #A3A7AF; }
+.dk-katildiklarim-meta { display: flex; align-items: center; flex-wrap: wrap; column-gap: 14px; row-gap: 2px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; color: #8A8E97; }
+.dk-katildiklarim-rate {
+  flex-shrink: 0; height: 40px; box-sizing: border-box; padding: 0 14px; margin: 0; display: flex; align-items: center; gap: 8px;
+  border-radius: 6px; border: 1px solid rgba(255,138,42,0.5); background: rgba(255,138,42,0.10); color: #FF8A2A;
+  font-family: var(--dk-font-sans); font-size: 13.5px; font-weight: 600; white-space: nowrap;
+}
+.dk-katildiklarim-rated { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.dk-katildiklarim-ministars { display: flex; gap: 2px; }
+.dk .dk-katildiklarim-golink, .dk .dk-katildiklarim-golink:hover { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap; }
+
+/* Puanlanmamış sekmesi boş */
+.dk-katildiklarim-alldone { margin-left: 86px; height: 160px; box-sizing: content-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px dashed #2C303A; border-radius: 12px; text-align: center; padding: 0 16px; }
+.dk-katildiklarim-alldone-t { font-size: 16px; font-weight: 600; }
+.dk-katildiklarim-alldone-s { font-size: 13.5px; color: #8A8E97; }
+
+/* yükleniyor iskeleti */
+.dk-katildiklarim-skel { display: flex; flex-direction: column; gap: 14px; padding-top: 46px; }
+.dk-katildiklarim-skelrow { display: flex; gap: 14px; }
+.dk-katildiklarim-skelday { width: 72px; flex-shrink: 0; padding-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.dk-katildiklarim-skelcard { flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 14px; display: flex; align-items: center; gap: 18px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; }
+.dk-katildiklarim-skelcol { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+.dk-katildiklarim-skelthumb { flex-shrink: 0; }
+
+/* ── RateModal (portal; dkModal cls) ── */
+.dk-mdl.dk-katildiklarim-rm { padding: 0; gap: 0; overflow: hidden; }
+.dk-katildiklarim-rmmedia { position: relative; height: 112px; overflow: hidden; flex-shrink: 0; }
+.dk-katildiklarim-rmmedia > .dk-ec-img { width: 100%; height: 100%; object-fit: cover; display: flex; }
+.dk-katildiklarim-rmshade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,16,20,0.2), rgba(14,16,20,0.96)); display: block; }
+.dk-katildiklarim-rm .dk-mdl-x { position: absolute; top: 12px; right: 12px; border-color: rgba(242,241,238,0.18); background: rgba(6,7,10,0.7); color: #F2F1EE; }
+.dk-katildiklarim-rmcap { position: absolute; left: 24px; right: 64px; bottom: 14px; display: flex; flex-direction: column; gap: 3px; }
+.dk-katildiklarim-rmwhen { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #FF8A2A; }
+.dk-katildiklarim-rmtitle { font-size: 20px; font-weight: 600; letter-spacing: -0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-katildiklarim-rmin { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.dk-katildiklarim-rm .dk-mdl-body { gap: 18px; }
+.dk-katildiklarim-targets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dk-katildiklarim-target {
+  height: 56px; box-sizing: border-box; padding: 0 14px; margin: 0; min-width: 0; border-radius: 8px; border: 1px solid #1F232B; background: transparent; color: #F2F1EE;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; text-align: left; font-family: var(--dk-font-sans);
+}
+.dk-katildiklarim-target:disabled { opacity: .45; cursor: not-allowed; }
+.dk-katildiklarim-target.is-venue.is-on { border-color: rgba(255,138,42,0.6); background: rgba(255,138,42,0.08); }
+.dk-katildiklarim-target.is-artist.is-on { border-color: rgba(255,79,163,0.6); background: rgba(255,79,163,0.08); }
+.dk-katildiklarim-tkind { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; }
+.is-artist > .dk-katildiklarim-tkind { color: #FF4FA3; }
+.is-venue > .dk-katildiklarim-tkind { color: #FF8A2A; }
+.dk-katildiklarim-tname { max-width: 100%; font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-katildiklarim-rmnote { margin: -8px 0 0; font-size: 12.5px; line-height: 1.5; color: #8A8E97; }
+.dk-katildiklarim-rmnote[hidden] { display: none; }
+.dk-katildiklarim-rmfield { display: flex; flex-direction: column; gap: 8px; }
+.dk-katildiklarim-rmstars { gap: 10px; }
+.dk-katildiklarim-rmlbl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; line-height: normal; }
+.dk-katildiklarim-starrow { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.dk-katildiklarim-stars { display: flex; gap: 4px; }
+.dk-katildiklarim-starbtn { width: 44px; height: 44px; padding: 0; margin: 0; border: 0; background: none; display: flex; align-items: center; justify-content: center; }
+.dk-katildiklarim-starlbl { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-katildiklarim-starlbl.is-on { color: #FF8A2A; }
+.dk-katildiklarim-rm .dk-ta { font-size: 14.5px; }
+.dk-katildiklarim-rm .dk-ta:hover:not(:focus) { border-color: #1F232B; }
+.dk-katildiklarim-rmcount { align-self: flex-end; font-family: var(--dk-font-mono); font-size: 10.5px; color: #8A8E97; }
+.dk-katildiklarim-rm .dk-btn-primary[aria-disabled="true"] { opacity: .45; cursor: not-allowed; filter: none; }
+
+/* ── duyarlı ── */
+/* 1024–1279: küçük görsel + sıkı kart */
+@media (max-width: 1279px) {
+  .dk-katildiklarim-thumb { width: 112px; height: 72px; }
+  .dk-katildiklarim-card { padding: 12px; gap: 16px; }
+}
+/* 769–1023: 96×64 görsel, sağ blok bilgi altına (kart 2 satır), gün kolonu 56 (ray left 27) */
+@media (max-width: 1023px) {
+  .dk-katildiklarim-rail { left: 27px; }
+  .dk-katildiklarim-nodecol, .dk-katildiklarim-day, .dk-katildiklarim-skelday { width: 56px; }
+  .dk-katildiklarim-alldone { margin-left: 70px; }
+  .dk-katildiklarim-thumb { width: 96px; height: 64px; }
+  .dk-katildiklarim-card { flex-wrap: wrap; align-items: flex-start; row-gap: 12px; }
+  .dk-katildiklarim-info { flex-basis: calc(100% - 96px - 16px); }
+  .dk-katildiklarim-rate, .dk-katildiklarim-rated { margin-left: calc(96px + 16px); }
+  .dk-katildiklarim-rated { flex-direction: row; align-items: center; gap: 12px; }
+  .dk-katildiklarim-ctl { flex-wrap: wrap; }
+}

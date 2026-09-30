@@ -1,0 +1,65 @@
+/* dk-auth-shell.css — AuthSplit (görsel yan panel + form kolonu) + auth atomları.
+   JS: js/desktop/shared/auth-shell.js. Kaynak: WebAdminGiris / WebKayit / WebOnayBekleniyor / WebDogrula / WebRolSec (aside 720+1, main pad 36 64 32).
+   Spec: auth §0.2/0.3 + §R (duyarlı). SAHİBİ: foundation adım 2. */
+
+.dk[data-area="auth"] { --dk-rise-dur: 520ms; --dk-rise-y: 12px; --dk-focus-border: #4ED8FF; --dk-focus-fill: #10131A; }
+.dk[data-area="auth"][data-role="admin"] { --dk-focus-border: #A78BFA; --dk-focus-fill: #100F18; --dk-press-bright: 1.12; }
+.dk-auth { display: flex; min-height: 100vh; background: #06070A; }
+
+/* ---------- AuthAside ---------- */
+.dk-auth-aside {
+  position: sticky; top: 0; align-self: flex-start; flex-shrink: 0; height: 100vh; min-height: 560px;
+  /* 1440: 720 + 1px kenar (artboard) · 1024–1279: main ≥ 560 kalacak şekilde daralır */
+  width: min(50%, calc(100% - 561px)); overflow: hidden; border-right: 1px solid #14171D; background: #0A0B0F;
+}
+.dk-auth-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-auth-aside-admin .dk-auth-img { filter: grayscale(0.6); }
+.dk-auth-grad { position: absolute; inset: 0; display: block; background: linear-gradient(180deg, rgba(6,7,10,0.72) 0%, rgba(6,7,10,0.15) 26%, rgba(6,7,10,0.5) 55%, rgba(6,7,10,0.97) 86%); }
+.dk-auth-aside-admin .dk-auth-grad { background: linear-gradient(160deg, rgba(167,139,250,0.28) 0%, rgba(6,7,10,0.35) 40%, rgba(6,7,10,0.97) 85%); }
+.dk-auth-gridov { position: absolute; inset: 0; display: block; background-image: linear-gradient(rgba(167,139,250,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(167,139,250,0.07) 1px, transparent 1px); background-size: 48px 48px; }
+.dk-auth-logo { position: absolute; top: 40px; left: var(--dk-auth-inset, 56px); }
+.dk-auth-copy { position: absolute; left: var(--dk-auth-inset, 56px); right: var(--dk-auth-inset, 56px); bottom: var(--dk-auth-inset, 56px); display: flex; flex-direction: column; gap: 28px; }
+.dk-auth-eb { display: flex; align-items: center; gap: 10px; font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; }
+.dk-auth-ebline { width: 24px; height: 2px; display: block; flex-shrink: 0; }
+.dk-auth-stmt { margin: 0; font-family: var(--dk-font-serif); font-size: clamp(44px, 4.4445vw, 64px); font-weight: 400; line-height: 1.02; letter-spacing: -0.01em; color: #F2F1EE; }
+.dk-auth-stmt em { font-style: italic; }
+.dk-auth-feats { margin: 0; padding: 22px 0 0; border-top: 1px solid rgba(242,241,238,0.14); list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.dk-auth-feats li { display: flex; align-items: center; gap: 14px; font-size: 15px; color: #C9CACD; }
+.dk-auth-ftile { width: 34px; height: 34px; flex-shrink: 0; box-sizing: border-box; border-radius: 8px; border: 1px solid rgba(242,241,238,0.16); background: rgba(6,7,10,0.5); display: flex; align-items: center; justify-content: center; }
+
+/* ---------- Main ---------- */
+.dk-auth-main { flex-grow: 1; min-width: 0; min-height: 100vh; box-sizing: border-box; padding: 36px 64px 32px; display: flex; flex-direction: column; }
+.dk-auth-brand { display: none; height: 40px; margin-bottom: 16px; align-items: center; }
+.dk-auth-top { height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.dk-auth-center { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 32px 0; }
+.dk-auth-col { display: flex; flex-direction: column; }
+.dk-auth-legal { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: #8A8E97; }
+
+/* ---------- atomlar ---------- */
+.dk-auth-toplink { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; padding: 0; border: 0; background: none; cursor: pointer; }
+.dk-auth-tag { height: 28px; box-sizing: border-box; padding: 0 10px; border-radius: 4px; border: 1px solid; display: flex; align-items: center; gap: 7px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; white-space: nowrap; }
+.dk-auth-head { display: flex; flex-direction: column; }
+.dk-auth-head .dk-display em { color: var(--dk-accent, #FF4FA3); }
+.dk-auth[data-role="admin"] .dk-auth-head .dk-display em { color: #A78BFA; }
+.dk-auth-heb { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-auth-lead { margin: 0; font-size: 15.5px; line-height: 1.5; color: #A3A7AF; }
+.dk-auth-ibadge { position: relative; box-sizing: border-box; border: 1px solid; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+@keyframes dkScan { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
+.dk-auth-scan { position: absolute; left: 0; right: 0; top: 0; height: 100%; display: block; background: linear-gradient(180deg, transparent 40%, rgba(167,139,250,0.25) 50%, transparent 60%); animation: dkScan 2.6s ease-in-out infinite alternate; }
+.dk-auth-note { box-sizing: border-box; padding: 12px 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; display: flex; gap: 10px; font-size: 13px; line-height: 1.5; color: #8A8E97; }
+.dk-auth-note svg { flex-shrink: 0; margin-top: 2px; }
+.dk .dk-auth-note a { color: #F2F1EE; text-decoration: underline; }
+.dk-auth-google { font-weight: 500; }
+.dk-auth form { margin: 0; display: flex; flex-direction: column; }
+
+/* ---------- duyarlı (§R) ---------- */
+@media (max-width: 1279px) {
+  .dk-auth { --dk-auth-inset: 40px; }
+  .dk-auth-main { padding: 36px 48px 32px; }
+}
+@media (max-width: 1023px) {
+  .dk-auth-aside { display: none; }
+  .dk-auth-brand { display: flex; }
+  .dk-auth-main { padding: 28px 32px 32px; }
+}
+@media (prefers-reduced-motion: reduce) { .dk-auth-scan { animation: none; } }

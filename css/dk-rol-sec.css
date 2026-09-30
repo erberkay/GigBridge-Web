@@ -1,0 +1,72 @@
+/* dk-rol-sec.css — WebRolSec masaüstü görünümü (rolsec, #/setup). Kolon kökü: .dk-rol-sec (AuthSplit kolonu).
+   SAHİBİ: js/desktop/auth/rol-sec.js uygulayıcısı (specs/foundation.md §3). Spec: specs/auth.md WebRolSec
+   KAPSAM: tüm seçiciler .dk-rol-sec* sınıfları altında; çıplak eleman seçicisi / legacy sınıf adı YOK.
+   Rol tonları öğe başına CSS değişkeni: --rc (renk) + --rc-rgb ("r,g,b"). */
+
+/* ---------- üst satır: AccountChip ---------- */
+/* Dar genişlikte (1024–1279) önce e-posta kısalır (ellipsis); "Çıkış / farklı hesapla gir" tek satırda ve tam kalır */
+.dk-auth-top:has(> .dk-rol-sec-chip) > .dk-auth-toplink { white-space: nowrap; flex-shrink: 0; }
+.dk-rol-sec-chip {
+  flex: 0 1 auto; height: 36px; min-width: 0; max-width: 360px; box-sizing: border-box; padding: 0 12px 0 4px;
+  border-radius: 18px; border: 1px solid #1F232B; background: #0E1014;
+  display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: #C9CACD;
+}
+.dk-rol-sec-av {
+  width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: linear-gradient(135deg, #4ED8FF, #0369A1);
+  color: #06070A; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+}
+.dk-rol-sec-email { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-rol-sec-chip > svg { flex-shrink: 0; }
+
+/* ---------- rol satırları (RoleOption row; artboard .gb-role: translateX(3px), kenar vurgusu yalnız seçili olmayanda) ---------- */
+.dk-rol-sec-list { display: flex; flex-direction: column; gap: 8px; }
+.dk-rol-sec-row {
+  position: relative; height: 72px; box-sizing: border-box; padding: 0 16px 0 14px; margin: 0;
+  border-radius: 12px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE;
+  display: flex; align-items: center; gap: 14px; text-align: left; overflow: hidden;
+  transition: transform 220ms cubic-bezier(.2,.7,.2,1), border-color 200ms ease, background-color 200ms ease;
+}
+.dk-rol-sec-row:hover { transform: translateX(3px); }
+.dk-rol-sec-row[aria-checked="false"]:hover { border-color: #2C303A; }
+.dk-rol-sec-row[aria-checked="true"] { border-color: rgba(var(--rc-rgb), 0.6); background: rgba(var(--rc-rgb), 0.07); }
+.dk-rol-sec-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; display: block; }
+.dk-rol-sec-row[aria-checked="true"] .dk-rol-sec-bar { background: var(--rc); }
+.dk-rol-sec-ico {
+  width: 44px; height: 44px; flex-shrink: 0; box-sizing: border-box; border-radius: 10px;
+  background: rgba(var(--rc-rgb), 0.12); color: var(--rc); display: flex; align-items: center; justify-content: center;
+}
+.dk-rol-sec-txt { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-rol-sec-top { display: flex; align-items: center; gap: 8px; }
+.dk-rol-sec-l { font-size: 16px; font-weight: 600; }
+.dk-rol-sec-tag {
+  height: 18px; box-sizing: border-box; padding: 0 6px; border-radius: 3px; border: 1px solid rgba(var(--rc-rgb), 0.4); color: var(--rc);
+  display: flex; align-items: center; white-space: nowrap;
+  font-family: var(--dk-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+}
+.dk-rol-sec-d { font-size: 13px; color: #A3A7AF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dk-rol-sec-ring {
+  width: 20px; height: 20px; flex-shrink: 0; box-sizing: border-box; border-radius: 50%; border: 2px solid #2C303A;
+  display: flex; align-items: center; justify-content: center;
+}
+.dk-rol-sec-dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; display: block; }
+.dk-rol-sec-row[aria-checked="true"] .dk-rol-sec-ring { border-color: var(--rc); }
+.dk-rol-sec-row[aria-checked="true"] .dk-rol-sec-dot { background: var(--rc); }
+
+/* ---------- form ---------- */
+.dk-rol-sec-form { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.dk-rol-sec-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 12px; }
+.dk-rol-sec-grid.is-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dk-rol-sec-fld { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+/* ŞEHİR artboard'da düz input (ikon yok): datalist önerileri yazarken çıkar, Chrome'un ▼ göstergesi gizli */
+.dk-rol-sec-fld .dk-inp[list]::-webkit-calendar-picker-indicator { opacity: 0; }
+.dk-rol-sec-note {
+  box-sizing: border-box; padding: 11px 14px; border-radius: 8px;
+  border: 1px solid rgba(var(--rc-rgb), 0.4); background: rgba(var(--rc-rgb), 0.1);
+  display: flex; gap: 10px; font-size: 13px; line-height: 1.45; color: #C9CACD;
+}
+.dk-rol-sec-note > svg { flex-shrink: 0; margin-top: 1px; }
+.dk-rol-sec-status { display: flex; flex-direction: column; }
+
+/* SHARED-CANDIDATE: AuthSplit orta bölgesinin dikey iç boşluğu. Kabuk 32px veriyor (artboard'da yok) → uzun durumlarda (hata/onay
+   notu) kolon 6px aşağı kayıyor ve sayfa 12px kayıyor. Artboard kanıtı: WebKayit 1040'ta kolon üst satırın 20px altında başlıyor. */
+.dk-auth-center:has(> .dk-rol-sec) { padding: 20px 0; }
