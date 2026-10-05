@@ -369,7 +369,6 @@ export const ST = {
   invited:   { label: "Bekliyor", color: "#FFD700" },
   joined:    { label: "Katıldı", color: "#7CE0B0" },
   active:    { label: "Aktif", color: "#7CE0B0" },
-  vip:       { label: "VIP onaylandı", color: "#FFD700" },
   // etkinlik rozetleri (Keşfet/Etkinlikler)
   full:      { label: "BEKLEME LİSTESİ", labelKesfet: "BEKLEME LİSTESİNE KATIL!", color: "#A3A7AF" },
   vipEvent:  { label: "VIP DENEYİM", color: "#FFD700" },

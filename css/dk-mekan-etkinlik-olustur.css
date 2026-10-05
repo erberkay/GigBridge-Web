@@ -96,13 +96,6 @@
 .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-free.is-on .dk-mekan-etkinlik-olustur-track { background: #7CE0B0; justify-content: flex-end; }
 .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-knob { width: 12px; height: 12px; border-radius: 50%; background: #F2F1EE; display: block; }
 
-/* 07 VIP */
-.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipb { height: 44px; border-radius: 8px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 600; }
-.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipb.is-on { border-color: #F2F1EE; background: #1C2029; color: #F2F1EE; }
-.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipb.is-vip.is-on { border-color: #FF8A2A; background: rgba(255,138,42,0.12); color: #FF8A2A; }
-.dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-vipb:disabled { opacity: .55; }
-
 /* hata + kilit + eylem çubuğu */
 .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-err { padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(255,90,110,0.45); background: rgba(255,90,110,0.08); display: flex; align-items: center; gap: 10px; font-size: 14px; color: #FF5A6E; }
 .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-err[hidden] { display: none; }
@@ -177,7 +170,7 @@
   .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pair { grid-template-columns: minmax(0, 1fr); }
   .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-skgrid { grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; }
 }
-/* ≤1279: tek kolon; önizleme 07'den sonra (JS taşır) iki kolonlu blok: kart | kontrol listesi + konum notu */
+/* ≤1279: tek kolon; önizleme 06'dan sonra (JS taşır) iki kolonlu blok: kart | kontrol listesi + konum notu */
 @media (max-width: 1279px) {
   .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-grid { grid-template-columns: minmax(0, 1fr); }
   .dk-mekan-etkinlik-olustur .dk-mekan-etkinlik-olustur-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }

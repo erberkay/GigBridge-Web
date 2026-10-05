@@ -93,7 +93,7 @@ export const DESKTOP_ROUTES = [
   // bildirim (+ bilinmeyenler) → legacy-in-shell
   R("orgLegacy", "— (legacy-in-shell)", pre("#/organizer"), "organizer/legacy.js", "orgLegacyView", "panel", [...SH.panel], { role: "organizer", panel: "organizer", legacyShell: true, spec: "foundation.md §4" }),
 
-  // ════ Yönetici (#/admin + sekme alt rotaları #/admin/vip|ad|sorun) ════
+  // ════ Yönetici (#/admin + sekme alt rotaları #/admin/ad|sorun) ════
   R("admin", "WebAdmin", pre("#/admin"), "admin/admin.js", "adminView", "panel", [...SH.panel, "css/dk-admin-panel.css"], { role: "admin", spec: "org-admin.md WebAdmin" }),
 ];
 

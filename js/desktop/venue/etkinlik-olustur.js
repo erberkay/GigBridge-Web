@@ -6,14 +6,14 @@
 //
 // OLUŞTUR — legacy renderCreate ile AYNI yazım yolu (korunan özellikler):
 //   · createEvent(profile, f) yükü birebir (title, date, time, genre, price→ticketPrice|null, capacity→(mekan kapasitesi), description,
-//     vip→vipStatus "pending"|null, artistId/artistName (grup: yalnız artistName), bannerUrl) · bitiş → updateEvent(id,{endAt}) (gece
+//     artistId/artistName (grup: yalnız artistName), bannerUrl; vipStatus her zaman null — VIP talebi kaldırıldı) · bitiş → updateEvent(id,{endAt}) (gece
 //     yarısını geçerse +1 gün) · solo sanatçı: findExistingInvitation → createInvitation(…, {date,time,fee,message:"",photoUrl,eventId})
 //   · doğrulama sırası: ad → tarih → mekan konumu pinli (değilse "📍 Mekan Konumunu Ayarla →") → aynı gün aynı ad → bitiş≠başlangıç →
 //     solo ücret ≥ 3.500 → solo başlangıç saati · "Fotoğraf yükleniyor…" · "Oluşturulamadı." · kontenjan yer tutucu/ipucu varyantları
 //     (mekan kapasitesi bilinmiyorsa "Sınırsız") · sanatçı seçici (sanatçılar + gruplar, TR arama) · seçilince tür otomatik gelir
 //   · + uygulama paritesi: solo sanatçıya event_invite bildirimi (data.sendNotification — fromUserId = auth uid)
 // DÜZENLE — app EditEventScreen paritesi: saveEventEdits(id, {title, description, artistName, artistId, genre[], ticketPrice, capacity,
-//   (+ değiştiyse bannerUrl / vipStatus "pending"|null)}) → lastEditedAt damgası; tarih/saat DEĞİŞTİRİLEMEZ; etkinlik başladıysa ya da
+//   (+ değiştiyse bannerUrl; vipStatus'a dokunulmaz)}) → lastEditedAt damgası; tarih/saat DEĞİŞTİRİLEMEZ; etkinlik başladıysa ya da
 //   son düzenlemeden bu yana 2 gün geçmediyse kilitli ("Tekrar düzenleme: …"); gruplar atanamaz; organizatör etkinliği salt-okunur.
 // Tasarımın ekledikleri: iki kolon + canlı Keşfet kartı önizlemesi (cards.eventCard — tek kaynak), yayın kontrol listesi, süre
 // göstergesi, Ücretsiz anahtarı, kapak ön ayarları (ui.BANNER_PRESETS — ücretsiz, yüklemesiz) + Yükle (16:9 kırpıcı),
@@ -111,7 +111,7 @@ export function venueEtkinlikOlusturView(ctx) {
   unsubs.push(() => { alive = false; });
 
   // ── form durumu ──
-  const blank = () => ({ title: "", desc: "", artist: null, fee: "", date: "", start: "", end: "", genre: "", price: "", free: false, cap: "", vip: false, cover: { kind: "none" } });
+  const blank = () => ({ title: "", desc: "", artist: null, fee: "", date: "", start: "", end: "", genre: "", price: "", free: false, cap: "", cover: { kind: "none" } });
   let st = blank();
   let orig = null;       // düzenleme: yüklenen etkinliğin form karşılığı (değişiklik tespiti)
   let ev = null;         // düzenleme: etkinlik kaydı
@@ -279,17 +279,6 @@ export function venueEtkinlikOlusturView(ctx) {
       helpEl("Boş bırakırsanız etkinlik “Ücretsiz” görünür.")),
     labelWrap("KONTENJAN", capIn, helpEl(venueCap ? `Boş bırakırsanız mekan kapasitesi (${venueCap} kişi) uygulanır.` : "Boş bırakırsanız sınırsız sayılır. Mekan kapasitenizi Profil > Kapasite bölümünden girebilirsiniz.")));
 
-  // ── 07 VIP ──
-  const stdBtn = h("button", { type: "button", role: "radio", class: cx(c("vipb"), "dk-press") }, "Standart");
-  const vipBtn = h("button", { type: "button", role: "radio", class: cx(c("vipb"), "is-vip", "dk-press") }, raw("sparkle", 15), "VIP İste");
-  stdBtn.addEventListener("click", () => { if (!locked() && !vipLocked()) { st.vip = false; changed(); } });
-  vipBtn.addEventListener("click", () => { if (!locked() && !vipLocked()) { st.vip = true; changed(); } });
-  const vipGroup = h("div", { role: "radiogroup", "aria-label": "VIP seçimi", class: c("vipg") }, stdBtn, vipBtn);
-  vipGroup.addEventListener("keydown", (e) => { if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) { e.preventDefault(); (st.vip ? stdBtn : vipBtn).click(); (st.vip ? vipBtn : stdBtn).focus(); } });
-  allInputs.push(stdBtn, vipBtn);
-  const vipHelp = helpEl("VIP etkinlikler onaylanınca müşteride en üstteki kayan alanda en önde + “VIP DENEYİM” rozetiyle gösterilir. İsteğin GigBridge ekibinin onayına düşer.");
-  const s07 = section("07", "VIP Etkinlik", null, vipGroup, vipHelp);
-
   // ── hata + eylem çubuğu ──
   const errBox = h("div", { role: "alert", class: c("err"), hidden: true });
   const lockNote = h("div", { class: c("lock"), hidden: true });
@@ -303,7 +292,7 @@ export function venueEtkinlikOlusturView(ctx) {
   const actions = h("div", { class: c("actions") }, cancelLink, h("div", { class: c("actr") }, draftBtn, pubBtn));
 
   const form = h("form", { "aria-label": "Etkinlik formu", class: c("form"), novalidate: true },
-    s01, s02, h("div", { class: c("pair") }, s03, s04), s05, h("div", { class: c("pair") }, s06, s07), errBox, actions);
+    s01, s02, h("div", { class: c("pair") }, s03, s04), s05, s06, errBox, actions);
   form.addEventListener("submit", (e) => e.preventDefault()); // Enter yanlışlıkla yayınlamasın (legacy ile aynı: yalnız düğme)
 
   // ═════════ önizleme (aside) ═════════
@@ -317,7 +306,7 @@ export function venueEtkinlikOlusturView(ctx) {
     h("div", { class: c("locnote") }, raw("pin", 16, "1.8", { color: "#4ED8FF" }), locNote));
   const grid = h("div", { class: c("grid") }, form, aside);
 
-  // Duyarlı yerleşim: ≤1279 önizleme eylem çubuğunun ÜSTÜNE (07'den sonra) iki kolonlu blok olarak taşınır (spec §10)
+  // Duyarlı yerleşim: ≤1279 önizleme eylem çubuğunun ÜSTÜNE (06'dan sonra) iki kolonlu blok olarak taşınır (spec §10)
   const narrow = window.matchMedia("(max-width: 1279px)");
   const place = () => {
     if (narrow.matches) { if (aside.parentNode !== form) form.insertBefore(aside, errBox); }
@@ -347,7 +336,8 @@ export function venueEtkinlikOlusturView(ctx) {
   // durum → arayüz
   // ══════════════════════════════════════════════════════════════════════
   const locked = () => !!lock;
-  const vipLocked = () => isEdit && ev?.vipStatus === "approved";
+  // VIP talebi kaldırıldı: yalnız eski (onaylı) VIP etkinliğin düzenlemesinde önizlemede rozet gösterilir; vipStatus yazılmaz
+  const vipApproved = () => isEdit && ev?.vipStatus === "approved";
   const isSolo = () => st.artist?.kind === "artist";
   function changed(o = {}) {
     dirty = true;
@@ -415,10 +405,6 @@ export function venueEtkinlikOlusturView(ctx) {
     priceIn.classList.toggle("is-off", st.free);
     freeSw.setAttribute("aria-checked", st.free ? "true" : "false");
     freeSw.classList.toggle("is-on", st.free);
-    // VIP
-    stdBtn.classList.toggle("is-on", !st.vip); stdBtn.setAttribute("aria-checked", st.vip ? "false" : "true"); stdBtn.tabIndex = st.vip ? -1 : 0;
-    vipBtn.classList.toggle("is-on", st.vip); vipBtn.setAttribute("aria-checked", st.vip ? "true" : "false"); vipBtn.tabIndex = st.vip ? 0 : -1;
-    if (vipLocked()) vipHelp.textContent = "VIP onaylandı — etkinlik “VIP DENEYİM” rozetiyle yayında. Onaylı VIP düzenlemede değiştirilemez.";
     drawPreview(o);
     drawChecks();
     if (isEdit) syncPub();
@@ -464,8 +450,8 @@ export function venueEtkinlikOlusturView(ctx) {
     if (pr) { const pv = st.free ? null : parsePrice(st.price); pr.textContent = pv ? "₺" + pv.toLocaleString("tr-TR") : "Ücretsiz"; pr.style.color = pv ? "#F2F1EE" : "#7CE0B0"; }
     const media = card.querySelector(".dk-ecd-media");
     let vip = media?.querySelector("." + c("vipbadge"));
-    if (st.vip && media && !vip) media.append(h("span", { class: c("vipbadge") }, raw("sparkle", 11, "2"), "VIP DENEYİM"));
-    if (!st.vip && vip) vip.remove();
+    if (vipApproved() && media && !vip) media.append(h("span", { class: c("vipbadge") }, raw("sparkle", 11, "2"), "VIP DENEYİM"));
+    if (!vipApproved() && vip) vip.remove();
   }
 
   // ── yayın kontrolü ──
@@ -484,12 +470,11 @@ export function venueEtkinlikOlusturView(ctx) {
           : [true, `${st.artist.name} (grup) etkinliğe eklenecek`])
         : [true, "Sanatçısız etkinlik"],
       [true, cap ? `Kontenjan: ${cap.toLocaleString("tr-TR")} kişi` : venueCap ? `Kontenjan: ${venueCap} (mekan kapasitesi) kişi` : "Kontenjan: sınırsız"],
-      [!st.vip || vipLocked(), vipLocked() ? "VIP onaylandı" : st.vip ? "VIP isteği GigBridge ekibinin onayına düşer" : "Standart yayın", " (onay bekler)"],
     ];
-    // sarı satırın ekran okuyucu eki: eksik alan "(eksik)", isteğe bağlı VIP isteği "(onay bekler)"
-    checks.replaceChildren(...rows.map(([ok, text, srWarn = " (eksik)"]) => h("div", { class: cx(c("chk"), ok ? "is-ok" : "is-warn") },
+    // sarı satırın ekran okuyucu eki: eksik alan "(eksik)"
+    checks.replaceChildren(...rows.map(([ok, text]) => h("div", { class: cx(c("chk"), ok ? "is-ok" : "is-warn") },
       h("span", { class: c("chkic"), "aria-hidden": "true" }, raw("check", 12, "2.6")), h("span", {}, text),
-      ok ? null : h("span", { class: "dk-sr" }, srWarn))));
+      ok ? null : h("span", { class: "dk-sr" }, " (eksik)"))));
     const where = [p.district || p.location?.district, p.city || p.location?.city].filter(Boolean).join(", ");
     locNote.textContent = `Etkinlik, mekan konumun${where ? ` (${where})` : ""} üzerinden müşteri haritasında görünür. Konum pinlenmemişse yayınlanamaz.`;
   }
@@ -552,7 +537,7 @@ export function venueEtkinlikOlusturView(ctx) {
   // ── taslak ──
   function snapshot() {
     return {
-      v: 1, title: st.title, desc: st.desc, fee: st.fee, date: st.date, start: st.start, end: st.end, genre: st.genre, price: st.price, free: st.free, cap: st.cap, vip: st.vip,
+      v: 1, title: st.title, desc: st.desc, fee: st.fee, date: st.date, start: st.start, end: st.end, genre: st.genre, price: st.price, free: st.free, cap: st.cap,
       artist: st.artist ? { kind: st.artist.kind, id: st.artist.id || null, name: st.artist.name, photo: st.artist.photo || null, genre: st.artist.genre || "" } : null,
       cover: st.cover.kind === "preset" || st.cover.kind === "existing" ? { kind: st.cover.kind, url: st.cover.url } : st.cover.kind === "none" ? { kind: "none" } : null,
       savedAt: Date.now(),
@@ -566,7 +551,7 @@ export function venueEtkinlikOlusturView(ctx) {
   }
   async function applyDraft(d) {
     if (!d || d.v !== 1) return false;
-    Object.assign(st, { title: d.title || "", desc: d.desc || "", fee: d.fee || "", genre: d.genre || "", price: d.price || "", free: !!d.free, cap: d.cap || "", vip: !!d.vip });
+    Object.assign(st, { title: d.title || "", desc: d.desc || "", fee: d.fee || "", genre: d.genre || "", price: d.price || "", free: !!d.free, cap: d.cap || "" });
     if (!isEdit) Object.assign(st, { date: d.date || "", start: d.start || "", end: d.end || "" });
     if (d.cover && d.cover.kind) st.cover = d.cover.kind === "none" ? { kind: "none" } : { kind: d.cover.kind, url: d.cover.url };
     st.artist = null;
@@ -627,7 +612,7 @@ export function venueEtkinlikOlusturView(ctx) {
     if (!st.free && Number.isNaN(priceValue(st.price))) return showErr("Bilet ücreti geçersiz.");
     if (capInvalid(st.cap)) return showErr("Kontenjan en az 1 kişi olmalı.");
     const pv = st.free ? null : parsePrice(st.price); // "2.500" → 2500 (düzenleme ile aynı ayrıştırıcı)
-    const f = { title, date, time, genre: st.genre.trim(), price: pv ? String(pv) : "", capacity: String(st.cap || "").trim(), description: st.desc.trim(), vip: st.vip };
+    const f = { title, date, time, genre: st.genre.trim(), price: pv ? String(pv) : "", capacity: String(st.cap || "").trim(), description: st.desc.trim() };
     if (isSolo()) {
       f.artistId = st.artist.id; f.artistName = st.artist.name;
       if (!(Number(st.fee) >= MIN_STAGE_FEE)) return showErr(`Sanatçı seçtiysen sahne ücreti en az ₺${MIN_STAGE_FEE.toLocaleString("tr-TR")} olmalı.`);
@@ -661,7 +646,7 @@ export function venueEtkinlikOlusturView(ctx) {
       dropDraft(DKEY);
       dirty = false;
       // aynı tarihe zaten teklif varsa yeni teklif yazılmaz → "teklif gönderildi" denmez
-      dkToast(st.vip ? "Yayınlandı — VIP onayına düştü" : offerSent ? "Yayınlandı — sanatçıya teklif gönderildi" : "Etkinlik yayınlandı");
+      dkToast(offerSent ? "Yayınlandı — sanatçıya teklif gönderildi" : "Etkinlik yayınlandı");
       location.hash = "#/venue";
       return true;
     } catch (e) {
@@ -715,11 +700,6 @@ export function venueEtkinlikOlusturView(ctx) {
         const cur = st.cover.kind === "none" ? null : st.cover.url;
         if (cur !== origCover) patch.bannerUrl = cur;
       }
-      if (!vipLocked()) {
-        const nextVip = st.vip ? "pending" : null;
-        const was = ev.vipStatus === "pending" ? "pending" : null;
-        if (nextVip !== was && !(nextVip === null && ev.vipStatus === "rejected")) patch.vipStatus = nextVip;
-      }
       setBusy(true, "Kaydediliyor…");
       await saveEventEdits(eventId, patch);
       dropDraft(DKEY);
@@ -736,7 +716,7 @@ export function venueEtkinlikOlusturView(ctx) {
   }
   // Düzenleme: form yüklenen etkinlikle aynıysa "Değişiklikleri kaydet" kapalı
   const formKey = (x) => JSON.stringify([x.title.trim(), x.desc.trim(), x.artist ? [x.artist.kind, x.artist.id || null, x.artist.name] : null, x.genre.trim(),
-    x.free ? "" : String(x.price ?? "").trim(), !!x.free, String(x.cap ?? "").trim(), !!x.vip, x.cover.kind === "none" ? null : x.cover.kind + ":" + x.cover.url]);
+    x.free ? "" : String(x.price ?? "").trim(), !!x.free, String(x.cap ?? "").trim(), x.cover.kind === "none" ? null : x.cover.kind + ":" + x.cover.url]);
   const editChanged = () => !!orig && formKey(st) !== formKey(orig);
   function syncPub() {
     pubBtn.disabled = busy || locked(); draftBtn.disabled = busy || locked();
@@ -755,7 +735,6 @@ export function venueEtkinlikOlusturView(ctx) {
     [dateIn, startIn, endIn].forEach((el) => { el.disabled = true; });
     if (!off) [dateIn, startIn, endIn].forEach((el) => { el.disabled = isEdit; });
     priceIn.disabled = off || st.free;
-    if (vipLocked()) { stdBtn.disabled = true; vipBtn.disabled = true; }
     syncPub();
     form.classList.toggle("is-locked", off);
     lockNote.hidden = !off;
@@ -809,7 +788,7 @@ export function venueEtkinlikOlusturView(ctx) {
       date: e.dateKey || (s != null ? isoDate(s) : ""), start: e.startTime || (s != null ? fmtTime(s) : ""),
       end: e.endTime || (endMs != null ? fmtTime(endMs) : ""),
       genre: g0, price: Number(e.ticketPrice) > 0 ? String(e.ticketPrice) : "", free: !(Number(e.ticketPrice) > 0),
-      cap: e.capacity != null ? String(e.capacity) : "", vip: e.vipStatus === "pending" || e.vipStatus === "approved",
+      cap: e.capacity != null ? String(e.capacity) : "",
       cover: presetHit ? { kind: "preset", url: banner } : banner ? { kind: "existing", url: banner } : { kind: "none" },
     });
     orig = { ...st, cover: { ...st.cover } };

@@ -244,7 +244,6 @@ export function venueAnalitikView(ctx) {
       avgAttendance: events.length ? Math.round(total / events.length) : 0,
       withArtist: events.filter((e) => e.artistId).length,
       vip: events.filter((e) => e.vipStatus === "approved").length,
-      vipPending: events.filter((e) => e.vipStatus === "pending").length,
     };
   }
 
@@ -612,7 +611,7 @@ export function venueAnalitikView(ctx) {
       cardHead("TÜM ZAMANLAR", "Genel özet", null, "dk-ma-h-all"),
       h("div", { class: "dk-mekan-analitik-ogrid" },
         cell(fmt(o.eventCount), "Toplam Etkinlik"), cell(fmt(o.upcoming), "Yaklaşan"), cell(fmt(o.totalAttendance), "Toplam Katılım"),
-        cell(fmt(o.avgAttendance), "Ort. Katılım"), cell(fmt(o.withArtist), "Sanatçılı"), cell(fmt(o.vip), o.vipPending ? `VIP (${o.vipPending} onayda)` : "VIP")));
+        cell(fmt(o.avgAttendance), "Ort. Katılım"), cell(fmt(o.withArtist), "Sanatçılı"), cell(fmt(o.vip), "VIP")));
   }
 
   // ── ?ev derin bağlantısı ──

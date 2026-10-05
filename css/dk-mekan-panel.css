@@ -259,7 +259,7 @@
   .dk-mekan-panel .dk-mekan-panel-pair > .dk-mekan-panel-paircell { flex: 1 1 0; }
   .dk-mekan-panel .dk-mekan-panel-kpis4, .dk-mekan-panel .dk-mekan-panel-qas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-/* Dar etkinlik kartı (<740: 1024–1099 ve 769–~800): küçük kapak düşer → başlık + rozetler için ~56 px (VIP ONAYDA'lı başlık ≥120 px) */
+/* Dar etkinlik kartı (<740: 1024–1099 ve 769–~800): küçük kapak düşer → başlık + rozetler için ~56 px (rozetli başlık ≥120 px) */
 @container (max-width: 739px) {
   .dk-mekan-panel .dk-mekan-panel-ev .dk-mekan-panel-thumb { display: none; }
 }

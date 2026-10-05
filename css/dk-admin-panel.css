@@ -34,7 +34,7 @@
 .dk-admin-panel-hero .dk-hero-eb { color: #A78BFA; }
 
 /* ---------- 2. KPI (dkKpi panel varyantı = artboard; aktif kenar rgba(167,139,250,.5)) ---------- */
-.dk-admin-panel-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.dk-admin-panel-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .dk-admin-panel-kpi { width: 100%; margin: 0; cursor: pointer; }
 .dk-admin-panel .dk-kpi.is-active { border-color: rgba(167,139,250,0.5); }
 
@@ -158,20 +158,19 @@
 /* ---------- duyarlı ----------
    ≥1400: artboard (detay 380; kart içeriği ≥640 → tam 4 sütunlu tablo, klasik kaydırma çubuğu payıyla) · 1180–1399: detay 320
    (380'de kart 1382 altında <640'a iner, 1280'de 540 → satırlar karta dönüyordu) · <1180: detay gizli → sağ çekmece (spec §10) ·
-   KPI 4'lü ≥1180, 2×2 <1180 (spec §10). Dar 4'lü dizide alt metin/etiket iki satıra sarabilir → kartlar eşit boy (ızgara stretch).
+   KPI 3'lü (VIP sekmesi kaldırıldı → 2×2 düzeni yok). Dar dizide alt metin/etiket iki satıra sarabilir → kartlar eşit boy (ızgara stretch).
    tablo KENDİ genişliğine göre (container query): <640 → TÜR sütunu gizli, tür etiketi başlığın altına (spec "col2 hidden") ·
    <560 → satırlar kart (avatar + başlık | durum, işlemler ikinci satır; spec 769–1023 "rows → cards"). */
 @media (max-width: 1399px) {
   .dk-admin-panel-grid { grid-template-columns: minmax(0, 1fr) 320px; }
-  /* dar 4'lü KPI'da "MEKAN ADI İSTEĞİ" iki satıra sarar → satır arası nefes (tek satırda konum değişmez: ikonla ortalı) */
+  /* dar 3'lü KPI'da "MEKAN ADI İSTEĞİ" iki satıra sarar → satır arası nefes (tek satırda konum değişmez: ikonla ortalı) */
   .dk-admin-panel .dk-admin-panel-kpi .dk-kpi-l { line-height: 1.4; }
 }
 @media (max-width: 1179px) {
-  .dk-admin-panel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dk-admin-panel-grid { grid-template-columns: minmax(0, 1fr); }
   .dk-admin-panel-detail { display: none; }
 }
-/* dar kart (≈1180–1224: detay 320 yanında): sekme şeridi sıkışır (şerit pad 4, aralık 0, sekme pad 8) → 4 sekme sığar */
+/* dar kart (≈1180–1224: detay 320 yanında): sekme şeridi sıkışır (şerit pad 4, aralık 0, sekme pad 8) → 3 sekme sığar */
 @container dkadmtbl (max-width: 560px) {
   .dk-admin-panel .dk-admin-panel-tabs { padding: 0 4px; gap: 0; }
   .dk-admin-panel .dk-admin-panel-tabs .dk-utab-t { padding: 0 8px; }

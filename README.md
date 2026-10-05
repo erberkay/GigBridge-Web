@@ -33,7 +33,7 @@ Derleme/paket adımı yoktur — saf statik **ES-module SPA** (Firebase 10.11 CD
 | 🎤 **Sanatçı** | e-posta/şifre veya Google | Ana sayfa (teklifler kabul/ret), Top 10, mekanlar, mesajlar, profil |
 | 🏢 **Mekan** | e-posta/şifre veya Google → **yönetici onayı** | Etkinlikler, sanatçı bul + davet, analitik, mesajlar, profil |
 | 🗓 **Organizatör** | e-posta/şifre veya Google → **yönetici onayı** | Etkinlikler (mekana istek), ekip, mesajlar, profil |
-| 🛡 **Yönetici** | `#/yonetici` (owner e-postası / `adminUids`) | Mekan/organizatör onayı, VIP istekleri, mekan-adı istekleri, sorun bildirimleri |
+| 🛡 **Yönetici** | `#/yonetici` (owner e-postası / `adminUids`) | Mekan/organizatör onayı, mekan-adı istekleri, sorun bildirimleri |
 
 Müşteri/sanatçı onaysız anında aktif; mekan/organizatör `approved:false` yazılıp yönetici onayını bekler.
 Web'de Google ile ilk kez girip profili olmayan kullanıcı rol-seçim ekranına (`#/setup`) düşer.
@@ -89,7 +89,7 @@ js/pages/
   ├── artist.js       Ana sayfa, Top 10, mekanlar, aldığım yorumlar, profil
   ├── venue.js        Panel, sanatçı bul + davet, analitik, create/edit, profil
   ├── organizer.js    Etkinlikler (mekana istek), ekip, profil
-  ├── admin.js        Onay paneli (mekan/organizatör/VIP/ad isteği/sorun bildirimi)
+  ├── admin.js        Onay paneli (mekan/organizatör/ad isteği/sorun bildirimi)
   ├── auth.js         Giriş/kayıt sayfaları + modalları, Google, şifre sıfırlama, reCAPTCHA
   └── messages.js     Mesajlaşma + teklif kabul/ret balonları
 ```

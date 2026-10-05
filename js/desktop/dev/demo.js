@@ -99,7 +99,7 @@ function catalog() {
       cell("h34 radiogroup (Fiyat)", h("div", { style: { width: "240px" } }, dkSegmented({ items: [{ key: "all", label: "Tümü" }, { key: "free", label: "Ücretsiz" }, { key: "paid", label: "Ücretli" }], value: "all", size: 34, role: "radiogroup", stretch: true, label: "Fiyat" })))),
     cell("mono (Keşfet kategori, düz pembe)", h("div", { class: "dkd-bar" }, dkUnderlineTabs({ label: "Kategori", value: "all", items: [{ key: "all", label: "TÜMÜ", icon: "grid" }, { key: "ev", label: "ETKİNLİKLER", icon: "ticket" }, { key: "ven", label: "MEKANLAR", icon: "building" }, { key: "art", label: "SANATÇILAR", icon: "mic" }] }))),
     cell("anchor (prizma)", dkUnderlineTabs({ variant: "anchor", value: "h", items: [{ key: "h", label: "Hakkında" }, { key: "e", label: "Etkinlikler" }, { key: "r", label: "Yorumlar" }, { key: "m", label: "Medya" }] })),
-    cell("sans (WebAdmin, rol rengi)", h("div", { class: "dkd-roleadmin" }, dkUnderlineTabs({ variant: "sans", value: "a", items: [{ key: "a", label: "Onaylar", count: 3 }, { key: "v", label: "VIP İstekleri", count: 2 }, { key: "n", label: "Mekan Adı İstekleri", count: 1 }, { key: "s", label: "Sorun Bildirimleri", count: 4 }] }))));
+    cell("sans (WebAdmin, rol rengi)", h("div", { class: "dkd-roleadmin" }, dkUnderlineTabs({ variant: "sans", value: "a", items: [{ key: "a", label: "Onaylar", count: 3 }, { key: "n", label: "Mekan Adı İstekleri", count: 1 }, { key: "s", label: "Sorun Bildirimleri", count: 4 }] }))));
 
   const chips = sec("dkd-chips", "Chip / GenreChip / GenreTag / StatusBadge / Fiyat", "public-a §0.6–0.7 · org-admin F5 ST",
     row(dkGenreChip(null, { pressed: true }), ...["Jazz", "Techno", "Rock", "Pop", "Akustik", "Hip-Hop", "R&B"].map((g) => dkGenreChip(g, { pressed: false, onClick: (e, el) => el.dk.set(el.getAttribute("aria-pressed") !== "true") }))),
@@ -107,7 +107,7 @@ function catalog() {
     row(...["Jazz", "Deep House", "Türkçe Rock", "Türkçe Pop", "Türkü", "Türkçe Rap", "Indie", "Klasik", "Arabesk"].map((g) => dkGenreTag(g))),
     row(dkGenreTag("Jazz", { variant: "table" }), dkGenreTag("Electronic", { variant: "hero" }), dkGenreTag("Electronic", { variant: "pill" }), dkGenreTag("Jazz", { variant: "neutral" })),
     row(...["full", "vipEvent", "exclusive", "busy", "popular", "new"].map((k) => dkStatusBadge(k, { variant: "card", kesfet: k === "full" })), dkStatusBadge("vipEvent", { variant: "hero" }), dkStatusBadge("exclusive", { variant: "wide" })),
-    row(...["live", "up", "past", "pending", "accepted", "rejected", "cancelled", "resolved", "vip", "invited", "joined", "active"].map((k) => dkStatusBadge(k))),
+    row(...["live", "up", "past", "pending", "accepted", "rejected", "cancelled", "resolved", "invited", "joined", "active"].map((k) => dkStatusBadge(k))),
     row(dkStatusBadge("offerPending", { variant: "box" }), dkStatusBadge("offerAccepted", { variant: "box" }), dkStatusBadge("offerRejected", { variant: "box" }), dkStatusBadge({ label: "AKTİF", color: "#7CE0B0" }, { variant: "plain" }),
       dkPrice(350), dkPrice(0, { upper: true }), dkPrice(0), dkPricePill(250), dkPricePill(0)));
 
@@ -128,7 +128,7 @@ function catalog() {
     row(dkStars(4), dkStars(3, { size: 20 }), dkStars(5, { variant: "text", size: 13 }), dkStars(2, { variant: "text", size: 13 })),
     h("div", { class: "dkd-grid4" },
       dkKpi({ label: "BEKLEYEN ONAY", value: "3", sub: "Mekan ve organizatör başvurusu", icon: "shieldCheck", color: "#A78BFA" }),
-      dkKpi({ label: "VIP İSTEĞİ", value: "2", sub: "Onay bekleyen etkinlik", icon: "sparklesAdmin", color: "#FFD700", onClick: () => {} }),
+      dkKpi({ label: "MEKAN ADI İSTEĞİ", value: "1", sub: "Ad değişikliği talebi", icon: "edit", color: "#FF8A2A", onClick: () => {} }),
       dkKpi({ label: "KATILIMCI", value: "128", icon: "users", color: "#4ED8FF", variant: "card" }),
       dkKpi({ label: "DURUM", value: "Satışta", variant: "card", valueColor: "#7CE0B0", valueIcon: "trendingUp" })));
 
@@ -282,9 +282,9 @@ function panelScene(q) {
   });
   if (role === "artist") shell.setBadge("home", 3);
   if (role === "organizer") shell.setBadge("etkinlik", 2);
-  if (role === "admin") { shell.setBadge("onaylar", 3); shell.setBadge("vip", 2); shell.setBadge("ad", 1); shell.setBadge("sorun", 4); }
+  if (role === "admin") { shell.setBadge("onaylar", 3); shell.setBadge("ad", 1); shell.setBadge("sorun", 4); }
   shell.setNotifications(role === "admin"
-    ? [{ title: "Yeni mekan başvurusu", body: "Soho House onay bekliyor.", icon: "building", color: "#FF8A2A", time: "2 DK ÖNCE" }, { title: "VIP isteği", body: "“Deep House Set” için VIP isteği geldi.", icon: "sparklesAdmin", color: "#FFD700", time: "1 SA ÖNCE" }, { title: "Sorun bildirimi", body: "DJ Berkay yeni bir bildirim gönderdi.", icon: "flag", color: "#FF5A6E", time: "DÜN", read: true }]
+    ? [{ title: "Yeni mekan başvurusu", body: "Soho House onay bekliyor.", icon: "building", color: "#FF8A2A", time: "2 DK ÖNCE" }, { title: "Mekan adı isteği", body: "Babylon Club ad değişikliği istedi.", icon: "edit", color: "#FF8A2A", time: "1 SA ÖNCE" }, { title: "Sorun bildirimi", body: "DJ Berkay yeni bir bildirim gönderdi.", icon: "flag", color: "#FF5A6E", time: "DÜN", read: true }]
     : [{ title: "Düzenleme İzni İstendi", body: "Ayşe, “Rock Partisi” etkinliğini düzenlemek istiyor.", icon: "key", color: "#FF4FA3", time: "5 DK ÖNCE" }, { title: "Mekan isteği onaylandı", body: "Zorlu PSM, “Electronic Night” isteğini onayladı.", icon: "check", color: "#7CE0B0", time: "2 SA ÖNCE" }, { title: "İstek reddedildi", body: "Nardis Jazz, “Akustik Akşam” isteğini reddetti.", icon: "trash", color: "#FF5A6E", time: "DÜN", read: true }]);
   shell.content.append(filler("İçerik alanı (panelShell.content)", 1100));
   return shell;

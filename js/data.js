@@ -144,13 +144,6 @@ export async function listPendingByRole(role) {
 export async function approveUser(uid) { await updateDoc(doc(db, "users", uid), { approved: true, approvedAt: serverTimestamp() }); }
 export async function rejectUser(uid) { await updateDoc(doc(db, "users", uid), { approved: false, rejected: true }); }
 
-export async function listPendingVip() {
-  const snap = await getDocs(query(collection(db, "events"), where("vipStatus", "==", "pending")));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-}
-export async function approveVip(id) { await updateDoc(doc(db, "events", id), { vipStatus: "approved", vipApprovedAt: serverTimestamp() }); }
-export async function rejectVip(id) { await updateDoc(doc(db, "events", id), { vipStatus: "rejected" }); }
-
 export async function listReports() {
   const snap = await getDocs(collection(db, "reports"));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((r) => r.status !== "resolved").sort(byMs);
@@ -255,7 +248,7 @@ export async function createEvent(venue, f) {
     city: venue?.city ?? venue?.location?.city ?? null,
     district: venue?.district ?? null,
     location: loc,
-    vipStatus: f.vip ? "pending" : null,
+    vipStatus: null, // VIP talep özelliği kaldırıldı; yalnız eski "approved" kayıtlar rozet gösterir
     createdAt: serverTimestamp(),
   })).id;
 }

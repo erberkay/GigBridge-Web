@@ -1,7 +1,7 @@
 // Masaüstü alan CSS'lerini tembel yükler (FOUC'suz: görünüm, CSS'i yüklenmeden mount edilmez).
 // Her dosya bir kez eklenir; <link> head'in SONUNA gider → style.css + aether.css'ten sonra (kaskadda en son).
 // CSS_VER: index.html'deki ?v= deseniyle aynı mantık — dk-*.css değişince artır (GitHub Pages ~10 dk HTTP önbelleği).
-export const CSS_VER = "20260930f";
+export const CSS_VER = "20261005a";
 
 const _css = new Map();
 

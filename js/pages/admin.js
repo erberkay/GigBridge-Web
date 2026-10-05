@@ -1,11 +1,10 @@
-// Yönetici paneli — mekan/organizatör onayı, VIP istekleri, sorun bildirimleri.
+// Yönetici paneli — mekan/organizatör onayı, mekan adı istekleri, sorun bildirimleri.
 import { session, logout } from "../store.js";
 import {
   listPendingByRole, approveUser, rejectUser,
-  listPendingVip, approveVip, rejectVip,
   listReports, resolveReport, approveNameChange, rejectNameChange,
 } from "../data.js";
-import { h, clear, icon, btn, topbar, empty, spinner, toast, avatar, fmtDate, ROLE } from "../ui.js";
+import { h, clear, icon, btn, topbar, empty, spinner, toast, avatar, ROLE } from "../ui.js";
 // NOT: kesfetPage'i STATİK import ETME — admin panelini customer.js'e bağlar; önbellek
 // uyumsuzluğunda (eski customer.js) import patlar ve panel "Sayfa yüklenemedi" verir.
 // Onun yerine butona basınca DİNAMİK import ediyoruz (aşağıda openKesfetPreview).
@@ -85,8 +84,8 @@ async function openKesfetPreview() {
 
 async function load(root) {
   try {
-    const [venues, orgs, vip, reports] = await Promise.all([
-      listPendingByRole("venue"), listPendingByRole("organizer"), listPendingVip(), listReports(),
+    const [venues, orgs, reports] = await Promise.all([
+      listPendingByRole("venue"), listPendingByRole("organizer"), listReports(),
     ]);
     const nameReqs = reports.filter((r) => r.type === "name_change");
     const otherReports = reports.filter((r) => r.type !== "name_change");
@@ -96,8 +95,6 @@ async function load(root) {
         venues.length ? venues.map((v) => approvalRow(v, ROLE.venue, v.city)) : [emptyRow("Bekleyen mekan yok")]),
       groupSection("Onay Bekleyen Organizatörler", "megaphone-outline", orgs.length,
         orgs.length ? orgs.map((o) => approvalRow(o, ROLE.organizer, o.email)) : [emptyRow("Bekleyen organizatör yok")]),
-      groupSection("VIP İstekleri", "sparkles-outline", vip.length,
-        vip.length ? vip.map(vipRow) : [emptyRow("Bekleyen VIP isteği yok")]),
       groupSection("Mekan Adı İstekleri", "create-outline", nameReqs.length,
         nameReqs.length ? nameReqs.map(nameReqRow) : [emptyRow("Bekleyen isim isteği yok")]),
       groupSection("Sorun Bildirimleri", "flag-outline", otherReports.length,
@@ -126,18 +123,6 @@ function approvalRow(u, color, meta) {
     h("div", { class: "lrow-actions" },
       actBtn("checkmark", "Onayla", "ok", async () => { await approveUser(u.id); row.remove(); toast("Onaylandı"); }),
       actBtn("close", "Reddet", "danger", async () => { await rejectUser(u.id); row.remove(); toast("Reddedildi"); })));
-  return row;
-}
-
-function vipRow(ev) {
-  const row = h("div", { class: "lrow" },
-    avatar(ev.title, ROLE.venue),
-    h("div", { class: "lrow-info" },
-      h("div", { class: "lrow-name" }, ev.title || "İsimsiz Etkinlik"),
-      h("div", { class: "lrow-meta" }, [ev.venueName, typeof ev.date === "string" ? ev.date : fmtDate(ev.date)].filter(Boolean).join(" · "))),
-    h("div", { class: "lrow-actions" },
-      actBtn("sparkles", "VIP Yap", "ok", async () => { await approveVip(ev.id); row.remove(); toast("VIP onaylandı"); }),
-      actBtn("close", "Reddet", "danger", async () => { await rejectVip(ev.id); row.remove(); toast("Reddedildi"); })));
   return row;
 }
 

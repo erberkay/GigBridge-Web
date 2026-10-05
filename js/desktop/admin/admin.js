@@ -1,15 +1,16 @@
-// WebAdmin — Yönetici Paneli (onay merkezi) masaüstü görünümü (≥769 px). Registry anahtarı: admin (#/admin, #/admin/vip|ad|sorun).
+// WebAdmin — Yönetici Paneli (onay merkezi) masaüstü görünümü (≥769 px). Registry anahtarı: admin (#/admin, #/admin/ad|sorun).
 // Spec: specs/org-admin.md § WebAdmin (+ F3–F7). Artboard: design/WebAdmin.dc.html (sahibi notu yok; WebAdminGiris notu: rol rengi #A78BFA).
 // CSS: css/dk-admin-panel.css — kök sınıf .dk-admin-panel (kabuğun <main id="dk-main">'ine eklenir); kabuk dışındaki parçalar
 //   (üst bar "Keşfet önizleme" düğmesi, portal çekmecesi) .dk-admin-panel-* sınıflarıyla kapsanır.
 // ≤768: legacy js/pages/admin.js adminPage() aynen kalır (router bu modülü mobilde yüklemez).
 //
-// Legacy özellikleri (hepsi korundu): mekan + organizatör onayı (approveUser / rejectUser) · VIP istekleri (approveVip / rejectVip) ·
+// Legacy özellikleri (hepsi korundu): mekan + organizatör onayı (approveUser / rejectUser) ·
 //   mekan adı istekleri (approveNameChange / rejectNameChange) · sorun bildirimleri (resolveReport; mesaj metni artık detay panelinde) ·
 //   Keşfet önizleme modalı (openKesfetPreview — küçült/büyüt, gezinme kilidi; üst bar düğmesi + kenar "Keşfet ekranı" + "Siteye dön") ·
 //   çıkış (kabuk "Çıkış" → onay → #/yonetici) · yönetici e-postası (kabuk kullanıcı kartı) · işlem sırasında düğme kilidi, hata toast'ı
-//   "İşlem başarısız" · "Yüklenemedi / Bağlantıyı kontrol edip sayfayı yenile." · grup başına boş metinler · "İsimsiz" / "İsimsiz Etkinlik" /
+//   "İşlem başarısız" · "Yüklenemedi / Bağlantıyı kontrol edip sayfayı yenile." · grup başına boş metinler · "İsimsiz" /
 //   "Bildirim" / "Mekan" / "?" / "—" yedekleri.
+// VIP talep sekmesi kaldırıldı; eski #/admin/vip bağlantısı #/admin'e yönlenir (bilinmeyen alt rota).
 // Tasarım ekleri: sekme alt rotaları (kenar menüsü + KPI kartları + sekme şeridi eşzamanlı), ?tur= (başvuru türü) + ?sec= (seçili satır),
 //   satır seçimi + detay paneli (≥1180; daha darda sağ çekmece), karar verilen satırlar oturum boyunca rozetle YERİNDE kalır + "Geri al"
 //   (telafi yazımı; ad değişikliğinde yok — spec §6), "Mesaj gönder" (mailto yedeği, spec §9), türetilmiş zil akışı (spec §9), panel araması
@@ -20,7 +21,6 @@ import { h, clear, icon, spinner, empty } from "../../ui.js";
 import { session } from "../../store.js";
 import {
   listPendingByRole, approveUser, rejectUser,
-  listPendingVip, approveVip, rejectVip,
   listReports, resolveReport, approveNameChange, rejectNameChange,
   userById,
 } from "../../data.js";
@@ -28,7 +28,7 @@ import { db, doc, updateDoc } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import { cx, dkKpi, dkUnderlineTabs, dkChip, dkStatusBadge, dkPageHero, dkToast, dkDrawer, dkSkeleton, dkButton, portalRoot } from "../shared/ui.js";
-import { rgba, trUpper, toMs, MONTHS_TR_SHORT, matchText, writeQuery, hashBase, fmtTime, eventGenres, ROLE_LABELS } from "../shared/helpers.js";
+import { rgba, trUpper, toMs, MONTHS_TR_SHORT, matchText, writeQuery, hashBase, ROLE_LABELS } from "../shared/helpers.js";
 
 // ══════════ Sabitler (DCLogic ile birebir) ══════════
 const VIOLET = "#A78BFA";
@@ -36,23 +36,21 @@ const V = "#FF8A2A", O = "#FF4FA3", C = "#4ED8FF";
 // sekme: [anahtar (kabuk nav), rota, etiket, KPI etiketi, KPI alt metni, KPI rengi, ikon]
 const TABS = [
   { key: "onaylar", route: "#/admin", label: "Onaylar", kLabel: "BEKLEYEN ONAY", kSub: "Mekan ve organizatör başvurusu", color: VIOLET, icon: "shieldCheck" },
-  { key: "vip", route: "#/admin/vip", label: "VIP İstekleri", kLabel: "VIP İSTEĞİ", kSub: "Onay bekleyen etkinlik", color: "#FFD700", icon: "sparklesAdmin" },
   { key: "ad", route: "#/admin/ad", label: "Mekan Adı İstekleri", kLabel: "MEKAN ADI İSTEĞİ", kSub: "Ad değişikliği talebi", color: V, icon: "edit" },
   { key: "sorun", route: "#/admin/sorun", label: "Sorun Bildirimleri", kLabel: "SORUN BİLDİRİMİ", kSub: "Çözülmeyi bekliyor", color: "#FF5A6E", icon: "flag" },
 ];
 const TAB = Object.fromEntries(TABS.map((t) => [t.key, t]));
-const HEAD = { onaylar: ["BAŞVURAN", "TÜR · İLETİŞİM"], vip: ["ETKİNLİK", "MEKAN · TARİH"], ad: ["MEVCUT → İSTENEN", "NEDEN"], sorun: ["KONU", "BİLDİREN"] };
-const EMPTY = { onaylar: "Bekleyen başvuru yok", vip: "Bekleyen VIP isteği yok", ad: "Bekleyen isim isteği yok", sorun: "Bekleyen bildirim yok" };
+const HEAD = { onaylar: ["BAŞVURAN", "TÜR · İLETİŞİM"], ad: ["MEVCUT → İSTENEN", "NEDEN"], sorun: ["KONU", "BİLDİREN"] };
+const EMPTY = { onaylar: "Bekleyen başvuru yok", ad: "Bekleyen isim isteği yok", sorun: "Bekleyen bildirim yok" };
 const FOOT = {
   onaylar: "Onaylanan mekan ve organizatörler panellerine erişir; reddedilenler giriş yaptığında bilgilendirilir.",
-  vip: "VIP onaylanan etkinlik Keşfet’te öne çıkar.",
   ad: "Onaylanınca mekanın adı sitenin her yerinde güncellenir.",
   sorun: "Çözüldü olarak işaretlenen bildirimler listeden kalkar.",
 };
-const OKL = { venue: "Onayla", org: "Onayla", vip: "VIP Yap", name: "Onayla", report: "Çözüldü" };
-const OKT = { venue: "Onaylandı", org: "Onaylandı", vip: "VIP onaylandı", name: "Ad değiştirildi", report: "Çözüldü olarak işaretlendi" };
-const OKS = { venue: "approved", org: "approved", vip: "vip", name: "approved", report: "resolved" };
-const EYE = { venue: "MEKAN BAŞVURUSU", org: "ORGANİZATÖR BAŞVURUSU", vip: "VIP İSTEĞİ", name: "MEKAN ADI İSTEĞİ", report: "SORUN BİLDİRİMİ" };
+const OKL = { venue: "Onayla", org: "Onayla", name: "Onayla", report: "Çözüldü" };
+const OKT = { venue: "Onaylandı", org: "Onaylandı", name: "Ad değiştirildi", report: "Çözüldü olarak işaretlendi" };
+const OKS = { venue: "approved", org: "approved", name: "approved", report: "resolved" };
+const EYE = { venue: "MEKAN BAŞVURUSU", org: "ORGANİZATÖR BAŞVURUSU", name: "MEKAN ADI İSTEĞİ", report: "SORUN BİLDİRİMİ" };
 const KIND_TAG = { venue: ["MEKAN", V], org: ["ORGANİZATÖR", O] };
 const SUBS = [["all", "Tümü", "#A3A7AF", null], ["venue", "Mekan", V, "mekan"], ["org", "Organizatör", O, "organizator"]];
 const REPORT_COLOR = { customer: C, artist: O, venue: V, organizer: O };
@@ -80,12 +78,12 @@ const fmtDateNum = (v) => {                          // "27 Eyl 2026" (spec I11:
 // boşluksuz uzun değerler (e-posta) dar panelde "@" / "." sonrasında satır kırsın
 const wbr = (v) => (typeof v !== "string" || /\s/.test(v) || !/[@.]/.test(v) ? [v] : v.split(/(?<=[@.])/).flatMap((p, i) => (i ? [h("wbr"), p] : [p])));
 const ini = (s) => { const c = String(s || "").replace(/^[\s[“"'(]+/, "").charAt(0); return c ? trUpper(c) : "?"; };
-const statusLabel = (it) => (it.status === "pending" ? (it.kind === "report" ? "Açık" : "Bekliyor") : ({ approved: "Onaylandı", rejected: "Reddedildi", vip: "VIP onaylandı", resolved: "Çözüldü" })[it.status] || "—");
-const statusColor = (it) => (it.status === "pending" ? "#FFD700" : it.status === "rejected" ? "#FF5A6E" : it.status === "vip" ? "#FFD700" : "#7CE0B0");
-const tabOfKind = (k) => (k === "venue" || k === "org" ? "onaylar" : k === "vip" ? "vip" : k === "name" ? "ad" : "sorun");
-// öğe türü → Firestore kaynağı (loadAll'daki 4 sorgu) · sekme / başvuru türü süzgeci → beslendiği kaynaklar
-const SRC_OF = { venue: "venue", org: "org", vip: "vip", name: "rep", report: "rep" };
-const TAB_SRCS = { onaylar: ["venue", "org"], vip: ["vip"], ad: ["rep"], sorun: ["rep"] };
+const statusLabel = (it) => (it.status === "pending" ? (it.kind === "report" ? "Açık" : "Bekliyor") : ({ approved: "Onaylandı", rejected: "Reddedildi", resolved: "Çözüldü" })[it.status] || "—");
+const statusColor = (it) => (it.status === "pending" ? "#FFD700" : it.status === "rejected" ? "#FF5A6E" : "#7CE0B0");
+const tabOfKind = (k) => (k === "venue" || k === "org" ? "onaylar" : k === "name" ? "ad" : "sorun");
+// öğe türü → Firestore kaynağı (loadAll'daki 3 sorgu) · sekme / başvuru türü süzgeci → beslendiği kaynaklar
+const SRC_OF = { venue: "venue", org: "org", name: "rep", report: "rep" };
+const TAB_SRCS = { onaylar: ["venue", "org"], ad: ["rep"], sorun: ["rep"] };
 const SUB_SRCS = { all: ["venue", "org"], venue: ["venue"], org: ["org"] };
 // "Mesaj gönder" adresi: yalnız düz e-posta (?, &, #, boşluk vb. yok → mailto'ya cc/bcc/body eklenemez); href'te ayrıca kodlanır
 const EMAIL_RE = /^[^\s@?&#%/\\:;,<>"'()[\]]+@[^\s@?&#%/\\:;,<>"'()[\]]+\.[^\s@?&#%/\\:;,<>"'()[\]]+$/;
@@ -102,15 +100,6 @@ function toItem(kind, r) {
       : [["ROL", "Organizatör"], ["E-POSTA", r.email || "—"], ["ŞEHİR", r.city || "—"], ["BAŞVURU", fmtDateNum(r.createdAt)]];
     return { kind, id: r.id, title, sub: kind === "venue" ? r.city || "—" : r.email || "—", col2: r.email || "—", color: kind === "venue" ? V : O,
       ini: ini(title), fields, email: r.email || null, emailUid: null, createdMs, raw: r };
-  }
-  if (kind === "vip") {
-    const title = r.title || "İsimsiz Etkinlik";
-    const when = r.eventAt ? fmtDateNum(r.eventAt) : r.date || "—";
-    const genres = eventGenres(r);
-    return { kind, id: r.id, title, sub: r.artistName || genres.join(", ") || "—", col2: [r.venueName, when !== "—" ? when : null].filter(Boolean).join(" · ") || "—",
-      color: V, ini: ini(title),
-      fields: [["MEKAN", r.venueName || "—"], ["TARİH", when], ["SAAT", r.startTime || (r.eventAt ? fmtTime(r.eventAt) : "") || "—"], ["SANATÇI", r.artistName || "—"], ["TÜR", genres.join(", ") || "—"]],
-      email: null, emailUid: null, createdMs, raw: r };
   }
   if (kind === "name") {
     const cur = r.currentName || "Mekan";
@@ -129,24 +118,23 @@ function toItem(kind, r) {
     msgLabel: "MESAJ", msg: r.message || "", email: null, emailAlt: r.reporterEmail || null, emailUid: r.reporterId || null, createdMs, raw: r };
 }
 const keyOf = (it) => `${it.kind}:${it.id}`;
-const KIND_ORDER = { venue: 0, org: 1, vip: 2, name: 3, report: 4 };
+const KIND_ORDER = { venue: 0, org: 1, name: 2, report: 3 };
 
 // Tüm listeleri yükle (kaynak başına hata: allSettled → _cache.src). Bu oturumda karar verilen öğeler (Firestore'da artık bekleyen değil)
 // listede yerinde kalır; yeni bekleyenler eklenir.
 function loadAll(uid) {
   if (_cache.loading) return _cache.loading;
   const startedAt = Date.now();
-  _cache.loading = Promise.allSettled([listPendingByRole("venue"), listPendingByRole("organizer"), listPendingVip(), listReports()]).then((res) => {
+  _cache.loading = Promise.allSettled([listPendingByRole("venue"), listPendingByRole("organizer"), listReports()]).then((res) => {
     if (_cache.uid !== uid) return;
-    const [ven, org, vip, rep] = res;
+    const [ven, org, rep] = res;
     const fresh = [];
     // kaynak başına hata (kısmi hata görünür kalsın: ör. yalnız organizatör sorgusu düşerse "Organizatör · —" + satır üstü uyarı)
-    const src = { venue: ven.status === "rejected", org: org.status === "rejected", vip: vip.status === "rejected", rep: rep.status === "rejected" };
+    const src = { venue: ven.status === "rejected", org: org.status === "rejected", rep: rep.status === "rejected" };
     if (ven.status === "fulfilled") ven.value.forEach((r) => fresh.push(toItem("venue", r)));
     if (org.status === "fulfilled") org.value.forEach((r) => fresh.push(toItem("org", r)));
-    if (vip.status === "fulfilled") vip.value.forEach((r) => fresh.push(toItem("vip", r)));
     if (rep.status === "fulfilled") rep.value.forEach((r) => fresh.push(toItem(r.type === "name_change" ? "name" : "report", r)));
-    [ven, org, vip, rep].forEach((x) => { if (x.status === "rejected") console.error(x.reason); });
+    [ven, org, rep].forEach((x) => { if (x.status === "rejected") console.error(x.reason); });
     const next = new Map();
     // Yarış koruması: yazımı süren (busy) ya da yenileme başladıktan SONRA karar verilen / geri alınan öğe AYNI nesneyle kalır —
     // decide()/undo() yakaladıkları nesnede biter; yeni nesne konsaydı satır "Bekliyor" + kilitli düğmelerle takılı kalıyordu.
@@ -177,24 +165,21 @@ function loadAll(uid) {
 }
 
 // ── Yazımlar (legacy data.js fonksiyonları birebir) + "Geri al" telafi yazımları ──
-// Geri al (spec §6): kurallar admin'e users {approved, approvedAt, rejected} · events {vipStatus, vipApprovedAt} · reports (tümü) izni veriyor.
+// Geri al (spec §6): kurallar admin'e users {approved, approvedAt, rejected} · reports (tümü) izni veriyor.
 // Ad değişikliğinde geri al YOK (displayName'i geri yazmak 90 günlük bekleme damgasını sıfırlar).
-// Yeni data.js yardımcıları önerildi (unapproveUser/unrejectUser/resetVip/reopenReport); data.js'e dokunulmadığı için burada yerel.
+// Yeni data.js yardımcıları önerildi (unapproveUser/unrejectUser/reopenReport); data.js'e dokunulmadığı için burada yerel.
 const undoWrite = {
-  // DATA-LOCAL (SHARED-CANDIDATE: spec §7 önerisi data.js'te unapproveUser / unrejectUser / resetVip / reopenReport)
+  // DATA-LOCAL (SHARED-CANDIDATE: spec §7 önerisi data.js'te unapproveUser / unrejectUser / reopenReport)
   user: (it) => updateDoc(doc(db, "users", it.id), it.status === "approved" ? { approved: false } : { rejected: false }),
-  vip: (it) => updateDoc(doc(db, "events", it.id), { vipStatus: "pending" }),
   report: (it) => updateDoc(doc(db, "reports", it.id), { status: it.raw?.status && it.raw.status !== "resolved" ? it.raw.status : "pending" }),
 };
 function writeDecision(it, ok) {
   if (it.kind === "venue" || it.kind === "org") return ok ? approveUser(it.id) : rejectUser(it.id);
-  if (it.kind === "vip") return ok ? approveVip(it.id) : rejectVip(it.id);
   if (it.kind === "name") return ok ? approveNameChange(it.raw) : rejectNameChange(it.raw);
   return resolveReport(it.id);
 }
 function writeUndo(it) {
   if (it.kind === "venue" || it.kind === "org") return undoWrite.user(it);
-  if (it.kind === "vip") return undoWrite.vip(it);
   if (it.kind === "report") return undoWrite.report(it);
   return Promise.reject(new Error("no-undo"));
 }
@@ -548,7 +533,6 @@ export function adminView(ctx) {
   // İletişim adresi: başvuran → users.email · ad isteği / sorun → önce users/{hedef|bildiren}.email (userById), yoksa rapordaki
   // reporterEmail (bildirenin kendi yazdığı alan; yedek). Hepsi safeEmail süzgecinden geçer. Getirme sürerken düğme gizli.
   function contactEmail(it) {
-    if (it.kind === "vip") return null;
     if (it.email || !it.emailUid) return safeEmail(it.email) || safeEmail(it.emailAlt);
     if (!_cache.emails.has(it.emailUid)) {
       const id = it.emailUid;
@@ -593,7 +577,7 @@ export function adminView(ctx) {
         h("span", {}, "Karar verildi: " + statusLabel(it)),
         canUndo(it) ? undoBtn(it, "dk-admin-panel-dundo", "dundo") : null));
     }
-    // "Mesaj gönder" (VIP hariç): yönetici sohbeti yok → mailto yedeği (spec §9); geçerli e-posta yoksa gizli
+    // "Mesaj gönder": yönetici sohbeti yok → mailto yedeği (spec §9); geçerli e-posta yoksa gizli
     const email = contactEmail(it);
     if (email) {
       acts.append(h("a", { class: "dk-admin-panel-dmsg dk-press", href: mailtoHref(email, "GigBridge – " + it.title) },
@@ -733,7 +717,6 @@ export function adminView(ctx) {
         const base = { createdAt: it.createdMs, read: it.createdMs <= seen, href };
         if (it.kind === "venue") return { ...base, title: "Yeni mekan başvurusu", body: `${it.title} onay bekliyor.`, icon: "building", color: V };
         if (it.kind === "org") return { ...base, title: "Yeni organizatör başvurusu", body: `${it.title} onay bekliyor.`, icon: "building", color: V };
-        if (it.kind === "vip") return { ...base, title: "VIP isteği", body: `“${it.title}” için VIP isteği geldi.`, icon: "sparklesAdmin", color: "#FFD700" };
         if (it.kind === "name") return { ...base, title: "Mekan adı isteği", body: `${it.raw.currentName || "Mekan"} ad değişikliği istedi.`, icon: "edit", color: V };
         return { ...base, title: "Sorun bildirimi", body: `${it.raw.reporterName || "Bir kullanıcı"} yeni bir bildirim gönderdi.`, icon: "flag", color: "#FF5A6E" };
       });

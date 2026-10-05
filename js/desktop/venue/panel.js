@@ -13,7 +13,7 @@
 //     acceptOrgRequest(req, profile); konum pinlenmemişse "Haritada görünmek için…" uyarısı; mesaj → requestChat → #/venue/mesaj
 //   · uzun dönem anlaşmalar (bekleyen + aktif; bekleyende de İptal), "bitiş dd.mm.yyyy" / "Sanatçı onayı bekleniyor",
 //     iptal onayı → cancelResidencyDoc; hata "İptal edilemedi"
-//   · etkinlik satırları: VIP / VIP onayda rozetleri, Onaylı/Bekliyor kuralı (org ‖ sanatçısız ‖ kabul edilmiş davet ‖
+//   · etkinlik satırları: VIP rozeti (yalnız onaylı eski kayıtlar — VIP talebi kaldırıldı), Onaylı/Bekliyor kuralı (org ‖ sanatçısız ‖ kabul edilmiş davet ‖
 //     confirmed/live/completed), davet ücreti, tür gradyanlı kapak yedeği, "Tüm etkinlikleri gör (N)" yerinde açılır /
 //     "Yalnız yaklaşanları göster" · önerilen sanatçı → Davet modalı (tek etkinlik / uzun dönem) doğrudan · boş durumlar ·
 //     yükleme hatası "Yüklenemedi / Bağlantıyı kontrol edip yenile."
@@ -487,7 +487,7 @@ export function venuePanelView(ctx) {
       ? h("img", { src: e.bannerUrl, alt: "", loading: "lazy", decoding: "async", class: c("thumb") })
       : h("span", { class: cx(c("thumb"), "is-ph"), style: { background: genreGrad(g, 135) }, "aria-hidden": "true" }, trUpper((g || "GB").slice(0, 2)));
     if (e.bannerUrl) thumb.addEventListener("error", () => thumb.replaceWith(h("span", { class: cx(c("thumb"), "is-ph"), style: { background: genreGrad(g, 135) }, "aria-hidden": "true" }, trUpper((g || "GB").slice(0, 2)))), { once: true });
-    const vip = e.vipStatus === "approved" ? "VIP" : e.vipStatus === "pending" ? "VIP ONAYDA" : null;
+    const vip = e.vipStatus === "approved" ? "VIP" : null;
     const price = isFree(e.ticketPrice) ? "Ücretsiz" : fmtTL(e.ticketPrice);
     const a = e.artistId ? data.artistsById.get(e.artistId) : null;
     const artistAv = e.artistName || e.artistId

@@ -9,7 +9,7 @@
 //   opts = {
 //     role:   "artist" | "venue" | "organizer" | "admin",
 //     active: artist: home|kesfet|top10|mekanlar|mesaj|profil · venue: home|olustur(CTA)|sanatci|analitik|mesaj|profil
-//             organizer: home|etkinlik|mekan|ekip|mesaj|profil · admin: onaylar|vip|ad|sorun
+//             organizer: home|etkinlik|mekan|ekip|mesaj|profil · admin: onaylar|ad|sorun
 //     title, subtitle (sanatçı: başlık üstte + alt satır), crumb (mekan: "Babylon Club / {crumb}" nav + h1; org/admin: mono eyebrow + başlık),
 //     search: { placeholder, onSubmit(q), onInput(q), value } | false  (mekan: "/" kısayolu + kbd çipi),
 //     headerActions: Node[] (arama öncesi; WebAdmin "Keşfet önizleme"),
@@ -87,7 +87,6 @@ const ROLES = {
     sections: [
       { label: "ONAYLAR", navLabel: "Yönetici sekmeleri", items: [
         ["onaylar", "Onaylar", "#/admin", "shieldCheck"],
-        ["vip", "VIP İstekleri", "#/admin/vip", "sparklesAdmin"],
         ["ad", "Mekan Adı İstekleri", "#/admin/ad", "edit"],
         ["sorun", "Sorun Bildirimleri", "#/admin/sorun", "flag"],
       ] },

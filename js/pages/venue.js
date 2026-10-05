@@ -410,8 +410,7 @@ function evRow(ev, acc) {
       (g || "GB").slice(0, 2).toLocaleUpperCase("tr-TR")),
     h("div", { class: "grow", style: { minWidth: "0" } },
       h("div", { class: "vx-ev-title" }, ev.title || "Etkinlik",
-        ev.vipStatus === "approved" ? h("span", { class: "vx-vippill" }, icon("sparkles", { size: 9, color: AMBER }), "VIP") : null,
-        ev.vipStatus === "pending" ? h("span", { class: "vx-vippill" }, "VIP onayda") : null),
+        ev.vipStatus === "approved" ? h("span", { class: "vx-vippill" }, icon("sparkles", { size: 9, color: AMBER }), "VIP") : null),
       h("div", { class: "vx-ev-meta" }, icon("mic-outline", { size: 11, color: "var(--text-secondary)" }), h("span", {}, ev.artistName || "Sanatçı yok"))),
     h("div", { class: "vx-ev-right" },
       h("div", { class: "vx-ev-date" }, icon("calendar-outline", { size: 11, color: "var(--text-muted)" }), h("span", {}, shortDate(ev))),
@@ -615,7 +614,7 @@ export async function renderCreate(root) {
   clear(root);
   const p = session.profile || {};
   const venueCap = Number(p.capacity) || null;
-  let artistSel = null, artistKind = null, vip = false, genreSel = "";
+  let artistSel = null, artistKind = null, genreSel = "";
 
   // Kapak fotoğrafı (16:9)
   const pic = photoPicker("Fotoğraf seç ve kaydırarak konumlandır (16:9)", undefined, { aspect: 16 / 9 });
@@ -671,11 +670,6 @@ export async function renderCreate(root) {
     genreSel = genreSel === g ? "" : g; gInput.value = genreSel; paintG();
   } }, g)));
 
-  // VIP — Standart / VIP İste (iki buton)
-  const stdBtn = h("button", { type: "button", class: "vx-vipbtn on", onclick: () => setVip(false) }, h("span", {}, "Standart"));
-  const vipBtn = h("button", { type: "button", class: "vx-vipbtn", onclick: () => setVip(true) }, icon("sparkles", { size: 14 }), h("span", {}, "VIP İste"));
-  const setVip = (x) => { vip = x; stdBtn.classList.toggle("on", !x); vipBtn.classList.toggle("on", x); };
-
   const msgEl = h("p", { class: "msg" });
   const submit = h("button", { class: "vx-submit", onclick: doCreate }, "Etkinliği Yayınla");
 
@@ -698,7 +692,7 @@ export async function renderCreate(root) {
     if (myEvents.some((e) => e.date === date && (e.title || "").trim().toLocaleLowerCase("tr-TR") === lcT))
       return fail(msgEl, "Aynı gün aynı adla bir etkinlik zaten var.");
     if (time && end && time === end) return fail(msgEl, "Bitiş saati başlangıçla aynı olamaz.");
-    const f = { title, date, time, genre: (genreSel || v("#cgenre")).trim(), price: v("#cprice"), capacity: v("#ccap"), description: v("#cdesc"), vip };
+    const f = { title, date, time, genre: (genreSel || v("#cgenre")).trim(), price: v("#cprice"), capacity: v("#ccap"), description: v("#cdesc") };
     if (artistSel && artistKind === "artist") {
       f.artistId = artistSel.id; f.artistName = nameOf(artistSel);
       if (!(Number(v("#cfee")) >= MIN_STAGE_FEE)) return fail(msgEl, `Sanatçı seçtiysen sahne ücreti en az ₺${MIN_STAGE_FEE.toLocaleString("tr-TR")} olmalı.`);
@@ -719,7 +713,7 @@ export async function renderCreate(root) {
         const dup = await findExistingInvitation(session.user.uid, artistSel.id, date).catch(() => null);
         if (!dup) await createInvitation(session.profile, artistSel, { date, time, fee: v("#cfee"), message: "", photoUrl: f.bannerUrl ?? null, eventId });
       }
-      toast(vip ? "Yayınlandı — VIP onayına düştü" : (artistSel && artistKind === "artist") ? "Yayınlandı — sanatçıya teklif gönderildi" : "Etkinlik yayınlandı");
+      toast((artistSel && artistKind === "artist") ? "Yayınlandı — sanatçıya teklif gönderildi" : "Etkinlik yayınlandı");
       location.hash = "#/venue";
     } catch (e) { fail(msgEl, "Oluşturulamadı."); submit.disabled = false; }
   }
@@ -742,9 +736,6 @@ export async function renderCreate(root) {
       placeholder: venueCap ? `${venueCap} (mekan kapasitesi)` : "Sınırsız",
       hint: venueCap ? `Boş bırakırsanız mekan kapasitesi (${venueCap} kişi) uygulanır.` : "Boş bırakırsanız sınırsız sayılır. Mekan kapasitenizi Profil > Kapasite bölümünden girebilirsiniz." }),
     field({ label: "Açıklama", id: "cdesc", placeholder: "Etkinlik hakkında kısa bilgi...", multiline: true }),
-    h("span", { class: "vx-lbl" }, "VIP Etkinlik"),
-    h("div", { class: "vx-vipseg" }, stdBtn, vipBtn),
-    h("span", { class: "vx-help" }, "VIP etkinlikler onaylanınca müşteride en üstteki kayan alanda en önde + “VIP DENEYİM” rozetiyle gösterilir. İsteğin GigBridge ekibinin onayına düşer."),
   ), submit, msgEl);
 }
 
