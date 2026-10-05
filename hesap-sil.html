@@ -8,11 +8,9 @@
 <link rel="canonical" href="https://gigbridges.com/hesap-sil.html" />
 <link rel="icon" type="image/png" href="favicon.png" />
 <meta name="theme-color" content="#06070A" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="/assets/fonts/gb-fonts.css" />
-<link rel="stylesheet" href="/assets/seo.css?v=20260929s" />
-<script src="/assets/seo.js?v=20260929s" defer></script>
+<link rel="stylesheet" href="/assets/seo.css?v=20260930f" />
+<script src="/assets/seo.js?v=20260930f" defer></script>
 </head>
 <body class="gb gb-pg-delete">
   <a class="gb-skip" href="#icerik">İçeriğe geç</a>
@@ -150,9 +148,10 @@
               <span class="gb-field gb-field-ro"><input type="text" value="Hesap Silme Talebi" readonly><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A8E97" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
             </label>
             <label class="gb-agree">
-              <input type="checkbox" class="gb-chk" name="onay" required data-gb-agree>
+              <input type="checkbox" class="gb-chk" name="onay" required aria-describedby="gb-agree-err" data-gb-agree>
               <span>Hesabımın ve ilişkili verilerimin <strong>kalıcı olarak</strong> silineceğini ve bu işlemin <strong>geri alınamayacağını</strong> anladım.</span>
             </label>
+            <span class="gb-fld-err gb-agree-err" id="gb-agree-err" role="alert" data-gb-agree-err></span>
             <button type="submit" class="gb-danger gb-press" data-gb-del-submit><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg>Silme talebi gönder</button>
             <noscript><a class="gb-del-noscript" href="mailto:gigbridge.tr@gmail.com?subject=Hesap%20Silme%20Talebi">E-posta ile talep gönder</a></noscript>
             <p class="gb-del-foot">Talep gigbridge.tr@gmail.com adresine iletilir. Hesap silme talepleri için herhangi bir ücret alınmaz.</p>

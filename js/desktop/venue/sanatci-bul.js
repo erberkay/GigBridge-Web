@@ -103,6 +103,10 @@ function isoToTRDate(iso) {
 const formatTL = (n) => "₺" + Number(n).toLocaleString("tr-TR");
 const formatDays = (days) => [...days].sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7)).map((d) => DAYS_TR_SHORT[d]).join(", ");
 const pad2 = (n) => String(n).padStart(2, "0");
+// Gruba uzun dönem anlaşma gönderilemez (app: createResidency bireysel sanatçı ister) → düğme görünür ama aria-disabled + açıklama
+const LONG_GROUP_MSG = "Uzun dönem anlaşma yalnızca bireysel sanatçıya gönderilebilir. Gruba \"Tek Etkinlik\" teklifi gönderebilirsiniz.";
+// Ad + (varsa) biyografi → başlık ipucu (tabloda kesilen adlar okunabilsin; legacy bio satırı)
+const titleOf = (x) => (x.bio ? `${nameOf(x)} — ${x.bio}` : nameOf(x));
 let _mid = 0; // davet modalı sekme/panel kimlikleri
 
 // ── salt-okuma yerel sorgular (tek alan eşitliği; mevcut kurallar/indekslerle) ──
@@ -357,8 +361,12 @@ export function venueSanatciBulView(ctx) {
     return b;
   }
   function longBtn(x, variant) {
-    return h("button", { type: "button", class: cx("dk-mekan-sanatci-bul-long dk-press", variant === "row" && "is-row"), "aria-label": "Uzun dönem anlaşma teklif et: " + nameOf(x),
-      title: "Uzun Dönem Anlaşma", onclick: (e) => { e.stopPropagation(); openInvite(x, "longterm"); } }, ico("repeat", variant === "row" ? 15 : 16));
+    const isG = !!x._group;
+    // Grup: artboard'daki tekrar düğmesi korunur ama devre dışı (aria-disabled — odaklanabilir, tıklayınca açıklama gösterir)
+    return h("button", { type: "button", class: cx("dk-mekan-sanatci-bul-long dk-press", variant === "row" && "is-row", isG && "is-off"),
+      "aria-label": "Uzun dönem anlaşma teklif et: " + nameOf(x) + (isG ? " (gruplara gönderilemez)" : ""), "aria-disabled": isG ? "true" : null,
+      title: isG ? LONG_GROUP_MSG : "Uzun Dönem Anlaşma",
+      onclick: (e) => { e.stopPropagation(); if (isG) dkToast(LONG_GROUP_MSG, { type: "info" }); else openInvite(x, "longterm"); } }, ico("repeat", variant === "row" ? 15 : 16));
   }
   function mediaOf(x, size) {
     const name = nameOf(x), g = genreOf(x);
@@ -374,7 +382,7 @@ export function venueSanatciBulView(ctx) {
   }
   function card(x, rank) {
     const isG = !!x._group, name = nameOf(x), g = genreOf(x), fam = genreFamily(g), r = ratingOf(x);
-    const cityLine = isG ? `${membersOf(x)} üye · ${x.city || "—"}` : [x.city, x.district].filter(Boolean).join(" · ");
+    const cityLine = isG ? [`${membersOf(x)} üye`, x.city].filter(Boolean).join(" · ") : [x.city, x.district].filter(Boolean).join(" · ");
     const media = h("div", { class: "dk-mekan-sanatci-bul-media" },
       mediaOf(x, "card"),
       h("span", { class: "dk-mekan-sanatci-bul-gtag" }, h("span", { class: "dk-mekan-sanatci-bul-gdot", style: { background: fam.color } }), trUpper(g || "Müzik")),
@@ -383,8 +391,8 @@ export function venueSanatciBulView(ctx) {
         h("span", { "aria-hidden": "true" }, "#"), h("span", { "aria-hidden": "true" }, String(rank + 1))) : null,
       isG ? null : watchBtn(x, "card"));
     const nameEl = isG
-      ? h("span", { class: "dk-mekan-sanatci-bul-name" }, h("span", { class: "dk-mekan-sanatci-bul-nm" }, name), h("span", { class: "dk-mekan-sanatci-bul-grp" }, "Grup"))
-      : h("span", { class: "dk-mekan-sanatci-bul-name" }, h("a", { href: perfHref(x), class: "dk-mekan-sanatci-bul-nm", title: x.bio || null }, name));
+      ? h("span", { class: "dk-mekan-sanatci-bul-name" }, h("span", { class: "dk-mekan-sanatci-bul-nm", title: titleOf(x) }, name), h("span", { class: "dk-mekan-sanatci-bul-grp" }, "Grup"))
+      : h("span", { class: "dk-mekan-sanatci-bul-name" }, h("a", { href: perfHref(x), class: "dk-mekan-sanatci-bul-nm", title: titleOf(x) }, name));
     const followers = x.followerCount != null || !isG ? h("span", { class: "dk-mekan-sanatci-bul-fol" }, shortNumTR(x.followerCount ?? 0) + " takipçi") : null;
     const att = attOf(x);
     // .dk-card YOK: dk-base'in `.dk-card:hover img { scale(1.05) }` kuralı artboard'da yok (.gb-card yalnız kaldırır + kenar)
@@ -400,8 +408,8 @@ export function venueSanatciBulView(ctx) {
         h("div", { class: "dk-mekan-sanatci-bul-div" },
           h("span", { class: "dk-mekan-sanatci-bul-att" }, ico("trend", 12), att ? fmtInt(att) + " katılım" : "Henüz katılım yok"),
           h("span", { class: "dk-mekan-sanatci-bul-fee" }, feeLabel(x))),
-        // gruba uzun dönem anlaşma yok (app paritesi) → tekrar düğmesi yalnız solo
-        h("div", { class: "dk-mekan-sanatci-bul-acts" }, isG ? null : longBtn(x, "card"), inviteBtn(x, "card"))));
+        // gruba uzun dönem anlaşma yok (app paritesi) → grupta tekrar düğmesi devre dışı (artboard yerleşimi korunur)
+        h("div", { class: "dk-mekan-sanatci-bul-acts" }, longBtn(x, "card"), inviteBtn(x, "card"))));
     if (!isG) art.addEventListener("click", (e) => { if (e.target.closest("button,a")) return; location.hash = perfHref(x); });
     return art;
   }
@@ -410,13 +418,13 @@ export function venueSanatciBulView(ctx) {
     const el = h("div", { role: "row", class: cx("dk-mekan-sanatci-bul-tr dk-mekan-sanatci-bul-row dk-row", !isG && "is-link") },
       h("span", { role: "cell", class: "dk-mekan-sanatci-bul-who" }, mediaOf(x, "row"),
         h("span", { class: "dk-mekan-sanatci-bul-whocol" },
-          isG ? h("span", { class: "dk-mekan-sanatci-bul-rn" }, name) : h("a", { href: perfHref(x), class: "dk-mekan-sanatci-bul-rn", title: x.bio || null }, name),
+          isG ? h("span", { class: "dk-mekan-sanatci-bul-rn", title: titleOf(x) }, name) : h("a", { href: perfHref(x), class: "dk-mekan-sanatci-bul-rn", title: titleOf(x) }, name),
           h("span", { class: "dk-mekan-sanatci-bul-rsub", style: { color: fam.color } }, (isG ? "Grup · " : "") + (g || "Müzik")))),
       h("span", { role: "cell", class: "dk-mekan-sanatci-bul-rcity c-city" }, x.city || "—"),
       h("span", { role: "cell", class: "dk-mekan-sanatci-bul-rrate" }, starIco(12, "#FF8A2A"), r ? r.toFixed(1) : "Yeni"),
       h("span", { role: "cell", class: "dk-mekan-sanatci-bul-ratt c-att" }, att ? fmtInt(att) : "—"),
       h("span", { role: "cell", class: cx("dk-mekan-sanatci-bul-rfee", !feeRange(x) && "is-none"), title: feeRange(x) ? null : feeLabel(x) }, feeLabel(x)),
-      h("span", { role: "cell", class: "dk-mekan-sanatci-bul-racts c-act" }, isG ? null : watchBtn(x, "row"), isG ? null : longBtn(x, "row"), inviteBtn(x, "row")));
+      h("span", { role: "cell", class: "dk-mekan-sanatci-bul-racts c-act" }, isG ? null : watchBtn(x, "row"), longBtn(x, "row"), inviteBtn(x, "row")));
     if (!isG) el.addEventListener("click", (e) => { if (e.target.closest("button,a")) return; location.hash = perfHref(x); });
     return el;
   }
@@ -480,7 +488,13 @@ export function venueSanatciBulView(ctx) {
       onClose: () => { drawer = null; filterSlot.append(filters); } });
   }
   const wideMq = window.matchMedia("(min-width: 1280px)");
-  const onMq = () => { if (wideMq.matches && drawer) drawer.close(); };
+  // ≥1280'de çekmece kendiliğinden kapanır; geri dönüş hedefi ("Filtreler" düğmesi) orada gizli → odağı paneldeki aramaya taşı
+  const onMq = () => {
+    if (!wideMq.matches || !drawer) return;
+    const had = drawer.node.contains(document.activeElement);
+    drawer.close();
+    if (had || document.activeElement === document.body) requestAnimationFrame(() => { if (alive && fSearch.isConnected) try { fSearch.focus({ preventScroll: true }); } catch (_) {} });
+  };
   wideMq.addEventListener("change", onMq);
   unsubs.push(() => wideMq.removeEventListener("change", onMq));
   unsubs.push(() => { if (drawer) drawer.close(); });
@@ -528,7 +542,7 @@ export function venueSanatciBulView(ctx) {
     fileInp.addEventListener("change", async () => {
       const picked = fileInp.files?.[0] || null; fileInp.value = "";
       if (!picked) return;
-      const blob = await cropWithKeys(picked);
+      const blob = await cropWithKeys(picked, photoBtn);
       if (!blob || !alive) return;
       photoBlob = blob;
       const url = URL.createObjectURL(blob);
@@ -561,7 +575,6 @@ export function venueSanatciBulView(ctx) {
       b.dataset.k = k; return b;
     });
     // Gruba uzun dönem anlaşma gönderilemez (app) → sekme devre dışı + açıklama (hata yolu yerine)
-    const LONG_GROUP_MSG = "Uzun dönem anlaşma yalnızca bireysel sanatçıya gönderilebilir. Gruba \"Tek Etkinlik\" teklifi gönderebilirsiniz.";
     if (isG) { tabs[1].disabled = true; tabs[1].setAttribute("aria-disabled", "true"); tabs[1].title = LONG_GROUP_MSG; if (mode === "longterm") mode = "single"; }
     const tabList = h("div", { role: "tablist", "aria-label": "Davet türü", class: "dk-mekan-sanatci-bul-mtabs" }, ...tabs);
     tabList.addEventListener("keydown", (e) => {
@@ -632,6 +645,8 @@ export function venueSanatciBulView(ctx) {
             await sendNotification(x.id, { type: "event_invite", title: "Yeni Sahne Teklifi 🎤", body, fromName: venue.displayName ?? "Mekan",
               extra: { eventId: null, relatedUserId: null } }).catch(() => {});
           }
+          // bağlanan etkinlik artık bekleyen teklife bağlı → sonraki davetlerde seçilemez (çift rezervasyon önlemi)
+          if (f.eventId) upcoming = upcoming.filter((e) => e.id !== f.eventId);
           close("action");   // önce kapat (odak geri yükleme), sonra yeniden çiz + yeni düğmeye odak
           markSent(x, true);
           dkToast("Davet gönderildi");
@@ -674,7 +689,9 @@ export function venueSanatciBulView(ctx) {
 
   // Legacy openImageCropper (#modal-root, z 3000) klavye desteği: davet modalının belge düzeyi ESC/Tab'ı kırpıcıya gitmesin.
   // SHARED-CANDIDATE: dk görünümlü, klavye erişilebilir ortak kırpıcı (profil.js de legacy kırpıcıyı kullanıyor).
-  function cropWithKeys(file) {
+  let cropOvl = null; // açık legacy kırpıcının katmanı (görünüm kapanırsa iptal edilir)
+  unsubs.push(() => { if (cropOvl?.isConnected) cropOvl.dispatchEvent(new MouseEvent("click", { bubbles: true })); cropOvl = null; });
+  function cropWithKeys(file, restoreEl) {
     const mr = document.getElementById("modal-root");
     const ovl = () => mr?.querySelector(".cr-overlay:last-child");
     const onKey = (e) => {
@@ -688,10 +705,14 @@ export function venueSanatciBulView(ctx) {
         f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
       }
     };
-    const mo = mr ? new MutationObserver(() => { const o = ovl(); if (o) { mo.disconnect(); o.querySelector(".cr-actions button:last-child")?.focus(); } }) : null;
+    const mo = mr ? new MutationObserver(() => { const o = ovl(); if (o) { mo.disconnect(); cropOvl = o; o.querySelector(".cr-actions button:last-child")?.focus(); } }) : null;
     mo?.observe(mr, { childList: true });
     window.addEventListener("keydown", onKey, true);
-    return openImageCropper(file, { aspect: 16 / 9 }).catch(() => null).finally(() => { window.removeEventListener("keydown", onKey, true); mo?.disconnect(); });
+    return openImageCropper(file, { aspect: 16 / 9 }).catch(() => null).finally(() => {
+      window.removeEventListener("keydown", onKey, true); mo?.disconnect(); cropOvl = null;
+      // kırpıcı kapandı (Uygula / İptal / Esc) → odak davet modalındaki fotoğraf düğmesine döner (body'ye düşmesin)
+      if (alive && restoreEl?.isConnected) try { restoreEl.focus({ preventScroll: true }); } catch (_) {}
+    });
   }
 
   // ══════════════════════════════════════════════════════════════════════
@@ -715,9 +736,15 @@ export function venueSanatciBulView(ctx) {
     artists = as.v;
     groups = gs.map((g) => ({ ...g, _group: true }));
     watched = new Set(ws.map((w) => w.artistId || w.id));
-    invs.filter((v) => v.status === "pending").forEach((v) => { if (v.groupId) sent.add("g:" + v.groupId); else if (v.artistId) sent.add("a:" + v.artistId); });
+    const today = isoDate(Date.now());
+    // "Gönderildi ✓" yalnız tarihi geçmemiş bekleyen tekliflerden (eski bekleyen teklif sanatçıyı süresiz işaretlemesin)
+    invs.filter((v) => v.status === "pending" && (!v.eventDate || String(v.eventDate) >= today))
+      .forEach((v) => { if (v.groupId) sent.add("g:" + v.groupId); else if (v.artistId) sent.add("a:" + v.artistId); });
+    // Bekleyen/kabul edilmiş bir teklife zaten bağlı etkinlikler seçilemez: respondToOffer kabulde events/{eventId}.artistId'yi
+    // koşulsuz yazar → aynı etkinliğe ikinci teklif çift rezervasyon olurdu.
+    const linked = new Set(invs.filter((v) => v.eventId && (v.status === "pending" || v.status === "accepted")).map((v) => v.eventId));
     const now = Date.now();
-    upcoming = evs.filter((e) => e.status !== "cancelled" && !e.artistId && !e.organizerId)
+    upcoming = evs.filter((e) => e.status !== "cancelled" && !e.artistId && !e.organizerId && !linked.has(e.id))
       .map((e) => ({ ...e, _ms: eventStartMs(e) }))
       .filter((e) => e._ms != null && e._ms > now)
       .sort((a, b) => a._ms - b._ms)

@@ -48,6 +48,8 @@
 /* ═════════ kart ortakları ═════════ */
 .dk-mekan-panel .dk-mekan-panel-card { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; min-width: 0; }
 .dk-mekan-panel section.dk-mekan-panel-card { overflow: hidden; }
+/* etkinlik kartı: tablo yoğunluğu kart genişliğine göre (container query) */
+.dk-mekan-panel .dk-mekan-panel-evcard { container-type: inline-size; }
 .dk-mekan-panel .dk-mekan-panel-pad { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 .dk-mekan-panel .dk-mekan-panel-sh { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .dk-mekan-panel .dk-mekan-panel-eb { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: #8A8E97; }
@@ -88,9 +90,10 @@
 .dk-mekan-panel .dk-mekan-panel-tonight { flex-shrink: 0; height: 20px; padding: 0 7px; display: flex; align-items: center; border-radius: 4px; background: rgba(255,90,110,0.12); color: #FF5A6E; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; }
 .dk-mekan-panel .dk-mekan-panel-vip { flex-shrink: 0; height: 20px; padding: 0 7px; display: flex; align-items: center; gap: 4px; border-radius: 4px; border: 1px solid rgba(255,138,42,0.45); color: #FF8A2A; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; }
 .dk-mekan-panel .dk-mekan-panel-evg { display: flex; align-items: center; gap: 6px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; white-space: nowrap; min-width: 0; }
-.dk-mekan-panel .dk-mekan-panel-gname { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+/* tür adı önce korunur; dar sütunda önce fiyat eki kısalır (flex-shrink ağırlığı) */
+.dk-mekan-panel .dk-mekan-panel-gname { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .dk-mekan-panel .dk-mekan-panel-gdot { width: 6px; height: 6px; border-radius: 50%; display: block; flex-shrink: 0; }
-.dk-mekan-panel .dk-mekan-panel-gprice { display: none; color: #A3A7AF; flex-shrink: 0; }
+.dk-mekan-panel .dk-mekan-panel-gprice { display: none; color: #A3A7AF; flex: 0 99 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dk-mekan-panel .dk-mekan-panel-evar { display: none; font-size: 12.5px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dk-mekan-panel .dk-mekan-panel-ar { min-width: 0; display: flex; align-items: center; gap: 10px; }
 .dk-mekan-panel .dk-mekan-panel-ar .dk-av { flex-shrink: 0; }
@@ -99,7 +102,6 @@
 .dk-mekan-panel .dk-mekan-panel-arn { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dk-mekan-panel .dk-mekan-panel-arf { font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dk-mekan-panel .dk-mekan-panel-price { font-family: var(--dk-font-mono); font-size: 14px; font-weight: 600; white-space: nowrap; }
-.dk-mekan-panel .dk-mekan-panel-price.is-free { color: #7CE0B0; }
 .dk-mekan-panel .dk-mekan-panel-att { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
 .dk-mekan-panel .dk-mekan-panel-attt { font-size: 13px; color: #A3A7AF; white-space: nowrap; }
 .dk-mekan-panel .dk-mekan-panel-attn { color: #F2F1EE; font-weight: 600; }
@@ -245,9 +247,10 @@
 }
 /* 1024–1279: KPI + hızlı eylemler 2×2, hero yığılır, alt ızgara 2 kolon (öneriler iki kolona yayılır, satırları 3 kolon).
    Tablo: spec'in <1440 ızgarası 1024–1199'da başlık sütununu ~0'a indiriyordu → ≤1279 sıkışık tablo: SANATÇI sütunu düşer,
-   sanatçı + ücret etkinlik hücresinin 3. satırında (yatay kaydırma yok; 769–1023 aynı düzen). */
+   sanatçı + ücret etkinlik hücresinin 3. satırında (yatay kaydırma yok; 769–1023 aynı düzen). Sabit sütunlar içeriğe göre
+   daraltıldı (KATILIMCI 100 · DURUM 108 = "Tamamlandı" hapı · İŞLEM 80 · boşluk 12) → ETKİNLİK sütunu en geniş kalır. */
 @media (max-width: 1279px) {
-  .dk-mekan-panel .dk-mekan-panel-tr { grid-template-columns: 76px minmax(0, 1fr) 120px 110px 90px; }
+  .dk-mekan-panel .dk-mekan-panel-tr { grid-template-columns: 76px minmax(0, 1fr) 100px 108px 80px; gap: 12px; }
   .dk-mekan-panel .dk-mekan-panel-colartist { display: none; }
   .dk-mekan-panel .dk-mekan-panel-evar { display: block; }
   .dk-mekan-panel .dk-mekan-panel-evcol { gap: 3px; }
@@ -255,6 +258,10 @@
   .dk-mekan-panel .dk-mekan-panel-hero { flex-direction: column; align-items: stretch; gap: 20px; }
   .dk-mekan-panel .dk-mekan-panel-pair > .dk-mekan-panel-paircell { flex: 1 1 0; }
   .dk-mekan-panel .dk-mekan-panel-kpis4, .dk-mekan-panel .dk-mekan-panel-qas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Dar etkinlik kartı (<740: 1024–1099 ve 769–~800): küçük kapak düşer → başlık + rozetler için ~56 px (VIP ONAYDA'lı başlık ≥120 px) */
+@container (max-width: 739px) {
+  .dk-mekan-panel .dk-mekan-panel-ev .dk-mekan-panel-thumb { display: none; }
 }
 /* 769–1023: sıkışık tablo (yukarıda), alt ızgara tek kolon */
 @media (max-width: 1023px) {

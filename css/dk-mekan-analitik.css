@@ -59,7 +59,7 @@
 .dk-mekan-analitik-sseg { display: flex; padding: 3px; border: 1px solid #1F232B; border-radius: 8px; background: #0A0B0F; flex-shrink: 0; }
 .dk-mekan-analitik-sb { height: 30px; padding: 0 12px; border: 0; border-radius: 5px; background: transparent; color: #8A8E97; font-size: 13px; font-weight: 500; }
 .dk-mekan-analitik-sb[aria-checked="true"] { background: #1C2029; color: #F2F1EE; }
-.dk-mekan-analitik-dempty { box-sizing: border-box; border: 1px dashed #2C303A; border-radius: 10px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 16px; font-size: 13.5px; color: #8A8E97; }
+.dk-mekan-analitik-dempty { border: 1px dashed #2C303A; border-radius: 10px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 16px; font-size: 13.5px; color: #8A8E97; }
 .dk-mekan-analitik-foot, .dk-mekan-analitik-note { font-size: 12px; color: #8A8E97; }
 .dk-mekan-analitik-card.is-genre .dk-mekan-analitik-foot { margin-top: auto; }
 .dk-mekan-analitik-distrow { margin-top: auto; display: flex; }
@@ -92,7 +92,7 @@
 .dk-mekan-analitik-barv.is-first { color: #FF8A2A; }
 .dk-mekan-analitik-barrest { color: #8A8E97; font-weight: 400; }
 .dk-mekan-analitik-track { height: 8px; border-radius: 4px; background: #14171D; display: block; overflow: hidden; }
-.dk-mekan-analitik-fillw { height: 100%; display: block; }  /* genişlik + soluklaştırma (1 / .45); animasyon içteki dolguda */
+.dk-mekan-analitik-fillw { height: 100%; display: block; }  /* genişlik; replay animasyonu içteki dolguda (ref PNG: tümü tam turuncu) */
 .dk-mekan-analitik-fill { width: 100%; height: 100%; border-radius: 4px; background: #FF8A2A; display: block; }
 
 /* ── 03 Sütun grafik ── */
@@ -100,7 +100,7 @@
 .dk-mekan-analitik-col { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
 .dk-mekan-analitik-colv { font-family: var(--dk-font-mono); font-size: 10.5px; color: #8A8E97; }
 .dk-mekan-analitik-colv.is-top { color: #F2F1EE; }
-.dk-mekan-analitik-colbarw { width: 100%; min-height: 2px; display: block; }  /* yükseklik + soluklaştırma (1 / .38) */
+.dk-mekan-analitik-colbarw { width: 100%; min-height: 2px; display: block; }  /* yükseklik; animasyon içteki çubukta (ref PNG: tümü tam turuncu) */
 .dk-mekan-analitik-colbar { width: 100%; height: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: #FF8A2A; display: block; }
 .dk-mekan-analitik-coll { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; color: #8A8E97; }
 
@@ -121,7 +121,7 @@
 .dk-mekan-analitik-rnc { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .dk-mekan-analitik-rn { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* alt satır en çok 2 satır (artboard da kırıyor): 1440'ta 90 px ad kolonunda "{tür} · {n} etkinlik" kesilmesin; 56 px satıra sığar */
-.dk-mekan-analitik-rs { font-size: 12px; line-height: 1.2; color: #8A8E97; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: anywhere; }
+.dk-mekan-analitik-rs { font-size: 12px; line-height: 16px; color: #8A8E97; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: anywhere; }
 .dk-mekan-analitik-rright { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
 .dk-mekan-analitik-rv { font-family: var(--dk-font-mono); font-size: 13px; font-weight: 600; }
 .dk-mekan-analitik-rvl { font-size: 11px; color: #8A8E97; }
@@ -149,7 +149,10 @@
 .dk-mekan-analitik-pev { height: 44px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #14171D; }
 .dk-mekan-analitik-pevcol { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .dk-mekan-analitik-pevt { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dk-mekan-analitik-pevm { font-size: 11.5px; color: #8A8E97; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* meta: mekan adı kısalır (üç nokta), " · tarih" (yıl dahil) hep tam */
+.dk-mekan-analitik-pevm { display: flex; min-width: 0; font-size: 11.5px; color: #8A8E97; white-space: nowrap; }
+.dk-mekan-analitik-pevmv { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dk-mekan-analitik-pevmd { flex-shrink: 0; white-space: pre; }  /* baştaki boşluk esnek öğede kırpılmasın */
 .dk-mekan-analitik-peva { display: flex; align-items: center; gap: 4px; color: #FF8A2A; flex-shrink: 0; }
 .dk-mekan-analitik-peva > span { font-family: var(--dk-font-mono); font-size: 12.5px; font-weight: 600; color: #F2F1EE; }
 
@@ -157,7 +160,7 @@
 .dk-mekan-analitik-thead { padding: 20px 24px 16px; }
 .dk-mekan-analitik-trange { font-family: var(--dk-font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; white-space: nowrap; }
 .dk-mekan-analitik-tr { box-sizing: border-box; padding: 0 24px; display: grid; grid-template-columns: 64px minmax(0, 1fr) 150px 96px 100px; gap: 14px; align-items: center; border-bottom: 1px solid #14171D; }
-.dk-mekan-analitik-th { height: 36px; border-top: 1px solid #14171D; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
+.dk-mekan-analitik-th { white-space: nowrap; height: 36px; border-top: 1px solid #14171D; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
 .dk-mekan-analitik-threv { text-align: right; }
 .dk-mekan-analitik-trow { height: 54px; transition: background-color 160ms ease; }
 .dk-mekan-analitik-trow:hover { background: #0C0E12; }
@@ -175,12 +178,20 @@
 .dk-mekan-analitik-prog { height: 4px; border-radius: 2px; background: #1F232B; display: block; overflow: hidden; }
 .dk-mekan-analitik-prog > span { height: 100%; background: #FF8A2A; display: block; }
 .dk-mekan-analitik-trev { font-family: var(--dk-font-mono); font-size: 12.5px; text-align: right; white-space: nowrap; }
-.dk-mekan-analitik-status { height: 24px; box-sizing: border-box; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 12px; border: 1px solid #2C303A; color: #A3A7AF; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.dk-mekan-analitik-status { height: 24px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 12px; border: 1px solid #2C303A; color: #A3A7AF; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .dk-mekan-analitik-status.is-cancel { border-color: rgba(255,90,110,0.4); color: #FF5A6E; }
 .dk-mekan-analitik-status.is-live { border-color: rgba(124,224,176,0.35); background: rgba(124,224,176,0.10); color: #7CE0B0; }
 .dk-mekan-analitik-tempty { height: 100px; display: flex; align-items: center; justify-content: center; font-size: 13.5px; color: #8A8E97; border-bottom: 1px solid #14171D; }
 .dk-mekan-analitik-tfoot { height: 48px; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 13px; color: #8A8E97; }
 .dk-mekan-analitik-more { height: 32px; padding: 0; border: 0; background: none; font-size: 13px; }
+/* Dar tablo kartı (1440'ta kart içi 718; 1280–1439'da 613–700): sabit kolonlar ETKİNLİK'i ~100 px'e eziyordu → TARİH 56, KATILIM 130,
+   GELİR kolonu gizli (gelir alt satırda "· gelir ₺…"). 1440 ve tam genişlik (1024–1279) artboard ızgarasıyla kalır. */
+.dk-mekan-analitik-card.is-table { container: dkma-tbl / inline-size; }
+@container dkma-tbl (max-width: 699.5px) {
+  .dk-mekan-analitik-tr { grid-template-columns: 56px minmax(0, 1fr) 130px 100px; }
+  .dk-mekan-analitik-trev, .dk-mekan-analitik-threv { display: none; }
+  .dk-mekan-analitik-tsubrev { display: inline; }
+}
 
 /* ── 06 Yorumlar ── */
 .dk-mekan-analitik-score { display: flex; align-items: center; gap: 16px; }
@@ -210,7 +221,7 @@
 /* ── Yükleniyor / hata ── */
 .dk-mekan-analitik-skel { display: flex; flex-direction: column; gap: 16px; }
 .dk-mekan-analitik-skel .dk-mekan-analitik-row { margin-top: 12px; }
-.dk-mekan-analitik-error { height: 280px; box-sizing: border-box; border: 1px dashed #2C303A; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #8A8E97; text-align: center; }
+.dk-mekan-analitik-error { height: 280px; border: 1px dashed #2C303A; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #8A8E97; text-align: center; }
 .dk-mekan-analitik-error-t { font-size: 16px; font-weight: 600; color: #F2F1EE; }
 .dk-mekan-analitik-error-s { font-size: 13.5px; }
 .dk-mekan-analitik-error-b { margin-top: 6px; height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-size: 13.5px; }

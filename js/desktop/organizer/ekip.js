@@ -199,10 +199,11 @@ export function orgEkipView(ctx) {
       h("span", { role: "cell", class: k("who") },
         h("span", { class: k("av"), style: { background: `linear-gradient(135deg,${g0},${g1})` }, "aria-hidden": "true" }, initials(name, 2)),
         h("span", { class: k("wcol") },
-          h("span", { class: k("nrow") }, h("span", { class: k("name") }, name), isMe ? h("span", { class: k("me") }, "SEN") : null),
-          m.email ? h("span", { class: k("msub") }, m.email) : null)),
+          // dar sütunlarda üç noktayla kısalır → tam değer title ile okunur
+          h("span", { class: k("nrow") }, h("span", { class: k("name"), title: name }, name), isMe ? h("span", { class: k("me") }, "SEN") : null),
+          m.email ? h("span", { class: k("msub"), title: m.email }, m.email) : null)),
       h("span", { role: "cell", class: k("c-role") }, rolePill(owner)),
-      h("span", { role: "cell", class: cx(k("mail"), k("c-mail")) }, m.email || "—"),
+      h("span", { role: "cell", class: cx(k("mail"), k("c-mail")), title: m.email || null }, m.email || "—"),
       h("span", { role: "cell", class: k("c-st") }, dkStatusBadge(statusKey, { variant: "pill" })),
       h("span", { role: "cell", class: k("c-act") }, kebab));
   }
@@ -214,7 +215,7 @@ export function orgEkipView(ctx) {
       h("span", { role: "cell", class: k("imail") },
         h("span", { class: k("itile") }, ico("mail", 15)),
         // ≤860: GÖNDERİLDİ sütunu yerine tarih e-postanın altında (herhangi bir genişlikte ikisinden yalnız biri görünür)
-        h("span", { class: k("icol") }, h("span", { class: k("iemail") }, iv.invitedEmail || ""), h("span", { class: k("isub") }, date))),
+        h("span", { class: k("icol") }, h("span", { class: k("iemail"), title: iv.invitedEmail || null }, iv.invitedEmail || ""), h("span", { class: k("isub") }, date))),
       h("span", { role: "cell", class: k("idate") }, date),
       h("span", { role: "cell" }, dkStatusBadge(key, { variant: "pill" })));
   }
@@ -355,8 +356,9 @@ export function orgEkipView(ctx) {
             if (alive) { dkToast("Üye ekipten çıkarıldı"); refocus = true; load(); }
             return true;
           } catch (_) {
+            // legacy confirmRemoveMember (keepOpen): hata → diyalog açık kalır, sahip tekrar deneyebilir
             dkToast("Çıkarılamadı", { type: "err" });
-            return true;
+            return false;
           }
         } },
       ],

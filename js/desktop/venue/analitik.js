@@ -23,7 +23,7 @@ import { getVenueReviews, userById } from "../../data.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgRaw } from "../shared/icons.js";
 import { cx, dkModal, dkSkeleton } from "../shared/ui.js";
-import { trUpper, writeQuery, eventStartMs, MONTHS_TR, MONTHS_TR_SHORT, DAYS_TR_SHORT, toMs, isLive, clamp } from "../shared/helpers.js";
+import { trUpper, writeQuery, eventStartMs, MONTHS_TR, MONTHS_TR_SHORT, DAYS_TR_SHORT, toMs, isLive, isEventOver, clamp } from "../shared/helpers.js";
 import { genreColor } from "../shared/genres.js";
 
 const PERIODS = [[7, "Bu Hafta"], [30, "Bu Ay"], [90, "3 Ay"], [365, "1 Yıl"]];
@@ -36,9 +36,9 @@ const att = (e) => Number(e.attendeeCount) || 0;
 const price = (e) => Number(e.ticketPrice) || 0;
 // takvim günü başı: `back` gün önce 00:00 (negatif → ileri); DST'de de doğru (Date aritmetiği)
 const dayStart = (ms, back = 0) => { const d = new Date(ms); return new Date(d.getFullYear(), d.getMonth(), d.getDate() - back).getTime(); };
-// Dönem penceresi (TEK başlangıç): son `period` takvim günü, bugün dahil → [since, now]. KPI'lar, kartlar 02–05, grafik
-// kovaları ve aralık etiketi aynı `since`'i kullanır (artboard: etiket = ilk grafik günü; END gün sonuna hizalı).
-const sinceOf = (period, now) => dayStart(now, period - 1);
+// Dönem penceresi (TEK başlangıç) = legacy renderAnalytics + spec: [şimdi − dönem × 24 sa, şimdi] → ≤768 (legacy) ile aynı
+// KPI'lar. KPI'lar, kartlar 02–05, grafik kovaları (ilk kova `since`'ten başlar; kovalar gün sınırlı) ve aralık etiketi aynı `since`.
+const sinceOf = (period, now) => now - period * 86400e3;
 
 // Artboard SVG gövdeleri (birebir)
 const I = {
@@ -88,10 +88,16 @@ async function venueEventsRO(uid) {
   if (s.empty && s.metadata.fromCache) throw new Error("offline");
   return s.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
-const _users = new Map(); // id → { p: Promise<user|null>, v, done } (oturum boyunca; çözülen değer eşzamanlı okunur)
+// id → { p: Promise<user|null>, v, done } — çözülen değer eşzamanlı okunur. Hata önbelleğe ALINMAZ (geçici hata kalıcı "—" bırakmasın);
+// önbellek her load()'da (ilk yükleme + "Tekrar dene") temizlenir → puan/foto her açılışta tazelenir.
+const _users = new Map();
 function userInfo(id) {
   let c = _users.get(id);
-  if (!c) { c = { v: null, done: false }; c.p = userById(id).catch(() => null).then((v) => { c.v = v; c.done = true; return v; }); _users.set(id, c); }
+  if (!c) {
+    c = { v: null, done: false };
+    c.p = userById(id).then((v) => { c.v = v; c.done = true; return v; }, () => { if (_users.get(id) === c) _users.delete(id); return null; });
+    _users.set(id, c);
+  }
   return c.p;
 }
 
@@ -188,18 +194,19 @@ export function venueAnalitikView(ctx) {
     const uniq = new Set(ok.map((x) => x.e.artistId || x.e.artistName).filter(Boolean)).size;
     const avgTicket = priced.length ? Math.round(priced.reduce((a, x) => a + price(x.e), 0) / priced.length) : 0;
 
-    // zaman kovaları (artboard; gün sınırlı, son kova bugünle biter). İlk kova `since`'ten başlar → grafik toplamı = KPI toplamı
-    // (90: 13 haftalık kovanın ilki 6 güne kısalır; 365: ilk ay kovası `since` gününü de kapsar).
+    // zaman kovaları (artboard; gün sınırlı, son kova bugünle biter). İlk kova tam `since` anından başlar → grafik toplamı =
+    // KPI toplamı (7: ilk gün kovası pencerenin baştaki kısmi gününü de kapsar; 30/90: ilk kova kısalır/uzar; 365: ilk ay kovası).
     let buckets = [];
     if (st.period === 7) {
       for (let i = 6; i >= 0; i--) { const s = dayStart(now, i); const d = new Date(s); buckets.push({ st: s, en: dayStart(now, i - 1), label: DAYS_TR_SHORT[d.getDay()] + " " + d.getDate(), sub: dl(s) }); }
     } else if (st.period === 30 || st.period === 90) {
       const w = st.period === 30 ? 6 : 7, n = st.period === 30 ? 5 : 13;
-      for (let i = n - 1; i >= 0; i--) { const s = Math.max(since, dayStart(now, w * i + w - 1)), en = dayStart(now, w * i - 1); buckets.push({ st: s, en, label: dl(s), sub: dl(s) + " – " + dl(en - 1) }); }
+      for (let i = n - 1; i >= 0; i--) { const s = i === n - 1 ? since : dayStart(now, w * i + w - 1), en = dayStart(now, w * i - 1); buckets.push({ st: s, en, label: dl(s), sub: dl(s) + " – " + dl(en - 1) }); }
     } else {
       const c = new Date(now);
-      for (let i = 11; i >= 0; i--) { const s = new Date(c.getFullYear(), c.getMonth() - i, 1); const en = new Date(c.getFullYear(), c.getMonth() - i + 1, 1); buckets.push({ st: i === 11 ? Math.min(since, s.getTime()) : s.getTime(), en: en.getTime(), label: MONTHS_TR_SHORT[s.getMonth()], sub: MONTHS_TR_SHORT[s.getMonth()] + " " + s.getFullYear() }); }
+      for (let i = 11; i >= 0; i--) { const s = new Date(c.getFullYear(), c.getMonth() - i, 1); const en = new Date(c.getFullYear(), c.getMonth() - i + 1, 1); buckets.push({ st: i === 11 ? since : s.getTime(), en: en.getTime(), label: MONTHS_TR_SHORT[s.getMonth()], sub: MONTHS_TR_SHORT[s.getMonth()] + " " + s.getFullYear() }); }
     }
+    buckets[0].st = since; // (7) ilk gün kovası pencerenin başladığı andan itibaren
     const valOf = (e) => (st.series === "att" ? att(e) : price(e) * att(e));
     buckets = buckets.map((b) => { const evs = ok.filter((x) => x.ms >= b.st && x.ms < b.en); return { ...b, v: evs.reduce((a, x) => a + valOf(x.e), 0), n: evs.length }; });
 
@@ -408,8 +415,9 @@ export function venueAnalitikView(ctx) {
     return h("div", { role: "list", class: "dk-mekan-analitik-bars" }, ...items.map((it) => h("div", { role: "listitem", class: "dk-mekan-analitik-bar" },
       h("div", { class: "dk-mekan-analitik-barrow" }, h("span", { class: "dk-mekan-analitik-barl" }, it.label),
         h("span", { class: cx("dk-mekan-analitik-barv", it.first && "is-first") }, it.value, " ", h("span", { class: "dk-mekan-analitik-barrest" }, it.rest))),
-      // soluklaştırma sarmalayıcıda: replay animasyonu (opacity 0→1, both) satır içi opacity'yi ezmesin (spec 1 / .45)
-      h("span", { class: "dk-mekan-analitik-track" }, h("span", { class: "dk-mekan-analitik-fillw", style: { width: it.pct + "%", opacity: it.first ? "1" : "0.45" } },
+      // Artboard render'ı (ref PNG): tüm dolgular tam turuncu — tasarımdaki satır içi .45 opaklığı aynı öğedeki replay animasyonu
+      // (gbFade to{opacity:1}, both) ezdiği için tuvalde hiç görünmüyor; görünen tasarım esas alındı. Öne çıkan satır değer rengiyle ayrılır.
+      h("span", { class: "dk-mekan-analitik-track" }, h("span", { class: "dk-mekan-analitik-fillw", style: { width: it.pct + "%" } },
         h("span", { class: cx("dk-mekan-analitik-fill", animCls()) }))))));
   }
 
@@ -419,7 +427,11 @@ export function venueAnalitikView(ctx) {
     const distSeg = miniSeg("Dağılım", [["day", "Günler"], ["hour", "Saatler"]], st.dist, (k, kb) => {
       if (k === st.dist) return; st.dist = k; sync();
       const old = body.querySelector(".dk-mekan-analitik-card.is-days");
-      if (old) { const nc = daysCard(); old.replaceWith(nc); if (kb) nc.querySelector(`.dk-mekan-analitik-sseg [data-k="${k}"]`)?.focus(); }
+      if (!old) return;
+      // kart yeniden kuruluyor → odak geçişteydiyse (tık / Boşluk / Enter / oklar) yeni kartın seçili düğmesine taşınır (body'ye düşmesin)
+      const hadFocus = kb || old.contains(document.activeElement);
+      const nc = daysCard(); old.replaceWith(nc);
+      if (hadFocus) nc.querySelector(`.dk-mekan-analitik-sseg [data-k="${k}"]`)?.focus();
     });
     const hour = st.dist === "hour";
     const card = h("section", { "aria-labelledby": "dk-ma-h-day", class: "dk-mekan-analitik-card is-days" },
@@ -433,7 +445,7 @@ export function venueAnalitikView(ctx) {
           const v = d.byDay[di], top = v === dMax && dMax > 0;
           return h("div", { class: "dk-mekan-analitik-col" },
             h("span", { class: cx("dk-mekan-analitik-colv", top && "is-top") }, v ? fmt(v) : ""),
-            h("span", { class: "dk-mekan-analitik-colbarw", style: { height: (dMax ? Math.round(v / dMax * 86) : 0) + "%", opacity: top ? "1" : "0.38" } },
+            h("span", { class: "dk-mekan-analitik-colbarw", style: { height: (dMax ? Math.round(v / dMax * 86) : 0) + "%" } }, // tam turuncu (ref PNG; bkz. barList)
               h("span", { class: cx("dk-mekan-analitik-colbar", animCls()) })),
             h("span", { class: "dk-mekan-analitik-coll" }, DAYS_TR_SHORT[di]));
         })),
@@ -469,8 +481,10 @@ export function venueAnalitikView(ctx) {
     return card;
   }
   function selectedKey() { const a = data.aTop; return a.find((x) => x.key === st.artist) ? st.artist : a[0]?.key || ""; }
-  function paintArtists() {
+  function paintArtists(keepFocus = false) {
     const aTop = data.aTop;
+    // yeniden çizim düğmeleri değiştirir → seçimden (ya da foto/puan gelişinden) önce odak listedeyse aynı sanatçıya geri döner
+    const focusKey = perfList?.contains(document.activeElement) ? document.activeElement.dataset?.k : null;
     const sel = selectedKey();
     const users = new Map();
     // önbellekten eşzamanlı oku (çözülmüşse)
@@ -479,9 +493,9 @@ export function venueAnalitikView(ctx) {
       const on = a.key === sel, u = users.get(a.id);
       const av = u?.photoURL ? h("img", { src: u.photoURL, alt: "", class: "dk-mekan-analitik-rav", loading: "lazy" }) : h("span", { class: "dk-mekan-analitik-rav is-ini", "aria-hidden": "true" }, trUpper(String(a.name).charAt(0) || "?"));
       if (av.tagName === "IMG") av.addEventListener("error", () => av.replaceWith(h("span", { class: "dk-mekan-analitik-rav is-ini", "aria-hidden": "true" }, trUpper(String(a.name).charAt(0) || "?"))), { once: true });
-      const b = h("button", { type: "button", "aria-pressed": on ? "true" : "false", class: "dk-mekan-analitik-rank dk-press",
+      const b = h("button", { type: "button", "aria-pressed": on ? "true" : "false", class: "dk-mekan-analitik-rank dk-press", dataset: { k: a.key },
         "aria-label": `${i + 1}. ${a.name}, ${a.genre ? a.genre + ", " : ""}${a.count} etkinlik, ${fmt(a.att)} katılımcı${a.rev ? ", " + TL(a.rev) : ""}`,
-        onclick: () => { st.artist = a.key; sync(); paintArtists(); } },
+        onclick: () => { st.artist = a.key; sync(); paintArtists(true); } },
       h("span", { class: cx("dk-mekan-analitik-rk", i === 0 && "is-first") }, "#" + (i + 1)), av,
       h("span", { class: "dk-mekan-analitik-rnc" }, h("span", { class: "dk-mekan-analitik-rn" }, a.name), h("span", { class: "dk-mekan-analitik-rs" }, `${a.genre ? a.genre + " · " : ""}${a.count} etkinlik`,
         a.rev ? h("span", { class: "dk-mekan-analitik-rsrev" }, " · " + TL(a.rev)) : null)), // dar kartta (<720) GELİR kolonu gizli → alt satırda
@@ -489,6 +503,8 @@ export function venueAnalitikView(ctx) {
       h("span", { class: "dk-mekan-analitik-rrev" }, a.rev ? TL(a.rev) : "—"));
       return h("div", { role: "listitem", class: "dk-mekan-analitik-rankli" }, b); // button rolü + aria-pressed korunur
     }) : [dashedEmpty("Bu dönem için sanatçı verisi yok", 120)]));
+    const fk = keepFocus ? st.artist : focusKey;
+    if (fk != null) { const nb = [...perfList.querySelectorAll(".dk-mekan-analitik-rank")].find((x) => x.dataset.k === fk); try { nb?.focus({ preventScroll: true }); } catch (_) {} }
     perfGrid.classList.toggle("is-empty", !aTop.length);
     if (!aTop.length) { perfPanel.replaceChildren(); perfPanel.hidden = true; return; }
     perfPanel.hidden = false;
@@ -496,7 +512,8 @@ export function venueAnalitikView(ctx) {
     const u = a.id ? users.get(a.id) : null;
     const now = Date.now();
     const past = events.map((e) => ({ e, ms: eventStartMs(e) }))
-      .filter((x) => x.ms != null && x.ms <= now && x.e.status !== "cancelled" && (a.id ? x.e.artistId === a.id : !x.e.artistId && x.e.artistName === a.name))
+      // "Geçmiş" = bitmiş (sürmekte olan "Canlı" etkinlik sayılmaz — tablo 05 ile tutarlı)
+      .filter((x) => x.ms != null && x.ms <= now && isEventOver(x.e) && x.e.status !== "cancelled" && (a.id ? x.e.artistId === a.id : !x.e.artistId && x.e.artistName === a.name))
       .sort((p, q) => q.ms - p.ms);
     const r = Number(u?.avgRating) || 0, rc = Number(u?.reviewCount) || 0;
     const vName = profile().displayName || "Mekan";
@@ -511,7 +528,9 @@ export function venueAnalitikView(ctx) {
         const dd = new Date(x.ms);
         return h("div", { class: "dk-mekan-analitik-pev" },
           h("span", { class: "dk-mekan-analitik-pevcol" }, h("span", { class: "dk-mekan-analitik-pevt" }, x.e.title || "Etkinlik"),
-            h("span", { class: "dk-mekan-analitik-pevm" }, `${x.e.venueName || vName} · ${dd.getDate()} ${MONTHS_TR_SHORT[dd.getMonth()]} ${dd.getFullYear()}`)),
+            // dar panelde mekan adı kısalır, tarih (yıl dahil) her zaman tam kalır
+            h("span", { class: "dk-mekan-analitik-pevm" }, h("span", { class: "dk-mekan-analitik-pevmv" }, x.e.venueName || vName),
+              h("span", { class: "dk-mekan-analitik-pevmd" }, ` · ${dd.getDate()} ${MONTHS_TR_SHORT[dd.getMonth()]} ${dd.getFullYear()}`))),
           h("span", { class: "dk-mekan-analitik-peva" }, ico("users", 12), h("span", {}, fmt(att(x.e)))));
       })));
   }
@@ -531,10 +550,11 @@ export function venueAnalitikView(ctx) {
       const subParts = [g ? h("span", { style: { color: genreColor(g) } }, g) : null, e.artistName || null, price(e) ? TL(price(e)) : "Ücretsiz"].filter(Boolean);
       const sub = h("span", { class: "dk-mekan-analitik-tsub" });
       subParts.forEach((p, i) => { if (i) sub.append(" · "); sub.append(p); });
-      sub.append(h("span", { class: "dk-mekan-analitik-tsubrev" }, " · " + rev)); // ≤1023 GELİR kolonu gizli → alt satırda
+      sub.append(h("span", { class: "dk-mekan-analitik-tsubrev" }, " · gelir " + rev)); // dar tabloda GELİR kolonu gizli → alt satırda
+      sub.title = sub.textContent; // kesilirse tam metin (tür · sanatçı · bilet · gelir) ipucunda
       return h("div", { role: "row", class: "dk-mekan-analitik-tr dk-mekan-analitik-trow", dataset: { ev: e.id } },
         h("span", { role: "cell", class: "dk-mekan-analitik-tdate" }, trUpper(dl(ms))),
-        h("span", { role: "cell", class: "dk-mekan-analitik-tev" }, h("span", { class: "dk-mekan-analitik-ttitle" }, e.title || "Etkinlik"), sub),
+        h("span", { role: "cell", class: "dk-mekan-analitik-tev" }, h("span", { class: "dk-mekan-analitik-ttitle", title: e.title || null }, e.title || "Etkinlik"), sub),
         h("span", { role: "cell", class: "dk-mekan-analitik-tatt" },
           h("span", { class: "dk-mekan-analitik-tattn" }, h("span", { class: "dk-mekan-analitik-tattv" }, cancel ? "—" : fmt(a)), cap && !cancel ? h("span", { class: "dk-mekan-analitik-tattc" }, ` / ${fmt(cap)} · %${pct}`) : null),
           cap && !cancel ? h("span", { class: "dk-mekan-analitik-prog" }, h("span", { style: { width: Math.min(100, pct) + "%" } })) : null),
@@ -551,7 +571,7 @@ export function venueAnalitikView(ctx) {
         h("div", { role: "row", class: "dk-mekan-analitik-tr dk-mekan-analitik-th" },
           h("span", { role: "columnheader" }, "TARİH"), h("span", { role: "columnheader" }, "ETKİNLİK"), h("span", { role: "columnheader" }, "KATILIM · DOLULUK"),
           h("span", { role: "columnheader", class: "dk-mekan-analitik-threv" }, "GELİR"), h("span", { role: "columnheader" }, "DURUM")),
-        ...(rows.length ? rows : [h("div", { class: "dk-mekan-analitik-tempty" }, "Bu dönem için etkinlik verisi yok")])),
+        ...(rows.length ? rows : [h("div", { role: "row", class: "dk-mekan-analitik-tempty" }, h("span", { role: "cell", "aria-colspan": "5" }, "Bu dönem için etkinlik verisi yok"))])),
       h("div", { class: "dk-mekan-analitik-tfoot" }, moreBtn, cap0 ? h("span", {}, `Kapasite: ${fmt(cap0)} kişi`) : null));
   }
 
@@ -567,15 +587,14 @@ export function venueAnalitikView(ctx) {
   };
   function reviewsCard() {
     const withText = custReviews.filter((r) => String(r.comment || "").trim());
-    // Etiket "yalnız müşteri yorumları" → puan/sayı yalnız müşteri yorumlarından (users.avgRating sanatçı yorumlarını da içerir;
-    // KPI ORT. PUAN + Yorum Sayısı legacy venueRating formülünde kalır)
-    const rated = custReviews.map((r) => Number(r.overallRating ?? r.rating) || 0).filter((v) => v > 0);
-    const cAvg = rated.length ? rated.reduce((a, v) => a + v, 0) / rated.length : 0;
+    // Puan + sayı = KPI ORT. PUAN / Yorum Sayısı ile TEK kaynak (legacy venueRating; legacy "Yorum & Puanlama" kutusu ve artboard'da
+    // üçü aynı sayı). "yalnız müşteri yorumları" (artboard metni) altındaki görünen yorum listesini niteler.
+    const cAvg = rating.avg, cCount = rating.count;
     return h("section", { "aria-labelledby": "dk-ma-h-rev", class: "dk-mekan-analitik-card is-rev" },
       cardHead("06 · YORUMLAR", "Yorum & puanlama", null, "dk-ma-h-rev"),
       h("div", { class: "dk-mekan-analitik-score" },
         h("span", { class: "dk-mekan-analitik-scorev" }, cAvg ? cAvg.toFixed(1) : "—"),
-        h("span", { class: "dk-mekan-analitik-scorecol" }, stars(cAvg, 13, 2), h("span", { class: "dk-mekan-analitik-scoret" }, `${rated.length} değerlendirme · yalnız müşteri yorumları`))),
+        h("span", { class: "dk-mekan-analitik-scorecol" }, stars(cAvg, 13, 2), h("span", { class: "dk-mekan-analitik-scoret" }, `${fmt(cCount)} değerlendirme · yalnız müşteri yorumları`))),
       withText.length ? reviewCard(withText[0])
         : h("div", { class: "dk-mekan-analitik-rev is-empty" }, h("p", { class: "dk-mekan-analitik-revt" }, "Henüz müşteri yorumu yok. Müşteriler etkinliklerine katıldıkça yorumları burada görünür.")),
       withText.length ? h("button", { type: "button", class: "dk-mekan-analitik-all dk-link", "aria-haspopup": "dialog", onclick: () => openAllReviews(withText) }, "Tüm yorumlar", ico("arrowR", 14)) : null);
@@ -621,7 +640,7 @@ export function venueAnalitikView(ctx) {
   function setPeriod(d) { if (d === st.period) return; st.period = d; hi = null; expanded = false; bump(); }
 
   async function load() {
-    loaded = false; failed = false; render();
+    loaded = false; failed = false; _users.clear(); render();
     const [evs, revs] = await Promise.all([
       venueEventsRO(uid).then((v) => ({ ok: true, v })).catch(() => ({ ok: false, v: [] })),
       getVenueReviews(uid).catch(() => []),

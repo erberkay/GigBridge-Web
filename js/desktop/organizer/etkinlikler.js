@@ -256,12 +256,22 @@ export function attachOrgBell(shell, { uid }) {
     if (x && href && hashBase(href) === hashBase()) setTimeout(() => { if (x.isConnected) x.click(); }, 0);
   };
   document.addEventListener("click", onClick, true);
+  // Popover açılınca türetilen satırlar "görüldü" (satır başına okundu durumu yok; mekanın bildirim yazmadığı yanıtlar zil noktasını
+  // 7 gün yakmasın). Açık popover anlık görüntüdür → noktalar bu açılışta görünür kalır, zil noktası hemen güncellenir.
+  // Kabuğun zil dinleyicisi önce kaydedildi → burada is-open yeni durumu gösterir.
+  const bellBtn = shell.topbar?.querySelector(".dk-ps-bell");
+  const onBell = () => {
+    if (!bellBtn.classList.contains("is-open")) return;
+    const newest = items.reduce((m, x) => (x.derived && !x.read ? Math.max(m, x._ms) : m), 0);
+    if (newest) { writeSeen(uid, Math.max(readSeen(uid), newest)); build(); }
+  };
+  bellBtn?.addEventListener("click", onBell);
   return {
     setRequests(list) { reqs = list || []; build(); },
     notifications: () => live.notifications || [],
     // kayıt anında mevcut listeyle de çağır (canlı mağaza doluysa bir sonraki değişikliği beklemesin)
     onNotifs(fn) { listeners.add(fn); try { fn(live.notifications || []); } catch (e) { console.error(e); } return () => listeners.delete(fn); },
-    destroy() { try { un(); } catch (_) {} document.removeEventListener("click", onClick, true); listeners.clear(); },
+    destroy() { try { un(); } catch (_) {} document.removeEventListener("click", onClick, true); bellBtn?.removeEventListener("click", onBell); listeners.clear(); },
   };
 }
 
@@ -461,6 +471,8 @@ export function orgEtkinliklerView(ctx) {
       try {
         const [events, reqs] = await Promise.all([organizerEvents(orgId), organizerRequests(uid)]);
         if (!alive) return;
+        // Çevrimdışı: getDocs boş önbellekten hata vermeden döner → "Aktif etkinlik yok" yerine "Yüklenemedi"
+        if (navigator.onLine === false && !(events || []).length && !(reqs || []).length) throw new Error("offline");
         S.events = events || []; S.reqs = reqs || []; S.loaded = true; S.error = false;
         shell.setBadge("etkinlik", S.reqs.filter((r) => r.status === "pending").length);
         bell.setRequests(S.reqs);
@@ -583,20 +595,22 @@ export function orgEtkinliklerView(ctx) {
 
     // 3) ad
     const tIn = dkInput({ id: `${P}-c-title`, placeholder: "Örn. Yaz Festivali", value: prefill.title || "", onInput: () => setErr("") });
-    // 4) mekan seçici
-    const venueLbl = h("span", { class: `${P}-pbl` });
-    const venueBtn = h("button", { type: "button", class: `${P}-pick dk-press`, "aria-expanded": "false", "aria-haspopup": "listbox", id: `${P}-c-venue` },
+    // 4) mekan seçici — erişilebilir ad = "MEKAN *" etiketi + seçili değer; zorunlu; açılır liste aria-controls ile bağlı
+    const venueLbl = h("span", { class: `${P}-pbl`, id: `${P}-c-venue-val` });
+    const venueBtn = h("button", { type: "button", class: `${P}-pick dk-press`, "aria-expanded": "false", "aria-haspopup": "listbox", id: `${P}-c-venue`,
+      "aria-labelledby": `${P}-c-venue-lbl ${P}-c-venue-val`, "aria-controls": `${P}-c-venue-list`, "aria-required": "true" },
       ico("building", 18), venueLbl, ico("chevD", 16));
-    const venueList = h("div", { class: `${P}-dlist dk-scroll`, role: "listbox", "aria-label": "Mekanlar" });
+    const venueList = h("div", { class: `${P}-dlist dk-scroll`, role: "listbox", "aria-label": "Mekanlar", id: `${P}-c-venue-list` });
     const venueQ = h("input", { type: "text", "aria-label": "Mekan ara", placeholder: "Mekan ara...", class: `${P}-dq`, autocomplete: "off" });
     const venueDrop = h("div", { class: `${P}-drop dk-pop`, hidden: true },
       h("label", { class: `${P}-dsearch` }, ico("search", 15), venueQ), venueList);
     // 5) sanatçı seçici
-    const artistLbl = h("span", { class: `${P}-pbl` });
-    const artistBtn = h("button", { type: "button", class: `${P}-pick dk-press`, "aria-expanded": "false", "aria-haspopup": "listbox", id: `${P}-c-artist` },
+    const artistLbl = h("span", { class: `${P}-pbl`, id: `${P}-c-artist-val` });
+    const artistBtn = h("button", { type: "button", class: `${P}-pick dk-press`, "aria-expanded": "false", "aria-haspopup": "listbox", id: `${P}-c-artist`,
+      "aria-labelledby": `${P}-c-artist-lbl ${P}-c-artist-val`, "aria-controls": `${P}-c-artist-list` },
       ico("mic", 18), artistLbl, ico("chevD", 16));
     const artistClear = h("button", { type: "button", class: `${P}-clear dk-press`, hidden: true }, ico("x", 14), "Kaldır");
-    const artistList = h("div", { class: `${P}-dlist dk-scroll`, role: "listbox", "aria-label": "Sanatçılar" });
+    const artistList = h("div", { class: `${P}-dlist dk-scroll`, role: "listbox", "aria-label": "Sanatçılar", id: `${P}-c-artist-list` });
     const artistQ = h("input", { type: "text", "aria-label": "Sanatçı ara", placeholder: "Sanatçı ara...", class: `${P}-dq`, autocomplete: "off" });
     const artistDrop = h("div", { class: `${P}-drop dk-pop`, hidden: true },
       h("label", { class: `${P}-dsearch` }, ico("search", 15), artistQ), artistList);
@@ -607,14 +621,14 @@ export function orgEtkinliklerView(ctx) {
     // 7) açıklama
     const descIn = dkTextarea({ id: `${P}-c-desc`, rows: 3, placeholder: "Açıklama..." });
 
-    const lbl = (text, forId) => h(forId ? "label" : "span", { class: "dk-lbl", for: forId || null }, text);
+    const lbl = (text, forId, id) => h(forId ? "label" : "span", { class: "dk-lbl", for: forId || null, id: id || null }, text);
     const body = h("div", { class: `${P}-form` },
       steps,
       h("div", { class: `${P}-covwrap` }, cover, fileIn),
       h("div", { class: `${P}-fld` }, lbl("ETKİNLİK ADI *", tIn.id), tIn),
-      h("div", { class: `${P}-fld` }, lbl("MEKAN *"), venueBtn, venueDrop,
+      h("div", { class: `${P}-fld` }, lbl("MEKAN *", null, `${P}-c-venue-lbl`), venueBtn, venueDrop,
         h("span", { class: `${P}-help` }, "Seçtiğin mekana istek gönderilir. ", h("a", { href: "#/organizer/mekan", class: `${P}-helpa` }, "Mekanları haritada gör"))),
-      h("div", { class: `${P}-fld` }, lbl("SANATÇI (OPSİYONEL)"), h("div", { class: `${P}-prow` }, artistBtn, artistClear), artistDrop, artistNote),
+      h("div", { class: `${P}-fld` }, lbl("SANATÇI (OPSİYONEL)", null, `${P}-c-artist-lbl`), h("div", { class: `${P}-prow` }, artistBtn, artistClear), artistDrop, artistNote),
       h("div", { class: `${P}-two` },
         h("div", { class: `${P}-fld` }, lbl("ETKİNLİK TARİHİ *", dIn.id), dIn),
         h("div", { class: `${P}-fld` }, lbl("SAAT", hIn.id), hIn)),
@@ -655,8 +669,8 @@ export function orgEtkinliklerView(ctx) {
     artistBtn.addEventListener("click", () => setPick(pick === "artist" ? "" : "artist"));
     artistClear.addEventListener("click", () => { artistSel = null; paintArtist(); artistBtn.focus(); });
 
-    const optRow = ({ av, name, meta, onPick }) => {
-      const b = h("button", { type: "button", role: "option", class: `${P}-opt dk-row` }, av,
+    const optRow = ({ av, name, meta, onPick, selected }) => {
+      const b = h("button", { type: "button", role: "option", "aria-selected": selected ? "true" : "false", class: `${P}-opt dk-row` }, av,
         h("span", { class: `${P}-ocol` }, h("span", { class: `${P}-on` }, name), meta ? h("span", { class: `${P}-om` }, meta) : null),
         ico("chevR", 16, { color: "#8A8E97" }));
       b.addEventListener("click", onPick);
@@ -677,7 +691,7 @@ export function orgEtkinliklerView(ctx) {
       if (!list.length) return listMsg(venueList, "Kayıtlı mekan bulunamadı.");
       venueList.replaceChildren(...list.map((vn) => optRow({
         av: h("span", { class: `${P}-vav` }, (vn.displayName || "M").charAt(0).toLocaleUpperCase("tr-TR")),
-        name: vn.displayName || "Mekan", meta: venueCity(vn),
+        name: vn.displayName || "Mekan", meta: venueCity(vn), selected: !!venueSel && venueSel.id === vn.id,
         onPick: () => { venueSel = vn; paintVenue(); setPick(""); setErr(""); venueBtn.focus(); },
       })));
     }
@@ -700,13 +714,33 @@ export function orgEtkinliklerView(ctx) {
         const g = artistGenre(a);
         return optRow({
           av: h("span", { class: `${P}-aav`, style: { background: g ? genreColor(g) : "#A3A7AF" } }, name.replace(/^DJ\s+/i, "").charAt(0).toLocaleUpperCase("tr-TR")),
-          name, meta: [g, artistCity(a)].filter(Boolean).join(" · "),
+          name, meta: [g, artistCity(a)].filter(Boolean).join(" · "), selected: !!artistSel && artistSel.id === a.id,
           onPick: () => { artistSel = { id: a.id, name }; paintArtist(); setPick(""); artistBtn.focus(); },
         });
       }));
     }
     venueQ.addEventListener("input", drawVenues);
     artistQ.addEventListener("input", drawArtists);
+    // Liste klavyesi: arama kutusunda ↓ → ilk seçenek; seçenekler arasında ↑/↓/Home/End (ilkte ↑ → arama kutusu)
+    const listKeys = (q, list) => {
+      const opts = () => [...list.querySelectorAll('[role="option"]')];
+      q.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowDown") return;
+        const o = opts(); if (!o.length) return;
+        e.preventDefault(); o[0].focus();
+      });
+      list.addEventListener("keydown", (e) => {
+        if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+        const o = opts(); const i = o.indexOf(document.activeElement);
+        if (i < 0) return;
+        e.preventDefault();
+        if (e.key === "ArrowUp" && i === 0) { q.focus(); return; }
+        const n = e.key === "Home" ? 0 : e.key === "End" ? o.length - 1 : Math.min(o.length - 1, Math.max(0, i + (e.key === "ArrowDown" ? 1 : -1)));
+        o[n].focus();
+      });
+    };
+    listKeys(venueQ, venueList);
+    listKeys(artistQ, artistList);
     // Açılır liste açıkken ESC yalnız listeyi kapatsın (çekmecenin belge düzeyi ESC'sinden önce: pencere yakalama evresi)
     const onEsc = (e) => {
       if (e.key !== "Escape" || !pick || document.querySelector("#modal-root .cr-overlay")) return;
@@ -771,8 +805,10 @@ export function orgEtkinliklerView(ctx) {
     if (!ev) {
       try { ev = await eventById(id); } catch (e) { if (!alive) return; closeDrawer(); dkToast("Etkinlik açılamadı", { type: "err" }); writeQuery({ duzenle: null, izin: null }); return; }
       if (!alive) return;
+      // Yalnız bu organizasyonun etkinliği (organizerId == orgId) açılır: el yapımı ?duzenle= bağlantısı ya da sahte edit_request
+      // bildirimi başka bir etkinliği sahip denetimleriyle (sil → mekana event_deleted) açamasın → "bulunamadı".
       // URL ile arayüz ayrışmasın: önceki çekmece (başka etkinlik) açıksa kapat
-      if (!ev) { closeDrawer(); dkToast("Etkinlik bulunamadı", { type: "err" }); writeQuery({ duzenle: null, izin: null }); return; }
+      if (!ev || ev.organizerId !== orgId) { closeDrawer(); dkToast("Etkinlik bulunamadı", { type: "err" }); writeQuery({ duzenle: null, izin: null }); return; }
     }
     openEdit(ev, izin);
   }
@@ -893,16 +929,16 @@ export function orgEtkinliklerView(ctx) {
     function askDelete() {
       confirmDlg({ title: "Etkinliği Sil", body: "Bu etkinlik kalıcı olarak silinecek. Emin misiniz? Mekana “Etkinlik İptal Edildi” bildirimi gider.", cta: "Sil", danger: true,
         run: async () => {
-          try {
-            if (ev.venueId) {
-              try {
-                await sendNotification(ev.venueId, { type: "event_deleted", title: "Etkinlik İptal Edildi",
-                  body: `${p.orgName || p.displayName || "Organizatör"}, "${ev.title || "Etkinlik"}" etkinliğini sildi.`,
-                  fromName: p.orgName || p.displayName || "Organizatör" });
-              } catch (_) {}
-            }
-            await deleteEventById(ev.id);
-          } catch (e) { console.warn("[org delete]", e); dkToast("Silinemedi", { type: "err" }); return false; }
+          // Önce sil, sonra mekana event_deleted (best-effort, aynı yük): silme reddedilirse mekana yanlış "iptal" bildirimi gitmesin
+          try { await deleteEventById(ev.id); }
+          catch (e) { console.warn("[org delete]", e); dkToast("Silinemedi", { type: "err" }); return false; }
+          if (ev.venueId) {
+            try {
+              await sendNotification(ev.venueId, { type: "event_deleted", title: "Etkinlik İptal Edildi",
+                body: `${p.orgName || p.displayName || "Organizatör"}, "${ev.title || "Etkinlik"}" etkinliğini sildi.`,
+                fromName: p.orgName || p.displayName || "Organizatör" });
+            } catch (_) {}
+          }
           dkToast("Etkinlik silindi");
           setTimeout(() => d.close("action"), 0);
           load();
@@ -978,6 +1014,10 @@ export function orgEtkinliklerView(ctx) {
 
   load();
   apply(ctx.query, { initial: true });
+  // Bağlantı geri gelince hata durumundaysa yeniden yükle
+  const onOnline = () => { if (alive && S.error && !S.loaded) { S.error = false; render(); load(); } };
+  window.addEventListener("online", onOnline);
+  unsubs.push(() => window.removeEventListener("online", onOnline));
 
   return {
     node: shell.node,

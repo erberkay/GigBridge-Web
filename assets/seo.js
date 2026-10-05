@@ -1,7 +1,7 @@
 /* seo.js — GigBridge statik sayfaları için ilerleyici geliştirmeler (defer, modülsüz).
    Sayfalar bu dosya OLMADAN da eksiksiz okunur ve gezilir; burada yalnız:
-   1) açılır <details> menüleri (şehir, hamburger, mobil içindekiler): dışarı tık / Esc ile kapanma
-   2) header şehir etiketi = SPA'nın seçili şehri (localStorage gb_city); şehir seçimi SPA ile paylaşılır
+   1) açılır <details> menüleri (şehir, hamburger, mobil içindekiler): dışarı tık / Esc / odak dışarı çıkınca kapanma
+   2) header şehir etiketi = SPA'nın seçili şehri (localStorage gb_city — yalnız OKUNUR; statik sayfa SPA tercihini yazmaz)
    3) SSS tek-açık akordeon yedeği (<details name> desteklemeyen tarayıcılar)
    4) İçindekiler scroll-spy (rehber + yasal metinler)
    5) İlçe semt haritası seçimi
@@ -10,7 +10,7 @@
 (function () {
   "use strict";
   var d = document;
-  var V = "20260929s";
+  var V = "20260930f";
   var $$ = function (s, r) { return Array.prototype.slice.call((r || d).querySelectorAll(s)); };
   d.documentElement.classList.add("gb-js");
 
@@ -32,6 +32,14 @@
       if (isPopover(p) && !p.contains(t)) p.open = false;              // dışarı tık
     });
   });
+  // klavye: odak açık menünün dışına çıkınca (Tab) kapan — relatedTarget yoksa (fare/pencere) dokunma
+  pops.forEach(function (p) {
+    if (!isPopover(p)) return;
+    p.addEventListener("focusout", function (e) {
+      var to = e.relatedTarget;
+      if (p.open && to && !p.contains(to)) p.open = false;
+    });
+  });
   d.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
     pops.forEach(function (p) {
@@ -42,11 +50,17 @@
     });
   });
 
-  // ── 2) şehir etiketi / seçimi ──
+  // ── 2) şehir etiketi ──
+  // Onarım: önceki sürüm menüden "Bodrum"/"Kuşadası" yazıyordu; bunlar SPA'nın il listesinde yok (etkinlikler 0 görünür).
+  // Yalnız bu iki bozuk değeri bağlı oldukları ile çevir (Bodrum → Muğla, Kuşadası → Aydın); başka değere dokunma.
+  var saved = null;
+  try {
+    saved = localStorage.getItem("gb_city");
+    var FIX = { "Bodrum": "Muğla", "Kuşadası": "Aydın" };
+    if (saved && Object.prototype.hasOwnProperty.call(FIX, saved)) { saved = FIX[saved]; localStorage.setItem("gb_city", saved); }
+  } catch (_) { saved = null; }
   var cityBox = d.querySelector("[data-gb-city]");
   if (cityBox && !cityBox.querySelector(".gb-city-opt[aria-current]")) {
-    var saved = null;
-    try { saved = localStorage.getItem("gb_city"); } catch (_) { saved = null; }
     if (saved && saved !== "TÜMÜ" && saved.length <= 40) {
       var lab = cityBox.querySelector(".gb-city-l");
       if (lab) lab.textContent = saved;
@@ -54,9 +68,7 @@
       if (sum) sum.setAttribute("aria-label", "Şehir seç, şu an " + saved);
     }
   }
-  $$(".gb-city-opt[data-city], .gb-menu-city[data-city]").forEach(function (a) {
-    a.addEventListener("click", function () { try { localStorage.setItem("gb_city", a.getAttribute("data-city")); } catch (_) { /* depolama kapalı */ } });
-  });
+  // Not: şehir menüsü yalnız şehir SAYFALARINA gider; SPA'nın gb_city tercihini değiştirmez (Bodrum/Kuşadası il değildir).
 
   // ── 3) SSS tek-açık yedeği ──
   if (!("name" in HTMLDetailsElement.prototype)) {
@@ -79,7 +91,14 @@
       return el;
     }).filter(Boolean);
     if (!targets.length || !("IntersectionObserver" in window)) return;
-    var scroller = toc.closest(".gb-ltoc-aside");
+    // yasal kenar çubuğu: yalnız liste kendi içinde kayar (iletişim kartı altta hep görünür); rehberde kaymaz → no-op
+    var scroller = toc;
+    var moreHint = function () {
+      toc.classList.toggle("gb-toc-more", toc.scrollHeight > toc.clientHeight + 2 && toc.scrollTop + toc.clientHeight < toc.scrollHeight - 2);
+    };
+    toc.addEventListener("scroll", moreHint, { passive: true });
+    window.addEventListener("resize", moreHint);
+    moreHint();
     var current = null;
     function setActive(id) {
       if (!byId[id] || id === current) return;
@@ -92,8 +111,11 @@
       // yapışkan, kendi içinde kayan kenar çubuğunda etkin öğeyi görünür tut (sayfayı kaydırmadan)
       if (scroller && scroller.scrollHeight > scroller.clientHeight + 2) {
         var a = byId[id], r = a.getBoundingClientRect(), sr = scroller.getBoundingClientRect();
-        if (r.top < sr.top + 8) scroller.scrollTop -= sr.top + 8 - r.top;
-        else if (r.bottom > sr.bottom - 8) scroller.scrollTop += r.bottom - sr.bottom + 8;
+        if (a === links[0]) scroller.scrollTop = 0;                                            // başlık etiketi de görünsün
+        else if (a === links[links.length - 1]) scroller.scrollTop = scroller.scrollHeight;
+        else if (r.top < sr.top + 8) scroller.scrollTop -= sr.top + 8 - r.top;
+        else if (r.bottom > sr.bottom - 32) scroller.scrollTop += r.bottom - sr.bottom + 32;   // alttaki soluklaşma payı
+        moreHint();
       }
     }
     var vis = {};
@@ -146,6 +168,7 @@
     var agree = form.querySelector("[data-gb-agree]");
     var box = form.querySelector("[data-gb-email-box]");
     var err = form.querySelector("[data-gb-email-err]");
+    var agreeErr = form.querySelector("[data-gb-agree-err]");
     var btn = form.querySelector("[data-gb-del-submit]");
     var RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     var tried = false;
@@ -159,6 +182,12 @@
       email.setAttribute("aria-invalid", show ? "true" : "false");
       var msg = show ? "Geçerli bir e-posta adresi girin." : "";
       if (err.textContent !== msg) err.textContent = msg;
+      var showA = tried && !agree.checked;
+      agree.setAttribute("aria-invalid", showA ? "true" : "false");
+      if (agreeErr) {
+        var msgA = showA ? "Devam etmek için onay kutusunu işaretleyin." : "";
+        if (agreeErr.textContent !== msgA) agreeErr.textContent = msgA;
+      }
     };
     email.addEventListener("input", sync);
     agree.addEventListener("change", sync);

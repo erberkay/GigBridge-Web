@@ -36,7 +36,7 @@ import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import { cx, dkModal, dkToast, dkEmpty, dkSkeleton, dkButton, dkAvatar, dkLoginGate } from "../shared/ui.js";
 import {
-  eventStartMs, isEventOver, isToday, isLive, startOfDay, fmtTime, fmtTL, fmtPrice, isFree, shortNumTR, trUpper, fold, matchText,
+  eventStartMs, isEventOver, isToday, isLive, fmtTime, fmtTL, fmtPrice, isFree, shortNumTR, trUpper, fold, matchText,
   MONTHS_TR, MONTHS_TR_SHORT, DAYS_TR_SHORT, rgba, writeQuery, toMs, isoDate, initials,
 } from "../shared/helpers.js";
 import { genreColor, genreGrad, primaryGenre } from "../shared/genres.js";
@@ -120,9 +120,12 @@ export async function venueRating(uid, p) {
 }
 
 // YENİ sorgu (spec §7): mekanın tüm davetleri — tek eşitlik (indeks gerekmez), durum istemcide süzülür.
+// fromCache: sunucuya ulaşılamadı (getDocs çevrimdışıyken hata atmak yerine önbelleği — çoğu zaman boş — döndürür).
 async function venueInvitations(uid) {
   const s = await getDocs(query(collection(db, "invitations"), where("venueId", "==", uid)));
-  return s.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const list = s.docs.map((d) => ({ id: d.id, ...d.data() }));
+  list.fromCache = !!s.metadata?.fromCache;
+  return list;
 }
 
 // Sohbete git: legacy bekleyen hedef + masaüstü sohbetin bekleyen hedefi (chat.js) → #/venue/mesaj
@@ -228,8 +231,9 @@ export function venuePanelView(ctx) {
     h("div", { role: "table", "aria-label": "Etkinlik listesi", class: c("tbl") }, h("div", { role: "rowgroup" }, thead), rowsBox));
   const footNote = h("span", { class: c("footnote") }, "");
   const footLink = h("button", { type: "button", class: cx(c("footlink"), "dk-link"), hidden: true });
-  footLink.addEventListener("click", () => { setTab(tab === "all" ? "up" : "all"); });
-  const evSection = h("section", { "aria-labelledby": "dk-mp-h-ev", class: c("card") },
+  let allFrom = "up"; // "tümü" görünümü hangi sekmeden açıldı → daraltınca oraya dönülür
+  footLink.addEventListener("click", () => { if (tab === "all") setTab(allFrom); else { allFrom = tab; setTab("all"); } });
+  const evSection = h("section", { "aria-labelledby": "dk-mp-h-ev", class: cx(c("card"), c("evcard")) },
     h("div", { class: c("evhead") },
       h("div", { class: c("sh") }, h("span", { class: c("eb") }, "01 · TAKVİM"), h("h3", { id: "dk-mp-h-ev", class: c("h3ev") }, "Etkinlikler")),
       h("div", { class: c("evtools") }, tablist, addLink)),
@@ -277,6 +281,9 @@ export function venuePanelView(ctx) {
     ]);
     if (!alive) return;
     if (evR.status !== "fulfilled") { showError(); return; }
+    // Çevrimdışı: Firestore hata atmadan boş önbellek döndürür → yanıltıcı "Henüz etkinlik yok" yerine Yüklenemedi.
+    // (Paralel davet sorgusu sunucuya ulaşamadıysa ve etkinlik de gelmediyse bağlantı yok sayılır.)
+    if (invR.status === "fulfilled" && invR.value.fromCache && !(evR.value || []).length) { showError(); return; }
     let invitations = invR.status === "fulfilled" ? invR.value : null;
     let accepted = invitations ? invitations.filter((i) => i.status === "accepted") : null;
     if (!accepted) { try { accepted = await venueAcceptedInvitations(uid); } catch (_) { accepted = []; } }
@@ -306,6 +313,20 @@ export function venuePanelView(ctx) {
     const retry = dkButton("Yenile", { variant: "outline", size: 40, icon: "refresh", onClick: () => { root.replaceChildren(hero, kpis, quick, evSection, bottom); drawTableSkeleton(); load(); } });
     root.replaceChildren(dkEmpty({ icon: "alertCircle", title: "Yüklenemedi", sub: "Bağlantıyı kontrol edip yenile.", action: retry, cls: c("err") }));
   }
+  // Davet / uzun dönem teklifi gönderildi → "Sanatçı yanıtları" + "Uzun dönem anlaşmalar" (+ tablodaki teklif ücreti) tazelenir
+  async function reloadInvites() {
+    const [invR, resR] = await Promise.allSettled([venueInvitations(uid), venueResidencies(uid)]);
+    if (!alive || !data) return;
+    if (invR.status === "fulfilled") {
+      data.invitations = invR.value;
+      data.pendByEvent = new Map();
+      invR.value.forEach((i) => { if (i.eventId && i.status === "pending" && !data.pendByEvent.has(i.eventId)) data.pendByEvent.set(i.eventId, i); });
+      invCard.hidden = false; bottom.classList.remove("no-inv");
+      drawInvites();
+    }
+    if (resR.status === "fulfilled") { data.residencies = resR.value || []; drawResidencies(); }
+    drawTable();
+  }
   // Etkinlikleri yeniden oku (istek onayı yeni etkinlik ekler) — tablo + özet
   async function reloadEvents() {
     try {
@@ -324,9 +345,9 @@ export function venuePanelView(ctx) {
     const confirmedCount = evs.filter((e) => ["upcoming", "live", "completed", "confirmed"].includes(e.status)).length;
     const inWin = (e, from) => { const s = eventStartMs(e); return s != null && s >= from && s <= t; };
     const monthly = notCancelled.filter((e) => inWin(e, t - 30 * DAY)).reduce((s, e) => s + (Number(e.ticketPrice) || 0) * (e.attendeeCount || 0), 0);
-    // BU HAFTA: bugün dahil son 7 takvim günü (artboard "20–26 Eyl" = Cmt 26 → 7 gün). Pencere etiketle aynı günleri kapsar
-    // (legacy kayan 7×24 sa idi; etiket 8 güne yayılıyordu).
-    const weekFrom = startOfDay(t - 6 * DAY);
+    // BU HAFTA: legacy/mobil ile AYNI kayan 7×24 sa pencere (masaüstü ve mobil aynı sayıyı göstersin); etiket pencerenin
+    // gerçek başlangıç–bitiş günleri ("22–29 Eyl").
+    const weekFrom = t - 7 * DAY;
     const week = notCancelled.filter((e) => inWin(e, weekFrom));
     const weekAtt = week.reduce((s, e) => s + (e.attendeeCount || 0), 0);
     const cancelled = evs.filter((e) => e.status === "cancelled").length;
@@ -418,9 +439,10 @@ export function venuePanelView(ctx) {
     else if (tab === "up") footNote.textContent = L.up.length ? `Yaklaşan ${L.up.length} etkinlik · Bekleyen davetli etkinlik sarı çubukla işaretli` : "Yaklaşan etkinlik yok";
     else if (tab === "past") footNote.textContent = `Son ${shown.length} etkinlik gösteriliyor`;
     else footNote.textContent = `Tüm etkinlikler · ${total} etkinlik`;
-    const needMore = !q && tab !== "all" && total > shown.length;
+    // Yaklaşan: legacy kuralı (tüm etkinlik sayısı gösterilenden fazlaysa). Geçmiş: yalnız geçmiş listesi kesildiyse.
+    const needMore = !q && (tab === "up" ? total > shown.length : tab === "past" ? L.past.length > shown.length : false);
     footLink.hidden = !(needMore || tab === "all");
-    footLink.replaceChildren(tab === "all" ? "Yalnız yaklaşanları göster" : `Tüm etkinlikleri gör (${total})`, raw("arrow", 14));
+    footLink.replaceChildren(tab === "all" ? (allFrom === "past" ? "Yalnız geçmişi göster" : "Yalnız yaklaşanları göster") : `Tüm etkinlikleri gör (${total})`, raw("arrow", 14));
     footLink.setAttribute("aria-expanded", tab === "all" ? "true" : "false");
     footLink.setAttribute("aria-controls", "dk-mp-evrows");
   }
@@ -694,7 +716,7 @@ export function venuePanelView(ctx) {
         : h("span", { class: cx(c("sphoto"), "is-ph"), style: { background: genreGrad(g, 135) }, role: "img", "aria-label": name }, initials(String(name).replace(/^DJ\s+/i, "")));
       const inv = h("button", { type: "button", class: cx(c("invite"), "dk-press") }, "Davet et");
       inv.setAttribute("aria-label", `Davet et: ${name}`);
-      inv.addEventListener("click", () => openInviteModal(a, { events: data.events }));
+      inv.addEventListener("click", () => openInviteModal(a, { events: data.events, onSent: reloadInvites }));
       sugList.append(h("div", { class: c("item") }, photo,
         h("span", { class: c("icol") },
           h("span", { class: c("iname") }, name),
@@ -735,6 +757,7 @@ function swap(el) {
 // Yazımlar legacy inviteModal ile birebir: findExistingInvitation → uploadImage → createInvitation | createGroupInvitation;
 // uzun dönem → createResidency. + uygulama paritesinde event_invite / residency_offer bildirimi (best-effort).
 // ══════════════════════════════════════════════════════════════════════
+let inviteSeq = 0; // modal başına benzersiz sekme/panel kimlikleri (aria-controls)
 export function openInviteModal(x, { events = [], mode: initMode = "single", onSent } = {}) {
   if (dkLoginGate("Davet göndermek")) return;
   const C = (s) => `dk-mekan-panel-inv-${s}`;
@@ -760,7 +783,8 @@ export function openInviteModal(x, { events = [], mode: initMode = "single", onS
     h("option", { value: "" }, "Yeni tarih (etkinliksiz teklif)"),
     ...upcoming.map((e) => { const s = eventStartMs(e); const d = s != null ? new Date(s) : null;
       return h("option", { value: e.id }, `${e.title || "Etkinlik"}${d ? ` · ${d.getDate()} ${MONTHS_TR_SHORT[d.getMonth()]} ${DAYS_TR_SHORT[d.getDay()]} ${evTime(e)}` : ""}`); }));
-  const dateIn = inp({ type: "date" });
+  const todayIso = isoDate(Date.now());
+  const dateIn = inp({ type: "date", min: todayIso }); // app FindArtistScreen: minimumDate = bugün
   const timeIn = inp({ type: "time" });
   const feeIn = inp({ type: "number", min: "3500", step: "500", placeholder: "En az 3500", class: cx(C("in"), C("mono")) });
   const msgIn = h("textarea", { class: cx(C("in"), C("ta")), rows: 3, placeholder: "Merhaba, mekanımızda sahne almanızı isteriz…" });
@@ -789,7 +813,8 @@ export function openInviteModal(x, { events = [], mode: initMode = "single", onS
     clearErr();
   });
   const selWrap = h("span", { class: C("selwrap") }, sel, raw("chevronDown", 16, "1.8", { cls: C("chev"), color: "#8A8E97" }));
-  const singleBox = h("div", { class: C("box") },
+  const uidN = ++inviteSeq;
+  const singleBox = h("div", { class: C("box"), role: "tabpanel", id: `dk-mp-inv-single-${uidN}`, "aria-labelledby": `dk-mp-inv-tsingle-${uidN}` },
     isG ? null : lbl("ETKİNLİK", selWrap),
     h("div", { class: C("g2") }, lbl("TARİH", dateIn), lbl("SAAT", timeIn)),
     lbl("ÜCRET (₺)", feeIn),
@@ -808,14 +833,14 @@ export function openInviteModal(x, { events = [], mode: initMode = "single", onS
   })); });
   const rTime = inp({ type: "time" });
   const rFee = inp({ type: "number", min: "3500", step: "500", placeholder: "En az 3500", class: cx(C("in"), C("mono")) });
-  const longBox = h("div", { class: C("box"), hidden: true },
+  const longBox = h("div", { class: C("box"), hidden: true, role: "tabpanel", id: `dk-mp-inv-long-${uidN}`, "aria-labelledby": `dk-mp-inv-tlong-${uidN}` },
     h("div", { class: C("fld") }, h("span", { class: C("lbl") }, "SÜRE"), monthRow),
     h("div", { class: C("fld") }, h("span", { class: C("lbl") }, "SAHNE GÜNLERİ"), dayRow),
     h("div", { class: C("g2") }, lbl("SAAT", rTime), lbl("GECE BAŞINA ÜCRET (₺)", rFee)));
   // mod sekmeleri (grup: uzun dönem yok — legacy createResidency yalnız bireysel sanatçı)
   const tabs = h("div", { role: "tablist", "aria-label": "Davet türü", class: C("tabs") });
-  const tSingle = h("button", { type: "button", role: "tab", class: cx(C("tab"), "dk-press") }, "Tek Etkinlik");
-  const tLong = h("button", { type: "button", role: "tab", class: cx(C("tab"), "dk-press") }, "Uzun Dönem");
+  const tSingle = h("button", { type: "button", role: "tab", id: `dk-mp-inv-tsingle-${uidN}`, "aria-controls": singleBox.id, class: cx(C("tab"), "dk-press") }, "Tek Etkinlik");
+  const tLong = h("button", { type: "button", role: "tab", id: `dk-mp-inv-tlong-${uidN}`, "aria-controls": longBox.id, class: cx(C("tab"), "dk-press") }, "Uzun Dönem");
   tabs.append(tSingle, tLong);
   const setMode = (m) => {
     mode = m;
@@ -845,6 +870,7 @@ export function openInviteModal(x, { events = [], mode: initMode = "single", onS
         if (mode === "single") {
           const f = { date: dateIn.value, time: timeIn.value, fee: feeIn.value, message: msgIn.value.trim(), eventId: sel.value || null };
           if (!f.date || !f.time) return err("Tarih ve saat gir");
+          if (f.date < isoDate(Date.now())) return err("Geçmiş bir tarih seçilemez");
           if (!(Number(f.fee) >= MIN_STAGE_FEE)) return err(`Ücret en az ₺${MIN_STAGE_FEE.toLocaleString("tr-TR")}`);
           try {
             if (!isG) {

@@ -433,6 +433,7 @@ summary::-webkit-details-marker { display: none; }
 .gb-dl-hero { position: relative; padding: 64px var(--px) 88px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: center; overflow: hidden; }
 .gb-dl-l { grid-column: span 6; display: flex; flex-direction: column; gap: 24px; }
 .gb-dl-h1 { font-size: 112px; }
+.gb-dl-h1 .gb-nw { white-space: nowrap; }  /* çizimdeki iki satır: "Canlı müzik," / "cebinde." */
 .gb-dl-lead { max-width: 560px; font-size: 19px; }
 .gb-feats { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
 .gb-feats li { display: flex; align-items: center; gap: 12px; font-size: 15.5px; color: #F2F1EE; }
@@ -520,7 +521,11 @@ summary::-webkit-details-marker { display: none; }
 .gb-upd { flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid rgba(124,224,176,0.45); background: rgba(124,224,176,0.06); color: #7CE0B0; display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
 .gb-upd > svg { flex-shrink: 0; }
 .gb-lbody { padding: 56px var(--px) 96px; display: grid; grid-template-columns: 280px minmax(0, 760px); column-gap: 96px; align-items: start; }
-.gb-ltoc-aside { position: sticky; top: calc(var(--hd-h) + 24px); max-height: calc(100vh - var(--hd-h) - 48px); overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 24px; scrollbar-width: thin; scrollbar-color: #1F232B transparent; }
+/* Kenar çubuğu yapışkan; kısa pencerede YALNIZ içindekiler listesi kendi içinde kayar → iletişim kartı (Hesabımı Sil) hep görünür */
+.gb-ltoc-aside { position: sticky; top: calc(var(--hd-h) + 24px); max-height: calc(100vh - var(--hd-h) - 48px); display: flex; flex-direction: column; gap: 24px; }
+.gb-ltoc { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #2C303A transparent; }
+.gb-ltoc > * { flex-shrink: 0; }
+.gb-ltoc.gb-toc-more { -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 40px), transparent); }
 .gb-ltoc .gb-toc-h { margin-bottom: 12px; }
 .gb-ltoc .gb-toc-a { min-height: 36px; padding: 8px 0 8px 14px; align-items: flex-start; font-size: 13.5px; }
 .gb-ltoc .gb-toc-n { width: 20px; padding-top: 1px; }
@@ -609,6 +614,7 @@ summary::-webkit-details-marker { display: none; }
 .gb-field-ro input { color: #A3A7AF; }
 .gb-fld-err { font-size: 12.5px; color: #FF5A6E; }
 .gb-fld-err:empty { display: none; }
+.gb-agree-err { margin-top: -10px; }  /* onay kutusunun 8px altında (form aralığı 18) */
 .gb-agree { padding: 14px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: border-color 160ms ease, background-color 160ms ease; }
 .gb-agree:has(input:checked) { border-color: rgba(255,90,110,0.5); background: rgba(255,90,110,0.06); }
 .gb-agree:has(input:focus-visible) { outline: 2px solid #4ED8FF; outline-offset: 2px; }
@@ -865,6 +871,6 @@ summary::-webkit-details-marker { display: none; }
   .gb-dl-h1 { font-size: 52px; }
 }
 
-/* Kurumsal tipografi ayarı (Inter) */
+/* Kurumsal tipografi ayarı (Inter) — sayfa h1'leri .gb-h1 (−0.01em) taşıdığından sınıf da burada (masaüstü .dk h1 ile aynı) */
 body { font-synthesis: none; }
-h1 { letter-spacing: -0.025em; }
+h1, .gb-h1 { letter-spacing: -0.025em; }

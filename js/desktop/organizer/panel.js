@@ -114,14 +114,18 @@ export function orgPanelView(ctx) {
       // artboard: mekan · saat · sanatçı ayrı flex öğeleri (gap 6) → "·" iki yanı 6px; tek kesilen (ellipsis) satırda ayraç span'ı
       const parts = [e.venueName || "", evTime(e), e.artistName || ""].filter(Boolean);
       const meta = parts.flatMap((t, i) => (i ? [h("span", { class: `${P}-sep` }, "·"), t] : [t]));
-      return h("a", { href: `#/organizer/etkinlik?duzenle=${encodeURIComponent(e.id)}`, class: `${P}-ev dk-row`, "aria-label": `${e.title || "Etkinlik"} etkinliğini düzenle` },
+      // Erişilebilir ad satır içeriğinden gelir (tarih · başlık · mekan/saat/sanatçı · durum) + görünmez "düzenle" eki;
+      // görsel "17 / EKİ" sütunu yerine okunur tam tarih (dk-sr).
+      return h("a", { href: `#/organizer/etkinlik?duzenle=${encodeURIComponent(e.id)}`, class: `${P}-ev dk-row` },
         evThumb(e.bannerUrl),
         h("span", { class: `${P}-date`, "aria-hidden": "true" }, h("span", { class: `${P}-dd` }, d ? String(d.getDate()) : "—"), h("span", { class: `${P}-mm` }, d ? monShort(ms) : "")),
+        d ? h("span", { class: "dk-sr" }, `${fmtDayMonYear(ms)}, `) : null,
         h("span", { class: `${P}-info` },
           h("span", { class: `${P}-evt` }, e.title || "Etkinlik"),
           h("span", { class: `${P}-evm` }, ico("pin", 13, { color: "#FF8A2A" }), h("span", { class: "dk-truncate" }, ...(meta.length ? meta : ["—"])))),
         dkStatusBadge(evStatusKey(e), { variant: "pill" }),
-        h("span", { class: `${P}-chev` }, ico("chevR", 18)));
+        h("span", { class: `${P}-chev` }, ico("chevR", 18)),
+        h("span", { class: "dk-sr" }, " — düzenle"));
     }));
   }
 
@@ -327,6 +331,8 @@ export function orgPanelView(ctx) {
         isOwner ? orgInvites(uid).catch(() => []) : Promise.resolve([]),
       ]);
       if (!alive) return;
+      // Çevrimdışı: getDocs boş önbellekten hata vermeden döner → sıfırlar yerine "Yüklenemedi" (legacy ile aynı sorgular; spec hata durumu)
+      if (navigator.onLine === false && !(events || []).length && !(members || []).length) { fail(); return; }
       Object.assign(S, { events: events || [], members: members || [], reqs: reqs || [], invites: invites || [], loaded: true });
       shell.setBadge("etkinlik", S.reqs.filter((r) => r.status === "pending").length);
       bell.setRequests(S.reqs);

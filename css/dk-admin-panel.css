@@ -17,6 +17,19 @@
   .dk-admin-panel-kbtn-l { display: none; }
 }
 
+/* ---------- üst bar araması (admin.js kabuğun arama alanına .dk-admin-panel-search ekler) ----------
+   SHARED-CANDIDATE (dk-panel-shell.css ≤1279 genişlik 240): yer tutucu "Etkinlik, mekan veya üye ara" 189 px, içerik kutusu 188 px
+   → "…üye a" kırpılıyordu. 1024–1279'da 248 (üst bar sığar: Keşfet düğmesi 158/40 + 248 + zil + avatar). */
+@media (max-width: 1279px) and (min-width: 1024px) {
+  .dk-ps .dk-ps-search.dk-admin-panel-search { width: 248px; }
+}
+/* boş alanda Chrome'un gizli "temizle" düğmesi (~16 px) yine yer tutup yer tutucuyu kırpıyordu → yalnız yer tutucu görünürken kaldır */
+.dk-admin-panel-search input:placeholder-shown::-webkit-search-cancel-button { display: none; }
+
+/* ---------- toast (artboard: padding 0 16px → × düğmesi sağdan 16) ----------
+   SHARED-CANDIDATE: dk-ui.css .dk-tst-light "0 8px 0 16px" kullanıyor; admin.js toast düğümüne .dk-admin-panel-tst ekler. */
+.dk-tst-light.dk-admin-panel-tst { padding: 0 16px; }
+
 /* ---------- 1. hero ---------- */
 .dk-admin-panel-hero .dk-hero-eb { color: #A78BFA; }
 
@@ -81,11 +94,17 @@
 .dk-admin-panel-act[aria-disabled="true"], .dk-admin-panel-dok[aria-disabled="true"], .dk-admin-panel-dno[aria-disabled="true"] { opacity: 0.55; cursor: default; }
 .dk-admin-panel-act[aria-busy="true"], .dk-admin-panel-dok[aria-busy="true"], .dk-admin-panel-dno[aria-busy="true"] { opacity: 0.8; cursor: progress; }
 .dk-admin-panel-undo { height: 34px; padding: 0 6px; margin: 0; border: 0; background: none; font-family: var(--dk-font-sans); font-size: 13px; font-weight: 500; cursor: pointer; }
-.dk-admin-panel-undo[aria-disabled="true"], .dk-admin-panel-dundo[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
+.dk-admin-panel-undo[aria-disabled="true"], .dk-admin-panel-dundo[aria-disabled="true"], .dk-admin-panel-iretry[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
 /* boş / hata / iskelet */
 .dk-admin-panel-empty { padding: 56px 20px; text-align: center; font-size: 14px; color: #8A8E97; }
 .dk-admin-panel-err { padding: 48px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; font-size: 13.5px; color: #8A8E97; }
 .dk-admin-panel-err .dk-btn { margin-top: 6px; }
+/* kısmi hata (bir kaynak yüklenemedi, diğer satırlar görünüyor): tablonun üstünde tek satır uyarı + "Tekrar dene" */
+.dk-admin-panel-ierr { box-sizing: border-box; min-height: 48px; padding: 8px 14px 8px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #14171D;
+  background: rgba(255,90,110,0.06); font-size: 13px; color: #F2F1EE; }
+.dk-admin-panel-ierr > span { flex-grow: 1; min-width: 0; }
+.dk-admin-panel-ierr svg { flex-shrink: 0; }
+.dk-admin-panel-iretry { height: 32px; padding: 0 6px; margin: 0; border: 0; background: none; flex-shrink: 0; font-family: var(--dk-font-sans); font-size: 13px; font-weight: 500; cursor: pointer; }
 .dk-admin-panel-skc1 { display: flex; align-items: center; gap: 12px; }
 .dk-admin-panel-row.is-skel .dk-admin-panel-tcol { gap: 8px; }
 /* dipnot */
@@ -137,17 +156,18 @@
 .dk-admin-panel-drw .dk-admin-panel-dact { padding: 20px 0 0; }
 
 /* ---------- duyarlı ----------
-   ≥1440: artboard (detay 380) · 1180–1439: detay 320 · <1180: detay gizli → sağ çekmece (spec §10) ·
-   KPI 2×2 <1380 (spec: <1180; daha darda 4'lü dizide "Mekan ve organizatör başvurusu" alt metni iki satıra sarıp kartları 147→164 büyütüyordu) ·
+   ≥1400: artboard (detay 380; kart içeriği ≥640 → tam 4 sütunlu tablo, klasik kaydırma çubuğu payıyla) · 1180–1399: detay 320
+   (380'de kart 1382 altında <640'a iner, 1280'de 540 → satırlar karta dönüyordu) · <1180: detay gizli → sağ çekmece (spec §10) ·
+   KPI 4'lü ≥1180, 2×2 <1180 (spec §10). Dar 4'lü dizide alt metin/etiket iki satıra sarabilir → kartlar eşit boy (ızgara stretch).
    tablo KENDİ genişliğine göre (container query): <640 → TÜR sütunu gizli, tür etiketi başlığın altına (spec "col2 hidden") ·
    <560 → satırlar kart (avatar + başlık | durum, işlemler ikinci satır; spec 769–1023 "rows → cards"). */
-@media (max-width: 1439px) {
+@media (max-width: 1399px) {
   .dk-admin-panel-grid { grid-template-columns: minmax(0, 1fr) 320px; }
-}
-@media (max-width: 1379px) {
-  .dk-admin-panel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* dar 4'lü KPI'da "MEKAN ADI İSTEĞİ" iki satıra sarar → satır arası nefes (tek satırda konum değişmez: ikonla ortalı) */
+  .dk-admin-panel .dk-admin-panel-kpi .dk-kpi-l { line-height: 1.4; }
 }
 @media (max-width: 1179px) {
+  .dk-admin-panel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dk-admin-panel-grid { grid-template-columns: minmax(0, 1fr); }
   .dk-admin-panel-detail { display: none; }
 }

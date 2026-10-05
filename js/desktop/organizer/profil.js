@@ -20,7 +20,7 @@
 //   E-posta/Şifre/Hesabımı Sil legacy auth.js modallarıyla AYNI akış + metin, org form modalı (F5) görünümünde (auth.js'in
 //   yardımcıları dışa aktarılmıyor → yerel kopya; SHARED-CANDIDATE, WebSanatciProfil/WebProfil de kopyalıyor).
 import { h, openImageCropper } from "../../ui.js";
-import { session, logout, refreshProfile, scheduleAccountDeletion } from "../../store.js";
+import { session, logout, refreshProfile, scheduleAccountDeletion, onSession as onSessionChange } from "../../store.js";
 import { saveOrganizerProfile, uploadImage, organizerEvents, orgMembers } from "../../data.js";
 import {
   auth, EmailAuthProvider, reauthenticateWithCredential, verifyBeforeUpdateEmail, updatePassword,
@@ -118,6 +118,25 @@ function trError(code) {
 const isGoogleOnly = (user) => !!(user && user.providerData && user.providerData.some((x) => x.providerId === "google.com"))
   && !(user?.providerData || []).some((x) => x.providerId === "password");
 
+// Hesabımı Sil onay toast'u: scheduleAccountDeletion çıkış yapar → router kimlik değişiminde "dk:teardown identity" ile açık
+// dk toast'unu kapatır. Toast bu yüzden oturum misafire OTURDUKTAN sonra (router'ın aynı yayındaki çiziminden sonra)
+// gösterilir; yayın gelmezse 6 sn yedek. WebProfil (account/profil.js armLogoutToast) ile aynı yöntem.
+// SHARED-CANDIDATE: dkToast'a kimlik yıkımından sağ çıkan (persist) seçenek eklenmeli.
+function armLogoutToast(msg) {
+  const settled = () => session.ready && !session.reauthing && (!session.user || session.guest);
+  let off = null, fallback = 0, done = false;
+  const stop = () => { done = true; off?.(); off = null; clearTimeout(fallback); };
+  const show = () => { if (done) return; stop(); setTimeout(() => dkToast(msg, { duration: 6000 }), 60); };
+  const fire = () => {
+    if (done) return;
+    if (settled()) { show(); return; }
+    off = onSessionChange(() => { if (settled()) show(); });   // router dinleyicisinden SONRA eklenir → onun çiziminden sonra çalışır
+    fallback = setTimeout(show, 6000);
+  };
+  fire.cancel = stop;
+  return fire;
+}
+
 // Legacy kırpıcı (#modal-root, z 3000) açıkken pencere düzeyinde (dk katmanlarının belge düzeyi ESC/Tab'ından önce) ESC → İptal,
 // Tab → kırpıcı içinde döngü (WebOrgEtkinlikler ile aynı yöntem).
 function cropImage(file, opts) {
@@ -194,6 +213,13 @@ export function orgProfilView(ctx) {
     fld("Hakkında", bioIn, h("span", { class: k("help") }, "Organizasyonunu, düzenlediğin etkinlik türlerini ve çalıştığın sahneleri kısaca anlat.")),
     h("div", { class: k("foot") }, errEl, saveForm));
   form.addEventListener("submit", (e) => { e.preventDefault(); save(); });
+  // Formda gönder düğmesi yok (iki Kaydet de type=button dkButton) → tarayıcı birden çok metin alanında örtük gönderimi yapmaz;
+  // tek satırlı alanlarda Enter = Kaydet (textarea'da yeni satır kalır).
+  const onEnterSave = (e) => {
+    if (e.key !== "Enter" || e.isComposing || e.shiftKey || e.altKey || e.metaKey || e.ctrlKey) return;
+    if (e.target?.tagName !== "INPUT" || e.target.type === "file") return;
+    e.preventDefault(); save();
+  };
   const infoCard = h("section", { class: k("card"), "aria-labelledby": hInfo },
     h("div", { class: k("shead") }, h("span", { class: k("snum") }, "01"), h("h2", { id: hInfo }, "Organizasyon Bilgileri")),
     form);
@@ -212,6 +238,8 @@ export function orgProfilView(ctx) {
     youtube: socIn("youtube", "YOUTUBE", "youtube", "#FF5A6E", "kanal bağlantısı", soc.youtube),
     spotify: socIn("spotify", "SPOTIFY", "music", "#7CE0B0", "çalma listesi ya da bağlantı", soc.spotify),
   };
+  form.addEventListener("keydown", onEnterSave);
+  Object.values(S).forEach((x) => x.inp.addEventListener("keydown", onEnterSave));
   const socialCard = h("section", { class: k("card"), "aria-labelledby": hSoc },
     h("div", { class: k("shead") }, h("span", { class: k("snum") }, "02"), h("h2", { id: hSoc }, "Sosyal bağlantılar")),
     h("div", { class: k("socgrid") }, S.instagram.node, S.website.node, S.youtube.node, S.spotify.node));
@@ -270,7 +298,7 @@ export function orgProfilView(ctx) {
     idAv.replaceChildren(p.photoURL
       ? dkAvatar({ photo: p.photoURL, size: 88, alt: "" })
       : h("span", { class: k("idfb"), "aria-hidden": "true" }, ico("person", 36, { color: "#F2F1EE", sw: "1.8" })));
-    idName.textContent = p.displayName || "Organizatör";
+    idName.textContent = p.displayName || p.orgName || "Organizatör";   // legacy renderProfile yedeği
     idMail.textContent = p.email || s.user?.email || "";
     idMail.hidden = !idMail.textContent;
     idOrg.textContent = p.orgName || "Organizasyonunuz";
@@ -482,12 +510,14 @@ export function orgProfilView(ctx) {
       actions: [
         { label: "Vazgeç", variant: "outline" },
         { label: "Hesabımı Sil", variant: "danger", icon: ico("trash", 15, { color: "#06070A", sw: "2.2" }), busyLabel: "İşleniyor…", onClick: async () => {
+          const confirmAfterLogout = armLogoutToast("Hesabın silinmek üzere işaretlendi. 3 ay içinde giriş yaparsan geri alınır.");
           try {
             await scheduleAccountDeletion();
             location.hash = "#/";
-            dkToast("Hesabın silinmek üzere işaretlendi. 3 ay içinde giriş yaparsan geri alınır.");
+            confirmAfterLogout();
             return true;
           } catch (_) {
+            confirmAfterLogout.cancel();
             dkToast("İşlem başarısız. İnternetini kontrol edip tekrar dene.", { type: "err" });
             return false;
           }

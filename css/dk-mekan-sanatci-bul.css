@@ -94,6 +94,7 @@
 .dk-mekan-sanatci-bul-acts { margin-top: auto; display: flex; gap: 8px; }
 .dk-mekan-sanatci-bul-long { width: 40px; height: 40px; padding: 0; flex-shrink: 0; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #A3A7AF; display: flex; align-items: center; justify-content: center; }
 .dk-mekan-sanatci-bul-long.is-row { width: 36px; height: 36px; }
+.dk-mekan-sanatci-bul-long.is-off { opacity: 0.45; cursor: not-allowed; }  /* grup: uzun dönem yok (aria-disabled; tık → açıklama) */
 .dk-mekan-sanatci-bul-inv { flex-grow: 1; height: 40px; padding: 0 8px; border-radius: 6px; border: 1px solid #FF8A2A; background: #FF8A2A; color: #06070A; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 13.5px; font-weight: 600; white-space: nowrap; }
 .dk-mekan-sanatci-bul-inv.is-sent { border-color: rgba(124,224,176,0.45); background: rgba(124,224,176,0.08); color: #7CE0B0; }
 /* tablo: sabit genişlik ("Gönderildi ✓" sığar) → gönderildi satırında da düğmeler İŞLEM kolonunda hizalı kalır */
@@ -101,10 +102,10 @@
 
 /* ── Tablo (liste görünümü) ──
    Artboard ızgarası (1fr 130 110 110 150 170, gap 14) 812 px'te SANATÇI kolonunu 30 px'e eziyor (ad/avatar ŞEHİR'in üstüne
-   biniyor — tasarım hatası). Kolonlar daraltıldı; SANATÇI ≥150 px kalır. <1440: ŞEHİR + KATILIM gizli (spec §10).
-   İŞLEM 192 = göz 36 + tekrar 36 + davet 108 + 2 × 6 (gönderildi durumunda da taşmaz); ÜCRET 128 (en uzun aralık "₺12.000 – 15.000"). */
+   biniyor — tasarım hatası). Kolonlar daraltıldı; 1440'ta SANATÇI ≈ 180 px (kesilen adlar title ile okunur). <1440: ŞEHİR + KATILIM gizli (spec §10).
+   İŞLEM 192 = göz 36 + tekrar 36 + davet 108 + 2 × 6 (gönderildi durumunda da taşmaz); ÜCRET 120 (en uzun aralık "₺12.000 – 15.000"). */
 .dk-mekan-sanatci-bul-table { border: 1px solid #1F232B; border-radius: 12px; background: #0E1014; overflow: hidden; }
-.dk-mekan-sanatci-bul-tr { box-sizing: border-box; padding: 0 20px; display: grid; grid-template-columns: minmax(0, 1fr) 96px 64px 72px 128px 192px; gap: 12px; align-items: center; border-bottom: 1px solid #14171D; }
+.dk-mekan-sanatci-bul-tr { box-sizing: border-box; padding: 0 20px; display: grid; grid-template-columns: minmax(0, 1fr) 84px 64px 72px 120px 192px; gap: 12px; align-items: center; border-bottom: 1px solid #14171D; }
 .dk-mekan-sanatci-bul-thead { height: 40px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
 .dk-mekan-sanatci-bul-thead .c-act { text-align: right; }
 .dk-mekan-sanatci-bul-row { height: 64px; transition: background-color 160ms ease; }
@@ -125,7 +126,7 @@
 .dk-mekan-sanatci-bul-racts { display: flex; justify-content: flex-end; gap: 6px; }
 
 /* ── Boş / hata / iskelet ── */
-.dk-mekan-sanatci-bul-empty { height: 280px; box-sizing: border-box; border: 1px dashed #2C303A; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #8A8E97; text-align: center; padding: 0 24px; }
+.dk-mekan-sanatci-bul-empty { height: 280px; border: 1px dashed #2C303A; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #8A8E97; text-align: center; padding: 0 24px; }
 .dk-mekan-sanatci-bul-empty-t { font-size: 16px; font-weight: 600; color: #F2F1EE; }
 .dk-mekan-sanatci-bul-empty-s { font-size: 13.5px; }
 .dk-mekan-sanatci-bul-empty-b { margin-top: 6px; height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE; font-size: 13.5px; }
@@ -176,7 +177,7 @@
 /* ── Duyarlı ── */
 @media (max-width: 1439px) {
   .dk-mekan-sanatci-bul-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .dk-mekan-sanatci-bul-tr { grid-template-columns: minmax(0, 1fr) 64px 128px 192px; }
+  .dk-mekan-sanatci-bul-tr { grid-template-columns: minmax(0, 1fr) 64px 120px 192px; }
   .dk-mekan-sanatci-bul-tr > .c-city, .dk-mekan-sanatci-bul-tr > .c-att { display: none; }
 }
 @media (max-width: 1279px) {

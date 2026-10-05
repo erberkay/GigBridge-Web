@@ -28,7 +28,7 @@ import { db, doc, updateDoc } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import { cx, dkKpi, dkUnderlineTabs, dkChip, dkStatusBadge, dkPageHero, dkToast, dkDrawer, dkSkeleton, dkButton, portalRoot } from "../shared/ui.js";
-import { rgba, trUpper, toMs, MONTHS_TR_SHORT, matchText, writeQuery, fmtTime, eventGenres, ROLE_LABELS } from "../shared/helpers.js";
+import { rgba, trUpper, toMs, MONTHS_TR_SHORT, matchText, writeQuery, hashBase, fmtTime, eventGenres, ROLE_LABELS } from "../shared/helpers.js";
 
 // ══════════ Sabitler (DCLogic ile birebir) ══════════
 const VIOLET = "#A78BFA";
@@ -65,7 +65,7 @@ const CHECK_SVG = '<path d="m5 12.5 4.5 4.5L19 7.5"></path>';
 const X_SVG = '<path d="M6 6l12 12M18 6 6 18"></path>';
 
 // ══════════ Modül önbelleği (sekme = rota; görünüm her sekmede yeniden kurulur) ══════════
-const _cache = { uid: null, at: 0, ready: false, loading: null, items: new Map(), order: [], errors: {}, emails: new Map() };
+const _cache = { uid: null, at: 0, ready: false, loading: null, items: new Map(), order: [], src: {}, emails: new Map() };
 let _q = "";                                         // panel araması (sekmeler arası korunur)
 let _last = { at: -1e9, scrollY: 0 };                // son yıkım (sekme geçişinde "sıcak" yeniden kurulum)
 let _pendingFocus = null;                            // { src: "tab"|"kpi"|"nav", key } → yeni görünümde aynı denetime odak
@@ -83,6 +83,14 @@ const ini = (s) => { const c = String(s || "").replace(/^[\s[“"'(]+/, "").char
 const statusLabel = (it) => (it.status === "pending" ? (it.kind === "report" ? "Açık" : "Bekliyor") : ({ approved: "Onaylandı", rejected: "Reddedildi", vip: "VIP onaylandı", resolved: "Çözüldü" })[it.status] || "—");
 const statusColor = (it) => (it.status === "pending" ? "#FFD700" : it.status === "rejected" ? "#FF5A6E" : it.status === "vip" ? "#FFD700" : "#7CE0B0");
 const tabOfKind = (k) => (k === "venue" || k === "org" ? "onaylar" : k === "vip" ? "vip" : k === "name" ? "ad" : "sorun");
+// öğe türü → Firestore kaynağı (loadAll'daki 4 sorgu) · sekme / başvuru türü süzgeci → beslendiği kaynaklar
+const SRC_OF = { venue: "venue", org: "org", vip: "vip", name: "rep", report: "rep" };
+const TAB_SRCS = { onaylar: ["venue", "org"], vip: ["vip"], ad: ["rep"], sorun: ["rep"] };
+const SUB_SRCS = { all: ["venue", "org"], venue: ["venue"], org: ["org"] };
+// "Mesaj gönder" adresi: yalnız düz e-posta (?, &, #, boşluk vb. yok → mailto'ya cc/bcc/body eklenemez); href'te ayrıca kodlanır
+const EMAIL_RE = /^[^\s@?&#%/\\:;,<>"'()[\]]+@[^\s@?&#%/\\:;,<>"'()[\]]+\.[^\s@?&#%/\\:;,<>"'()[\]]+$/;
+const safeEmail = (v) => { const e = typeof v === "string" ? v.trim() : ""; return e.length <= 254 && EMAIL_RE.test(e) ? e : null; };
+const mailtoHref = (email, subject) => `mailto:${encodeURIComponent(email).replace(/%40/g, "@")}?subject=${encodeURIComponent(subject)}`;
 
 // ── Firestore kaydı → görünüm öğesi ──
 function toItem(kind, r) {
@@ -110,7 +118,7 @@ function toItem(kind, r) {
     return { kind, id: r.id, title: `${cur}  →  ${r.requestedName || "?"}`, sub: "Mekan adı değişikliği talebi", col2: "Neden: " + reason, color: V,
       ini: ini(r.currentName || r.reporterName || "?"),
       fields: [["MEVCUT AD", cur], ["İSTENEN AD", r.requestedName || "?"], ["BİLDİREN", `${r.reporterName || cur} · Mekan`], ["TARİH", fmtDateNum(r.createdAt)]],
-      msgLabel: "NEDEN", msg: reason, email: r.reporterEmail || null, emailUid: r.targetUserId || r.reporterId || null, createdMs, raw: r };
+      msgLabel: "NEDEN", msg: reason, email: null, emailAlt: r.reporterEmail || null, emailUid: r.targetUserId || r.reporterId || null, createdMs, raw: r };
   }
   // sorun bildirimi (type: report | content | …)
   const typeLabel = ROLE_LABELS[r.reporterType] || r.reporterType || "";
@@ -118,12 +126,12 @@ function toItem(kind, r) {
   return { kind: "report", id: r.id, title: r.subject || "Bildirim", sub: who, col2: who, color: REPORT_COLOR[r.reporterType] || C,
     ini: ini(r.reporterName || r.subject || "?"),
     fields: [["BİLDİREN", r.reporterName || "—"], ["HESAP TÜRÜ", typeLabel || "—"], ["TARİH", fmtDateNum(r.createdAt)]],
-    msgLabel: "MESAJ", msg: r.message || "", email: r.reporterEmail || null, emailUid: r.reporterId || null, createdMs, raw: r };
+    msgLabel: "MESAJ", msg: r.message || "", email: null, emailAlt: r.reporterEmail || null, emailUid: r.reporterId || null, createdMs, raw: r };
 }
 const keyOf = (it) => `${it.kind}:${it.id}`;
 const KIND_ORDER = { venue: 0, org: 1, vip: 2, name: 3, report: 4 };
 
-// Tüm listeleri yükle (sekme başına hata: allSettled). Bu oturumda karar verilen öğeler (Firestore'da artık bekleyen değil)
+// Tüm listeleri yükle (kaynak başına hata: allSettled → _cache.src). Bu oturumda karar verilen öğeler (Firestore'da artık bekleyen değil)
 // listede yerinde kalır; yeni bekleyenler eklenir.
 function loadAll(uid) {
   if (_cache.loading) return _cache.loading;
@@ -132,36 +140,36 @@ function loadAll(uid) {
     if (_cache.uid !== uid) return;
     const [ven, org, vip, rep] = res;
     const fresh = [];
-    const errors = { onaylar: ven.status === "rejected" || org.status === "rejected", vip: vip.status === "rejected", ad: rep.status === "rejected", sorun: rep.status === "rejected" };
+    // kaynak başına hata (kısmi hata görünür kalsın: ör. yalnız organizatör sorgusu düşerse "Organizatör · —" + satır üstü uyarı)
+    const src = { venue: ven.status === "rejected", org: org.status === "rejected", vip: vip.status === "rejected", rep: rep.status === "rejected" };
     if (ven.status === "fulfilled") ven.value.forEach((r) => fresh.push(toItem("venue", r)));
     if (org.status === "fulfilled") org.value.forEach((r) => fresh.push(toItem("org", r)));
     if (vip.status === "fulfilled") vip.value.forEach((r) => fresh.push(toItem("vip", r)));
     if (rep.status === "fulfilled") rep.value.forEach((r) => fresh.push(toItem(r.type === "name_change" ? "name" : "report", r)));
     [ven, org, vip, rep].forEach((x) => { if (x.status === "rejected") console.error(x.reason); });
     const next = new Map();
+    // Yarış koruması: yazımı süren (busy) ya da yenileme başladıktan SONRA karar verilen / geri alınan öğe AYNI nesneyle kalır —
+    // decide()/undo() yakaladıkları nesnede biter; yeni nesne konsaydı satır "Bekliyor" + kilitli düğmelerle takılı kalıyordu.
+    const keep = (old) => !!old && (!!old.busy || old.decidedAt >= startedAt);
     fresh.forEach((it) => {
       const k = keyOf(it);
       const old = _cache.items.get(k);
-      // yarış: yenileme başladıktan SONRA verilen karar korunur (okuma karardan önce yapılmış olabilir)
-      if (old && old.status !== "pending" && old.decidedAt >= startedAt) { next.set(k, old); return; }
+      if (keep(old)) { next.set(k, old); return; }
       it.status = "pending"; it.busy = null; it.decidedAt = 0;
-      if (old?.busy) { it.busy = old.busy; }
       next.set(k, it);
     });
-    // bu oturumda karar verilmiş (artık Firestore'da bekleyen değil) öğeler yerinde kalır — yalnız sekmesi başarıyla yüklendiyse
+    // Firestore'da artık bekleyen olmayan eski öğeler: bu oturumda karar verilenler yerinde kalır (rozet + "Geri al");
+    // kaynağı bu turda yüklenemeyen öğeler (önbellek) kalır; diğer bekleyenler (başka yerde karar verilmiş) düşer.
     _cache.items.forEach((old, k) => {
-      if (next.has(k) || old.status === "pending") return;
-      if (errors[tabOfKind(old.kind)]) return;
-      next.set(k, old);
+      if (next.has(k)) return;
+      if (keep(old) || old.status !== "pending" || src[SRC_OF[old.kind]]) next.set(k, old);
     });
-    // hata veren sekmenin eski (önbellek) öğeleri kalsın
-    _cache.items.forEach((old, k) => { if (!next.has(k) && errors[tabOfKind(old.kind)]) next.set(k, old); });
     _cache.items = next;
+    _cache.src = src;
     _cache.order = [...next.keys()].sort((a, b) => {
       const x = next.get(a), y = next.get(b);
       return (KIND_ORDER[x.kind] - KIND_ORDER[y.kind]) || (y.createdMs - x.createdMs) || String(x.id).localeCompare(String(y.id));
     });
-    _cache.errors = errors;
     _cache.ready = true;
     _cache.at = Date.now();
   }).finally(() => { _cache.loading = null; });
@@ -296,7 +304,7 @@ export function adminView(ctx) {
   let alive = true;
   const warm = performance.now() - _last.at < 2500;  // aynı paneldeki sekme geçişi → giriş animasyonu/kaydırma sıfırlaması yok
   if (_cache.uid !== uid) {                            // kimlik değişti → önbelleği sıfırla
-    _cache.uid = uid; _cache.at = 0; _cache.ready = false; _cache.items = new Map(); _cache.order = []; _cache.errors = {}; _cache.emails = new Map();
+    _cache.uid = uid; _cache.at = 0; _cache.ready = false; _cache.items = new Map(); _cache.order = []; _cache.src = {}; _cache.emails = new Map();
     _q = "";
   }
 
@@ -311,6 +319,7 @@ export function adminView(ctx) {
   const T = TAB[tab];
   let sub = "all";
   let selKey = null;          // açık seçim (?sec) — yoksa ilk satır
+  let urlSec = null;          // adresteki ?sec (çözülemezse adresten silinir)
   let drawer = null;          // dar ekranda detay çekmecesi
   let lastToast = null;
   const wideMq = window.matchMedia("(min-width: 1180px)");
@@ -318,6 +327,7 @@ export function adminView(ctx) {
     const tur = q?.get?.("tur");
     sub = tab === "onaylar" ? (SUBS.find((x) => x[3] && x[3] === tur)?.[0] || "all") : "all";
     const sec = q?.get?.("sec");
+    urlSec = sec || null;
     selKey = sec ? findKeyById(sec) : null;
   };
   const findKeyById = (id) => {
@@ -328,14 +338,25 @@ export function adminView(ctx) {
   // ── kabuk ──
   const kbtn = h("button", { type: "button", class: "dk-admin-panel-kbtn dk-press", "aria-label": "Keşfet önizleme", title: "Keşfet ekranını önizle" },
     svgIcon("compassAdmin", { size: 16, color: VIOLET }), h("span", { class: "dk-admin-panel-kbtn-l" }, "Keşfet önizleme"));
-  kbtn.addEventListener("click", () => openKesfetPreview());
+  // 769–1023: kenar çekmecesindeki "Keşfet ekranı" / "Siteye dön" <button> olduğundan kabuk çekmeceyi kapatmıyor → önizleme
+  // çekmece + perde altında açılıyordu. Önce çekmeceyi kapat, odağı hamburgere ver (önizleme kapanınca oraya döner).
+  // SHARED-CANDIDATE: panelShell kenar menüsünde <button> tıklanınca da çekmeceyi kapatmalı.
+  const openPreview = () => {
+    if (shell.node.classList.contains("is-nav-open")) {
+      shell.node.querySelector(".dk-ps-scrim")?.click();
+      try { shell.topbar.querySelector(".dk-ps-burger")?.focus({ preventScroll: true }); } catch (_) {}
+    }
+    openKesfetPreview();
+  };
+  kbtn.addEventListener("click", openPreview);
   const shell = panelShell({
     role: "admin", active: tab, crumb: T.label, ctx, notifications: "custom",
-    headerActions: [kbtn], onPreview: () => openKesfetPreview(),
+    headerActions: [kbtn], onPreview: openPreview,
     search: { placeholder: "Etkinlik, mekan veya üye ara", value: _q, onInput: (q) => { _q = q || ""; renderList(); }, onSubmit: (q) => { _q = q || ""; renderList(); } },
   });
   const root = shell.content;
   root.classList.add("dk-admin-panel");
+  shell.search?.classList.add("dk-admin-panel-search");   // 1024–1279 genişlik düzeltmesi (dk-admin-panel.css)
   if (warm) root.classList.add("is-warm");
   // görünmez duyuru bölgesi ("Geri alındı"): #app DIŞINDA (portal) — çekmece açıkken #app inert, içindeki canlı bölge duyurulmaz.
   // Görünümle birlikte kurulur/kaldırılır; önceden DOM'da olsun diye mount sonrası eklenir.
@@ -414,6 +435,10 @@ export function adminView(ctx) {
     return list[0] || null;
   };
   const asideShown = () => wideMq.matches;
+  // kaynak durumu: failed = bu turda yüklenemedi · unknown = yüklenemedi VE önbellekte o kaynaktan öğe yok (sayı bilinmiyor → "—")
+  const srcFailed = (sr) => !!_cache.src[sr];
+  const srcUnknown = (sr) => srcFailed(sr) && !_cache.order.some((x) => SRC_OF[_cache.items.get(x)?.kind] === sr);
+  const failedFeeds = () => (tab === "onaylar" ? SUB_SRCS[sub] : TAB_SRCS[tab]).filter(srcFailed);   // görünen süzgeci besleyen, düşen kaynaklar
 
   function go(k, src) {
     _pendingFocus = { src, key: k };
@@ -423,16 +448,19 @@ export function adminView(ctx) {
   }
   function setSub(k) {
     if (k === sub) return;
-    sub = k; selKey = null;
+    sub = k; selKey = null; urlSec = null;
     writeQuery({ tur: SUBS.find((x) => x[0] === k)?.[3] || null, sec: null });
     renderList();
   }
   function select(it, { open = true } = {}) {
-    selKey = keyOf(it);
+    selKey = keyOf(it); urlSec = it.id;
     writeQuery({ sec: it.id });
     if (!asideShown() && open) openDrawer();
     renderList();
   }
+
+  // artboard toast'ı (padding 0 16) — ortak açık toast'a yerel sınıf (SHARED-CANDIDATE, bkz. dk-admin-panel.css)
+  const toast = (msg, o) => { const t = dkToast(msg, o); t?.node?.classList.add("dk-admin-panel-tst"); return t; };
 
   // ── karar ──
   async function decide(it, ok) {
@@ -441,10 +469,10 @@ export function adminView(ctx) {
     try {
       await writeDecision(it, ok);
       it.status = ok ? OKS[it.kind] : "rejected"; it.decidedAt = Date.now();
-      lastToast = dkToast(ok ? OKT[it.kind] : "Reddedildi");
+      lastToast = toast(ok ? OKT[it.kind] : "Reddedildi");
     } catch (e) {
       console.error(e);
-      dkToast("İşlem başarısız", { type: "err" });
+      toast("İşlem başarısız", { type: "err" });
     } finally {
       it.busy = null;
       notify();
@@ -461,7 +489,7 @@ export function adminView(ctx) {
       say("Geri alındı");           // artboard: geri alınca toast yok → yalnız ekran okuyucu duyurusu
     } catch (e) {
       console.error(e);
-      dkToast("İşlem başarısız", { type: "err" });
+      toast("İşlem başarısız", { type: "err" });
     } finally {
       it.busy = null;
       notify();
@@ -517,6 +545,22 @@ export function adminView(ctx) {
     return row;
   }
 
+  // İletişim adresi: başvuran → users.email · ad isteği / sorun → önce users/{hedef|bildiren}.email (userById), yoksa rapordaki
+  // reporterEmail (bildirenin kendi yazdığı alan; yedek). Hepsi safeEmail süzgecinden geçer. Getirme sürerken düğme gizli.
+  function contactEmail(it) {
+    if (it.kind === "vip") return null;
+    if (it.email || !it.emailUid) return safeEmail(it.email) || safeEmail(it.emailAlt);
+    if (!_cache.emails.has(it.emailUid)) {
+      const id = it.emailUid;
+      _cache.emails.set(id, undefined);             // getiriliyor
+      userById(id).then((u) => { _cache.emails.set(id, u?.email || null); }, () => { _cache.emails.set(id, null); })
+        .finally(notify);                           // görünüm bu arada yeniden kurulmuş olabilir → mount'lu olanı çiz
+      return null;
+    }
+    const v = _cache.emails.get(it.emailUid);
+    return v === undefined ? null : safeEmail(v) || safeEmail(it.emailAlt);
+  }
+
   function detailNodes(it, inDrawer) {
     const out = [];
     const st = statusColor(it);
@@ -549,16 +593,11 @@ export function adminView(ctx) {
         h("span", {}, "Karar verildi: " + statusLabel(it)),
         canUndo(it) ? undoBtn(it, "dk-admin-panel-dundo", "dundo") : null));
     }
-    // "Mesaj gönder" (VIP hariç): yönetici sohbeti yok → mailto yedeği (spec §9); e-posta yoksa gizli
-    if (it.kind !== "vip") {
-      const email = it.email || (it.emailUid ? _cache.emails.get(it.emailUid) : null);
-      if (email) {
-        acts.append(h("a", { class: "dk-admin-panel-dmsg dk-press", href: `mailto:${email}?subject=${encodeURIComponent("GigBridge – " + it.title)}` },
-          svgIcon("chatSquare", { size: 16, sw: "2" }), "Mesaj gönder"));
-      } else if (it.emailUid && !_cache.emails.has(it.emailUid)) {
-        _cache.emails.set(it.emailUid, null);
-        userById(it.emailUid).then((u) => { _cache.emails.set(it.emailUid, u?.email || null); if (alive && u?.email) renderDetail(); }).catch(() => {});
-      }
+    // "Mesaj gönder" (VIP hariç): yönetici sohbeti yok → mailto yedeği (spec §9); geçerli e-posta yoksa gizli
+    const email = contactEmail(it);
+    if (email) {
+      acts.append(h("a", { class: "dk-admin-panel-dmsg dk-press", href: mailtoHref(email, "GigBridge – " + it.title) },
+        svgIcon("chatSquare", { size: 16, sw: "2" }), "Mesaj gönder"));
     }
     out.push(acts);
     return out;
@@ -574,10 +613,12 @@ export function adminView(ctx) {
       return;
     }
     if (!it) {
+      // liste yüklenemediyse "soldan bir satır seç" demeyelim (seçilecek satır yok)
+      const failed = failedFeeds().length > 0;
       detail.replaceChildren(h("div", { class: "dk-admin-panel-dempty" },
-        svgRaw(CHECK_SVG, { size: 28, sw: "2", color: "#5E636D" }),
+        failed ? svgIcon("alertCircle", { size: 28, color: "#5E636D" }) : svgRaw(CHECK_SVG, { size: 28, sw: "2", color: "#5E636D" }),
         h("span", { class: "dk-admin-panel-det" }, "Seçili kayıt yok"),
-        h("span", {}, "Detayları görmek için soldan bir satır seç.")));
+        h("span", {}, failed ? "Kayıtlar yüklenince detaylar burada görünür." : "Detayları görmek için soldan bir satır seç.")));
     } else detail.replaceChildren(...detailNodes(it, false));
     if (drawer) {
       if (!it) { drawer.close(); drawer = null; } else {
@@ -611,10 +652,17 @@ export function adminView(ctx) {
     const ae = document.activeElement;
     const inDrw = !!(drawer && ae && drawer.panel.contains(ae));
     const f = ae && (root.contains(ae) || inDrw) ? ae.dataset?.f : null;
+    // adresteki ?sec bu sekmede/süzgeçte yoksa (silinmiş, başka sekmenin kaydı) veri yüklenince adresten kaldır → paylaşılan /
+    // yenilenen bağlantı gösterilmeyen kayda işaret etmesin (arama ile gizlenen satır sayılmaz; seçim korunur)
+    if (urlSec && _cache.ready && !_cache.loading && !TAB_SRCS[tab].some(srcFailed) && !tabItems().some((it) => subOk(it) && it.id === urlSec)) {
+      urlSec = null; selKey = null;
+      if (alive && hashBase() === T.route) writeQuery({ sec: null });
+    }
     const list = visible();
     const sel = currentSel(list);
     const selK = sel ? keyOf(sel) : null;
     const showSel = asideShown() || !!drawer;
+    const failed = failedFeeds();
     table.setAttribute("aria-busy", !_cache.ready && !_cache.items.size ? "true" : "false");
     if (!_cache.ready && !_cache.items.size) {
       tbody.replaceChildren(...[0, 1, 2].map(() => h("div", { class: "dk-admin-panel-row is-skel", "aria-hidden": "true" },
@@ -622,8 +670,8 @@ export function adminView(ctx) {
         h("div", { class: "dk-admin-panel-c2" }, dkSkeleton({ w: 90, h: 13 })),
         h("div", { class: "dk-admin-panel-c3" }, dkSkeleton({ w: 84, h: 24, r: 12 })),
         h("div", { class: "dk-admin-panel-c4" }, dkSkeleton({ w: 84, h: 34 }), dkSkeleton({ w: 84, h: 34 })))));
-    } else if (_cache.errors[tab] && !list.length) {
-      const retry = dkButton("Tekrar dene", { variant: "outline", size: 40, icon: "refresh", onClick: () => refresh(true) });
+    } else if (failed.length && !list.length) {
+      const retry = dkButton("Tekrar dene", { variant: "outline", size: 40, icon: "refresh", onClick: (e) => retryLoad(e) });
       tbody.replaceChildren(h("div", { role: "row" }, h("div", { role: "cell", class: "dk-admin-panel-err" },
         svgIcon("alertCircle", { size: 28, color: "#5E636D" }),
         h("span", { class: "dk-admin-panel-det", role: "alert" }, "Yüklenemedi"),
@@ -631,7 +679,14 @@ export function adminView(ctx) {
     } else if (!list.length) {
       tbody.replaceChildren(h("div", { role: "row" }, h("div", { role: "cell", class: "dk-admin-panel-empty" }, _q && tabItems().some(subOk) ? "Aramanla eşleşen kayıt yok" : EMPTY[tab])));
     } else {
-      tbody.replaceChildren(...list.map((it) => rowEl(it, showSel && keyOf(it) === selK)));
+      const rows = list.map((it) => rowEl(it, showSel && keyOf(it) === selK));
+      if (failed.length) {        // kısmi hata: görünen satırlar eksik olabilir → üstte uyarı + "Tekrar dene"
+        const b = h("button", { type: "button", class: "dk-admin-panel-iretry dk-link", dataset: { f: "err|retry" }, "aria-disabled": _cache.loading ? "true" : null }, "Tekrar dene");
+        b.addEventListener("click", (e) => retryLoad(e));
+        rows.unshift(h("div", { role: "row" }, h("div", { role: "cell", class: "dk-admin-panel-ierr" },
+          svgIcon("alertCircle", { size: 16, color: "#FF5A6E" }), h("span", {}, "Bazı kayıtlar yüklenemedi."), b)));
+      }
+      tbody.replaceChildren(...rows);
     }
     renderDetail();
     if (f) {
@@ -650,16 +705,17 @@ export function adminView(ctx) {
 
   function renderCounts() {
     const ready = _cache.ready || _cache.items.size > 0;
+    // bilinmeyen sayı (kaynağı yüklenemedi, önbellekte de yok) → KPI / sekme / çip "—" (0 değil: "bekleyen yok" sanılmasın)
     TABS.forEach((t) => {
       const n = pendingCount(t.key);
-      const err = _cache.errors[t.key];
-      kpis.get(t.key)?.dk.setValue(!ready || (err && !tabItems(t.key).length) ? "—" : String(n));
-      tabs.dk.setCount(t.key, ready && !(err && !tabItems(t.key).length) ? String(n) : "");
+      const unknown = TAB_SRCS[t.key].some(srcUnknown);
+      kpis.get(t.key)?.dk.setValue(!ready || unknown ? "—" : String(n));
+      tabs.dk.setCount(t.key, !ready ? "" : unknown ? "—" : String(n));
     });
     if (subRow) SUBS.forEach(([k, label]) => {
       const n = tabItems("onaylar").filter((it) => it.status === "pending" && (k === "all" || it.kind === k)).length;
       const c = chips.get(k);
-      const l = c.querySelector("span:last-child"); if (l) l.textContent = ready ? `${label} · ${n}` : label;
+      const l = c.querySelector("span:last-child"); if (l) l.textContent = ready ? `${label} · ${SUB_SRCS[k].some(srcUnknown) ? "—" : n}` : label;
       c.dk.set(k === sub);
     });
     pushShellCounts();
@@ -684,6 +740,20 @@ export function adminView(ctx) {
     shell.setNotifications(feed);
   }
   function renderAll() { renderList(); }
+
+  // "Tekrar dene" (tam / kısmi hata): odak düğmedeyse yükleme sürerken içerik bölgesinde bekler, sonra ilk satıra
+  // (hata sürüyorsa yeni "Tekrar dene"ye) geçer — düğme yeniden çizimde kalkınca odak <body>'ye düşmesin.
+  async function retryLoad(e) {
+    if (_cache.loading) return;
+    const btn = e?.currentTarget;
+    const hadFocus = !!btn && document.activeElement === btn;
+    btn?.setAttribute("aria-disabled", "true");
+    if (hadFocus) { try { root.focus({ preventScroll: true }); } catch (_) {} }
+    await refresh(true);
+    if (!alive || !hadFocus || (document.activeElement !== root && document.activeElement !== document.body)) return;
+    const t = root.querySelector(".dk-admin-panel-err .dk-btn, .dk-admin-panel-iretry") || root.querySelector(".dk-admin-panel-pick") || root;
+    try { t.focus({ preventScroll: true }); } catch (_) {}
+  }
 
   async function refresh(force = false) {
     if (!uid) return;

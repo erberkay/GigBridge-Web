@@ -36,6 +36,7 @@ import { fold, trUpper, sortTR, fmtRating, latLngOf, haversineKm, fmtKm, directi
 const NS = "dk-org-mekan-sec";
 const k = (s) => `${NS}-${s}`;
 const CYAN = "#4ED8FF";
+const TR_BOUNDS = [[35.8, 25.7], [42.1, 44.8]];   // Türkiye (boş harita çerçevesi)
 // Mekan yedek gradyanları (artboard GR, 4 amber çifti)
 const GR = ["linear-gradient(135deg,#FF8A2A,#B45309)", "linear-gradient(135deg,#F59E0B,#FF5A6E)", "linear-gradient(135deg,#FF8A2A,#EC4899)", "linear-gradient(135deg,#FFD700,#FF8A2A)"];
 const CAPS = [["", "Tümü"], ["s", "150’ye kadar"], ["m", "150–500"], ["l", "500+"]];
@@ -249,7 +250,7 @@ export function orgMekanSecView(ctx) {
     }
     typeGroup.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", (b.dataset.key || "") === st.type ? "true" : "false"));
     frow2.classList.toggle("has-extra", list.length > TYPES.length);
-    countEl.textContent = st.loading ? "" : `${st.results.length} MEKAN`;
+    countEl.textContent = st.loading || st.error ? "" : `${st.results.length} MEKAN`;   // hata: sayı bilinmiyor (pinCount ile aynı)
   }
 
   function pendingPill(size) {
@@ -377,8 +378,9 @@ export function orgMekanSecView(ctx) {
   }
 
   // ══════════ HARİTA (Leaflet) ══════════
-  let L = null, map = null, tipMk = null, ro = null;
+  let L = null, map = null, tipMk = null, tipId = null, ro = null;
   const markers = new Map();   // id → marker
+  const baseLL = new Map();    // id → [lat, lng] (gerçek konum; görüntülenen konum layoutPins ile ayrılmış olabilir)
   let mapReady = false;
   async function initMap() {
     try { L = await loadLeaflet(); await leafletCssReady(); }
@@ -389,6 +391,9 @@ export function orgMekanSecView(ctx) {
       fadeAnimation: false, zoomAnimation: !rm, markerZoomAnimation: !rm, inertia: !rm });
     map.attributionControl.setPrefix(false);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+    // yakın pinler her yakınlaştırmada yeniden ayrılır; ipucu her hareket/boyut değişiminde harita içinde tutulur
+    map.on("zoomend", layoutPins);
+    map.on("move moveend zoomend resize", placeTip);
     // Kırılım değişimi (ör. 480×560 yan kolon → ≤1023 tam genişlik 280 px şerit) haritayı büyükçe yeniden boyutlar → boyut belirgin
     // değişince (debounce) sonuçlar yeniden sığdırılır; küçük değişimlerde yalnız invalidateSize (kullanıcının kaydırması korunur).
     let last = null, fitT = null;
@@ -414,10 +419,11 @@ export function orgMekanSecView(ctx) {
     if (!mapReady || !map) return;
     const list = st.loading || st.error ? [] : st.results.filter((v) => v.ll);
     const keep = new Set(list.map((v) => v.id));
-    markers.forEach((m, id) => { if (!keep.has(id)) { m.remove(); markers.delete(id); } });
+    markers.forEach((m, id) => { if (!keep.has(id)) { m.remove(); markers.delete(id); baseLL.delete(id); } });
     list.forEach((v) => {
       const on = v.id === st.sel;
       let m = markers.get(v.id);
+      baseLL.set(v.id, [v.ll.lat, v.ll.lng]);   // gerçek konum (yeniden yüklemede güncel); görüntülenen konumu layoutPins belirler
       if (!m) {
         m = L.marker([v.ll.lat, v.ll.lng], {
           icon: L.divIcon({ className: k("mk"), html: pinEl(on), iconSize: [44, 44], iconAnchor: [22, 22] }),
@@ -442,15 +448,57 @@ export function orgMekanSecView(ctx) {
     const focusedId = [...markers.entries()].find(([, mm]) => mm.getElement() === document.activeElement)?.[0];
     const stopId = focusedId || (keep.has(st.sel) ? st.sel : pinOrder[0]);
     markers.forEach((mm, id) => { const el = mm.getElement(); if (el) el.tabIndex = id === stopId ? 0 : -1; });
-    // seçili pin ipucu (artboard: pinin +18 px sağında, −16 px üstünde; 32 px yüksek)
-    tipMk?.remove(); tipMk = null;
+    layoutPins();
+    // seçili pin ipucu (artboard: pinin +18 px sağında, −16 px üstünde; 32 px yüksek). Sağda sığmazsa (pin haritanın doğu
+    // kenarında) pinin soluna döner → placeTip.
+    tipMk?.remove(); tipMk = null; tipId = null;
     const sv = selVenue();
     if (sv && sv.ll && keep.has(sv.id)) {
       const tip = h("span", { class: cx(k("tip"), "dk-pop") }, sv.name, sv.cap != null ? h("span", { class: k("tipcap") }, `${sv.cap} KİŞİ`) : null);
-      tipMk = L.marker([sv.ll.lat, sv.ll.lng], { icon: L.divIcon({ className: k("tipmk"), html: tip, iconSize: [0, 0], iconAnchor: [-18, 16] }), interactive: false, keyboard: false, zIndexOffset: 2000 }).addTo(map);
+      tipMk = L.marker(markers.get(sv.id)?.getLatLng() || [sv.ll.lat, sv.ll.lng], { icon: L.divIcon({ className: k("tipmk"), html: tip, iconSize: [0, 0], iconAnchor: [-18, 16] }), interactive: false, keyboard: false, zIndexOffset: 2000 }).addTo(map);
       tipMk.getElement()?.setAttribute("aria-hidden", "true");
+      tipId = sv.id;
     }
     if (fit) fitPins(list, animate && !rm);
+    placeTip();
+  }
+  // Yakın pinler (merkezleri < PIN_GAP px) aynı noktada üst üste binip fareyle seçilemez hale geliyordu → grup ağırlık
+  // merkezinin çevresine eşit aralıklı yerleştirilir (2'li grup yan yana). Gerçek konum baseLL'de; her zoomend'de yeniden
+  // hesaplanır (yakınlaştıkça gerçek konuma döner). Görsel 24 px + 2 px halka → 28 px aralıkta her pinin kendi merkezi tıklanır.
+  const PIN_GAP = 28;
+  function layoutPins() {
+    if (!map || !markers.size) return;
+    let items;
+    try { items = [...markers.entries()].map(([id, m]) => ({ id, m, pt: map.latLngToLayerPoint(baseLL.get(id)) })); } catch (_) { return; }
+    const order = (id) => { const i = pinOrder.indexOf(id); return i < 0 ? 1e9 : i; };
+    const rest = [...items];
+    while (rest.length) {
+      const group = [rest.shift()];
+      for (let gi = 0; gi < group.length; gi++) {
+        for (let j = rest.length - 1; j >= 0; j--) if (group[gi].pt.distanceTo(rest[j].pt) < PIN_GAP) group.push(...rest.splice(j, 1));
+      }
+      if (group.length === 1) { group[0].m.setLatLng(baseLL.get(group[0].id)); continue; }
+      const n = group.length;
+      const cx0 = group.reduce((a, g) => a + g.pt.x, 0) / n, cy0 = group.reduce((a, g) => a + g.pt.y, 0) / n;
+      const r = n === 2 ? PIN_GAP / 2 : PIN_GAP / (2 * Math.sin(Math.PI / n));
+      group.sort((a, b) => order(a.id) - order(b.id));
+      group.forEach((g, i) => {
+        const a = (n === 2 ? Math.PI : -Math.PI / 2) + (2 * Math.PI * i) / n;
+        g.m.setLatLng(map.layerPointToLatLng(L.point(cx0 + r * Math.cos(a), cy0 + r * Math.sin(a))));
+      });
+    }
+    if (tipMk && tipId && markers.get(tipId)) tipMk.setLatLng(markers.get(tipId).getLatLng());
+  }
+  // İpucu harita kartının içinde kalsın: sağda yer yoksa ve solda varsa pinin soluna (−18 px) döner.
+  function placeTip() {
+    const el = tipMk?.getElement()?.querySelector(`.${k("tip")}`);
+    if (!el || !map) return;
+    let pt;
+    try { pt = map.latLngToContainerPoint(tipMk.getLatLng()); } catch (_) { return; }
+    const W = mapEl.clientWidth, tw = el.offsetWidth;
+    if (!W || !tw) return;
+    const fitsR = pt.x + 18 + tw <= W - 8, fitsL = pt.x - 18 - tw >= 8;
+    el.classList.toggle("is-left", !fitsR && fitsL);
   }
   let pinOrder = [];
   function onPinKey(e, id) {
@@ -473,7 +521,14 @@ export function orgMekanSecView(ctx) {
   function fitPins(list, animate) {
     if (!map) return;
     try {
-      if (!list.length) { map.setView([39.1, 35.2], 5, { animate: false }); return; }
+      if (!list.length) {
+        // 0 sonuç: başlıktaki şehirle çelişmesin → şehir filtresi varsa o şehrin mekanları (diğer filtreler yok sayılır), yoksa
+        // tüm pinli mekanlar (sayfanın varsayılan görünümü); hiç pin yoksa (yükleniyor / hata / mekan yok) Türkiye çerçevesi.
+        const ctxPins = st.loading || st.error ? [] : st.all.filter((v) => v.ll && (!st.city || fold(v.city) === fold(st.city)));
+        if (ctxPins.length) { fitPins(ctxPins, false); return; }
+        map.fitBounds(TR_BOUNDS, { padding: [8, 8], animate: false });
+        return;
+      }
       if (list.length === 1) { map.setView([list[0].ll.lat, list[0].ll.lng], 13, { animate }); return; }
       map.fitBounds(L.latLngBounds(list.map((v) => [v.ll.lat, v.ll.lng])), { padding: [48, 48], maxZoom: 14, animate });
     } catch (_) {}

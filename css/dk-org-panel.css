@@ -5,6 +5,9 @@
 
 /* ---------- hero ---------- */
 .dk-org-panel .dk-org-panel-hero .dk-display { font-size: 52px; }
+/* hero tek satır; sığmazsa düğmeler başlığın altına sarar (H1 ezilmez). Inter 52px başlık (~670px) + iki düğme 1440'ta sığar,
+   1280–~1370'te sığmıyordu → "var?" tek başına ikinci satıra düşüyordu. */
+.dk-org-panel .dk-org-panel-hero { flex-wrap: wrap; row-gap: 20px; }
 .dk-org-panel-meta { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #A3A7AF; }
 .dk-org-panel-role { box-sizing: border-box; height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid rgba(255,79,163,0.45); background: rgba(255,79,163,0.08); color: #FF4FA3; display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
 .dk-org-panel-role.is-staff { border-color: rgba(78,216,255,0.45); background: rgba(78,216,255,0.08); color: #4ED8FF; }
@@ -89,21 +92,19 @@
 .dk-org-panel-tcol { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .dk-org-panel-tl { font-size: 15px; font-weight: 600; }
 .dk-org-panel-ts { font-size: 12.5px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* personel: "Davet Et" gizli → 3 kutucuk; tek kalan son kutucuk iki kolonu kaplar (2×2 ızgarada boş hücre kalmasın) */
+.dk-org-panel-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
 /* ---------- duyarlı (spec §10) ---------- */
-/* KPI 2×2 ≤1419: 4 kolonda "BEKLEYEN MEKAN İSTEĞİ" (164px mono) kart < 248px'te (≤1375), "Bugünden itibaren, iptal edilmemiş" (217px)
-   kart < 259px'te (≤1419) iki satıra kırılıyor, kartlar 147 → 164 uzuyordu (1280'de ikisi birden). 4 kolon yalnız çizildiği gibi sığdığı
-   yerde (≥1420). Spec 2×2'yi 1024–1279'a koyuyor → sapma (rapor). */
-@media (max-width: 1419px) {
-  .dk-org-panel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-/* 1024–1279: sağ kolon 360 (≥1180), altında tek kolon */
+/* KPI: ≥1280 çizildiği gibi 4 kolon (spec §10). 1280–1419'da kart 224–259px → "BEKLEYEN MEKAN İSTEĞİ" etiketi ve
+   "Bugünden itibaren, iptal edilmemiş" alt satırı iki satıra kırılabilir (kartlar eşit boy, ~162px) — kabul (spec: ≥1280 as drawn).
+   1024–1279: 2×2 (spec). */
+/* 1024–1279: KPI 2×2 · sağ kolon 360 (≥1180), altında tek kolon */
 @media (max-width: 1279px) {
+  .dk-org-panel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dk-org-panel-row { grid-template-columns: minmax(0, 1fr) 360px; }
   /* 360'lık kolonda kutucuk 153 → iç 119 < "E-posta ile personel" 120.2 → yatay dolgu 14 (iç 123) */
   .dk-org-panel-tile { padding: 16px 14px; }
-  /* hero tek satır; sığmazsa düğmeler başlığın altına sarar (H1 ezilmez) */
-  .dk-org-panel .dk-org-panel-hero { flex-wrap: wrap; row-gap: 20px; }
 }
 @media (max-width: 1179px) {
   .dk-org-panel-row { grid-template-columns: minmax(0, 1fr); }
