@@ -137,6 +137,11 @@ function adminGoogleBtn(msg) {
   } }, icon("logo-google", { size: 18 }), h("span", {}, "Google ile giriş"));
   return b;
 }
+// Topluluk Kuralları (App Store 1.2): kayıt formunda açık onay metni; sürüm uygulamadaki TERMS_VERSION ile aynı tutulur.
+const TERMS_VERSION = "2026-10-06";
+const consentNote = () => h("p", { class: "foot-note" }, "Kayıt olarak ",
+  h("a", { href: "kullanim-kosullari.html", target: "_blank", rel: "noopener" }, "Kullanım Koşulları ve Topluluk Kuralları"),
+  "'nı kabul etmiş olursun: uygunsuz içeriğe ve taciz eden kullanıcılara sıfır tolerans vardır.");
 const orSep = () => h("div", { class: "sep" }, "veya");
 
 // Yasal sayfa bağlantıları (statik HTML — mağaza/kullanıcı için her zaman erişilebilir)
@@ -309,6 +314,7 @@ export function register() {
         await setDoc(doc(db, "users", user.uid), {
           displayName: name, email: user.email, userType: role, photoURL: null,
           createdAt: serverTimestamp(),
+          termsVersion: TERMS_VERSION, termsAcceptedAt: serverTimestamp(), // kayıt formunda gösterilen Topluluk Kuralları onayı (uygulamayla aynı sürüm)
           ...(role === "venue" || role === "organizer" ? { approved: false } : {}), // müşteri/sanatçı onay gerektirmez
           ...(role === "organizer" ? { orgName: name } : {}),
           ...((role === "venue" || role === "artist") && city ? { city } : {}),
@@ -330,6 +336,7 @@ export function register() {
         ac(field({ label: "Şifre", id: "rpass", type: "password", placeholder: "En az 6 karakter", hint: "Uygulamadan giriş yaparken de bu şifreyi kullanacaksın." }), "new-password"),
         ac(field({ label: "Şifre Tekrar", id: "rpass2", type: "password", placeholder: "Şifreni tekrar gir" }), "new-password"),
         (role === "venue" || role === "artist") ? field({ label: "Şehir", id: "rcity", placeholder: "Örn. İstanbul", list: "cityList" }) : null,
+        consentNote(),
         (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Kayıt Ol")); x.id = "rbtn"; return x; })(),
         orSep(),
         googleBtn(msg),
@@ -383,6 +390,7 @@ export function registerModal() {
         await setDoc(doc(db, "users", user.uid), {
           displayName: name, email: user.email, userType: role, photoURL: null,
           createdAt: serverTimestamp(),
+          termsVersion: TERMS_VERSION, termsAcceptedAt: serverTimestamp(), // kayıt formunda gösterilen Topluluk Kuralları onayı (uygulamayla aynı sürüm)
           ...(role === "venue" || role === "organizer" ? { approved: false } : {}),
           ...(role === "organizer" ? { orgName: name } : {}),
           ...((role === "venue" || role === "artist") && city ? { city } : {}),
@@ -402,6 +410,7 @@ export function registerModal() {
         ac(field({ label: "Şifre", id: "rmpass", type: "password", placeholder: "En az 6 karakter" }), "new-password"),
         ac(field({ label: "Şifre Tekrar", id: "rmpass2", type: "password", placeholder: "Şifreni tekrar gir" }), "new-password"),
         (role === "venue" || role === "artist") ? field({ label: "Şehir", id: "rmcity", placeholder: "Örn. İstanbul", list: "cityListM" }) : null,
+        consentNote(),
         (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Kayıt Ol")); x.id = "rmbtn"; return x; })(),
         orSep(),
         googleBtn(msg, () => m.close()),
