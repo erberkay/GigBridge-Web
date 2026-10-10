@@ -16,7 +16,7 @@ import { cityButton } from "./city-picker.js";
 import { openLogin } from "./overlays.js";
 import { subscribeLive } from "./live.js";
 import { ROLE_LABELS, roleColor, rgba } from "./helpers.js";
-import { LEGAL, DOWNLOAD_PAGE } from "./assets.js";
+import { LEGAL, DOWNLOAD_PAGE, PAYMENT_NOTE } from "./assets.js";
 
 export const PUBLIC_NAV = [
   ["kesfet", "Keşfet", "#/kesfet"],
@@ -162,8 +162,9 @@ export function publicFooter({ seo = true } = {}) {
           ...(seo ? [["Canlı müzik rehberi", "rehber/canli-muzik/"]] : [])]),
         col("KATIL", "Katıl", [["Sanatçı ol", "#/register?rol=artist"], ["Mekan ekle", "#/register?rol=venue"], ["Organizatör ol", "#/register?rol=organizer"], ["Giriş yap", "#/login"],
           ...(seo ? [["Uygulamayı indir", DOWNLOAD_PAGE.replace(/^\//, "")]] : [])]),
-        col("YASAL", "Yasal", [["Gizlilik Politikası", LEGAL.privacy], ["Kullanım Koşulları", LEGAL.terms], ["Hesap Silme", LEGAL.deleteAccount]])),
-      h("div", { class: "dk-ft-bottom" }, h("span", {}, `© ${year} GigBridge`), h("span", {}, "gigbridges.com"))));
+        col("YASAL", "Yasal", [["Gizlilik Politikası", LEGAL.privacy], ["Kullanım Koşulları", LEGAL.terms], ["Mesafeli Hizmet Sözleşmesi", LEGAL.distanceContract],
+          ["İptal ve İade", LEGAL.refund], ["Teslimat ve İfa", LEGAL.delivery], ["Hesap Silme", LEGAL.deleteAccount], ["Hakkımızda", LEGAL.about], ["İletişim", LEGAL.contact]])),
+      h("div", { class: "dk-ft-bottom" }, h("span", {}, `© ${year} GigBridge`), h("span", {}, PAYMENT_NOTE), h("span", {}, "gigbridges.com"))));
 }
 
 // AccountFooter (kompakt; WebProfil 319–327): h64, "© yıl GigBridge" + Yasal nav (Gizlilik · Kullanım koşulları · KVKK) + gigbridges.com
@@ -177,8 +178,14 @@ export function accountFooter({ seo = true } = {}) {
         h("a", { href: LEGAL.privacy, class: "dk-link" }, "Gizlilik"),
         h("a", { href: LEGAL.terms, class: "dk-link" }, "Kullanım koşulları"),
         h("a", { href: LEGAL.privacy + "#kvkk", class: "dk-link" }, "KVKK aydınlatma metni"),
+        h("a", { href: LEGAL.distanceContract, class: "dk-link" }, "Mesafeli hizmet sözleşmesi"),
+        h("a", { href: LEGAL.refund, class: "dk-link" }, "İptal ve iade"),
+        h("a", { href: LEGAL.delivery, class: "dk-link" }, "Teslimat ve ifa"),
+        h("a", { href: LEGAL.about, class: "dk-link" }, "Hakkımızda"),
+        h("a", { href: LEGAL.contact, class: "dk-link" }, "İletişim"),
         seo ? h("a", { href: "rehber/canli-muzik/", class: "dk-link" }, "Canlı müzik rehberi") : null,
         seo ? h("a", { href: DOWNLOAD_PAGE.replace(/^\//, ""), class: "dk-link" }, "Uygulamayı indir") : null,
+        h("span", {}, PAYMENT_NOTE),
         h("span", {}, "gigbridges.com"))));
 }
 

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>GigBridge · Ödeme</title>
+  <link rel="icon" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="/assets/fonts/gb-fonts.css" rel="stylesheet" />
+  <!--
+    PayTR ödeme sonuç sayfası (merchant_ok_url = ?durum=ok · merchant_fail_url = ?durum=fail).
+    UYARI (PayTR): bu sayfa SİPARİŞİ ONAYLAMAZ ya da İPTAL ETMEZ — yalnız bilgilendirir. Kesin sonuç sunucuya
+    "Bildirim URL" (Cloud Functions paytrCallback) ile gelir; uygulama ödemeyi payments/{oid} kaydından okur.
+    Uygulama (react-native-webview) bu adrese yönlenmeyi yakalayıp ödeme ekranını kapatır. Sayfa PayTR iframe'i içinde
+    açılırsa üst pencereye çıkar (uygulama üst pencere yönlenmesini yakalar).
+    Tasarım: sifirla.html (AuthSplit) dili — .as-* sınıfları; Firebase/Firestore YOK, harici betik YOK.
+  -->
+  <script>
+    // PayTR iframe'i içinde açıldıysa üst pencereye çık (yalnız aynı kaynaktan — uygulamanın ödeme sarmalayıcısı gigbridges.com)
+    try { if (window.top !== window.self) window.top.location.replace(window.location.href); } catch (_) {}
+  </script>
+  <style>
+    :root {
+      --void: #06070A; --abyss: #0A0B0F; --stratum: #0E1014; --strata: #14171D; --hair: #1F232B; --hair-2: #2C303A;
+      --ink: #F2F1EE; --ink-2: #C9CACD; --fog: #A3A7AF; --vapor: #8A8E97;
+      --magenta: #FF4FA3; --cyan: #4ED8FF; --amber: #FF8A2A; --green: #7CE0B0; --red: #FF5A6E;
+      --sans: "GB Sans", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --serif: "GB Display", "GB Sans", "Inter", system-ui, sans-serif;
+      --mono: "GB Label", "GB Sans", "Inter", system-ui, sans-serif;
+      --ease: cubic-bezier(.2,.7,.2,1);
+    }
+    html, body { margin: 0; }
+    body { background: var(--void); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    a { color: var(--magenta); text-decoration: none; }
+    a:hover { color: #FF8AC4; }
+    a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+    .gb-link { color: var(--vapor); transition: color 160ms ease; }
+    .gb-link:hover { color: var(--ink); }
+    .gb-press { transition: transform 120ms ease, filter 180ms ease; }
+    .gb-press:hover { filter: brightness(1.15); }
+    .gb-press:active { transform: scale(.985); }
+    @keyframes gbRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .gb-rise { animation: gbRise 520ms var(--ease) both; }
+    @keyframes asBadgePop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+    .gb-pop { animation: asBadgePop 520ms var(--ease) both; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+    .as { display: flex; min-height: 100vh; min-height: 100dvh; background: var(--void); }
+    .as-main { flex-grow: 1; min-width: 0; min-height: 100vh; min-height: 100dvh; box-sizing: border-box; padding: 28px 32px 32px; display: flex; flex-direction: column; }
+    .as-brand { height: 40px; margin-bottom: 16px; display: flex; align-items: center; }
+    .as-logo { display: flex; align-items: center; gap: 10px; color: var(--ink); }
+    .as-logo:hover { color: var(--ink); }
+    .as-tile { width: 32px; height: 32px; flex-shrink: 0; display: flex; } .as-tile > img { width: 100%; height: 100%; display: block; }
+    .as-word { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; }
+    .as-center { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 32px 0; }
+    .as-col { width: min(400px, 100%); display: flex; flex-direction: column; }
+    .as-legal { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--vapor); }
+    .as-view { display: flex; flex-direction: column; gap: 22px; }
+    .as-badge { width: 64px; height: 64px; box-sizing: border-box; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .as-badge.is-ok { border: 1px solid rgba(124,224,176,0.45); background: rgba(124,224,176,0.12); color: var(--green); }
+    .as-badge.is-bad { border: 1px solid rgba(255,90,110,0.45); background: rgba(255,90,110,0.1); color: var(--red); }
+    .as-head { display: flex; flex-direction: column; gap: 10px; }
+    .as-heb { font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; }
+    .as-heb.is-ok { color: var(--green); }
+    .as-heb.is-bad { color: var(--red); }
+    .as-h1 { margin: 0; font-family: var(--serif); font-size: 52px; font-weight: 400; line-height: 1.02; letter-spacing: -0.01em; color: var(--ink); }
+    .as-h1 em { font-style: italic; }
+    .as-h1 em.is-ok { color: var(--green); }
+    .as-h1 em.is-bad { color: var(--red); }
+    .as-lead { margin: 0; font-size: 15.5px; line-height: 1.55; color: var(--fog); }
+    .as-note { box-sizing: border-box; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--hair); background: var(--stratum); color: var(--vapor); display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; line-height: 1.5; }
+    .as-note svg { flex-shrink: 0; margin-top: 2px; color: var(--cyan); }
+    .as-btn { width: 100%; height: 48px; box-sizing: border-box; border: 0; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 600; }
+    .as-btn-primary, .as-btn-primary:hover { background: var(--magenta); color: var(--void); }
+    .as-btn-outline, .as-btn-outline:hover { border: 1px solid var(--hair-2); background: transparent; color: var(--ink); font-weight: 500; }
+    .as-btns { display: flex; flex-direction: column; gap: 12px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 768px) {
+      .as-main { padding: 24px 20px 28px; }
+      .as-center { align-items: flex-start; padding: 28px 0 32px; }
+      .as-h1 { font-size: 40px; }
+      .as-view { gap: 20px; }
+    }
+    @media (max-width: 420px) {
+      .as-legal { gap: 6px 16px; }
+      .as-legal > span[aria-hidden="true"] { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="as">
+    <main class="as-main">
+      <div class="as-brand">
+        <a class="as-logo" href="https://gigbridges.com/" aria-label="GigBridge ana sayfa">
+          <span class="as-tile"><img src="/assets/logo-icon.svg" alt="" width="32" height="32" decoding="async"></span>
+          <span class="as-word">GigBridge</span>
+        </a>
+      </div>
+      <div class="as-center">
+        <div class="as-col">
+          <!-- Başarılı (durum=ok) -->
+          <section class="as-view gb-rise" id="ok" aria-labelledby="ok-h">
+            <span class="as-badge is-ok gb-pop" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg>
+            </span>
+            <div class="as-head">
+              <span class="as-heb is-ok">ÖDEME · PAYTR</span>
+              <h1 class="as-h1" id="ok-h">Ödeme <em class="is-ok">alındı</em></h1>
+              <p class="as-lead">Ödeme alındı, uygulamaya dönebilirsin. Tutar etkinlik sonrasına kadar emanette tutulur; onay birkaç saniye içinde uygulamada görünür.</p>
+            </div>
+            <div class="as-note">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8v.01"></path></svg>
+              <span>Etkinlikten sonra 24 saat içinde sorun bildirilmezse ödeme alıcıya aktarılır. Sorun olursa uygulamadan bildirebilirsin.</span>
+            </div>
+          </section>
+          <!-- Başarısız (durum=fail) -->
+          <section class="as-view gb-rise" id="fail" aria-labelledby="fail-h" hidden>
+            <span class="as-badge is-bad gb-pop" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10M17 7 7 17"></path></svg>
+            </span>
+            <div class="as-head">
+              <span class="as-heb is-bad">ÖDEME · PAYTR</span>
+              <h1 class="as-h1" id="fail-h">Ödeme <em class="is-bad">tamamlanamadı</em></h1>
+              <p class="as-lead">Ödeme tamamlanamadı. Kartından para çekilmedi; uygulamaya dönüp bilgileri kontrol ederek tekrar deneyebilirsin.</p>
+            </div>
+          </section>
+          <div class="as-btns" style="margin-top:22px">
+            <a class="as-btn as-btn-primary gb-press" href="gigbridge://">Uygulamaya dön</a>
+            <a class="as-btn as-btn-outline gb-press" href="https://gigbridges.com/">gigbridges.com</a>
+          </div>
+        </div>
+      </div>
+      <nav class="as-legal" aria-label="Yasal">
+        <span>© GigBridge</span><span aria-hidden="true">·</span>
+        <a class="gb-link" href="iptal-ve-iade.html">İptal ve İade</a><span aria-hidden="true">·</span>
+        <a class="gb-link" href="gizlilik.html">Gizlilik Politikası</a><span aria-hidden="true">·</span>
+        <a class="gb-link" href="kullanim-kosullari.html">Kullanım Koşulları</a>
+      </nav>
+    </main>
+  </div>
+  <script>
+    (function () {
+      var d = '';
+      try { d = new URLSearchParams(location.search).get('durum') || ''; } catch (_) { d = ''; }
+      var fail = d === 'fail';
+      document.getElementById('ok').hidden = fail;
+      document.getElementById('fail').hidden = !fail;
+      document.title = fail ? 'GigBridge · Ödeme tamamlanamadı' : 'GigBridge · Ödeme alındı';
+    })();
+  </script>
+</body>
+</html>

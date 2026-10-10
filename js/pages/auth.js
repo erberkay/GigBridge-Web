@@ -151,7 +151,18 @@ function legalFooter() {
     h("span", {}, "·"),
     h("a", { href: "kullanim-kosullari.html" }, "Kullanım Koşulları"),
     h("span", {}, "·"),
-    h("a", { href: "hesap-sil.html" }, "Hesap Silme"));
+    h("a", { href: "hesap-sil.html" }, "Hesap Silme"),
+    h("span", {}, "·"),
+    h("a", { href: "mesafeli-hizmet-sozlesmesi.html" }, "Mesafeli Hizmet Sözleşmesi"),
+    h("span", {}, "·"),
+    h("a", { href: "iptal-ve-iade.html" }, "İptal ve İade"),
+    h("span", {}, "·"),
+    h("a", { href: "teslimat-ve-ifa.html" }, "Teslimat ve İfa"),
+    h("span", {}, "·"),
+    h("a", { href: "hakkimizda.html" }, "Hakkımızda"),
+    h("span", {}, "·"),
+    h("a", { href: "iletisim.html" }, "İletişim"),
+    h("span", { style: { flexBasis: "100%", textAlign: "center" } }, "PayTR ile güvenli ödeme · Visa · Mastercard · Troy"));
 }
 
 // ── Landing — app WelcomeScreen birebir ──

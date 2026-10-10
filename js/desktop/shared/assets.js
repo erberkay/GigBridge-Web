@@ -48,5 +48,11 @@ export const LEGAL = {
   terms: "kullanim-kosullari.html",
   deleteAccount: "hesap-sil.html",
   resetPassword: "sifirla.html",
+  distanceContract: "mesafeli-hizmet-sozlesmesi.html",
+  refund: "iptal-ve-iade.html",
+  delivery: "teslimat-ve-ifa.html",
+  about: "hakkimizda.html",
+  contact: "iletisim.html",
 };
+export const PAYMENT_NOTE = "PayTR ile güvenli ödeme · Visa · Mastercard · Troy";
 export const SITE_HOST = "gigbridges.com";
