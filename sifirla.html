@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="/assets/fonts/gb-fonts.css" rel="stylesheet" />
   <!--
-    WebSifreSifirla — Firebase e-posta eylem sayfası (mode=resetPassword | verifyEmail | recoverEmail, oobCode).
+    WebSifreSifirla — Firebase e-posta eylem sayfası (mode=resetPassword | verifyEmail | recoverEmail | verifyAndChangeEmail, oobCode).
     Tasarım: Claude Design WebSifreSifirla (AuthSplit: görsel yan panel + form kolonu); tüm genişliklerde bu düzen
     (≥1280 çizildiği gibi · 1024–1279 dar yan panel · ≤1023 yan panel gizli + logo satırı · ≤768 tek kolon telefon düzeni).
     SPA dışı: kendi CSS'i (aşağıda, .as-* ad alanı) + kendi Firebase Auth örneği. Firestore YOK.
@@ -309,6 +309,7 @@
       "auth/user-disabled": "Bu hesap devre dışı bırakılmış.",
       "auth/user-not-found": "Hesap bulunamadı.",
       "auth/weak-password": "Şifre en az 6 karakter olmalı.",
+      "auth/email-already-in-use": "Bu e-posta başka bir hesapta kayıtlı. Uygulamadan farklı bir adres dene.",
     }[code] || "İşlem tamamlanamadı. Lütfen tekrar dene.");
     const LINK_DEAD = new Set(["auth/expired-action-code", "auth/invalid-action-code", "auth/user-disabled", "auth/user-not-found"]);
 
@@ -475,11 +476,12 @@
       formView(email);
     }
     async function handleApply(kind) {
-      document.title = kind === "verify" ? "GigBridge · E-posta Doğrulama" : "GigBridge · Hesap İşlemi";
+      document.title = kind === "verify" ? "GigBridge · E-posta Doğrulama" : kind === "change" ? "GigBridge · E-posta Değişikliği" : "GigBridge · Hesap İşlemi";
       setTopRight("");
       try { await applyActionCode(auth, oobCode); }
       catch (e) { return invalidView("Bağlantı ", "geçersiz", trErr(e && e.code)); }
       if (kind === "verify") successView("E-postan ", "doğrulandı", "Hesabın hazır. Artık giriş yapabilirsin.");
+      else if (kind === "change") successView("E-postan ", "güncellendi", "E-posta adresin güncellendi. Uygulamada yeni adresinle giriş yapabilirsin.");
       else successView("İşlem ", "tamamlandı", "E-posta değişikliği geri alındı.");
     }
 
@@ -491,6 +493,8 @@
       handleApply("verify");
     } else if (mode === "recoverEmail") {
       handleApply("recover");
+    } else if (mode === "verifyAndChangeEmail") {
+      handleApply("change");
     } else {
       setTopRight("");
       invalidView("Bilinmeyen ", "işlem", "Bu bağlantı türü desteklenmiyor.");
