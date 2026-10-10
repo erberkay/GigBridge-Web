@@ -57,6 +57,8 @@ if (EMU) {
 }
 // Özel şifre sıfırlama e-postası (Cloud Function: sendPasswordReset, europe-west1)
 export const sendPasswordResetMail = httpsCallable(functions, "sendPasswordReset");
+// Diğer callable'lar (WebAdmin adminModerate — js/desktop/admin/report-detail.js)
+export { httpsCallable };
 
 export {
   ref, uploadBytes, getDownloadURL, deleteObject,

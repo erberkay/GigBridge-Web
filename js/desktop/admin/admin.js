@@ -29,6 +29,7 @@ import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import { cx, dkKpi, dkUnderlineTabs, dkChip, dkStatusBadge, dkPageHero, dkToast, dkDrawer, dkSkeleton, dkButton, portalRoot } from "../shared/ui.js";
 import { rgba, trUpper, toMs, MONTHS_TR_SHORT, matchText, writeQuery, hashBase, ROLE_LABELS } from "../shared/helpers.js";
+import { threadWidget, unreadOf } from "./report-detail.js";
 
 // ══════════ Sabitler (DCLogic ile birebir) ══════════
 const VIOLET = "#A78BFA";
@@ -306,6 +307,7 @@ export function adminView(ctx) {
   let selKey = null;          // açık seçim (?sec) — yoksa ilk satır
   let urlSec = null;          // adresteki ?sec (çözülemezse adresten silinir)
   let drawer = null;          // dar ekranda detay çekmecesi
+  let thread = null;          // seçili sorun bildiriminin destek yazışması (report-detail.js threadWidget; seçim değişene kadar aynı düğüm)
   let lastToast = null;
   const wideMq = window.matchMedia("(min-width: 1180px)");
   const readQ = (q) => {
@@ -506,13 +508,20 @@ export function adminView(ctx) {
     return b;
   };
 
+  // bildirenden okunmamış yanıt (threadUnreadAdmin; admin yanıt yazınca sunucu sıfırlar)
+  const unreadTag = (it) => {
+    const n = it.kind === "report" ? unreadOf(it.raw) : 0;
+    return n ? h("span", { class: "dk-admin-panel-ktag dk-admin-panel-unread", style: { color: VIOLET, borderColor: rgba(VIOLET, 0.5) } }, n > 1 ? `${n} YENİ YANIT` : "YENİ YANIT") : null;
+  };
+
   function rowEl(it, isSel) {
     const k = keyOf(it);
-    const pick = h("button", { type: "button", class: "dk-admin-panel-pick", "aria-label": `${it.title} detayını göster`, "aria-pressed": isSel ? "true" : "false", dataset: { f: `${k}|pick` } },
+    const unread = it.kind === "report" ? unreadOf(it.raw) : 0;
+    const pick = h("button", { type: "button", class: "dk-admin-panel-pick", "aria-label": `${it.title} detayını göster${unread ? ` (${unread} yeni yanıt)` : ""}`, "aria-pressed": isSel ? "true" : "false", dataset: { f: `${k}|pick` } },
       avatar(it, 38),
       h("span", { class: "dk-admin-panel-tcol" },
         h("span", { class: "dk-admin-panel-t" }, it.title),
-        h("span", { class: "dk-admin-panel-s" }, kindTag(it, true), h("span", { class: "dk-admin-panel-stx" }, it.sub))));
+        h("span", { class: "dk-admin-panel-s" }, kindTag(it, true), unreadTag(it), h("span", { class: "dk-admin-panel-stx" }, it.sub))));
     pick.addEventListener("click", () => select(it));
     const acts = h("div", { role: "cell", class: "dk-admin-panel-c4" });
     if (it.status === "pending") {
@@ -577,19 +586,37 @@ export function adminView(ctx) {
         h("span", {}, "Karar verildi: " + statusLabel(it)),
         canUndo(it) ? undoBtn(it, "dk-admin-panel-dundo", "dundo") : null));
     }
-    // "Mesaj gönder": yönetici sohbeti yok → mailto yedeği (spec §9); geçerli e-posta yoksa gizli
+    // E-posta (mailto yedeği, spec §9); geçerli e-posta yoksa gizli. Sorun bildiriminde asıl kanal aşağıdaki destek yazışması.
     const email = contactEmail(it);
     if (email) {
       acts.append(h("a", { class: "dk-admin-panel-dmsg dk-press", href: mailtoHref(email, "GigBridge – " + it.title) },
-        svgIcon("chatSquare", { size: 16, sw: "2" }), "Mesaj gönder"));
+        svgIcon(it.kind === "report" ? "mail" : "chatSquare", { size: 16, sw: "2" }), it.kind === "report" ? "E-posta gönder" : "Mesaj gönder"));
     }
     out.push(acts);
+    if (it.kind === "report") out.push(threadFor(it).node);
     return out;
   }
+
+  // Seçili bildirimin yazışması: seçim aynı kaldıkça AYNI düğüm (yazılan metin, odak, kaydırma korunur); değişince eskisi kapanır.
+  function threadFor(it) {
+    if (thread && thread.rid !== it.id) dropThread();
+    if (!thread) {
+      const rid = it.id;
+      thread = threadWidget({
+        rid, me: uid, report: it.raw, onError: (m) => toast(m, { type: "err" }),
+        // admin yanıtında sunucu threadUnreadAdmin'i sıfırlar; önbellekteki satır rozeti de hemen kalksın
+        onSent: () => { const cur = _cache.items.get(`report:${rid}`); if (cur && unreadOf(cur.raw)) { cur.raw.threadUnreadAdmin = 0; notify(); } },
+      });
+    }
+    else thread.setReport(it.raw);
+    return thread;
+  }
+  function dropThread() { try { thread?.destroy(); } catch (_) {} thread = null; }
 
   function renderDetail() {
     const list = visible();
     const it = !_cache.ready && !_cache.items.size ? undefined : currentSel(list);
+    if (thread && (!it || it.kind !== "report" || it.id !== thread.rid)) dropThread();
     if (it === undefined) {
       detail.replaceChildren(h("div", { class: "dk-admin-panel-dhead" }, dkSkeleton({ w: 120, h: 11 }),
         h("div", { class: "dk-admin-panel-drow" }, dkSkeleton({ w: 56, h: 56, r: 8 }), h("div", { class: "dk-admin-panel-dcol" }, dkSkeleton({ w: 160, h: 18 }), dkSkeleton({ w: 90, h: 22, r: 12 })))),
@@ -611,6 +638,7 @@ export function adminView(ctx) {
         drawer.body.replaceChildren(...detailNodes(it, true));
       }
     }
+    thread?.restore();             // düğüm yer değiştirince yazışma kaydırması sıfırlanır
   }
   function openDrawer() {
     const it = currentSel(visible()); if (!it) return;
@@ -813,6 +841,7 @@ export function adminView(ctx) {
       alive = false;
       _last = { at: performance.now(), scrollY: window.scrollY || 0 };
       if (drawer) { try { drawer.close(); } catch (_) {} drawer = null; }
+      dropThread();
       unsubs.forEach((f) => { try { f(); } catch (_) {} });
       shell.destroy();
     },

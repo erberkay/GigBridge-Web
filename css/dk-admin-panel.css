@@ -145,6 +145,36 @@
 .dk-admin-panel-det { font-size: 15px; font-weight: 600; color: #F2F1EE; }
 .dk-admin-panel-dl .dk-skel { display: block; }
 
+/* ---------- destek yazışması (sorun bildirimi; report-detail.js threadWidget) ---------- */
+.dk-admin-panel-thread { border-top: 1px solid #14171D; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.dk-admin-panel-thead2 { display: flex; flex-direction: column; gap: 4px; }
+.dk-admin-panel-sech { margin: 0; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #A78BFA; }
+.dk-admin-panel-tsub { font-size: 12.5px; line-height: 1.45; color: #8A8E97; }
+.dk-admin-panel-tlog { max-height: 340px; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 10px;
+  padding: 12px; border-radius: 8px; background: #0E1014; border: 1px solid #1F232B; }
+.dk-admin-panel-tlog:focus-visible { outline: 2px solid #A78BFA; outline-offset: 2px; }
+.dk-admin-panel-tempty { margin: 0; padding: 8px 2px; font-size: 13px; line-height: 1.5; color: #8A8E97; }
+.dk-admin-panel-tday { display: flex; justify-content: center; }
+.dk-admin-panel-tday > span { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #5E636D; }
+.dk-admin-panel-tmsg { max-width: 88%; display: flex; flex-direction: column; gap: 4px; align-self: flex-start; }
+.dk-admin-panel-tmsg.is-admin { align-self: flex-end; align-items: flex-end; }
+.dk-admin-panel-tname { font-size: 11.5px; font-weight: 600; color: #A3A7AF; }
+.dk-admin-panel-tmsg.is-admin .dk-admin-panel-tname { color: #A78BFA; }
+.dk-admin-panel-tb { padding: 9px 12px; border-radius: 10px 10px 10px 4px; background: #181B22; font-size: 14px; line-height: 1.5; color: #F2F1EE;
+  white-space: pre-line; overflow-wrap: anywhere; }
+.dk-admin-panel-tmsg.is-admin .dk-admin-panel-tb { border-radius: 10px 10px 4px 10px; background: rgba(167,139,250,0.16); }
+.dk-admin-panel-ttime { font-family: var(--dk-font-mono); font-size: 10px; color: #5E636D; }
+.dk-admin-panel-tcomp { display: flex; flex-direction: column; gap: 8px; }
+.dk-admin-panel-tin { width: 100%; box-sizing: border-box; min-height: 84px; }
+.dk-admin-panel-trow { display: flex; align-items: center; gap: 10px; }
+.dk-admin-panel-tcnt, .dk-admin-panel-thint { font-family: var(--dk-font-mono); font-size: 10.5px; color: #5E636D; }
+.dk-admin-panel-thint { flex-grow: 1; }
+.dk-admin-panel-tsend { height: 38px; padding: 0 16px; flex-shrink: 0; }
+.dk-admin-panel-tsend[aria-disabled="true"] { opacity: 0.55; cursor: default; }
+.dk-admin-panel-tsend[aria-busy="true"] { opacity: 0.8; cursor: progress; }
+.dk-admin-panel-terr { margin: 0; font-size: 12.5px; color: #FF5A6E; }
+.dk-admin-panel-terr:empty { display: none; }
+
 /* ---------- çekmece (portal; dar ekranda detay) ---------- */
 .dk-admin-panel-drw .dk-drw-body { gap: 0; }
 /* başlık 2+ satır olabilir (ad isteği / sorun konusu) → sabit 80 yerine en az 80, dikey pay 16 */
@@ -154,6 +184,7 @@
 .dk-admin-panel-drw .dk-admin-panel-dl { padding: 8px 0; }
 .dk-admin-panel-drw .dk-admin-panel-msg { margin: 8px 0 0; }
 .dk-admin-panel-drw .dk-admin-panel-dact { padding: 20px 0 0; }
+.dk-admin-panel-drw .dk-admin-panel-thread { margin-top: 20px; padding: 20px 0 0; }
 
 /* ---------- duyarlı ----------
    ≥1400: artboard (detay 380; kart içeriği ≥640 → tam 4 sütunlu tablo, klasik kaydırma çubuğu payıyla) · 1180–1399: detay 320
