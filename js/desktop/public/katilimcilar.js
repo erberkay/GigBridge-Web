@@ -51,6 +51,7 @@ function messagesRoute() {
   if (session.isAdmin && !session.profile?.userType) return null;
   const home = homeRouteFor(session.profile);
   if (home === "#/artist" || home === "#/venue" || home === "#/organizer") return home + "/mesaj";
+  if (home === "#/agency") return "#/agency/mesajlar";
   if (home === "#/pending" || home === "#/unsupported") return null;
   return "#/mesajlar";
 }

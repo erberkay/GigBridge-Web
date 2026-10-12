@@ -11,8 +11,8 @@ import { dkKpi, dkSegmented, dkTable, dkPageHero, dkSkeleton, dkButton, dkAvatar
 import { toMs, MONTHS_TR_SHORT, matchText, writeQuery, ROLE_LABELS } from "../shared/helpers.js";
 
 const VIOLET = "#A78BFA";
-const ROLE_COLOR = { customer: "#4ED8FF", artist: "#FF4FA3", venue: "#FF8A2A", organizer: "#FF4FA3" };
-const SEGS = [["all", "Tümü"], ["customer", "Dinleyici"], ["artist", "Sanatçı"], ["venue", "Mekan"], ["organizer", "Organizatör"]];
+const ROLE_COLOR = { customer: "#4ED8FF", artist: "#FF4FA3", venue: "#FF8A2A", organizer: "#FF4FA3", agency: "#FBBF24" };
+const SEGS = [["all", "Tümü"], ["customer", "Dinleyici"], ["artist", "Sanatçı"], ["venue", "Mekan"], ["organizer", "Organizatör"], ["agency", "Ajans"]];
 const TITLE_MAX = 40, BODY_MAX = 110;          // functions/notifCatalog.js ile aynı
 const CACHE_TTL = 60e3;
 const sendFn = httpsCallable(functions, "adminSendNotification", { timeout: 120000 });
@@ -30,11 +30,11 @@ const errText = (e) => (e?.code === "functions/permission-denied" ? "Bu işlem i
 
 function toUser(d) {
   const u = { id: d.id, ...d.data() };
-  const role = ["customer", "artist", "venue", "organizer"].includes(u.userType) ? u.userType : null;
+  const role = ["customer", "artist", "venue", "organizer", "agency"].includes(u.userType) ? u.userType : null;
   let state = { label: "Aktif", color: "#7CE0B0" };
   if (u.pendingDeletion === true) state = { label: "Silinmekte", color: "#FF5A6E" };
   else if (u.banned === true) state = { label: "Yasaklı", color: "#FF5A6E" };
-  else if ((role === "venue" || role === "organizer") && u.approved === false && u.rejected !== true) state = { label: "Onay bekliyor", color: "#FFD700" };
+  else if ((role === "venue" || role === "organizer" || role === "agency") && u.approved === false && u.rejected !== true) state = { label: "Onay bekliyor", color: "#FFD700" };
   else if (u.rejected === true) state = { label: "Reddedildi", color: "#8A8E97" };
   else if (!role) state = { label: "Yarım kayıt", color: "#8A8E97" };
   return {

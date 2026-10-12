@@ -120,7 +120,7 @@ function viewerKind(venueId) {
   const p = session.profile || {};
   if (session.user?.uid === venueId) return "own";
   const t = p.userType;
-  return t === "artist" || t === "venue" || t === "organizer" ? t : "customer";
+  return t === "artist" || t === "venue" || t === "organizer" || t === "agency" ? t : "customer";
 }
 const myName = () => session.profile?.displayName || session.user?.displayName || "Kullanıcı";
 
@@ -242,7 +242,7 @@ export function mekanView(ctx) {
 
     // ── aksiyonlar ──
     const openReview = (act) => reviewModal(v, mine, () => { refocus = act; load({ quiet: true }); });
-    const msgRoute = kind === "artist" ? "#/artist/mesaj" : kind === "venue" ? "#/venue/mesaj" : kind === "organizer" ? "#/organizer/mesaj" : "#/mesajlar";
+    const msgRoute = kind === "artist" ? "#/artist/mesaj" : kind === "venue" ? "#/venue/mesaj" : kind === "organizer" ? "#/organizer/mesaj" : kind === "agency" ? "#/agency/mesajlar" : "#/mesajlar";
     // Legacy bekleyen sohbet (mobil/legacy mesaj görünümü okur) + masaüstü chat.js requestChat + `?c={convIdFor(me, mekan)}` derin
     // bağlantısı: masaüstü mesaj görünümü legacy `pending`'i okuyamaz (chat.js SHARED-CANDIDATE) → ?c= olmadan son konuşmayı açardı.
     const doMessage = () => {
@@ -263,7 +263,7 @@ export function mekanView(ctx) {
     const doReview = reviewAction("Puan vermek", "review");
     const doReviewWrite = reviewAction("Yorum yapmak", "write");
     const canSave = kind === "guest" || kind === "customer";
-    const canMessage = kind === "guest" || kind === "customer" || kind === "artist" || kind === "venue" || kind === "organizer";
+    const canMessage = kind === "guest" || kind === "customer" || kind === "artist" || kind === "venue" || kind === "organizer" || kind === "agency"; // ajans: yalnız mesaj (kaydet/puan yok)
     const canReview = kind === "guest" || kind === "customer" || (kind === "artist" && !!d.artistReview);
 
     // ── 1. breadcrumb ──

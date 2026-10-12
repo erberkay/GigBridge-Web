@@ -162,7 +162,7 @@ const fmtAvg = (n) => (Math.round(Number(n) * 10) / 10).toFixed(1);
 const reduceMotion = () => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
 
 // Mesaj rotası role göre (panel rolleri #/mesajlar'ı açamaz)
-const MSG_ROUTE = { customer: "#/mesajlar", artist: "#/artist/mesaj", venue: "#/venue/mesaj", organizer: "#/organizer/mesaj" };
+const MSG_ROUTE = { customer: "#/mesajlar", artist: "#/artist/mesaj", venue: "#/venue/mesaj", organizer: "#/organizer/mesaj", agency: "#/agency/mesajlar" };
 
 // ── Küçük parçalar ──
 const monoLabel = (text, cls) => h("span", { class: cx("dk-sanatci-detay-lbl", cls) }, text);

@@ -4,7 +4,7 @@
 // aside iç boşlukları 40, beyan clamp(44px,4.44vw,64px)) · 769–1023 aside gizli, main'in başında AuthBrandRow.
 //
 // authSplit({ variant, image, eyebrow, statement, features, top: { left, right }, width, gap, children, legal, asideLabel })
-//   variant: default (pembe "İSTANBUL · CANLI MÜZİK") | business (amber "MEKANLAR VE ORGANİZATÖRLER İÇİN", WebOnayBekleniyor) |
+//   variant: default (pembe "İSTANBUL · CANLI MÜZİK") | business (amber "İŞLETMELER İÇİN" — mekan · organizatör · ajans; WebOnayBekleniyor) |
 //            admin (mor, gri tonlu görsel + 160° mor gradyan + 48px ızgara, WebAdminGiris)
 //   Dönüş: { node, main, column, setColumn(children), destroy() }
 import { h } from "../../ui.js";
@@ -20,7 +20,7 @@ const FEATURES_DEFAULT = [
 ];
 const VARIANTS = {
   default: { eyebrow: "İSTANBUL · CANLI MÜZİK", color: "#FF4FA3", img: AUTH_ASIDE.login, statement: STATEMENT_DEFAULT, features: FEATURES_DEFAULT, label: "GigBridge tanıtım", role: "customer" },
-  business: { eyebrow: "MEKANLAR VE ORGANİZATÖRLER İÇİN", color: "#FF8A2A", img: AUTH_ASIDE.pending, statement: STATEMENT_DEFAULT, features: FEATURES_DEFAULT, label: "GigBridge tanıtım", role: "customer" },
+  business: { eyebrow: "İŞLETMELER İÇİN", color: "#FF8A2A", img: AUTH_ASIDE.pending, statement: STATEMENT_DEFAULT, features: FEATURES_DEFAULT, label: "GigBridge tanıtım", role: "customer" },
   admin: {
     eyebrow: "YÖNETİCİ ALANI", color: "#A78BFA", img: AUTH_ASIDE.admin, label: "Yönetici alanı", role: "admin",
     statement: { text: "Onay ve ", em: "yönetim", tail: " paneli.", emColor: "#A78BFA" },

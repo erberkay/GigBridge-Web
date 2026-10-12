@@ -7,6 +7,7 @@
 .dk[data-area="panel"][data-role="artist"] { --dk-nav-hover-bg: #111318; --dk-row-hover-bg: #0C0E12; --dk-fade-dur: 200ms; --dk-focus-border: #FF4FA3; --dk-ps-tint: rgba(255,79,163,0.10); --dk-ps-count: rgba(255,79,163,0.16); }
 .dk[data-area="panel"][data-role="venue"] { --dk-nav-hover-bg: #12141A; --dk-row-hover-bg: #0C0E12; --dk-rise-dur: 600ms; --dk-rise-y: 12px; --dk-swap-dur: 380ms; --dk-swap-y: 8px; --dk-pop-dur: 320ms; --dk-pop-y: 14px; --dk-fade-dur: 240ms; --dk-focus-border: #FF8A2A; --dk-ps-tint: rgba(255,138,42,0.10); --dk-ps-count: rgba(255,138,42,0.16); }
 .dk[data-area="panel"][data-role="organizer"] { --dk-nav-hover-bg: #101217; --dk-row-hover-bg: #0C0E13; --dk-rise-dur: 520ms; --dk-rise-y: 12px; --dk-pop-dur: 260ms; --dk-pop-y: 8px; --dk-focus-border: #4ED8FF; --dk-ps-tint: rgba(255,79,163,0.1); --dk-ps-count: rgba(255,79,163,0.16); }
+.dk[data-area="panel"][data-role="agency"] { --dk-nav-hover-bg: #101217; --dk-row-hover-bg: #0C0E13; --dk-rise-dur: 520ms; --dk-rise-y: 12px; --dk-pop-dur: 260ms; --dk-pop-y: 8px; --dk-focus-border: #FBBF24; --dk-ps-tint: rgba(251,191,36,0.10); --dk-ps-count: rgba(251,191,36,0.16); }
 .dk[data-area="panel"][data-role="admin"] { --dk-nav-hover-bg: #101217; --dk-row-hover-bg: #0C0E13; --dk-rise-dur: 520ms; --dk-rise-y: 12px; --dk-pop-dur: 260ms; --dk-pop-y: 8px; --dk-focus-border: #4ED8FF; --dk-ps-tint: rgba(167,139,250,0.10); --dk-ps-count: rgba(167,139,250,0.16); }
 
 /* ---------- çerçeve ---------- */
@@ -15,7 +16,7 @@
    sınıfında --dk-ps-padx/-padt/-padb'yi ya da .dk-ps-content padding'ini ezer (!important YOK). */
 .dk-ps { --dk-ps-padx: 40px; --dk-ps-padt: 32px; --dk-ps-padb: 40px; display: grid; grid-template-columns: 256px minmax(0, 1fr); min-height: 100vh; background: #06070A; }
 .dk-ps-venue { --dk-ps-padb: 48px; }
-.dk-ps-organizer, .dk-ps-admin { --dk-ps-padb: 32px; }
+.dk-ps-organizer, .dk-ps-admin, .dk-ps-agency { --dk-ps-padb: 32px; }
 .dk-ps-main { min-width: 0; display: flex; flex-direction: column; position: relative; }
 .dk-ps-scrim { display: none; }
 
@@ -32,6 +33,11 @@
 .dk-ps-venue .dk-ps-rolebadge { border: 1px solid rgba(255,138,42,0.5); background: rgba(255,138,42,0.08); }
 .dk-ps-organizer .dk-ps-rolebadge { border: 1px solid rgba(255,79,163,0.55); }
 .dk-ps-admin .dk-ps-rolebadge { border: 1px solid rgba(167,139,250,0.55); }
+/* ajans (#FBBF24): organizatör kabuğu düzeni + mekan gibi kenar CTA'sı ("İlan ekle") */
+.dk-ps-agency .dk-ps-rolebadge { border: 1px solid rgba(251,191,36,0.55); background: rgba(251,191,36,0.06); }
+.dk-ps-agency .dk-ps-aside { gap: 24px; }
+.dk.dk-ps-agency .dk-ps-cta { background: #FBBF24; border-color: #FBBF24; }
+.dk.dk-ps-agency .dk-ps-cta.is-on, .dk.dk-ps-agency .dk-ps-cta.is-on:hover { background: rgba(251,191,36,0.14); color: #FBBF24; border-color: rgba(251,191,36,0.6); }
 /* mekan CTA */
 .dk-ps-cta { box-sizing: border-box; height: 44px; padding: 0 16px; border-radius: 6px; background: #FF8A2A; border: 1px solid #FF8A2A; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14.5px; font-weight: 600; white-space: nowrap; }
 .dk .dk-ps-cta, .dk .dk-ps-cta:hover { color: #06070A; }
@@ -54,7 +60,7 @@
 .dk-ps-item.is-on .dk-ps-ic { stroke: var(--dk-role); }
 .dk-ps-ic { flex-shrink: 0; }
 .dk-ps-bar { position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 2px 2px 0; background: var(--dk-role); display: none; }
-.dk-ps-organizer .dk-ps-bar, .dk-ps-admin .dk-ps-bar { border-radius: 2px; }
+.dk-ps-organizer .dk-ps-bar, .dk-ps-admin .dk-ps-bar, .dk-ps-agency .dk-ps-bar { border-radius: 2px; }
 .dk-ps-item.is-on .dk-ps-bar { display: block; }
 .dk-ps-lbl { flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dk-ps-count { min-width: 22px; height: 20px; box-sizing: border-box; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: var(--dk-font-mono); font-weight: 700; flex-shrink: 0; }
@@ -69,7 +75,7 @@
 .dk-ps-venue .dk-ps-user { border-color: #1F232B; }
 .dk-ps-usercol { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .dk-ps-u1 { font-size: 14px; font-weight: 600; color: #F2F1EE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dk-ps-organizer .dk-ps-u1, .dk-ps-admin .dk-ps-u1 { font-size: 13.5px; }
+.dk-ps-organizer .dk-ps-u1, .dk-ps-admin .dk-ps-u1, .dk-ps-agency .dk-ps-u1 { font-size: 13.5px; }
 .dk-ps-u2 { font-size: 12px; color: #8A8E97; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dk-ps-foot { box-sizing: border-box; width: 100%; height: 40px; padding: 0 12px; margin: 0; border: 0; border-radius: 6px; background: transparent; display: flex; align-items: center; gap: 12px; font-family: var(--dk-font-sans); font-size: 14px; font-weight: 400; text-align: left; cursor: pointer; }
 .dk .dk-ps-foot { color: #A3A7AF; }
@@ -97,7 +103,7 @@
 .dk-ps-belldot[hidden] { display: none; }
 /* mekan: <a> r8, nokta 7 + 2px kenar (content-box → 11) top 9 right 10 */
 .dk-ps-venue .dk-ps-bell { border-radius: 8px; }
-.dk-ps-venue .dk-ps-belldot, .dk-ps-organizer .dk-ps-belldot, .dk-ps-admin .dk-ps-belldot { box-sizing: content-box; width: 7px; height: 7px; top: 9px; right: 10px; }
+.dk-ps-venue .dk-ps-belldot, .dk-ps-organizer .dk-ps-belldot, .dk-ps-admin .dk-ps-belldot, .dk-ps-agency .dk-ps-belldot { box-sizing: content-box; width: 7px; height: 7px; top: 9px; right: 10px; }
 .dk-ps-av { display: block; border-radius: 50%; flex-shrink: 0; }
 .dk-ps-av40 { width: 40px; height: 40px; box-sizing: border-box; overflow: hidden; border: 1px solid #2C303A; }
 .dk-ps-av40 > .dk-av { width: 100% !important; height: 100% !important; }
@@ -133,7 +139,7 @@
 /* ---------- duyarlı ---------- */
 @media (max-width: 1279px) {
   .dk-ps .dk-ps-search { width: 240px; }
-  .dk-ps-organizer, .dk-ps-admin { --dk-ps-padx: 32px; --dk-ps-padt: 32px; --dk-ps-padb: 32px; } /* org-admin §10: main padding 32 */
+  .dk-ps-organizer, .dk-ps-admin, .dk-ps-agency { --dk-ps-padx: 32px; --dk-ps-padt: 32px; --dk-ps-padb: 32px; } /* org-admin §10: main padding 32 */
 }
 @media (max-width: 1023px) {
   .dk-ps { grid-template-columns: minmax(0, 1fr); }

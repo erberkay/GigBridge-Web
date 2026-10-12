@@ -2,7 +2,7 @@
 // ≥769 px (viewport.isDesktop): desktop/registry.js'te kaydı olan rota yeni masaüstü görünümüyle çizilir;
 // kaydı olmayan ya da NOT_READY modül → legacy görünüm AYNEN. ≤768 px: legacy yol hiç değişmedi.
 import { initAuth, session, onSession, homeRouteFor } from "./store.js";
-import { landing, login, register, pending, adminLogin, unsupported, setup, verify } from "./pages/auth.js";
+import { landing, login, register, pending, adminLogin, unsupported, setup, verify, agencyMobile } from "./pages/auth.js";
 import { customerPage } from "./pages/customer.js";
 import { mount, h } from "./ui.js";
 import { isDesktop, viewMode, onViewModeChange } from "./viewport.js";
@@ -64,7 +64,7 @@ function resolve(desk = isDesktop(), panelPublic = desk) {
   if (!s.user.emailVerified) return "#/verify";
 
   // Girişli (yönetici değil) → rol + onaya göre ev
-  const home = homeRouteFor(s.profile); // #/kesfet | #/venue | #/organizer | #/pending | #/unsupported
+  const home = homeRouteFor(s.profile); // #/kesfet | #/artist | #/venue | #/organizer | #/agency | #/pending | #/unsupported
 
   // Müşteri: sekmeler (kesfet/harita/akis/mesajlar/profil) + detaylar (etkinlik/sanatci/mekan)
   if (home === "#/kesfet") {
@@ -75,13 +75,14 @@ function resolve(desk = isDesktop(), panelPublic = desk) {
   }
 
   // Masaüstü: panel rolleri herkese açık salt-okuma sayfalarını görebilir
-  if (desk && panelPublic && (home === "#/artist" || home === "#/venue" || home === "#/organizer") && isPublicRead(b)) return b;
+  if (desk && panelPublic && (home === "#/artist" || home === "#/venue" || home === "#/organizer" || home === "#/agency") && isPublicRead(b)) return b;
 
   if (b === "#/pending") return home;                         // onay bittiyse ev, değilse pending
   if (b === "#/unsupported") return home === "#/unsupported" ? b : home;
   if (matches(b, "#/venue")) return home === "#/venue" ? b : home;
   if (matches(b, "#/organizer")) return home === "#/organizer" ? b : home;
   if (matches(b, "#/artist")) return home === "#/artist" ? b : home;
+  if (matches(b, "#/agency")) return home === "#/agency" ? b : home;
   return home; // public/auth rotaları veya bilinmeyen → ev
 }
 
@@ -219,6 +220,7 @@ function renderLegacy(b) {
   else if (b === "#/yonetici") node = adminLogin();
   else if (b === "#/setup") node = setup();
   else if (b === "#/unsupported") node = unsupported();
+  else if (matches(b, "#/agency")) node = agencyMobile(); // ajans paneli yalnız masaüstü web + uygulama → mobil web bilgi ekranı
   else if (matches(b, "#/admin")) return mountLazy("./pages/admin.js", "adminPage");
   else if (matches(b, "#/venue")) return mountLazy("./pages/venue.js", "venuePage");
   else if (matches(b, "#/organizer")) return mountLazy("./pages/organizer.js", "organizerPage");

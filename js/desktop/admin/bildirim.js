@@ -13,10 +13,10 @@ import { toMs, MONTHS_TR_SHORT } from "../shared/helpers.js";
 
 const VIOLET = "#A78BFA";
 const TITLE_MAX = 40, BODY_MAX = 110;            // functions/notifCatalog.js
-const ROLES = [["customer", "Dinleyiciler", "#4ED8FF"], ["artist", "Sanatçılar", "#FF4FA3"], ["venue", "Mekanlar", "#FF8A2A"], ["organizer", "Organizatörler", "#FF4FA3"]];
+const ROLES = [["customer", "Dinleyiciler", "#4ED8FF"], ["artist", "Sanatçılar", "#FF4FA3"], ["venue", "Mekanlar", "#FF8A2A"], ["organizer", "Organizatörler", "#FF4FA3"], ["agency", "Ajanslar", "#FBBF24"]];
 const ROLE_LABEL = Object.fromEntries(ROLES.map(([k, l]) => [k, l]));
 const ROUTES = [{ value: "none", label: "Yok (yalnız bildirim)" }, { value: "ListenerSetup", label: "Dinleyici hesabı kurulumu" }, { value: "NotificationSettings", label: "Bildirim ayarları" }, { value: "Profile", label: "Profil" }];
-const AUD_LABEL = { all: "Herkes", user: "Tek kullanıcı", customer: "Dinleyiciler", artist: "Sanatçılar", venue: "Mekanlar", organizer: "Organizatörler" };
+const AUD_LABEL = { all: "Herkes", user: "Tek kullanıcı", customer: "Dinleyiciler", artist: "Sanatçılar", venue: "Mekanlar", organizer: "Organizatörler", agency: "Ajanslar" };
 const TEMPLATE = { audience: "roles", roles: ["artist"], route: "ListenerSetup", title: "Dinleyici hesabı açabilirsin",
   body: "Aynı hesapla, istediğin isimle dinleyici olarak etkinliklere katıl. Profil > Dinleyici hesabına geç." };
 const sendFn = httpsCallable(functions, "adminSendNotification", { timeout: 540000 });

@@ -331,7 +331,7 @@ export async function createVenueRequest(profile, venue, f) {
 
 // ── Mesajlaşma (MessagesScreen şemasıyla birebir) ──
 export function convIdFor(a, b) { return [a, b].sort().join("__"); }
-const emojiFor = (t) => (t === "artist" ? "🎤" : t === "venue" ? "🏢" : t === "organizer" ? "📣" : "👤");
+const emojiFor = (t) => (t === "artist" ? "🎤" : t === "venue" ? "🏢" : t === "organizer" ? "📣" : t === "agency" ? "📸" : "👤");
 
 const _convPhotoCache = {};   // otherId → photoURL (oturum içi; mesaj listesi avatarları için)
 export function listenConversations(uid, cb) {

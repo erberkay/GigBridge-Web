@@ -30,13 +30,14 @@ import { svgIcon, svgRaw } from "../shared/icons.js";
 import { cx, dkKpi, dkUnderlineTabs, dkChip, dkStatusBadge, dkPageHero, dkToast, dkDrawer, dkSkeleton, dkButton, portalRoot } from "../shared/ui.js";
 import { rgba, trUpper, toMs, MONTHS_TR_SHORT, matchText, writeQuery, hashBase, ROLE_LABELS } from "../shared/helpers.js";
 import { threadWidget, unreadOf } from "./report-detail.js";
+import { serviceLabel } from "../../agency-data.js";
 
 // ══════════ Sabitler (DCLogic ile birebir) ══════════
 const VIOLET = "#A78BFA";
-const V = "#FF8A2A", O = "#FF4FA3", C = "#4ED8FF";
+const V = "#FF8A2A", O = "#FF4FA3", C = "#4ED8FF", A = "#FBBF24"; // A: ajans
 // sekme: [anahtar (kabuk nav), rota, etiket, KPI etiketi, KPI alt metni, KPI rengi, ikon]
 const TABS = [
-  { key: "onaylar", route: "#/admin", label: "Onaylar", kLabel: "BEKLEYEN ONAY", kSub: "Mekan ve organizatör başvurusu", color: VIOLET, icon: "shieldCheck" },
+  { key: "onaylar", route: "#/admin", label: "Onaylar", kLabel: "BEKLEYEN ONAY", kSub: "Mekan, organizatör ve ajans başvurusu", color: VIOLET, icon: "shieldCheck" },
   { key: "ad", route: "#/admin/ad", label: "Mekan Adı İstekleri", kLabel: "MEKAN ADI İSTEĞİ", kSub: "Ad değişikliği talebi", color: V, icon: "edit" },
   { key: "sorun", route: "#/admin/sorun", label: "Sorun Bildirimleri", kLabel: "SORUN BİLDİRİMİ", kSub: "Çözülmeyi bekliyor", color: "#FF5A6E", icon: "flag" },
 ];
@@ -44,17 +45,18 @@ const TAB = Object.fromEntries(TABS.map((t) => [t.key, t]));
 const HEAD = { onaylar: ["BAŞVURAN", "TÜR · İLETİŞİM"], ad: ["MEVCUT → İSTENEN", "NEDEN"], sorun: ["KONU", "BİLDİREN"] };
 const EMPTY = { onaylar: "Bekleyen başvuru yok", ad: "Bekleyen isim isteği yok", sorun: "Bekleyen bildirim yok" };
 const FOOT = {
-  onaylar: "Onaylanan mekan ve organizatörler panellerine erişir; reddedilenler giriş yaptığında bilgilendirilir.",
+  onaylar: "Onaylanan mekan, organizatör ve ajanslar panellerine erişir; reddedilenler giriş yaptığında bilgilendirilir.",
   ad: "Onaylanınca mekanın adı sitenin her yerinde güncellenir.",
   sorun: "Çözülen bildirimler listenin altında kalır; yazışmasını açıp devam edebilir ya da “Geri al” ile yeniden açabilirsin.",
 };
-const OKL = { venue: "Onayla", org: "Onayla", name: "Onayla", report: "Çözüldü" };
-const OKT = { venue: "Onaylandı", org: "Onaylandı", name: "Ad değiştirildi", report: "Çözüldü olarak işaretlendi" };
-const OKS = { venue: "approved", org: "approved", name: "approved", report: "resolved" };
-const EYE = { venue: "MEKAN BAŞVURUSU", org: "ORGANİZATÖR BAŞVURUSU", name: "MEKAN ADI İSTEĞİ", report: "SORUN BİLDİRİMİ" };
-const KIND_TAG = { venue: ["MEKAN", V], org: ["ORGANİZATÖR", O] };
-const SUBS = [["all", "Tümü", "#A3A7AF", null], ["venue", "Mekan", V, "mekan"], ["org", "Organizatör", O, "organizator"]];
-const REPORT_COLOR = { customer: C, artist: O, venue: V, organizer: O };
+const OKL = { venue: "Onayla", org: "Onayla", agency: "Onayla", name: "Onayla", report: "Çözüldü" };
+const OKT = { venue: "Onaylandı", org: "Onaylandı", agency: "Onaylandı", name: "Ad değiştirildi", report: "Çözüldü olarak işaretlendi" };
+const OKS = { venue: "approved", org: "approved", agency: "approved", name: "approved", report: "resolved" };
+const EYE = { venue: "MEKAN BAŞVURUSU", org: "ORGANİZATÖR BAŞVURUSU", agency: "AJANS BAŞVURUSU", name: "MEKAN ADI İSTEĞİ", report: "SORUN BİLDİRİMİ" };
+const KIND_TAG = { venue: ["MEKAN", V], org: ["ORGANİZATÖR", O], agency: ["AJANS", A] };
+const SUBS = [["all", "Tümü", "#A3A7AF", null], ["venue", "Mekan", V, "mekan"], ["org", "Organizatör", O, "organizator"], ["agency", "Ajans", A, "ajans"]];
+const isApplicant = (k) => k === "venue" || k === "org" || k === "agency";   // users başvurusu (approveUser / rejectUser)
+const REPORT_COLOR = { customer: C, artist: O, venue: V, organizer: O, agency: A };
 const SEEN_KEY = "gb.admin.seen";
 // yeniden çizimde odak yedeği: data-f son eki → yerine geçen denetimler (satır: ok/no/undo/pick · detay/çekmece: dok/dno/dundo)
 const FOCUS_NEXT = { ok: ["undo", "pick"], no: ["undo", "pick"], undo: ["ok", "pick"], dok: ["dundo", "pick"], dno: ["dundo", "pick"], dundo: ["dok", "pick"] };
@@ -81,11 +83,11 @@ const wbr = (v) => (typeof v !== "string" || /\s/.test(v) || !/[@.]/.test(v) ? [
 const ini = (s) => { const c = String(s || "").replace(/^[\s[“"'(]+/, "").charAt(0); return c ? trUpper(c) : "?"; };
 const statusLabel = (it) => (it.status === "pending" ? (it.kind === "report" ? "Açık" : "Bekliyor") : ({ approved: "Onaylandı", rejected: "Reddedildi", resolved: "Çözüldü" })[it.status] || "—");
 const statusColor = (it) => (it.status === "pending" ? "#FFD700" : it.status === "rejected" ? "#FF5A6E" : "#7CE0B0");
-const tabOfKind = (k) => (k === "venue" || k === "org" ? "onaylar" : k === "name" ? "ad" : "sorun");
+const tabOfKind = (k) => (isApplicant(k) ? "onaylar" : k === "name" ? "ad" : "sorun");
 // öğe türü → Firestore kaynağı (loadAll'daki 3 sorgu) · sekme / başvuru türü süzgeci → beslendiği kaynaklar
-const SRC_OF = { venue: "venue", org: "org", name: "rep", report: "rep" };
-const TAB_SRCS = { onaylar: ["venue", "org"], ad: ["rep"], sorun: ["rep"] };
-const SUB_SRCS = { all: ["venue", "org"], venue: ["venue"], org: ["org"] };
+const SRC_OF = { venue: "venue", org: "org", agency: "agency", name: "rep", report: "rep" };
+const TAB_SRCS = { onaylar: ["venue", "org", "agency"], ad: ["rep"], sorun: ["rep"] };
+const SUB_SRCS = { all: ["venue", "org", "agency"], venue: ["venue"], org: ["org"], agency: ["agency"] };
 // "Mesaj gönder" adresi: yalnız düz e-posta (?, &, #, boşluk vb. yok → mailto'ya cc/bcc/body eklenemez); href'te ayrıca kodlanır
 const EMAIL_RE = /^[^\s@?&#%/\\:;,<>"'()[\]]+@[^\s@?&#%/\\:;,<>"'()[\]]+\.[^\s@?&#%/\\:;,<>"'()[\]]+$/;
 const safeEmail = (v) => { const e = typeof v === "string" ? v.trim() : ""; return e.length <= 254 && EMAIL_RE.test(e) ? e : null; };
@@ -101,6 +103,14 @@ function toItem(kind, r) {
       : [["ROL", "Organizatör"], ["E-POSTA", r.email || "—"], ["ŞEHİR", r.city || "—"], ["BAŞVURU", fmtDateNum(r.createdAt)]];
     return { kind, id: r.id, title, sub: kind === "venue" ? r.city || "—" : r.email || "—", col2: r.email || "—", color: kind === "venue" ? V : O,
       ini: ini(title), fields, email: r.email || null, emailUid: null, createdMs, raw: r };
+  }
+  if (kind === "agency") {
+    const title = r.displayName || "İsimsiz";
+    const services = (Array.isArray(r.agencyServices) ? r.agencyServices : []).filter((x) => typeof x === "string" && x).map(serviceLabel);
+    return { kind, id: r.id, title, sub: r.city || "—", col2: r.email || "—", color: A, ini: ini(title),
+      fields: [["ROL", "Ajans"], ["ŞEHİR", r.city || "—"], ["HİZMETLER", services.length ? services.join(" · ") : "—"], ["TELEFON", r.phone || "—"],
+        ["E-POSTA", r.email || "—"], ["BAŞVURU", fmtDateNum(r.createdAt)]],
+      msgLabel: "HAKKINDA", msg: typeof r.bio === "string" ? r.bio.trim() : "", email: r.email || null, emailUid: null, createdMs, raw: r };
   }
   if (kind === "name") {
     const cur = r.currentName || "Mekan";
@@ -127,27 +137,28 @@ async function listAllReports() {
   return [...open, ...done];
 }
 const keyOf = (it) => `${it.kind}:${it.id}`;
-const KIND_ORDER = { venue: 0, org: 1, name: 2, report: 3 };
+const KIND_ORDER = { venue: 0, org: 1, agency: 2, name: 3, report: 4 };
 
 // Tüm listeleri yükle (kaynak başına hata: allSettled → _cache.src). Bu oturumda karar verilen öğeler (Firestore'da artık bekleyen değil)
 // listede yerinde kalır; yeni bekleyenler eklenir.
 function loadAll(uid) {
   if (_cache.loading) return _cache.loading;
   const startedAt = Date.now();
-  _cache.loading = Promise.allSettled([listPendingByRole("venue"), listPendingByRole("organizer"), listAllReports()]).then((res) => {
+  _cache.loading = Promise.allSettled([listPendingByRole("venue"), listPendingByRole("organizer"), listAllReports(), listPendingByRole("agency")]).then((res) => {
     if (_cache.uid !== uid) return;
-    const [ven, org, rep] = res;
+    const [ven, org, rep, agn] = res;
     const fresh = [];
     // kaynak başına hata (kısmi hata görünür kalsın: ör. yalnız organizatör sorgusu düşerse "Organizatör · —" + satır üstü uyarı)
-    const src = { venue: ven.status === "rejected", org: org.status === "rejected", rep: rep.status === "rejected" };
+    const src = { venue: ven.status === "rejected", org: org.status === "rejected", agency: agn.status === "rejected", rep: rep.status === "rejected" };
     if (ven.status === "fulfilled") ven.value.forEach((r) => fresh.push(toItem("venue", r)));
     if (org.status === "fulfilled") org.value.forEach((r) => fresh.push(toItem("org", r)));
+    if (agn.status === "fulfilled") agn.value.forEach((r) => fresh.push(toItem("agency", r)));
     if (rep.status === "fulfilled") rep.value.forEach((r) => {
       // çözülen ad isteği listeye girmez; çözülen sorun bildirimi kalır (yazışması / bağlamı her zaman açılabilsin)
       if (r.status === "resolved" && r.type === "name_change") return;
       fresh.push(toItem(r.type === "name_change" ? "name" : "report", r));
     });
-    [ven, org, rep].forEach((x) => { if (x.status === "rejected") console.error(x.reason); });
+    [ven, org, rep, agn].forEach((x) => { if (x.status === "rejected") console.error(x.reason); });
     const next = new Map();
     // Yarış koruması: yazımı süren (busy) ya da yenileme başladıktan SONRA karar verilen / geri alınan öğe AYNI nesneyle kalır —
     // decide()/undo() yakaladıkları nesnede biter; yeni nesne konsaydı satır "Bekliyor" + kilitli düğmelerle takılı kalıyordu.
@@ -188,12 +199,12 @@ const undoWrite = {
   report: (it) => updateDoc(doc(db, "reports", it.id), { status: it.raw?.status && it.raw.status !== "resolved" ? it.raw.status : "pending" }),
 };
 function writeDecision(it, ok) {
-  if (it.kind === "venue" || it.kind === "org") return ok ? approveUser(it.id) : rejectUser(it.id);
+  if (isApplicant(it.kind)) return ok ? approveUser(it.id) : rejectUser(it.id);
   if (it.kind === "name") return ok ? approveNameChange(it.raw) : rejectNameChange(it.raw);
   return resolveReport(it.id);
 }
 function writeUndo(it) {
-  if (it.kind === "venue" || it.kind === "org") return undoWrite.user(it);
+  if (isApplicant(it.kind)) return undoWrite.user(it);
   if (it.kind === "report") return undoWrite.report(it);
   return Promise.reject(new Error("no-undo"));
 }
@@ -758,6 +769,7 @@ export function adminView(ctx) {
         const base = { createdAt: it.createdMs, read: it.createdMs <= seen, href };
         if (it.kind === "venue") return { ...base, title: "Yeni mekan başvurusu", body: `${it.title} onay bekliyor.`, icon: "building", color: V };
         if (it.kind === "org") return { ...base, title: "Yeni organizatör başvurusu", body: `${it.title} onay bekliyor.`, icon: "building", color: V };
+        if (it.kind === "agency") return { ...base, title: "Yeni ajans başvurusu", body: `${it.title} onay bekliyor.`, icon: "agency", color: A };
         if (it.kind === "name") return { ...base, title: "Mekan adı isteği", body: `${it.raw.currentName || "Mekan"} ad değişikliği istedi.`, icon: "edit", color: V };
         return { ...base, title: "Sorun bildirimi", body: `${it.raw.reporterName || "Bir kullanıcı"} yeni bir bildirim gönderdi.`, icon: "flag", color: "#FF5A6E" };
       });

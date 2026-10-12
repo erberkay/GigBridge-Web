@@ -255,8 +255,8 @@ const P = {
   emptySearch: '<path d="M11 4.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zM20 20l-4.2-4.2"></path>',
   emptyMusic: '<path d="M9 18V6l11-2v12M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"></path>',
 };
-const ROLE_LABEL = { artist: "Sanatçı", venue: "Mekan", group: "Grup", organizer: "Organizatör", customer: "Kullanıcı" };
-const roleOf = (it) => (it.kind === "user" ? (it.role === "organizer" ? "organizer" : "customer") : it.kind);
+const ROLE_LABEL = { artist: "Sanatçı", venue: "Mekan", group: "Grup", organizer: "Organizatör", agency: "Ajans", customer: "Kullanıcı" };
+const roleOf = (it) => (it.kind === "user" ? (it.role === "organizer" || it.role === "agency" ? it.role : "customer") : it.kind);
 const hrefOf = (it) => (it.kind === "artist" ? "#/sanatci/" + encodeURIComponent(it.id) : it.kind === "venue" ? "#/mekan/" + encodeURIComponent(it.id) : null);
 const evKindOf = (it) => (it.kind === "user" ? (it.role === "organizer" ? "organizer" : null) : it.kind);
 

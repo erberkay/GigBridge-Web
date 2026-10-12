@@ -53,6 +53,7 @@
   --dk-role-artist: #FF4FA3;
   --dk-role-venue: #FF8A2A;
   --dk-role-organizer: #FF4FA3;
+  --dk-role-agency: #FBBF24;
   --dk-role-admin: #A78BFA;
   /* yazı aileleri */
   /* Kurumsal yazı tipi (2026-09-30, Berkay): Inter — assets/fonts/gb-fonts.css. Rol adları korunur:
@@ -103,6 +104,7 @@ html[data-dk] #toasts { bottom: 32px; }
 .dk[data-role="artist"]    { --dk-role: var(--dk-role-artist); }
 .dk[data-role="venue"]     { --dk-role: var(--dk-role-venue); }
 .dk[data-role="organizer"] { --dk-role: var(--dk-role-organizer); }
+.dk[data-role="agency"]    { --dk-role: var(--dk-role-agency); }
 .dk[data-role="admin"]     { --dk-role: var(--dk-role-admin); --dk-a: #A78BFA; --dk-a-hover: #C4B1FF; }
 @media (max-width: 1279px) { .dk { --dk-gutter: 40px; } }
 @media (max-width: 1023px) { .dk { --dk-gutter: 32px; } }

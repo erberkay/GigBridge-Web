@@ -84,8 +84,8 @@ async function openKesfetPreview() {
 
 async function load(root) {
   try {
-    const [venues, orgs, reports] = await Promise.all([
-      listPendingByRole("venue"), listPendingByRole("organizer"), listReports(),
+    const [venues, orgs, reports, agencies] = await Promise.all([
+      listPendingByRole("venue"), listPendingByRole("organizer"), listReports(), listPendingByRole("agency").catch(() => []),
     ]);
     const nameReqs = reports.filter((r) => r.type === "name_change");
     const otherReports = reports.filter((r) => r.type !== "name_change");
@@ -95,6 +95,8 @@ async function load(root) {
         venues.length ? venues.map((v) => approvalRow(v, ROLE.venue, v.city)) : [emptyRow("Bekleyen mekan yok")]),
       groupSection("Onay Bekleyen Organizatörler", "megaphone-outline", orgs.length,
         orgs.length ? orgs.map((o) => approvalRow(o, ROLE.organizer, o.email)) : [emptyRow("Bekleyen organizatör yok")]),
+      groupSection("Onay Bekleyen Ajanslar", "camera-outline", agencies.length,
+        agencies.length ? agencies.map((a) => approvalRow(a, ROLE.agency, [a.city, a.email].filter(Boolean).join(" · "))) : [emptyRow("Bekleyen ajans yok")]),
       groupSection("Mekan Adı İstekleri", "create-outline", nameReqs.length,
         nameReqs.length ? nameReqs.map(nameReqRow) : [emptyRow("Bekleyen isim isteği yok")]),
       groupSection("Sorun Bildirimleri", "flag-outline", otherReports.length,

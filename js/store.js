@@ -124,8 +124,9 @@ export function homeRouteFor(profile) {
   const t = profile.userType;
   if (t === "customer") return "#/kesfet"; // müşteri onay gerektirmez
   if (t === "artist") return "#/artist"; // sanatçı onay gerektirmez
-  if ((t === "venue" || t === "organizer") && profile.approved === false) return "#/pending";
+  if ((t === "venue" || t === "organizer" || t === "agency") && profile.approved === false) return "#/pending"; // yönetici onayı bekleyen işletmeler
   if (t === "venue") return "#/venue";
   if (t === "organizer") return "#/organizer";
+  if (t === "agency") return "#/agency"; // ajans paneli (masaüstü web; mobil web bilgi ekranı)
   return "#/unsupported";
 }

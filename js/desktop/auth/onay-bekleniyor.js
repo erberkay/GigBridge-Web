@@ -41,6 +41,7 @@ const SVG_INFO = '<circle cx="12" cy="12" r="9"></circle><path d="M12 11v5.5M12 
 const ROLE = {
   venue: { tag: "MEKAN HESABI", color: "#FF8A2A", border: "rgba(255,138,42,0.45)", panel: "Mekan Paneli", route: "#/venue" },
   organizer: { tag: "ORGANİZATÖR HESABI", color: "#FF4FA3", border: "rgba(255,79,163,0.45)", panel: "Organizatör Paneli", route: "#/organizer" },
+  agency: { tag: "AJANS HESABI", color: "#FBBF24", border: "rgba(251,191,36,0.45)", panel: "Ajans Paneli", route: "#/agency" },
 };
 
 const accountName = (p) => (p?.userType === "organizer" ? (p.orgName || p.displayName) : p?.displayName) || "";
@@ -75,7 +76,7 @@ export function onayBekleniyorView(ctx) {
 
   const refreshIcon = svgRaw(SVG_REFRESH, { size: 17, sw: "2" });
   const refreshBtn = dkButton("Durumu yenile", { variant: "light", size: 48, full: true, icon: refreshIcon, cls: "dk-onay-bekleniyor-refresh", onClick: () => refresh() });
-  const panelBtn = dkButton("Panele git", { variant: "role", color: "#FF8A2A", size: 48, full: true, iconRight: "arrowRight", iconSize: 16, href: R.route, onClick: (e) => { e.preventDefault(); goPanel(); } });
+  const panelBtn = dkButton("Panele git", { variant: "role", color: R.color, size: 48, full: true, iconRight: "arrowRight", iconSize: 16, href: R.route, onClick: (e) => { e.preventDefault(); goPanel(); } });
   const supportBtn = dkButton("Destek ekibine yaz", { variant: "light", size: 48, full: true, icon: svgRaw(SVG_MAIL, { size: 17, sw: "2" }), href: mailto() });
   const logoutBtn = dkButton("Çıkış yap", { variant: "outline", size: 48, full: true, icon: svgRaw(SVG_LOGOUT, { size: 17, sw: "2" }), onClick: () => logout() });
   const actions = h("div", { class: "dk-onay-bekleniyor-actions" }, refreshBtn, logoutBtn);

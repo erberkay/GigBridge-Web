@@ -58,7 +58,7 @@ export function icon(name, opts = {}) {
 
 export const ROLE = {
   // Aether prizma paleti: cyan / magenta / amber (organizatör + admin = magenta)
-  customer: "#4ED8FF", artist: "#FF4FA3", venue: "#FF8A2A", organizer: "#FF4FA3", admin: "#FF4FA3",
+  customer: "#4ED8FF", artist: "#FF4FA3", venue: "#FF8A2A", organizer: "#FF4FA3", agency: "#FBBF24", admin: "#FF4FA3",
 };
 
 // ── Bileşenler ──

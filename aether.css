@@ -955,3 +955,20 @@ button, input, select, textarea { font-family: inherit; }
 .ev-cal-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
 .ev-cal-sub { font-size: 13px; font-weight: 700; color: var(--text); }
 .ev-cal-prism { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, #4ED8FF, #FF4FA3, #FF8A2A); }
+
+/* ---------- Kayıt: "İşletme" grubu (ajans-spec) — Dinleyici · Sanatçı · İşletme kartı; açılınca Mekan / Organizatör / Ajans ---------- */
+.au-typecards .au-typecard.au-tc-business { --tc: #F2F1EE; }
+.au-typecards .au-typecard.au-tc-business.on { border-color: var(--border-strong) !important; }
+.au-subcards { display: flex; flex-direction: column; gap: 10px; padding-left: 14px; border-left: 1px solid var(--border); margin-left: 6px; }
+.au-subcards[hidden] { display: none; }
+.au-typecards .au-subcards .au-typecard.au-tc-venue { --tc: #FF8A2A; }
+.au-typecards .au-subcards .au-typecard.au-tc-organizer { --tc: #B06BFF; }
+.au-typecards .au-subcards .au-typecard.au-tc-agency { --tc: #FBBF24; }
+.au-subcard { padding-top: 16px !important; padding-bottom: 16px !important; }
+.au-subcard .au-typelabel { margin-top: 6px; font-size: 16px; }
+.au-tc-agency { --tc: #FBBF24; }
+/* Ajans hizmetleri (çip satırı + "Hizmet ekle" alanı) */
+.au-svc { margin: 6px 0 4px; }
+.au-svc-new { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.au-svc-new[hidden] { display: none; }
+.au-svc-new input { flex: 1; min-width: 0; }

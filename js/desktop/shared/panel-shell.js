@@ -7,9 +7,10 @@
 //   panelShell(opts) → { node, content, main, setTitle(t), setSubtitle(s), setCrumb(c), setActive(key), setBadge(key, n),
 //                        setNotifications(items), search, destroy() }
 //   opts = {
-//     role:   "artist" | "venue" | "organizer" | "admin",
+//     role:   "artist" | "venue" | "organizer" | "agency" | "admin",
 //     active: artist: home|kesfet|top10|mekanlar|mesaj|profil · venue: home|olustur(CTA)|sanatci|analitik|mesaj|profil
-//             organizer: home|etkinlik|mekan|ekip|mesaj|profil · admin: onaylar|ad|sorun
+//             organizer: home|etkinlik|mekan|ajans|ekip|mesaj|profil · agency: home|katalog|mesaj|profil (CTA yeni) · admin: onaylar|ad|sorun
+//             (artist / venue nav'larında da "ajans" = Ajans Bul)
 //     title, subtitle (sanatçı: başlık üstte + alt satır), crumb (mekan: "Babylon Club / {crumb}" nav + h1; org/admin: mono eyebrow + başlık),
 //     search: { placeholder, onSubmit(q), onInput(q), value } | false  (mekan: "/" kısayolu + kbd çipi),
 //     headerActions: Node[] (arama öncesi; WebAdmin "Keşfet önizleme"),
@@ -50,6 +51,7 @@ const ROLES = {
       ["kesfet", "Keşfet", "#/artist/kesfet", "compass"],
       ["top10", "Top 10", "#/artist/top10", "trophy"],
       ["mekanlar", "Mekanlar", "#/artist/mekanlar", "star", { stroke: true }],
+      ["ajans", "Ajans Bul", "#/artist/ajans", "agency"],
       ["mesaj", "Mesajlar", "#/artist/mesaj", "chatBubble"],
       ["profil", "Profilim", "#/artist/profil", "userCircle"],
     ],
@@ -62,6 +64,7 @@ const ROLES = {
     nav: [
       ["home", "Ana Sayfa", "#/venue", "homeVenue"],
       ["sanatci", "Sanatçı Bul", "#/venue/sanatci", "search", { sw: "1.8" }],
+      ["ajans", "Ajans Bul", "#/venue/ajans", "agency"],
       ["analitik", "Analitik", "#/venue/analitik", "chart"],
       ["mesaj", "Mesajlar", "#/venue/mesaj", "chatLines"],
       ["profil", "Profil", "#/venue/profil", "userVenue"],
@@ -75,11 +78,25 @@ const ROLES = {
       ["home", "Ana Sayfa", "#/organizer", "homeOrg"],
       ["etkinlik", "Etkinlikler", "#/organizer/etkinlik", "calendar", { sw: "2" }],
       ["mekan", "Mekan Seç", "#/organizer/mekan", "building", { sw: "2" }],
+      ["ajans", "Ajans Bul", "#/organizer/ajans", "agency"],
       ["ekip", "Ekip", "#/organizer/ekip", "users"],
       ["mesaj", "Mesajlar", "#/organizer/mesaj", "chatSquare"],
       ["profil", "Profil", "#/organizer/profil", "userProfile"],
     ],
     searchPh: "Etkinlik, mekan veya üye ara", bell: { mode: "popover", allHref: "#/organizer/bildirim" }, profileHref: "#/organizer/profil", profileLabel: "Profil",
+    logoutIcon: "logoutOrg", navBadge: "tint",
+  },
+  // AJANS (tasarım tuvalinde ajans ekranı yok → organizatör kabuğunun düzeni + mekan gibi kenar CTA'sı; rol rengi #FBBF24)
+  agency: {
+    color: "#FBBF24", badge: "AJANS PANELİ", asideLabel: "Ajans paneli menüsü", headMode: "crumb", sw: "2", crumbRole: "AJANS",
+    cta: { key: "yeni", label: "İlan ekle", href: "#/agency/katalog?yeni=1" },
+    nav: [
+      ["home", "Ana Sayfa", "#/agency", "homeOrg"],
+      ["katalog", "Katalog", "#/agency/katalog", "grid"],
+      ["mesaj", "Mesajlar", "#/agency/mesajlar", "chatSquare"],
+      ["profil", "Profil", "#/agency/profil", "userProfile"],
+    ],
+    searchPh: "Katalogda ara", bell: { mode: "popover" }, profileHref: "#/agency/profil", profileLabel: "Profil",
     logoutIcon: "logoutOrg", navBadge: "tint",
   },
   admin: {
@@ -102,7 +119,7 @@ const ROLES = {
   },
 };
 export const PANEL_ROLES = ROLES;
-const HOME = { artist: "#/artist", venue: "#/venue", organizer: "#/organizer", admin: "#/admin" };
+const HOME = { artist: "#/artist", venue: "#/venue", organizer: "#/organizer", agency: "#/agency", admin: "#/admin" };
 const SITE = "#/kesfet";
 // Kabuk rozetlerinin son değerleri (uid|rol|anahtar → n): rota geçişinde kabuk yeniden kurulurken rozet göz kırpmasın.
 const _badgeCache = new Map();
@@ -184,6 +201,9 @@ export function panelShell(opts = {}) {
       av = p.photoURL ? dkAvatar({ photo: p.photoURL, size: 36, type: "organizer" }) : dkAvatar({ size: 36, type: "organizer", icon: "building", iconSize: 17 });
       const isStaff = (p.orgRole || "owner") === "staff"; // legacy organizer.js ile aynı kural
       l1 = p.orgName || p.displayName || "Organizasyonunuz"; l2 = `${isStaff ? "Personel" : "Sahip"}${email ? " · " + email : ""}`;
+    } else if (role === "agency") {
+      av = p.photoURL ? dkAvatar({ photo: p.photoURL, size: 36, type: "agency" }) : dkAvatar({ size: 36, type: "agency", icon: "agency", iconSize: 17 });
+      l1 = p.displayName || "Ajansın"; l2 = email;
     } else {
       av = dkAvatar({ size: 36, type: "admin", icon: "shieldCheck", iconSize: 17 });
       l1 = "Yönetici"; l2 = email;
@@ -223,10 +243,10 @@ export function panelShell(opts = {}) {
     const so = opts.search || {};
     // Varsayılan Enter davranışı (spec önerileri: mekan §0.5 → Sanatçı Bul, org F4 → Etkinlikler; sanatçı → Keşfet); görünüm ezebilir.
     // Hedef görünüm ?q okumalı (ctx.query.get("q")); hedef NOT_READY iken (legacy sekme ?q'yu yok sayar) arama gizlenir.
-    const SEARCH_ROUTE = { artist: "#/artist/kesfet", venue: "#/venue/sanatci", organizer: "#/organizer/etkinlik" }[role];
+    const SEARCH_ROUTE = { artist: "#/artist/kesfet", venue: "#/venue/sanatci", organizer: "#/organizer/etkinlik", agency: "#/agency/katalog" }[role];
     const usesDefault = !so.onSubmit && !so.onInput;
     const onSubmit = so.onSubmit || (SEARCH_ROUTE ? (q) => { location.hash = SEARCH_ROUTE + (q ? "?q=" + encodeURIComponent(q) : ""); } : undefined);
-    const iconName = role === "organizer" || role === "admin" ? "search2" : "search";
+    const iconName = role === "organizer" || role === "admin" || role === "agency" ? "search2" : "search";
     search = dkSearchInput({ placeholder: so.placeholder || R.searchPh, label: "Panelde ara", value: so.value || "", onInput: so.onInput, onSubmit,
       radius: role === "venue" ? 8 : 6, kbd: R.kbd, uaPad: role !== "artist", iconName, iconSw: role === "venue" ? "1.8" : "2", cls: "dk-ps-search" });
     search.id = `dk-ps-search-${role}`;
@@ -316,6 +336,7 @@ export function panelShell(opts = {}) {
     if (role === "artist") return h("a", { href: R.profileHref, class: "dk-ps-av dk-ps-av40", "aria-label": R.profileLabel }, dkAvatar({ name: p.displayName, photo: p.photoURL, size: 40, type: "artist" }));
     if (role === "venue") return h("a", { href: R.profileHref, class: "dk-ps-av", "aria-label": R.profileLabel }, dkAvatar({ name: p.displayName, photo: p.photoURL, size: 38, type: "venue", border: true }));
     if (role === "organizer") return h("a", { href: R.profileHref, class: "dk-ps-av", "aria-label": R.profileLabel }, p.photoURL ? dkAvatar({ photo: p.photoURL, size: 36 }) : dkAvatar({ size: 36, type: "organizer", icon: "building", iconSize: 16 }));
+    if (role === "agency") return h("a", { href: R.profileHref, class: "dk-ps-av", "aria-label": R.profileLabel }, p.photoURL ? dkAvatar({ photo: p.photoURL, size: 36, type: "agency" }) : dkAvatar({ size: 36, type: "agency", icon: "agency", iconSize: 16 }));
     return h("a", { href: R.profileHref, class: "dk-ps-av", "aria-label": R.profileLabel }, dkAvatar({ size: 36, type: "admin", icon: "shieldCheck", iconSize: 16 }));
   })();
   right.append(bell, avatarLink);

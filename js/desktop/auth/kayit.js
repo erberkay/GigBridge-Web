@@ -1,4 +1,7 @@
-// WebKayit — masaüstü kayıt (≥769 px), rota #/register (?rol=customer|artist|venue|organizer ön seçim).
+// WebKayit — masaüstü kayıt (≥769 px), rota #/register (?rol=customer|artist|venue|organizer|agency ön seçim).
+// AJANS (ajans-spec "Kayıt ekranı"): 1. adım Dinleyici + Sanatçı (ilk satır) ve altında tam genişlik "İşletme" bloğu; İşletme seçilince
+// içinde Mekan / Organizatör / Ajans alt seçenekleri açılır (?rol=venue|organizer|agency → İşletme + o alt rol ön seçili). Ajans 2. adımda
+// Şehir + Hizmetler (hazır 3 + "＋ Hizmet ekle", 1–10) ister; yazım userType:'agency', approved:false, city, agencyServices.
 // Spec: specs/auth.md WebKayit (+ §0). Artboard: WebKayit (1440×1040). CSS: css/dk-kayit.css. ≤768: legacy register()/registerModal().
 //
 // 2 adım aynı ekranda (owner notu): 1) hesap tipi (kart seçilir, "… olarak devam et" ilerler) 2) bilgiler.
@@ -20,7 +23,10 @@ import { LEGAL } from "../shared/assets.js";
 import {
   trError, googleSignIn, statusRegion, wireRadioGroup, shieldCheckIcon, refocusIfLost,
   ROLE_KEYS, ROLE_META, roleIcon, roleVars, setPendingRole, clearPendingRole,
+  BUSINESS_KEYS, TOP_ROLE_KEYS, isBusinessRole, pickMeta,
 } from "./giris.js";
+import { servicesEditor } from "../agency/common.js";
+import { normalizeServices, servicesError, CITY_MAX } from "../../agency-data.js";
 
 const INFO_ICON = '<circle cx="12" cy="12" r="9"></circle><path d="M12 11v5.5M12 7.5v.01"></path>';
 const KVKK_HREF = LEGAL.privacy + "#kvkk"; // "Gizlilik Politikası ve Aydınlatma Metni" (ayrı KVKK sayfası yok — foundation §8.15)
@@ -45,7 +51,13 @@ function armVerifyCountdown() {
 
 export function kayitView(ctx) {
   // ── görünüm durumu (adım değişiminde yazılanlar korunur — DCLogic ile aynı) ──
-  const st = { step: 1, role: validRole(ctx.query?.get("rol")) || "customer", name: "", email: "", pass: "", pass2: "", city: "", kvkk: false };
+  // pick: üst seçim (customer | artist | business) · biz: İşletme alt rolü · role: yazılacak rol (İşletme alt rolü seçilmeden null)
+  const st = { step: 1, pick: "customer", biz: null, role: "customer", name: "", email: "", pass: "", pass2: "", city: "", kvkk: false, services: [] };
+  const setRole = (r) => {
+    if (isBusinessRole(r)) { st.pick = "business"; st.biz = r; st.role = r; }
+    else { st.pick = r; st.role = r; }
+  };
+  setRole(validRole(ctx.query?.get("rol")) || "customer");
   let alive = true, busy = false, gBusy = false;
   const R = () => ROLE_META[st.role];
 
@@ -59,40 +71,62 @@ export function kayitView(ctx) {
   const body = h("div", { class: "dk-kayit-body" });
 
   // ══ 1. adım: hesap tipi ══
+  // Dinleyici + Sanatçı ilk satır (2 kolon), altında tam genişlik "İşletme" kartı (aynı kart dili). İşletme seçiliyken kartın hemen
+  // altında (görsel olarak aynı blok) Mekan / Organizatör / Ajans alt seçenekleri açılır — iki ayrı radyo grubu (iç içe radiogroup yok).
   let s1 = null;
   function buildStep1() {
-    const tiles = ROLE_KEYS.map((k) => {
-      const M = ROLE_META[k];
-      return h("button", { type: "button", role: "radio", "aria-checked": "false", class: "dk-kayit-tile", style: roleVars(k), onclick: () => pick(k) },
+    const pill = () => h("span", { class: "dk-kayit-pill" }, svgRaw('<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z"></path>', { size: 11, sw: "2.2" }), "YÖNETİCİ ONAYI GEREKİR");
+    const tiles = TOP_ROLE_KEYS.map((k) => {
+      const M = pickMeta(k);
+      const biz = k === "business";
+      return h("button", { type: "button", role: "radio", "aria-checked": "false", class: biz ? "dk-kayit-tile is-biz" : "dk-kayit-tile", style: roleVars(k), onclick: () => pickTop(k) },
         h("span", { class: "dk-kayit-tico" }, roleIcon(k, 20)),
         h("span", { class: "dk-kayit-ring", "aria-hidden": "true" }, h("span", { class: "dk-kayit-dot" })),
-        h("span", { class: "dk-kayit-tl" }, M.label),
-        h("span", { class: "dk-kayit-td" }, M.desc),
-        M.approval ? h("span", { class: "dk-kayit-pill" }, svgRaw('<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z"></path>', { size: 11, sw: "2.2" }), "YÖNETİCİ ONAYI GEREKİR") : null);
+        biz
+          ? h("span", { class: "dk-kayit-bt" }, h("span", { class: "dk-kayit-tl" }, M.label), h("span", { class: "dk-kayit-td" }, M.desc), pill())
+          : [h("span", { class: "dk-kayit-tl" }, M.label), h("span", { class: "dk-kayit-td" }, M.desc), M.approval ? pill() : null]);
     });
+    const subs = BUSINESS_KEYS.map((k) => {
+      const M = ROLE_META[k];
+      return h("button", { type: "button", role: "radio", "aria-checked": "false", class: "dk-kayit-sub", style: roleVars(k), onclick: () => pickSub(k) },
+        h("span", { class: "dk-kayit-sico" }, roleIcon(k, 18)),
+        h("span", { class: "dk-kayit-stxt" }, h("span", { class: "dk-kayit-sl" }, M.label), h("span", { class: "dk-kayit-sd" }, M.desc)),
+        h("span", { class: "dk-kayit-ring dk-kayit-sring", "aria-hidden": "true" }, h("span", { class: "dk-kayit-dot" })));
+    });
+    const subGroup = h("div", { class: "dk-kayit-subs", role: "radiogroup", "aria-label": "İşletme türü", style: roleVars("business"), hidden: true },
+      h("span", { class: "dk-kayit-subt", "aria-hidden": "true" }, "İŞLETME TÜRÜ"), ...subs);
     const next = dkButton("", { variant: "primary", size: 48, full: true, iconRight: "arrowRight", iconSize: 16, onClick: () => goStep(2) });
     const node = h("div", { class: "dk-kayit-s1 dk-rise" },
       h("div", { class: "dk-kayit-head" },
         h("h1", { class: "dk-display dk-t52" }, "Hesap tipini ", h("em", {}, "seç")),
         h("p", { class: "dk-kayit-lead" }, "Platforma nasıl katılmak istiyorsun? Rolün, sana açılacak paneli belirler.")),
-      h("div", { class: "dk-kayit-grid", role: "radiogroup", "aria-label": "Hesap tipi" }, ...tiles),
+      h("div", { class: "dk-kayit-roles" },
+        h("div", { class: "dk-kayit-grid", role: "radiogroup", "aria-label": "Hesap tipi" }, ...tiles),
+        subGroup),
       next);
-    const syncTab = wireRadioGroup(tiles, (i) => pick(ROLE_KEYS[i]));
-    // onay bilgisi (yalnız mekan/organizatör) — artboard sc-if: yokken DOM'da değil (flex boşluğu kaplamaz), her
-    // görünüşte gbMsg animasyonu; mekan↔organizatör geçişinde yalnız metin/renk güncellenir (React uzlaştırması gibi)
+    const syncTab = wireRadioGroup(tiles, (i) => pickTop(TOP_ROLE_KEYS[i]));
+    const syncSubTab = wireRadioGroup(subs, (i) => pickSub(BUSINESS_KEYS[i]));
+    // onay bilgisi (yalnız mekan/organizatör/ajans) — artboard sc-if: yokken DOM'da değil (flex boşluğu kaplamaz), her
+    // görünüşte gbMsg animasyonu; işletme alt rolleri arasında geçişte yalnız metin/renk güncellenir (React uzlaştırması gibi)
     let info = null;
     const infoIco = () => svgRaw(INFO_ICON, { size: 18, sw: "2", color: R().c });
     const infoText = () => R().label + " hesapları GigBridge ekibinin onayından sonra açılır. Kayıttan sonra başvurun incelenir; onaylanınca panelin ve uygulama girişin aktif olur.";
     const sync = () => {
-      tiles.forEach((t, i) => t.setAttribute("aria-checked", ROLE_KEYS[i] === st.role ? "true" : "false"));
-      syncTab();
-      next.dk.setLabel(R().label + " olarak devam et");
-      if (R().approval) {
+      const bizOn = st.pick === "business";
+      tiles.forEach((t, i) => t.setAttribute("aria-checked", TOP_ROLE_KEYS[i] === st.pick ? "true" : "false"));
+      tiles[2].classList.toggle("is-open", bizOn);
+      subGroup.hidden = !bizOn;
+      subs.forEach((b, i) => b.setAttribute("aria-checked", bizOn && BUSINESS_KEYS[i] === st.biz ? "true" : "false"));
+      syncTab(); syncSubTab();
+      if (st.role) { next.disabled = false; next.dk.setLabel(R().label + " olarak devam et"); }
+      else { next.disabled = true; next.dk.setLabel("İşletme türünü seç"); }
+      if (st.role && R().approval) {
         if (!info) { info = h("div", { class: "dk-kayit-info dk-msg" }, infoIco(), h("span", {}, infoText())); next.before(info); }
         else { info.firstChild.replaceWith(infoIco()); info.lastChild.textContent = infoText(); }
       } else if (info) { info.remove(); info = null; }
     };
-    return { node, sync, focusFirst: () => (tiles.find((t) => t.getAttribute("aria-checked") === "true") || tiles[0]).focus() };
+    const focusFirst = () => (tiles.find((t) => t.getAttribute("aria-checked") === "true") || tiles[0]).focus();
+    return { node, sync, focusFirst, focusSubs: () => (subs.find((b) => b.getAttribute("aria-checked") === "true") || subs[0]).focus() };
   }
 
   // ══ 2. adım: bilgiler ══
@@ -107,7 +141,12 @@ export function kayitView(ctx) {
     const pass2 = inp("rk-pass2", { type: "password", autocomplete: "new-password", placeholder: "Tekrar gir", value: st.pass2, onInput: (v) => { st.pass2 = v; } });
     const fld = (label, id, control) => h("div", { class: "dk-kayit-fld" }, dkLabel(label, { for: id }), control);
 
-    let city = null, cityBlock = null;
+    let city = null, cityBlock = null, svc = null, svcBlock = null;
+    if (M.services) {
+      // Ajans hizmetleri (1–10): hazır 3 + kendi hizmet adı; adım değişiminde seçim korunur (st.services)
+      svc = servicesEditor({ value: st.services, labelledBy: "rk-svc-l", onChange: (v) => { st.services = v; svc?.setInvalid(false); } });
+      svcBlock = h("div", { class: "dk-kayit-fld" }, h("span", { id: "rk-svc-l", class: "dk-lbl" }, "HİZMETLER"), svc.node);
+    }
     if (M.city) {
       const listId = uid("rk-cities");
       city = inp("rk-city", { autocomplete: "address-level1", placeholder: "Örn. İstanbul", value: st.city, cls: "dk-kayit-cityinp", attrs: { list: listId }, onInput: (v) => { st.city = v; } });
@@ -130,6 +169,8 @@ export function kayitView(ctx) {
 
     const markErr = (f) => {
       Object.entries(fields).forEach(([k, el]) => { if (k === f) el.setAttribute("aria-invalid", "true"); else el.removeAttribute("aria-invalid"); });
+      if (city) { if (f === "city") city.setAttribute("aria-invalid", "true"); else city.removeAttribute("aria-invalid"); }
+      svc?.setInvalid(f === "services");
       if (f === "kvkk") kvkk.setAttribute("aria-invalid", "true"); else kvkk.removeAttribute("aria-invalid");
     };
     // hata: durum bölgesi (role=status) duyurur + ilgili alan aria-invalid/kırmızı kenar (artboard: odak taşınmaz)
@@ -141,8 +182,11 @@ export function kayitView(ctx) {
       if (busy) return;
       clearErr();
       const role = st.role;
-      const nm = name.value.trim(), em = email.value.trim(), pw = pass.value, pw2 = pass2.value, ct = (city?.value || "").trim();
+      const nm = name.value.trim(), em = email.value.trim(), pw = pass.value, pw2 = pass2.value, ct = (city?.value || "").trim().slice(0, CITY_MAX);
+      const services = role === "agency" ? normalizeServices(svc ? svc.get() : st.services) : [];
       if (!nm) return showErr("name", ROLE_META[role].nameErr);
+      if (role === "agency" && !ct) return showErr("city", "Ajansının şehrini gir.");
+      if (role === "agency") { const se = servicesError(services); if (se) return showErr("services", se); }
       if (!em) return showErr("email", "E-posta gir.");
       if (pw.length < 6) return showErr("pass", "Şifre en az 6 karakter olmalı.");
       if (pw !== pw2) return showErr("pass2", "Şifreler uyuşmuyor.");
@@ -158,9 +202,10 @@ export function kayitView(ctx) {
           displayName: nm, email: user.email, userType: role, photoURL: null,
           createdAt: serverTimestamp(),
           termsAcceptedAt: serverTimestamp(), // YENİ: KVKK / Kullanım Koşulları onay zamanı (owner notu)
-          ...(role === "venue" || role === "organizer" ? { approved: false } : {}), // müşteri/sanatçı onay gerektirmez
+          ...(ROLE_META[role].approval ? { approved: false } : {}), // mekan/organizatör/ajans yönetici onayı bekler; müşteri/sanatçı beklemez
           ...(role === "organizer" ? { orgName: nm } : {}),
-          ...((role === "venue" || role === "artist") && ct ? { city: ct } : {}),
+          ...(ROLE_META[role].city && ct ? { city: ct } : {}), // sanatçı / mekan / ajans
+          ...(role === "agency" ? { agencyServices: services } : {}),
         });
         try { await sendEmailVerification(user); } catch (_) { disarm({ accountCreated: true }); } // doğrulama bağlantısı (gönderilemezse geri sayım yok)
         location.hash = "#/verify"; // önce e-posta doğrulama (router zaten oraya geçmiş olabilir)
@@ -199,6 +244,7 @@ export function kayitView(ctx) {
       h("div", { class: "dk-kayit-pwgrid" }, fld("Şifre", "rk-pass", pass), fld("Şifre tekrar", "rk-pass2", pass2)),
       h("span", { id: "rk-passhint", class: "dk-kayit-hint" }, "Uygulamadan giriş yaparken de bu şifreyi kullanacaksın."),
       cityBlock,
+      svcBlock,
       M.approval ? h("div", { class: "dk-kayit-note", style: roleVars(M.key) }, shieldCheckIcon(16, M.c),
         h("span", {}, "Bu hesap tipi yönetici onayı gerektirir. E-postanı doğruladıktan sonra başvurun incelemeye alınır.")) : null,
       consent,
@@ -224,16 +270,25 @@ export function kayitView(ctx) {
   }
   function goStep(n, { focus = true } = {}) {
     if (busy) return;
+    if (n === 2 && !st.role) { s1?.focusSubs(); return; } // İşletme seçili ama tür seçilmedi
     st.step = n;
     renderHeader();
     if (n === 1) { s2 = null; s1 = buildStep1(); s1.sync(); body.replaceChildren(s1.node); if (focus) s1.focusFirst(); }
     else { s1 = null; s2 = buildStep2(); body.replaceChildren(s2.node); if (focus) s2.focusFirst(); }
   }
-  function pick(k) {
-    if (st.role === k) return;
-    st.role = k;
+  // üst seçim: Dinleyici / Sanatçı / İşletme (İşletme → önceki alt rol korunur; yoksa alt seçenek beklenir)
+  function pickTop(k) {
+    if (st.pick === k) return;
+    st.pick = k;
+    st.role = k === "business" ? st.biz : k;
     s1?.sync();
-    try { writeQuery({ rol: k }); } catch (_) {} // paylaşılabilir ?rol= (replaceState → yeniden kurulum yok)
+    try { writeQuery({ rol: st.role || null }); } catch (_) {} // paylaşılabilir ?rol= (replaceState → yeniden kurulum yok)
+  }
+  function pickSub(k) {
+    if (st.pick === "business" && st.biz === k) return;
+    st.pick = "business"; st.biz = k; st.role = k;
+    s1?.sync();
+    try { writeQuery({ rol: k }); } catch (_) {}
   }
 
   const right = h("span", { class: "dk-kayit-topr" }, "Zaten üye misin? ", h("a", { href: "#/login", class: "dk-kayit-topr-a" }, "Giriş yap"));
@@ -253,7 +308,7 @@ export function kayitView(ctx) {
     update(query) {
       const r = validRole(query?.get("rol"));
       if (!r || r === st.role || busy) return;
-      st.role = r;
+      setRole(r);
       if (st.step === 1) s1?.sync(); else goStep(2, { focus: false });
     },
     onSession: () => true, // aynı kimlikte oturum yayını: yazılanları koru

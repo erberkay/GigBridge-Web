@@ -24,6 +24,7 @@ import { ensureCssAll } from "../css.js";
 import { svgIcon, svgRaw, svgPath } from "../shared/icons.js";
 import { uid, dkLogo, dkLabel, dkInput, dkPasswordInput, dkButton, dkInlineMessage, dkOrDivider, dkModal } from "../shared/ui.js";
 import { authSplit, authTopLink, authHeading, authGoogleButton } from "../shared/auth-shell.js";
+import { AGENCY_COLOR, AGENCY_RGB, AGENCY_ICON_D, BUSINESS_ICON_D } from "../../agency-data.js";
 
 // ══════════════════════════════════════════════════════════════════════
 // ORTAK AUTH YARDIMCILARI (kayit.js / rol-sec.js de kullanır)
@@ -120,7 +121,8 @@ export async function recaptchaToken(action, { timeout = 8000 } = {}) {
 }
 
 // Rol tablosu (WebKayit/WebRolSec DCLogic ROLES — birebir). rgb: rgba() tonları için.
-export const ROLE_KEYS = ["customer", "artist", "venue", "organizer"];
+// Ajans (agency) eklendi: kayıt/rol seçiminde "İşletme" grubunun içinde (Mekan · Organizatör · Ajans). approval → users.approved:false.
+export const ROLE_KEYS = ["customer", "artist", "venue", "organizer", "agency"];
 export const ROLE_META = {
   customer: { key: "customer", label: "Dinleyici", desc: "Etkinlikleri keşfet, sanatçıları takip et", c: "#4ED8FF", rgb: "78,216,255", approval: false, city: false,
     nameLabel: "Ad Soyad", namePh: "Adın ve soyadın", nameErr: "Adını gir.", next: "#/kesfet", nextText: "Keşfetmeye başla",
@@ -134,10 +136,20 @@ export const ROLE_META = {
   organizer: { key: "organizer", label: "Organizatör", desc: "Ekip kur, etkinlik yönet, mekanlarla çalış", c: "#FF4FA3", rgb: "255,79,163", approval: true, city: false,
     nameLabel: "Organizasyon adı", namePh: "Organizasyonunun adı", nameErr: "Organizasyon adını gir.", next: "#/pending", nextText: "Başvuru durumunu gör",
     icon: "M5 5h14a1.5 1.5 0 0 1 1.5 1.5v12.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5V6.5A1.5 1.5 0 0 1 5 5zM3.5 10h17M8 3v4M16 3v4" },
+  agency: { key: "agency", label: "Ajans", desc: "Fotoğraf çekimi, ışık ve cihaz kiralama", c: AGENCY_COLOR, rgb: AGENCY_RGB, approval: true, city: true, services: true,
+    nameLabel: "Ajans adı", namePh: "Örn. Işıltı Prodüksiyon", nameErr: "Ajans adını gir.", next: "#/pending", nextText: "Başvuru durumunu gör",
+    icon: AGENCY_ICON_D },
 };
-export const roleIcon = (key, size = 20, sw = "1.9") => svgPath(ROLE_META[key].icon, { size, sw });
+// "İşletme" grubu (kayıt + rol tamamlama): Dinleyici · Sanatçı · İşletme → içinde Mekan / Organizatör / Ajans (üçü de yönetici onaylı)
+export const BUSINESS_KEYS = ["venue", "organizer", "agency"];
+export const isBusinessRole = (k) => BUSINESS_KEYS.includes(k);
+export const TOP_ROLE_KEYS = ["customer", "artist", "business"];
+export const BUSINESS_META = { key: "business", label: "İşletme", desc: "Mekan, organizatör ya da ajans", c: "#F2F1EE", rgb: "242,241,238", approval: true, icon: BUSINESS_ICON_D };
+// Rol ya da grup meta (ikon/renk/etiket) — "business" anahtarı da kabul edilir
+export const pickMeta = (k) => (k === "business" ? BUSINESS_META : ROLE_META[k]);
+export const roleIcon = (key, size = 20, sw = "1.9") => svgPath(pickMeta(key).icon, { size, sw });
 // Rol tonları CSS değişkeni olarak (öğe başına): --rc (düz renk), --rc-rgb ("r,g,b" → rgba(var(--rc-rgb), a))
-export const roleVars = (key) => ({ "--rc": ROLE_META[key].c, "--rc-rgb": ROLE_META[key].rgb });
+export const roleVars = (key) => ({ "--rc": pickMeta(key).c, "--rc-rgb": pickMeta(key).rgb });
 // Kayıttan Google ile devam edilirse seçilen rol WebRolSec'e taşınır (spec auth WebKayit §6). sessionStorage değeri
 // JSON { r: rol, t: ms } — bayat kalmasın diye: iptal/hata ve giriş formundaki Google akışı temizler, 30 dk sonra yok sayılır.
 export const PENDING_ROLE_KEY = "gb_pending_role";

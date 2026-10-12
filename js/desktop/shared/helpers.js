@@ -240,15 +240,16 @@ export function rgba(hex, a = 1) {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 // Masaüstü rol renkleri (legacy ui.js ROLE mobilde aynen kalır)
-export const ROLE_COLORS = { customer: "#4ED8FF", artist: "#FF4FA3", venue: "#FF8A2A", organizer: "#FF4FA3", admin: "#A78BFA" };
+export const ROLE_COLORS = { customer: "#4ED8FF", artist: "#FF4FA3", venue: "#FF8A2A", organizer: "#FF4FA3", agency: "#FBBF24", admin: "#A78BFA" };
 export const roleColor = (t) => ROLE_COLORS[t] || "#FF4FA3";
-export const ROLE_LABELS = { customer: "Dinleyici", artist: "Sanatçı", venue: "Mekan", organizer: "Organizatör", admin: "Yönetici" };
+export const ROLE_LABELS = { customer: "Dinleyici", artist: "Sanatçı", venue: "Mekan", organizer: "Organizatör", agency: "Ajans", admin: "Yönetici" };
 // Baş harf avatarı gradyanları (tasarım; kullanıcı TÜRÜNE göre — legacy'deki hash paletleri yerine)
 export const AVATAR_GRADS = {
   customer: "linear-gradient(135deg, #4ED8FF, #0891B2)",
   artist: "linear-gradient(160deg, rgba(255,79,163,0.2), rgba(78,216,255,0.08))",   // yer tutucu (baş harf #F2F1EE)
   venue: "linear-gradient(135deg, #FF8A2A, #D97706)",
   organizer: "linear-gradient(135deg, #FF4FA3, #FF8A2A)",
+  agency: "linear-gradient(135deg, #FBBF24, #D97706)",
   admin: "linear-gradient(135deg, #A78BFA, #4ED8FF)",
 };
 export const avatarGrad = (t) => AVATAR_GRADS[t] || AVATAR_GRADS.customer;

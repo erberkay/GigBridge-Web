@@ -56,10 +56,10 @@ export const DESKTOP_ROUTES = [
 
   // ════ Giriş / kayıt akışı ════
   R("giris", "WebGiris", is("#/login"), "auth/giris.js", "girisView", "auth", [...SH.auth, "css/dk-giris.css"], { spec: "auth.md WebGiris (modal + #/login tam sayfa)" }),
-  R("kayit", "WebKayit", is("#/register"), "auth/kayit.js", "kayitView", "auth", [...SH.auth, "css/dk-kayit.css"], { spec: "auth.md WebKayit" }),
+  R("kayit", "WebKayit", is("#/register"), "auth/kayit.js", "kayitView", "auth", [...SH.auth, "css/dk-kayit.css", "css/dk-ajans.css"], { spec: "auth.md WebKayit (+ ajans-spec: İşletme grubu + ajans hizmetleri)" }),
   R("dogrula", "WebDogrula", is("#/verify"), "auth/dogrula.js", "dogrulaView", "auth", [...SH.auth, "css/dk-dogrula.css"], { spec: "auth.md WebDogrula" }),
   R("onay", "WebOnayBekleniyor", is("#/pending"), "auth/onay-bekleniyor.js", "onayBekleniyorView", "auth", [...SH.auth, "css/dk-onay-bekleniyor.css"], { spec: "auth.md WebOnayBekleniyor" }),
-  R("rolsec", "WebRolSec", is("#/setup"), "auth/rol-sec.js", "rolSecView", "auth", [...SH.auth, "css/dk-rol-sec.css"], { spec: "auth.md WebRolSec" }),
+  R("rolsec", "WebRolSec", is("#/setup"), "auth/rol-sec.js", "rolSecView", "auth", [...SH.auth, "css/dk-rol-sec.css", "css/dk-ajans.css"], { spec: "auth.md WebRolSec (+ ajans-spec: İşletme grubu + ajans hizmetleri)" }),
   R("admingiris", "WebAdminGiris", is("#/yonetici"), "auth/admin-giris.js", "adminGirisView", "auth", [...SH.auth, "css/dk-admin-giris.css"], { spec: "auth.md WebAdminGiris" }),
 
   // ════ Sanatçı paneli ════
@@ -69,6 +69,7 @@ export const DESKTOP_ROUTES = [
   R("artistTop10", "WebSanatciTop10", is("#/artist/top10"), "artist/top10.js", "artistTop10View", "panel", [...SH.panel, "css/dk-sanatci-top10.css"], { role: "artist", panel: "artist", nav: "top10", spec: "sanatci.md WebSanatciTop10" }),
   R("artistMekanlar", "WebSanatciMekanlar", is("#/artist/mekanlar"), "artist/mekanlar.js", "artistMekanlarView", "panel", [...SH.panel, "css/dk-sanatci-mekanlar.css"], { role: "artist", panel: "artist", nav: "mekanlar", spec: "sanatci.md WebSanatciMekanlar" }),
   R("artistMesaj", "WebPanelMesajlar", is("#/artist/mesaj"), "messages/panel-mesajlar.js", "panelMesajlarView", "panel", [...SH.panel, "css/dk-panel-mesajlar.css"], { role: "artist", panel: "artist", nav: "mesaj", spec: "sanatci.md WebPanelMesajlar" }),
+  R("artistAjans", "— (Ajans Bul; tasarım yok — ortak kit)", is("#/artist/ajans"), "agency/ajans-bul.js", "ajansBulView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "artist", panel: "artist", nav: "ajans", spec: "ajans-spec Ajans Bul" }),
   R("artistProfil", "WebSanatciProfil", is("#/artist/profil"), "artist/profil.js", "artistProfilView", "panel", [...SH.panel, "css/dk-sanatci-profil.css"], { role: "artist", panel: "artist", nav: "profil", spec: "sanatci.md WebSanatciProfil" }),
   // artboard'u olmayan sanatçı sekmeleri: sahnelerim, yorumlar, bildirimler, sanatci/:id (+ bilinmeyenler) → legacy-in-shell
   R("artistLegacy", "— (legacy-in-shell)", pre("#/artist"), "artist/legacy.js", "artistLegacyView", "panel", [...SH.panel], { role: "artist", panel: "artist", legacyShell: true, spec: "foundation.md §4" }),
@@ -77,6 +78,7 @@ export const DESKTOP_ROUTES = [
   R("venuePanel", "WebMekanPanel", is("#/venue"), "venue/panel.js", "venuePanelView", "panel", [...SH.panel, "css/dk-mekan-panel.css"], { role: "venue", panel: "venue", nav: "home", spec: "mekan.md WebMekanPanel" }),
   R("venueOlustur", "WebMekanEtkinlikOlustur", any(is("#/venue/olustur"), sub("#/venue/duzenle")), "venue/etkinlik-olustur.js", "venueEtkinlikOlusturView", "panel", [...SH.panel, "css/dk-mekan-etkinlik-olustur.css"], { role: "venue", panel: "venue", nav: "olustur", spec: "mekan.md WebMekanEtkinlikOlustur (#/venue/duzenle/:id = düzenleme modu, YENİ rota)" }),
   R("venueSanatci", "WebMekanSanatciBul", is("#/venue/sanatci"), "venue/sanatci-bul.js", "venueSanatciBulView", "panel", [...SH.panel, "css/dk-mekan-sanatci-bul.css"], { role: "venue", panel: "venue", nav: "sanatci", spec: "mekan.md WebMekanSanatciBul" }),
+  R("venueAjans", "— (Ajans Bul; tasarım yok — ortak kit)", is("#/venue/ajans"), "agency/ajans-bul.js", "ajansBulView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "venue", panel: "venue", nav: "ajans", spec: "ajans-spec Ajans Bul" }),
   R("venueAnalitik", "WebMekanAnalitik", is("#/venue/analitik"), "venue/analitik.js", "venueAnalitikView", "panel", [...SH.panel, "css/dk-mekan-analitik.css"], { role: "venue", panel: "venue", nav: "analitik", spec: "mekan.md WebMekanAnalitik" }),
   R("venueProfil", "WebMekanProfil", is("#/venue/profil"), "venue/profil.js", "venueProfilView", "panel", [...SH.panel, "css/dk-mekan-profil.css"], { role: "venue", panel: "venue", nav: "profil", spec: "mekan.md WebMekanProfil" }),
   R("venueMesaj", "WebPanelMesajlar", is("#/venue/mesaj"), "messages/panel-mesajlar.js", "panelMesajlarView", "panel", [...SH.panel, "css/dk-panel-mesajlar.css"], { role: "venue", panel: "venue", nav: "mesaj", spec: "sanatci.md WebPanelMesajlar" }),
@@ -87,11 +89,19 @@ export const DESKTOP_ROUTES = [
   R("orgPanel", "WebOrgPanel", is("#/organizer"), "organizer/panel.js", "orgPanelView", "panel", [...SH.panel, "css/dk-org-panel.css"], { role: "organizer", panel: "organizer", nav: "home", spec: "org-admin.md WebOrgPanel" }),
   R("orgEtkinlik", "WebOrgEtkinlikler", is("#/organizer/etkinlik"), "organizer/etkinlikler.js", "orgEtkinliklerView", "panel", [...SH.panel, "css/dk-org-etkinlikler.css"], { role: "organizer", panel: "organizer", nav: "etkinlik", spec: "org-admin.md WebOrgEtkinlikler" }),
   R("orgMekan", "WebOrgMekanSec", is("#/organizer/mekan"), "organizer/mekan-sec.js", "orgMekanSecView", "panel", [...SH.panel, "css/dk-org-mekan-sec.css"], { role: "organizer", panel: "organizer", nav: "mekan", spec: "org-admin.md WebOrgMekanSec" }),
+  R("orgAjans", "— (Ajans Bul; tasarım yok — ortak kit)", is("#/organizer/ajans"), "agency/ajans-bul.js", "ajansBulView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "organizer", panel: "organizer", nav: "ajans", spec: "ajans-spec Ajans Bul" }),
   R("orgEkip", "WebOrgEkip", is("#/organizer/ekip"), "organizer/ekip.js", "orgEkipView", "panel", [...SH.panel, "css/dk-org-ekip.css"], { role: "organizer", panel: "organizer", nav: "ekip", spec: "org-admin.md WebOrgEkip" }),
   R("orgProfil", "WebOrgProfil", is("#/organizer/profil"), "organizer/profil.js", "orgProfilView", "panel", [...SH.panel, "css/dk-org-profil.css"], { role: "organizer", panel: "organizer", nav: "profil", spec: "org-admin.md WebOrgProfil" }),
   R("orgMesaj", "WebPanelMesajlar", is("#/organizer/mesaj"), "messages/panel-mesajlar.js", "panelMesajlarView", "panel", [...SH.panel, "css/dk-panel-mesajlar.css"], { role: "organizer", panel: "organizer", nav: "mesaj", spec: "sanatci.md WebPanelMesajlar" }),
   // bildirim (+ bilinmeyenler) → legacy-in-shell
   R("orgLegacy", "— (legacy-in-shell)", pre("#/organizer"), "organizer/legacy.js", "orgLegacyView", "panel", [...SH.panel], { role: "organizer", panel: "organizer", legacyShell: true, spec: "foundation.md §4" }),
+
+  // ════ Ajans paneli (tasarım tuvalinde ajans ekranı YOK → ortak masaüstü kiti + organizatör paneli kalıbı; rol rengi #FBBF24) ════
+  // Bilinmeyen #/agency/… alt rotaları Ana Sayfa'ya düşer (son kayıt pre("#/agency")); legacy-in-shell yok (mobil ajans paneli yok).
+  R("agencyKatalog", "— (AJANS Katalog; ortak kit)", is("#/agency/katalog"), "agency/katalog.js", "agencyKatalogView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "agency", panel: "agency", nav: "katalog", spec: "ajans-spec agencyItems" }),
+  R("agencyProfil", "— (AJANS Profil; ortak kit)", is("#/agency/profil"), "agency/profil.js", "agencyProfilView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "agency", panel: "agency", nav: "profil", spec: "ajans-spec users/{uid}" }),
+  R("agencyMesaj", "WebPanelMesajlar", is("#/agency/mesajlar"), "messages/panel-mesajlar.js", "panelMesajlarView", "panel", [...SH.panel, "css/dk-panel-mesajlar.css"], { role: "agency", panel: "agency", nav: "mesaj", spec: "sanatci.md WebPanelMesajlar" }),
+  R("agencyPanel", "— (AJANS Ana Sayfa; ortak kit)", pre("#/agency"), "agency/panel.js", "agencyPanelView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "agency", panel: "agency", nav: "home", spec: "ajans-spec" }),
 
   // ════ Yönetici (#/admin + sekme alt rotaları #/admin/ad|sorun) ════
   R("adminKullanici", "WebAdminKullanicilar", is("#/admin/kullanicilar"), "admin/kullanicilar.js", "adminKullanicilarView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css"], { role: "admin", spec: "WebAdmin + kullanıcı yönetimi" }),

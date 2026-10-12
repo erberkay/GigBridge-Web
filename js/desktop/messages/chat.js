@@ -45,6 +45,7 @@ import {
 } from "../shared/helpers.js";
 import { genreColor, genreGrad } from "../shared/genres.js";
 import { evTitle, evImage, evHref } from "../shared/cards.js";
+import { agencyHref } from "../../agency-data.js";
 
 // ══════════ requestChat — bekleyen sohbet hedefi ══════════
 // Diğer sayfalar legacy `messages.requestChat({ otherId, otherName })` çağırıp mesajlar rotasına gider. Legacy modülün `pending`'i dışa
@@ -99,11 +100,12 @@ const GRAD = {
   venue: "linear-gradient(135deg, #FF8A2A, #B45309)",
   customer: "linear-gradient(135deg, #4ED8FF, #0891B2)",
   organizer: "linear-gradient(135deg, #FF4FA3, #FF8A2A)",
+  agency: "linear-gradient(135deg, #FBBF24, #D97706)",
   group: "linear-gradient(135deg, #A78BFA, #6D28D9)",
   unknown: "linear-gradient(135deg, #2C303A, #1C2029)",
 };
-const TYPEC = { artist: "#FF4FA3", venue: "#FF8A2A", customer: "#4ED8FF", organizer: "#FF4FA3", group: "#A78BFA" };
-const TYPE_LABEL = { artist: "Sanatçı", venue: "Mekan", customer: "Dinleyici", organizer: "Organizatör" };
+const TYPEC = { artist: "#FF4FA3", venue: "#FF8A2A", customer: "#4ED8FF", organizer: "#FF4FA3", agency: "#FBBF24", group: "#A78BFA" };
+const TYPE_LABEL = { artist: "Sanatçı", venue: "Mekan", customer: "Dinleyici", organizer: "Organizatör", agency: "Ajans" };
 const OFFER_TAG = { pending: ["TEKLİF BEKLİYOR", "#FF4FA3"], accepted: ["KABUL EDİLDİ", "#7CE0B0"], rejected: ["REDDEDİLDİ", "#FF5A6E"] };
 const OFFER_ST = { pending: ["BEKLİYOR", "#FF4FA3"], accepted: ["KABUL EDİLDİ", "#7CE0B0"], rejected: ["REDDEDİLDİ", "#FF5A6E"] };
 const DONE = {
@@ -374,6 +376,7 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     const t = typeOf(cv);
     if (t === "artist") return "#/sanatci/" + encodeURIComponent(cv.otherId);
     if (t === "venue") return "#/mekan/" + encodeURIComponent(cv.otherId);
+    if (t === "agency") return agencyHref(myType, cv.otherId); // ajansın herkese açık görünümü = izleyenin "Ajans Bul" ayrıntısı (yoksa null)
     return null;
   };
   // etkin konuşma yalnız okundu gerçekten yazılacaksa (readsActive) 0 sayılır; aksi hâlde gerçek sayı (kabuk rozetiyle tutarlı)
@@ -951,6 +954,7 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     else if (type === "artist") { tag = genre ? `SANATÇI · ${trUpper(genre)}` : "SANATÇI"; tagC = genre ? genreColor(genre) : TYPEC.artist; }
     else if (type === "venue") { tag = pr?.venueType ? `MEKAN · ${trUpper(pr.venueType)}` : "MEKAN"; tagC = TYPEC.venue; }
     else if (type === "organizer") { tag = "ORGANİZATÖR"; tagC = TYPEC.organizer; }
+    else if (type === "agency") { tag = "AJANS"; tagC = TYPEC.agency; }
     else if (type === "customer") { tag = "DİNLEYİCİ"; tagC = TYPEC.customer; }
     const ph = () => h("span", { class: c("cph") }, initial(cv.otherName));
     const img = coverSrc ? h("img", { src: coverSrc, alt: cv.otherName, class: c("cimg"), decoding: "async" }) : null;
@@ -1215,6 +1219,8 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
       const t = pendingTarget; pendingTarget = null;
       id = convIdFor(me, t.otherId);
       if (!S.convs.some((x) => x.id === id)) S.drafts.set(id, { id, otherId: t.otherId, otherName: t.otherName || "Sohbet", isGroup: false, draft: true, otherPhoto: null, lastMessage: "", lastMessageTime: null, unread: 0 });
+      // Ajans Bul "Mesaj gönder": hazır ilk mesaj (ör. «İlan» hakkında bilgi) — kullanıcının yazdığı taslağın üstüne yazılmaz
+      if (typeof t.text === "string" && t.text && !texts.get(id)) texts.set(id, t.text);
       select(id, { user: true });
       requestAnimationFrame(focusInput);
       return;

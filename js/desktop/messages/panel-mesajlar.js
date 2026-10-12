@@ -1,5 +1,5 @@
 // WebPanelMesajlar — masaüstü görünümü (≥769 px). Registry anahtarları: artistMesaj, venueMesaj, orgMesaj
-// (#/artist/mesaj, #/venue/mesaj, #/organizer/mesaj; rol = ctx.route.role).
+// (#/artist/mesaj, #/venue/mesaj, #/organizer/mesaj, #/agency/mesajlar [agencyMesaj]; rol = ctx.route.role).
 // Spec: specs/sanatci.md § WebPanelMesajlar · Artboard: design/WebPanelMesajlar.dc.html (sahibinin CLAUDE CODE notu uygulandı).
 // CSS: css/dk-panel-mesajlar.css — tüm seçiciler .dk-panel-mesajlar kökü / .dk-panel-mesajlar-* sınıfları altında.
 //
@@ -15,6 +15,7 @@ const HEAD = {
   artist: { subtitle: "Sanatçı Paneli · Mekanlarla teklif konuşmaları", search: { placeholder: "Mekan, etkinlik ara" } },
   venue: { crumb: "Mesajlar" },
   organizer: { crumb: "Mesajlar" },
+  agency: { crumb: "Mesajlar" },
 };
 
 export function panelMesajlarView(ctx) {

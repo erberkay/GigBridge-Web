@@ -70,3 +70,19 @@
 /* SHARED-CANDIDATE: AuthSplit orta bölgesinin dikey iç boşluğu. Kabuk 32px veriyor (artboard'da yok) → uzun durumlarda (hata/onay
    notu) kolon 6px aşağı kayıyor ve sayfa 12px kayıyor. Artboard kanıtı: WebKayit 1040'ta kolon üst satırın 20px altında başlıyor. */
 .dk-auth-center:has(> .dk-rol-sec) { padding: 20px 0; }
+
+/* ---------- İşletme grubu (ajans-spec "Kayıt ekranı") ----------
+   Dinleyici · Sanatçı · İşletme satırları; İşletme seçiliyken hemen altında (aynı blok gibi) Mekan / Organizatör / Ajans alt satırları. */
+.dk-rol-sec-roles { display: flex; flex-direction: column; }
+.dk-rol-sec-row.is-open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; transform: none; }
+.dk-rol-sec-subs {
+  box-sizing: border-box; padding: 10px; display: flex; flex-direction: column; gap: 6px;
+  border: 1px solid rgba(var(--rc-rgb), 0.6); border-top: 0; border-radius: 0 0 12px 12px; background: rgba(var(--rc-rgb), 0.04);
+}
+.dk-rol-sec-subs[hidden] { display: none; }
+.dk-rol-sec-subt { padding: 0 4px 2px; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-rol-sec-row.is-sub { height: 60px; border-radius: 10px; }
+.dk-rol-sec-row.is-sub .dk-rol-sec-ico { width: 36px; height: 36px; border-radius: 8px; }
+.dk-rol-sec-row.is-sub .dk-rol-sec-l { font-size: 15px; }
+.dk-rol-sec-row.is-sub .dk-rol-sec-d { font-size: 12.5px; }
+.dk-rol-sec-form[hidden] { display: none; }

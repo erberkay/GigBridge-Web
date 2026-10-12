@@ -32,7 +32,7 @@ export function headerVariant(s = session) {
   if (s.isAdmin) return "panel";
   const home = homeRouteFor(s.profile);
   if (home === "#/kesfet") return "customer";
-  if (home === "#/artist" || home === "#/venue" || home === "#/organizer") return "panel";
+  if (home === "#/artist" || home === "#/venue" || home === "#/organizer" || home === "#/agency") return "panel";
   return "guest";
 }
 

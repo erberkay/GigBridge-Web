@@ -49,6 +49,7 @@ const SESS = {
   artist: { user: { email: "djberkay@ornek.com" }, guest: false, profile: { userType: "artist", displayName: "DJ Berkay", photoURL: IMG.djBooth.src } },
   venue: { user: { email: "yetkili@babylon.com" }, guest: false, profile: { userType: "venue", displayName: "Babylon Club", photoURL: IMG.electronicNight.src } },
   organizer: { user: { email: "ekip@ornek.com" }, guest: false, profile: { userType: "organizer", orgName: "Gece Kolektif", displayName: "Gece Kolektif" } },
+  agency: { user: { email: "isik@ornek.com" }, guest: false, profile: { userType: "agency", displayName: "Işıltı Prodüksiyon", agencyServices: ["photo", "light", "rental"] } },
   admin: { user: { email: "yonetici@gigbridges.com" }, guest: false, isAdmin: true, profile: null },
 };
 
@@ -70,7 +71,7 @@ function catalog() {
     row(...[
       ["public&v=guest&active=kesfet", "PublicHeader · misafir (WebKesfet)"], ["public&v=customer", "PublicHeader · dinleyici (WebProfil)"], ["public&v=panel", "PublicHeader · Panelime dön"],
       ["account", "AccountLayout (WebProfil)"], ["auth&v=admin", "AuthSplit · admin (WebAdminGiris)"], ["auth&v=default", "AuthSplit · varsayılan (WebKayit)"], ["auth&v=business", "AuthSplit · business (WebOnayBekleniyor)"],
-      ["panel&role=artist", "PanelShell · sanatçı"], ["panel&role=venue", "PanelShell · mekan"], ["panel&role=organizer&open=notif", "PanelShell · organizatör"], ["panel&role=admin", "PanelShell · yönetici"],
+      ["panel&role=artist", "PanelShell · sanatçı"], ["panel&role=venue", "PanelShell · mekan"], ["panel&role=organizer&open=notif", "PanelShell · organizatör"], ["panel&role=agency", "PanelShell · ajans"], ["panel&role=admin", "PanelShell · yönetici"],
     ].map(([qs, t]) => dkButton(t, { variant: "outline", size: 36, href: "#/dk-demo?shell=" + qs }))));
 
   let busyBtn;
@@ -123,7 +124,7 @@ function catalog() {
     dkBreadcrumb({ variant: "mono", back: "#/kesfet", items: [{ label: "Keşfet", href: "#/kesfet" }, { label: "Mekanlar" }, { label: "Babylon Club" }] }));
 
   const misc = sec("dkd-misc", "Avatar / Stars / KPI", "sanatci §0.3 · org-admin F5 · public-b",
-    row(dkAvatar({ name: "Elif Yıldız", photo: IMG.vocalist.src, size: 56, border: true }), ...["customer", "artist", "venue", "organizer", "admin"].map((t) => dkAvatar({ name: "Gece Kolektif", type: t, size: 44 })),
+    row(dkAvatar({ name: "Elif Yıldız", photo: IMG.vocalist.src, size: 56, border: true }), ...["customer", "artist", "venue", "organizer", "agency", "admin"].map((t) => dkAvatar({ name: "Gece Kolektif", type: t, size: 44 })),
       dkAvatar({ name: "Jazz", genre: "Jazz", size: 52 }), dkAvatar({ name: "Babylon", type: "venue", size: 38, shape: "rounded", radius: 8 }), dkAvatar({ size: 36, type: "organizer", icon: "building", iconSize: 17 }), dkAvatar({ size: 36, type: "admin", icon: "shieldCheck", iconSize: 17 })),
     row(dkStars(4), dkStars(3, { size: 20 }), dkStars(5, { variant: "text", size: 13 }), dkStars(2, { variant: "text", size: 13 })),
     h("div", { class: "dkd-grid4" },
@@ -271,6 +272,7 @@ function panelScene(q) {
     artist: { title: "Ana Sayfa", subtitle: "Sanatçı Paneli · DJ Berkay", active: "home" },
     venue: { title: "Ana Sayfa", crumb: "Mekan Paneli", active: "home" },
     organizer: { title: "Ana Sayfa", crumb: "ORGANİZATÖR / ANA SAYFA", active: "home" },
+    agency: { title: "Ana Sayfa", crumb: "AJANS / ANA SAYFA", active: "home" },
     admin: { title: "Yönetici Paneli", crumb: "YÖNETİCİ / ONAYLAR", active: "onaylar" },
   }[role] || {};
   const shell = panelShell({

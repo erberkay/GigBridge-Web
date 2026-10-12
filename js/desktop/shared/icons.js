@@ -126,6 +126,9 @@ export const ICONS = {
   lockAuth: ["<rect x=\"4.5\" y=\"10.5\" width=\"15\" height=\"10\" rx=\"2\"></rect><path d=\"M8 10.5V7.5a4 4 0 0 1 8 0v3\"></path>", "1.9", "stroke"], // WebAdminGiris kilit (birebir)
   micAuth: ["<path d=\"M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3\"></path>", "1.9", "stroke"], // AuthSplit özellik satırı (birebir)
   buildingAuth: ["<path d=\"M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3\"></path>", "1.9", "stroke"], // AuthSplit özellik satırı (birebir)
+  // ── AJANS rolü (ajans-spec: Aether ikon dili, 24px stroke; uygulama src/services/agency.ts ile aynı yollar) ──
+  agency: ["<path d=\"M3 8.5A1.5 1.5 0 0 1 4.5 7h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 19 8.5V17a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 3 17zM11 16a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zM21 5.5v3M19.5 7h3\"></path>", "2", "stroke"], // ajans (kamera + ışık)
+  briefcase: ["<path d=\"M4 8.5A1.5 1.5 0 0 1 5.5 7h13A1.5 1.5 0 0 1 20 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18zM9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M4 12.5h16\"></path>", "2", "stroke"], // "İşletme" grubu (çanta)
 };
 
 // Eşanlamlı adlar (aynı ikon)

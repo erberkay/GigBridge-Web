@@ -57,6 +57,7 @@ function recaptchaNote() {
     " geçerlidir.");
 }
 import { session, logout, computeIsAdmin, refreshProfile, recheckEmailVerified, scheduleAccountDeletion } from "../store.js";
+import { SERVICE_PRESETS, SERVICES_MAX, SERVICE_NAME_MAX, isPresetService, normalizeServices, servicesError, CITY_MAX } from "../agency-data.js";
 import { h, clear, icon, btn, field, card, toast, modal, ROLE } from "../ui.js";
 
 const PROVINCES = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkâri","Hatay","Iğdır","Isparta","İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars","Kastamonu","Kayseri","Kilis","Kırıkkale","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu","Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli","Uşak","Van","Yalova","Yozgat","Zonguldak"];
@@ -274,16 +275,88 @@ export function loginModal() {
 }
 
 // ── Kayıt — app RegisterScreen birebir (2 adım: rol kartları → bilgiler) ──
+// Ajans-spec "Kayıt ekranı": Dinleyici · Sanatçı · İşletme (→ Mekan / Organizatör / Ajans; üçü de yönetici onaylı).
 const REG_TYPES = [
-  ["customer", "Müşteri", "Etkinlikleri keşfet, sanatçıları takip et", "headset-outline", ["#06B6D4", "#0891B2"]],
+  ["customer", "Dinleyici", "Etkinlikleri keşfet, sanatçıları takip et", "headset-outline", ["#06B6D4", "#0891B2"]],
   ["artist", "Sanatçı", "Profilini oluştur, mekanlardan teklif al", "mic-outline", ["#A855F7", "#7C3AED"]],
   ["venue", "Mekan", "Sanatçıları bul, etkinlik planla", "business-outline", ["#F59E0B", "#D97706"]],
   ["organizer", "Organizatör", "Ekip kur, etkinlik yönet, mekanlarla çalış", "calendar-outline", ["#F43F5E", "#BE123C"]],
+  ["agency", "Ajans", "Fotoğraf çekimi, ışık ve cihaz kiralama", "camera-outline", ["#FBBF24", "#D97706"]],
 ];
+const BIZ_TYPE = ["business", "İşletme", "Mekan, organizatör ya da ajans", "briefcase-outline", ["#F2F1EE", "#A3A7AF"]];
+const BIZ_KEYS = ["venue", "organizer", "agency"];
+const isBiz = (k) => BIZ_KEYS.includes(k);
+const needsApprovalRole = (k) => isBiz(k);                       // mekan / organizatör / ajans → approved:false
+const hasCity = (k) => k === "venue" || k === "artist" || k === "agency";
+const regLabelFor = (k) => k === "venue" ? "Mekan Adı" : k === "organizer" ? "Organizasyon Adı" : k === "artist" ? "Sanatçı Adı" : k === "agency" ? "Ajans Adı" : "Ad Soyad";
+// ?rol= (paylaşılan kayıt bağlantısı) → İşletme alt rolü ön seçimi
+const rolFromHash = () => { try { const r = new URLSearchParams((location.hash.split("?")[1]) || "").get("rol"); return REG_TYPES.some((t) => t[0] === r) ? r : null; } catch { return null; } };
+
+// Rol kartları (1. adım): Dinleyici, Sanatçı, İşletme kartı → açılınca altında Mekan / Organizatör / Ajans kartları (aynı kart dili)
+function typeCards(onPick, { bizOpen = false } = {}) {
+  let open = bizOpen;
+  const card = ([k, l, d, ic], onClick, extra = "") => h("button", { type: "button", class: "au-typecard au-tc-" + k + extra, onclick: onClick },
+    icon(ic, { size: 28, color: "#fff" }),
+    h("div", { class: "au-typelabel" }, l),
+    h("div", { class: "au-typedesc" }, d),
+    h("span", { class: "au-typearrow" }, icon(k === "business" ? "chevron-down" : "arrow-forward", { size: 16, color: "rgba(255,255,255,0.8)" })));
+  const subs = h("div", { class: "au-subcards" }, ...BIZ_KEYS.map((k) => card(REG_TYPES.find((t) => t[0] === k), () => onPick(k), " au-subcard")));
+  const biz = card(BIZ_TYPE, () => { open = !open; sync(); });
+  const sync = () => { subs.hidden = !open; biz.classList.toggle("on", open); biz.setAttribute("aria-expanded", open ? "true" : "false"); };
+  sync();
+  return h("div", { class: "au-typecards" },
+    card(REG_TYPES[0], () => onPick("customer")),
+    card(REG_TYPES[1], () => onPick("artist")),
+    biz, subs);
+}
+
+// Ajans hizmetleri (mobil): hazır 3 çip + kendi hizmet adı ("＋ Hizmet ekle"), 1–10 · { el, get() }
+function mobileServices(initial = []) {
+  let list = normalizeServices(initial).slice(0, SERVICES_MAX);
+  const row = h("div", { class: "chip-row au-svc" });
+  const inp = h("input", { type: "text", maxlength: String(SERVICE_NAME_MAX), placeholder: "Örn. Drone Çekimi", autocomplete: "off" });
+  const addRow = h("div", { class: "au-svc-new", hidden: true }, inp,
+    h("button", { type: "button", class: "btn btn-ghost", onclick: () => commit() }, h("span", {}, "Ekle")));
+  const note = h("span", { class: "fhint" });
+  const commit = () => {
+    const v = inp.value.trim().replace(/\s+/g, " ");
+    if (!v) { note.textContent = "Hizmet adını yaz."; return; }
+    const preset = SERVICE_PRESETS.find((p) => p.label.toLocaleLowerCase("tr-TR") === v.toLocaleLowerCase("tr-TR"));
+    const val = preset ? preset.key : v.slice(0, SERVICE_NAME_MAX);
+    if (list.some((x) => x.toLocaleLowerCase("tr-TR") === val.toLocaleLowerCase("tr-TR"))) { note.textContent = "Bu hizmet zaten listede."; return; }
+    if (list.length >= SERVICES_MAX) { note.textContent = `En çok ${SERVICES_MAX} hizmet ekleyebilirsin.`; return; }
+    list = [...list, val]; inp.value = ""; addRow.hidden = true; draw();
+  };
+  inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } });
+  const draw = () => {
+    note.textContent = `${list.length}/${SERVICES_MAX} hizmet · en az 1`;
+    row.replaceChildren(
+      ...SERVICE_PRESETS.map((p) => h("button", { type: "button", class: "chip" + (list.includes(p.key) ? " on" : ""), title: p.desc,
+        onclick: () => {
+          if (list.includes(p.key)) list = list.filter((x) => x !== p.key);
+          else if (list.length < SERVICES_MAX) list = [...list, p.key];
+          draw();
+        } }, p.label)),
+      ...list.filter((x) => !isPresetService(x)).map((v) => h("button", { type: "button", class: "chip on", "aria-label": v + " hizmetini kaldır",
+        onclick: () => { list = list.filter((x) => x !== v); draw(); } }, v + " ×")),
+      h("button", { type: "button", class: "chip", onclick: () => { if (list.length >= SERVICES_MAX) { note.textContent = `En çok ${SERVICES_MAX} hizmet ekleyebilirsin.`; return; } addRow.hidden = false; inp.focus(); } }, "＋ Hizmet ekle"));
+  };
+  draw();
+  return { el: h("div", { class: "field" }, h("span", { class: "flabel" }, "Hizmetler"), row, addRow, note), get: () => normalizeServices(list) };
+}
+// Kayıt/rol tamamlama yazımı: ortak şekil (mekan/organizatör/ajans approved:false; şehir sanatçı/mekan/ajans; ajans hizmetleri)
+function roleFields(role, name, city, services) {
+  return {
+    ...(needsApprovalRole(role) ? { approved: false } : {}), // müşteri/sanatçı onay gerektirmez
+    ...(role === "organizer" ? { orgName: name } : {}),
+    ...(hasCity(role) && city ? { city: city.slice(0, CITY_MAX) } : {}),
+    ...(role === "agency" ? { agencyServices: services } : {}),
+  };
+}
 export function register() {
-  let step = 1, role = "customer";
+  let step = 1, role = rolFromHash() || "customer";
   const wrap = h("main", { class: "au-wrap" });
-  const labelFor = (k) => k === "venue" ? "Mekan Adı" : k === "organizer" ? "Organizasyon Adı" : k === "artist" ? "Sanatçı Adı" : "Ad Soyad";
+  const labelFor = regLabelFor;
 
   function draw() {
     clear(wrap);
@@ -296,12 +369,7 @@ export function register() {
         h("div", { class: "au-head" }, back,
           h("h1", { class: "au-title" }, "Hesap Tipini Seç"),
           h("p", { class: "au-sub" }, "Platforma nasıl katılmak istiyorsun?"), dots),
-        h("div", { class: "au-typecards" }, ...REG_TYPES.map(([k, l, d, ic, [g1, g2]]) =>
-          h("button", { class: "au-typecard au-tc-" + k, onclick: () => { role = k; step = 2; draw(); } },
-            icon(ic, { size: 28, color: "#fff" }),
-            h("div", { class: "au-typelabel" }, l),
-            h("div", { class: "au-typedesc" }, d),
-            h("span", { class: "au-typearrow" }, icon("arrow-forward", { size: 16, color: "rgba(255,255,255,0.8)" }))))),
+        typeCards((k) => { role = k; step = 2; draw(); }, { bizOpen: isBiz(role) }),
         h("p", { class: "foot-note" }, "Zaten üye misin? ", h("a", { href: "#/login" }, "Giriş yap")));
       return;
     }
@@ -309,12 +377,16 @@ export function register() {
     // Adım 2 — bilgiler
     const msg = h("p", { class: "msg" });
     const dl = h("datalist", { id: "cityList" }, ...PROVINCES.map((p) => h("option", { value: p })));
+    const svc = role === "agency" ? mobileServices() : null;
     const submit = async (e) => {
       e.preventDefault();
       msg.textContent = ""; msg.className = "msg";
       const name = q("#rname").value.trim(); const email = q("#remail").value.trim();
       const pass = q("#rpass").value; const pass2 = q("#rpass2").value; const city = (q("#rcity")?.value || "").trim();
+      const services = svc ? svc.get() : [];
       if (!name) return fail(msg, labelFor(role).replace(" Adı", "") + " adını gir.");
+      if (role === "agency" && !city) return fail(msg, "Ajansının şehrini gir.");
+      if (role === "agency" && servicesError(services)) return fail(msg, servicesError(services));
       if (!email) return fail(msg, "E-posta gir.");
       if (pass.length < 6) return fail(msg, "Şifre en az 6 karakter olmalı.");
       if (pass !== pass2) return fail(msg, "Şifreler uyuşmuyor.");
@@ -326,9 +398,7 @@ export function register() {
           displayName: name, email: user.email, userType: role, photoURL: null,
           createdAt: serverTimestamp(),
           termsVersion: TERMS_VERSION, termsAcceptedAt: serverTimestamp(), // kayıt formunda gösterilen Topluluk Kuralları onayı (uygulamayla aynı sürüm)
-          ...(role === "venue" || role === "organizer" ? { approved: false } : {}), // müşteri/sanatçı onay gerektirmez
-          ...(role === "organizer" ? { orgName: name } : {}),
-          ...((role === "venue" || role === "artist") && city ? { city } : {}),
+          ...roleFields(role, name, city, services),
         });
         try { await sendEmailVerification(user); } catch (_) {} // doğrulama bağlantısı
         location.hash = "#/verify"; // önce e-posta doğrulama
@@ -346,7 +416,9 @@ export function register() {
         ac(field({ label: "E-posta", id: "remail", type: "email", placeholder: "ornek@email.com" }), "email"),
         ac(field({ label: "Şifre", id: "rpass", type: "password", placeholder: "En az 6 karakter", hint: "Uygulamadan giriş yaparken de bu şifreyi kullanacaksın." }), "new-password"),
         ac(field({ label: "Şifre Tekrar", id: "rpass2", type: "password", placeholder: "Şifreni tekrar gir" }), "new-password"),
-        (role === "venue" || role === "artist") ? field({ label: "Şehir", id: "rcity", placeholder: "Örn. İstanbul", list: "cityList" }) : null,
+        hasCity(role) ? field({ label: "Şehir", id: "rcity", placeholder: "Örn. İstanbul", list: "cityList" }) : null,
+        svc ? svc.el : null,
+        isBiz(role) ? h("p", { class: "fhint" }, "Bu hesap tipi yönetici onayı gerektirir. E-postanı doğruladıktan sonra başvurun incelemeye alınır.") : null,
         consentNote(),
         (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Kayıt Ol")); x.id = "rbtn"; return x; })(),
         orSep(),
@@ -361,7 +433,7 @@ export function register() {
 // ── Kayıt MODALI — "Kayıt Olun" tıklanınca yerinde açılır (ayrı sayfaya gitmeden), 2 adım aynı modalda ──
 export function registerModal() {
   let step = 1, role = "customer", m;
-  const labelFor = (k) => k === "venue" ? "Mekan Adı" : k === "organizer" ? "Organizasyon Adı" : k === "artist" ? "Sanatçı Adı" : "Ad Soyad";
+  const labelFor = regLabelFor;
   const body = h("div", { class: "login-modal register-modal" });
   const setTitle = (t) => { const el = body.closest(".modal") && body.closest(".modal").querySelector(".modal-head h3"); if (el) el.textContent = t; };
   const toLogin = (e) => { e.preventDefault(); m.close(); loginModal(); };
@@ -372,12 +444,7 @@ export function registerModal() {
       setTitle("Hesap Tipini Seç");
       body.append(
         h("p", { class: "au-sub", style: { margin: "0 0 14px" } }, "Platforma nasıl katılmak istiyorsun?"),
-        h("div", { class: "au-typecards" }, ...REG_TYPES.map(([k, l, d, ic]) =>
-          h("button", { class: "au-typecard au-tc-" + k, onclick: () => { role = k; step = 2; draw(); } },
-            icon(ic, { size: 28, color: "#fff" }),
-            h("div", { class: "au-typelabel" }, l),
-            h("div", { class: "au-typedesc" }, d),
-            h("span", { class: "au-typearrow" }, icon("arrow-forward", { size: 16, color: "rgba(255,255,255,0.8)" }))))),
+        typeCards((k) => { role = k; step = 2; draw(); }, { bizOpen: isBiz(role) }),
         h("p", { class: "foot-note" }, "Zaten üye misin? ", h("a", { href: "#", onclick: toLogin }, "Giriş yap")));
       return;
     }
@@ -385,12 +452,16 @@ export function registerModal() {
     setTitle("Bilgilerini Gir");
     const msg = h("p", { class: "msg" });
     const dl = h("datalist", { id: "cityListM" }, ...PROVINCES.map((p) => h("option", { value: p })));
+    const svc = role === "agency" ? mobileServices() : null;
     const submit = async (e) => {
       e.preventDefault();
       msg.textContent = ""; msg.className = "msg";
       const name = q("#rmname").value.trim(); const email = q("#rmemail").value.trim();
       const pass = q("#rmpass").value; const pass2 = q("#rmpass2").value; const city = (q("#rmcity") ? q("#rmcity").value : "").trim();
+      const services = svc ? svc.get() : [];
       if (!name) return fail(msg, labelFor(role).replace(" Adı", "") + " adını gir.");
+      if (role === "agency" && !city) return fail(msg, "Ajansının şehrini gir.");
+      if (role === "agency" && servicesError(services)) return fail(msg, servicesError(services));
       if (!email) return fail(msg, "E-posta gir.");
       if (pass.length < 6) return fail(msg, "Şifre en az 6 karakter olmalı.");
       if (pass !== pass2) return fail(msg, "Şifreler uyuşmuyor.");
@@ -402,9 +473,7 @@ export function registerModal() {
           displayName: name, email: user.email, userType: role, photoURL: null,
           createdAt: serverTimestamp(),
           termsVersion: TERMS_VERSION, termsAcceptedAt: serverTimestamp(), // kayıt formunda gösterilen Topluluk Kuralları onayı (uygulamayla aynı sürüm)
-          ...(role === "venue" || role === "organizer" ? { approved: false } : {}),
-          ...(role === "organizer" ? { orgName: name } : {}),
-          ...((role === "venue" || role === "artist") && city ? { city } : {}),
+          ...roleFields(role, name, city, services),
         });
         try { await sendEmailVerification(user); } catch (_) {}
         m.close(); location.hash = "#/verify";
@@ -420,7 +489,9 @@ export function registerModal() {
         ac(field({ label: "E-posta", id: "rmemail", type: "email", placeholder: "ornek@email.com" }), "email"),
         ac(field({ label: "Şifre", id: "rmpass", type: "password", placeholder: "En az 6 karakter" }), "new-password"),
         ac(field({ label: "Şifre Tekrar", id: "rmpass2", type: "password", placeholder: "Şifreni tekrar gir" }), "new-password"),
-        (role === "venue" || role === "artist") ? field({ label: "Şehir", id: "rmcity", placeholder: "Örn. İstanbul", list: "cityListM" }) : null,
+        hasCity(role) ? field({ label: "Şehir", id: "rmcity", placeholder: "Örn. İstanbul", list: "cityListM" }) : null,
+        svc ? svc.el : null,
+        isBiz(role) ? h("p", { class: "fhint" }, "Bu hesap tipi yönetici onayı gerektirir. E-postanı doğruladıktan sonra başvurun incelemeye alınır.") : null,
         consentNote(),
         (() => { const x = h("button", { class: "au-submit" }, h("span", {}, "Kayıt Ol")); x.id = "rmbtn"; return x; })(),
         orSep(),
@@ -569,48 +640,57 @@ export function deleteAccountModal() {
 }
 
 // ── Hesabı tamamla (Google ile yeni giriş → profil yok) ──
+// Roller: Dinleyici · Sanatçı · İşletme (→ Mekan / Organizatör / Ajans). Ajans: şehir + hizmetler (1–10).
 export function setup() {
   const u = session.user;
-  let role = "customer";
+  let top = "customer", role = "customer";
   const msg = h("p", { class: "msg" });
-  const nameLabel = (k) => k === "venue" ? "Mekan Adı" : k === "organizer" ? "Organizasyon Adı" : k === "artist" ? "Sanatçı Adı" : "Ad Soyad";
-  const showCity = (k) => k === "venue" || k === "artist";
+  const nameLabel = regLabelFor;
   const cityWrap = field({ label: "Şehir", id: "scity", placeholder: "Örn. İstanbul", list: "cityList" });
   const dl = h("datalist", { id: "cityList" }, ...PROVINCES.map((p) => h("option", { value: p })));
   const nameField = field({ label: nameLabel(role), id: "sname", value: u?.displayName || "", placeholder: "Adın" });
-  const roleBtn = (key, label, ic) => h("button", { type: "button", class: "seg" + (role === key ? " on" : ""), dataset: { role: key },
-    onclick: () => { role = key; [...seg.children].forEach((c) => c.classList.toggle("on", c.dataset.role === key));
-      nameField.querySelector(".flabel").textContent = nameLabel(key);
-      cityWrap.style.display = showCity(key) ? "" : "none"; } }, icon(ic, { size: 15 }), h("span", {}, label));
-  // Google yeni kullanıcı TÜM rolleri seçebilmeli (önceden yalnız mekan/organizatör vardı
-  // → sanatçı ve müşteri Google ile açılamıyordu). App AccountTypeScreen ile parite.
-  const seg = h("div", { class: "segrow wrap4" },
-    roleBtn("customer", "Müşteri", "headset-outline"),
-    roleBtn("artist", "Sanatçı", "mic-outline"),
-    roleBtn("venue", "Mekan", "business-outline"),
-    roleBtn("organizer", "Organizatör", "megaphone-outline"));
-  cityWrap.style.display = showCity(role) ? "" : "none";
+  const svc = mobileServices();
+  const segBtn = (key, label, ic, onPick) => h("button", { type: "button", class: "seg", dataset: { role: key }, onclick: () => onPick(key) }, icon(ic, { size: 15 }), h("span", {}, label));
+  const sync = () => {
+    [...seg.children].forEach((c) => c.classList.toggle("on", c.dataset.role === top));
+    subSeg.style.display = top === "business" ? "" : "none";
+    [...subSeg.children].forEach((c) => c.classList.toggle("on", c.dataset.role === role));
+    nameField.querySelector(".flabel").textContent = role ? nameLabel(role) : "Ad";
+    cityWrap.style.display = role && hasCity(role) ? "" : "none";
+    svc.el.style.display = role === "agency" ? "" : "none";
+  };
+  // Google yeni kullanıcı TÜM rolleri seçebilmeli (App AccountTypeScreen ile parite)
+  const seg = h("div", { class: "segrow" },
+    segBtn("customer", "Dinleyici", "headset-outline", (k) => { top = k; role = k; sync(); }),
+    segBtn("artist", "Sanatçı", "mic-outline", (k) => { top = k; role = k; sync(); }),
+    segBtn("business", "İşletme", "briefcase-outline", () => { top = "business"; role = isBiz(role) ? role : null; sync(); }));
+  const subSeg = h("div", { class: "segrow" },
+    segBtn("venue", "Mekan", "business-outline", (k) => { top = "business"; role = k; sync(); }),
+    segBtn("organizer", "Organizatör", "megaphone-outline", (k) => { top = "business"; role = k; sync(); }),
+    segBtn("agency", "Ajans", "camera-outline", (k) => { top = "business"; role = k; sync(); }));
   const submit = async (e) => {
     e && e.preventDefault();
     msg.textContent = ""; msg.className = "msg";
     if (!u) return fail(msg, "Oturum bulunamadı, tekrar giriş yap.");
+    if (!role) return fail(msg, "İşletme türünü seç: Mekan, Organizatör ya da Ajans.");
     const name = q("#sname").value.trim(); const city = q("#scity").value.trim();
+    const services = role === "agency" ? svc.get() : [];
     if (!name) return fail(msg, nameLabel(role).replace(" Adı", "") + " adını gir.");
-    const needsApproval = role === "venue" || role === "organizer";
+    if (role === "agency" && !city) return fail(msg, "Ajansının şehrini gir.");
+    if (role === "agency" && servicesError(services)) return fail(msg, servicesError(services));
     const b = q("#sbtn"); b.disabled = true; b.querySelector("span").textContent = "Kaydediliyor…";
     try {
       await setDoc(doc(db, "users", u.uid), {
         displayName: name, email: u.email, userType: role, photoURL: u.photoURL ?? null,
         createdAt: serverTimestamp(),
-        ...(needsApproval ? { approved: false } : {}), // müşteri/sanatçı onay gerektirmez
-        ...(role === "organizer" ? { orgName: name } : {}),
-        ...(showCity(role) && city ? { city } : {}),
+        ...roleFields(role, name, city, services),
       });
-      await refreshProfile(); // homeRouteFor: müşteri→#/kesfet, sanatçı→#/artist, mekan/org→#/pending
+      await refreshProfile(); // homeRouteFor: müşteri→#/kesfet, sanatçı→#/artist, mekan/org/ajans→#/pending
     } catch (err) { fail(msg, "Kaydedilemedi. Tekrar dene."); b.disabled = false; b.querySelector("span").textContent = "Hesabı Tamamla"; }
   };
-  const form = h("form", { onsubmit: submit }, seg, nameField, dl, cityWrap,
+  const form = h("form", { onsubmit: submit }, seg, subSeg, nameField, dl, cityWrap, svc.el,
     (() => { const x = btn("Hesabı Tamamla", { full: true }); x.id = "sbtn"; return x; })(), msg);
+  sync();
   return shell(hero("Hesabını Tamamla", "Google ile giriş yaptın. Rolünü seç ve bilgilerini gir."),
     card(form, h("p", { class: "foot-note" }, h("a", { href: "#/", onclick: (e) => { e.preventDefault(); logout(); } }, "Çıkış / farklı hesapla gir"))));
 }
@@ -694,6 +774,18 @@ export function adminLogin() {
   );
   return shell(hero("Yönetici Girişi", "Onay ve yönetim paneli."),
     card(form, h("p", { class: "foot-note" }, h("a", { href: "#/" }, "← Geri"))));
+}
+
+// ── Ajans (≤768 mobil web) — ajans paneli masaüstü web + GigBridge uygulamasında; burada bilgi + çıkış ──
+export function agencyMobile() {
+  const name = session.profile?.displayName || "";
+  return shell(hero("Ajans Paneli", null),
+    card(
+      h("div", { class: "pending-icon", style: { background: "linear-gradient(135deg, #FBBF24, #D97706)" } }, icon("camera-outline", { size: 34, color: "#06070A" })),
+      h("h3", { class: "center" }, name ? name : "Ajans hesabın hazır"),
+      h("p", { class: "center muted" }, "Ajans paneli (katalog, ilanlar, mesajlar ve profil) bilgisayardan gigbridges.com adresinde ve GigBridge uygulamasında açılır. Bu ekranı geniş bir pencerede açarsan panel otomatik gelir."),
+      btn("Uygulamayı indir", { variant: "ghost", ic: "download-outline", full: true, onClick: () => { location.href = "/indir/"; } }),
+      btn("Çıkış Yap", { variant: "ghost", ic: "log-out-outline", full: true, onClick: logout })));
 }
 
 // ── Desteklenmeyen rol ──

@@ -100,3 +100,38 @@
 /* SHARED-CANDIDATE: AuthSplit orta bölgesinin dikey iç boşluğu. Kabuk 32px veriyor (artboard'da yok) → uzun durumlarda (hata/onay
    notu) kolon 6px aşağı kayıyor ve sayfa 12px kayıyor. Artboard kanıtı: WebKayit 1040'ta kolon üst satırın 20px altında başlıyor. */
 .dk-auth-center:has(> .dk-kayit) { padding: 20px 0; }
+
+/* ---------- 1. adım: İşletme grubu (ajans-spec "Kayıt ekranı") ----------
+   Dinleyici + Sanatçı ilk satır; "İşletme" kartı altta tam genişlik (aynı kart dili, yatay düzen). Seçilince hemen altında
+   aynı blok gibi görünen alt seçenek paneli (Mekan / Organizatör / Ajans) açılır. --rc: İşletme nötr (#F2F1EE), alt satırlar rol rengi. */
+.dk-kayit-roles { display: flex; flex-direction: column; }
+.dk-kayit-tile.is-biz { grid-column: 1 / -1; min-height: 0; flex-direction: row; align-items: center; gap: 14px; padding-right: 48px; }
+.dk-kayit-tile.is-biz .dk-kayit-ring { top: 50%; margin-top: -9px; }
+.dk-kayit-tile.is-biz.is-open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; transform: none; }
+.dk-kayit-bt { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.dk-kayit-bt .dk-kayit-pill { margin-top: 6px; }
+.dk-kayit-subs {
+  box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+  border: 1px solid rgba(var(--rc-rgb), 0.6); border-top: 0; border-radius: 0 0 12px 12px; background: rgba(var(--rc-rgb), 0.04);
+}
+.dk-kayit-subs[hidden] { display: none; }
+.dk-kayit-subt { padding: 0 4px 2px; font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: #8A8E97; }
+.dk-kayit-sub {
+  position: relative; box-sizing: border-box; min-height: 60px; padding: 10px 44px 10px 12px; margin: 0;
+  border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE;
+  display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer;
+  transition: transform 220ms cubic-bezier(.2,.7,.2,1), border-color 200ms ease, background-color 200ms ease;
+}
+.dk-kayit-sub:hover { transform: translateX(3px); }
+.dk-kayit-sub[aria-checked="false"]:hover { border-color: #2C303A; }
+.dk-kayit-sub[aria-checked="true"] { border-color: rgba(var(--rc-rgb), 0.6); background: rgba(var(--rc-rgb), 0.07); }
+.dk-kayit-sico {
+  width: 34px; height: 34px; flex-shrink: 0; box-sizing: border-box; border-radius: 8px;
+  background: rgba(var(--rc-rgb), 0.12); color: var(--rc); display: flex; align-items: center; justify-content: center;
+}
+.dk-kayit-stxt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dk-kayit-sl { font-size: 15px; font-weight: 600; }
+.dk-kayit-sd { font-size: 12.5px; line-height: 1.4; color: #A3A7AF; }
+.dk-kayit-ring.dk-kayit-sring { top: 50%; right: 14px; margin-top: -9px; }
+.dk-kayit-sub[aria-checked="true"] .dk-kayit-ring { border-color: var(--rc); }
+.dk-kayit-sub[aria-checked="true"] .dk-kayit-dot { background: var(--rc); }
