@@ -196,7 +196,7 @@ function toAgency(id, d) {
   };
 }
 // Görünür ajans: onaylı (alan yoksa onaylı sayılır), reddedilmemiş, kapatılmamış, silinmekte değil
-const listable = (d) => !!d && d.approved !== false && d.rejected !== true && d.banned !== true && d.pendingDeletion !== true;
+const listable = (d) => !!d && d.approved !== false && d.rejected !== true && d.banned !== true && d.pendingDeletion !== true && d.testAccount !== true;
 
 export async function listAgencies() {
   const snap = await getDocs(query(collection(db, "users"), where("userType", "==", "agency")));
