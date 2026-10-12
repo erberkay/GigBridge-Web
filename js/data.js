@@ -840,11 +840,11 @@ export async function createGroupInvitation(venue, group, f) {
     message: f.message ?? "", photoUrl: f.photoUrl ?? null, eventId: f.eventId ?? null,
     status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
   };
-  // TEK davet (uygulama venue/FindArtistScreen ile aynı model: groupId, artistId YOK). Grubun YÖNETİCİSİ kabul / ret /
-  // karşı teklif yapar, tüm üyeler görür; sunucu (notify handleNewInvitation) üyelerin hepsine bildirim gönderir; ödeme
-  // tek tahsilat → grubun "ödemeyi alan yöneticisi"ne (functions/payments.js groupPayee). Eski üye başına (artistId'li)
-  // davetler okunmaya devam eder.
-  await addDoc(collection(db, "invitations"), base);
+  // ŞİMDİLİK üye başına davet (uygulama 1.0.1 grup teklifini yalnız artistId ile görebiliyor). Uygulama 1.0.2 yayına girince
+  // tek davet modeline geçilecek: dal web/grup-tek-davet (groupId'li tek davet, yönetici yanıtlar, tek ödeme).
+  const members = Array.isArray(group.memberIds) ? group.memberIds : [];
+  if (!members.length) { await addDoc(collection(db, "invitations"), base); return; }
+  for (const mid of members) await addDoc(collection(db, "invitations"), { ...base, artistId: mid });
 }
 
 // ── Mekan → sanatçı değerlendirmesi (reviews, {uid}_{artistId} deterministik id — kural uyumlu) ──

@@ -9,7 +9,7 @@
 //   kart tıklaması → #/venue/performans/{id} (solo), biyografi (başlık ipucu olarak), takipçi + katılım + ücret bilgisi,
 //   boş durum metinleri, davet modalı: Tek Etkinlik / Uzun Dönem; tarih+saat / ücret ≥ ₺3.500 / aynı gün çift teklif kontrolü
 //   (findExistingInvitation) / 16:9 kırpıcılı etkinlik fotoğrafı (uploadImage) / createInvitation (+ sohbete teklif mesajı,
-//   data.js içinde) · createGroupInvitation (tek grup daveti) · createResidency; "Davet gönderildi" / "Anlaşma teklifi gönderildi" /
+//   data.js içinde) · createGroupInvitation (üyelere yayılır) · createResidency; "Davet gönderildi" / "Anlaşma teklifi gönderildi" /
 //   "Gönderilemedi".
 // Tasarımın ekledikleri: sol filtre paneli (BÜTÇE kaydırıcısı + MİN. PUAN), kart/tablo görünümü, sonuç sayısı + filtre özeti,
 //   "Gönderildi ✓" durumu (bekleyen davetlerden de tohumlanır), davetin mevcut sanatçısız etkinliğe bağlanması (ETKİNLİK seçimi).
@@ -638,8 +638,8 @@ export function venueSanatciBulView(ctx) {
           if (isG) await createGroupInvitation(venue, x, f);
           else await createInvitation(venue, x, f);
           // app FindArtistScreen: solo sanatçıya uygulama içi bildirim (aynı metin/alanlar) — başarısızlık daveti engellemez.
-          // Grup: bildirim YAZILMAZ — createGroupInvitation tek (groupId'li) davet yazar, onNewInvitation CF tüm üyelere zaten
-          // push gönderir; ek bildirim (onNotificationCreated) çift push olurdu.
+          // Grup: bildirim YAZILMAZ — web createGroupInvitation üye başına artistId'li davet dokümanı yazar, onNewInvitation CF her
+          // üyeye zaten push gönderir; ek bildirim (onNotificationCreated) üye başına çift push olurdu (legacy web: üye başına 1 push).
           if (!isG) {
             const body = `${venue.displayName ?? "Bir mekan"} seni ${isoToTRDate(f.date)}${f.time ? " · " + f.time : ""} tarihli sahneye davet etti (${formatTL(Number(f.fee))}).`;
             await sendNotification(x.id, { type: "event_invite", title: "Yeni Sahne Teklifi 🎤", body, fromName: venue.displayName ?? "Mekan",
