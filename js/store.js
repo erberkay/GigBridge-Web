@@ -15,6 +15,9 @@ export const session = {
 
 export async function computeIsAdmin(user) {
   if (!user) return false;
+  // Asıl yetki: sunucunun verdiği `admin` custom claim (Cloud Functions: admin-claims.js).
+  try { const r = await user.getIdTokenResult(); if (r?.claims?.admin === true) return true; } catch { /* yoksay */ }
+  // Owner e-postası her koşulda yetkili (kural yedeği); eski adminUids işareti geriye uyumluluk.
   if ((user.email || "").toLowerCase() === OWNER_EMAIL) return true;
   try { return (await getDoc(doc(db, "adminUids", user.uid))).exists(); } catch { return false; }
 }
