@@ -90,6 +90,11 @@ const ROLES = {
         ["ad", "Mekan Adı İstekleri", "#/admin/ad", "edit"],
         ["sorun", "Sorun Bildirimleri", "#/admin/sorun", "flag"],
       ] },
+      { label: "YÖNETİM", items: [
+        ["kullanici", "Kullanıcılar", "#/admin/kullanicilar", "users"],
+        ["bildirim", "Bildirimler", "#/admin/bildirim", "bell"],
+        ["etkinlik", "Etkinlikler", "#/admin/etkinlikler", "calendar"],
+      ] },
       { label: "ÖNİZLEME", items: [["onizleme", "Keşfet ekranı", null, "compassAdmin"]] },
     ],
     searchPh: "Etkinlik, mekan veya üye ara", bell: { mode: "popover" }, profileHref: "#/admin", profileLabel: "Profil",

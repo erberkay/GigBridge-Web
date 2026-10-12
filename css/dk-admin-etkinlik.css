@@ -1,0 +1,51 @@
+/* WebAdminEtkinlikler — js/desktop/admin/etkinlikler.js. Taban: dk-admin-panel.css (hero/KPI/iki kolon/detay). */
+.dk-admin-etk-bar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #14171D; }
+.dk-admin-etk-tc { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dk-admin-etk .dk-tbl-row { cursor: pointer; }
+.dk-admin-etk-mono { font-family: var(--dk-font-mono); font-size: 12.5px; color: #C9CCD3; white-space: nowrap; }
+.dk-admin-etk-att { border-top: 1px solid #14171D; padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+.dk-admin-etk-ahead { display: flex; flex-direction: column; gap: 4px; }
+.dk-admin-etk-sum { font-size: 13px; color: #8A8E97; }
+.dk-admin-etk-tools { display: flex; gap: 10px; align-items: center; }
+.dk-admin-etk-q { flex: 1; min-width: 0; height: 36px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; font: inherit; font-size: 13.5px; }
+.dk-admin-etk-q:focus { outline: none; border-color: #A78BFA; }
+.dk-admin-etk-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; max-height: 520px; overflow-y: auto; }
+.dk-admin-etk-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #14171D; min-width: 0; }
+.dk-admin-etk-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dk-admin-etk-n { font-size: 14px; font-weight: 600; color: #F2F1EE; display: flex; align-items: center; gap: 6px; overflow-wrap: anywhere; }
+.dk-admin-etk-e { font-size: 12.5px; color: #8A8E97; overflow-wrap: anywhere; }
+.dk-admin-etk-tag { white-space: nowrap; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #A3A7AF; border: 1px solid #2C303A; border-radius: 4px; padding: 1px 5px; }
+.dk-admin-etk-st { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.dk-admin-etk-time { font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; }
+.dk-admin-etk-none { padding: 24px 0; text-align: center; font-size: 13.5px; color: #8A8E97; }
+
+/* ---------- Kullanıcılar (js/desktop/admin/kullanicilar.js) ---------- */
+.dk-admin-etk-urow { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.dk-admin-etk-form { display: flex; flex-direction: column; gap: 12px; padding: 0 20px 20px; }
+.dk-admin-etk-att .dk-admin-etk-form { padding: 0; }
+.dk-admin-etk-danger { background: rgba(255,90,110,0.04); }
+.dk-admin-etk-cbody { display: flex; flex-direction: column; gap: 10px; }
+
+/* ---------- Bildirimler (js/desktop/admin/bildirim.js) ---------- */
+.dk-admin-etk-g2 { grid-template-columns: minmax(0, 1fr) 380px; }
+.dk-admin-etk-col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.dk-admin-etk-card { overflow: visible; }
+.dk-admin-etk-ch { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #14171D; margin-bottom: 16px; flex-wrap: wrap; }
+.dk-admin-etk-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.dk-admin-etk-chips[hidden], .dk-admin-etk-fld[hidden] { display: none; }
+.dk-admin-etk-fld { display: flex; flex-direction: column; gap: 8px; }
+.dk-admin-etk-lbl { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
+.dk-admin-etk-glbl { margin-top: 8px; color: #A78BFA; }
+.dk-admin-etk-cnt { color: #5E636D; letter-spacing: 0; font-weight: 500; }
+.dk-admin-etk-tools { flex-wrap: wrap; }
+.dk-admin-etk-prev { border-radius: 14px; border: 1px solid #1F232B; background: #14171D; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px; max-width: 360px; }
+.dk-admin-etk-prev-app { display: flex; align-items: center; gap: 6px; font-family: var(--dk-font-mono); font-size: 10px; letter-spacing: 0.1em; color: #8A8E97; }
+.dk-admin-etk-prev-t { font-size: 14px; font-weight: 600; color: #F2F1EE; overflow-wrap: anywhere; }
+.dk-admin-etk-prev-b { font-size: 13px; color: #C9CCD3; overflow-wrap: anywhere; }
+.dk-admin-etk-hist { display: flex; flex-direction: column; }
+.dk-admin-etk-edit { font-size: 12.5px; white-space: nowrap; flex-shrink: 0; }
+.dk-admin-etk-cfgopen { display: flex; flex-direction: column; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid #14171D; }
+.dk-admin-etk-pad { display: block; padding: 0 20px 12px; }
+@media (max-width: 1179px) { .dk-admin-etk-g2 { grid-template-columns: minmax(0, 1fr); } }
+/* yeni yönetici sayfalarında detay paneli dar ekranda gizlenmez, listenin altına iner (çekmece yok) */
+@media (max-width: 1179px) { .dk-admin-etk .dk-admin-panel-detail { display: flex; position: relative; top: auto; } }

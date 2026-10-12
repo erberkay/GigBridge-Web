@@ -21,10 +21,10 @@ import { h, clear, icon, spinner, empty } from "../../ui.js";
 import { session } from "../../store.js";
 import {
   listPendingByRole, approveUser, rejectUser,
-  listReports, resolveReport, approveNameChange, rejectNameChange,
+  resolveReport, approveNameChange, rejectNameChange,
   userById,
 } from "../../data.js";
-import { db, doc, updateDoc } from "../../firebase.js";
+import { db, doc, updateDoc, collection, getDocs } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import { cx, dkKpi, dkUnderlineTabs, dkChip, dkStatusBadge, dkPageHero, dkToast, dkDrawer, dkSkeleton, dkButton, portalRoot } from "../shared/ui.js";
@@ -46,7 +46,7 @@ const EMPTY = { onaylar: "Bekleyen başvuru yok", ad: "Bekleyen isim isteği yok
 const FOOT = {
   onaylar: "Onaylanan mekan ve organizatörler panellerine erişir; reddedilenler giriş yaptığında bilgilendirilir.",
   ad: "Onaylanınca mekanın adı sitenin her yerinde güncellenir.",
-  sorun: "Çözüldü olarak işaretlenen bildirimler listeden kalkar.",
+  sorun: "Çözülen bildirimler listenin altında kalır; yazışmasını açıp devam edebilir ya da “Geri al” ile yeniden açabilirsin.",
 };
 const OKL = { venue: "Onayla", org: "Onayla", name: "Onayla", report: "Çözüldü" };
 const OKT = { venue: "Onaylandı", org: "Onaylandı", name: "Ad değiştirildi", report: "Çözüldü olarak işaretlendi" };
@@ -118,6 +118,14 @@ function toItem(kind, r) {
     fields: [["BİLDİREN", r.reporterName || "—"], ["HESAP TÜRÜ", typeLabel || "—"], ["TARİH", fmtDateNum(r.createdAt)]],
     msgLabel: "MESAJ", msg: r.message || "", email: null, emailAlt: r.reporterEmail || null, emailUid: r.reporterId || null, createdMs, raw: r };
 }
+// Sorun sekmesi çözülen bildirimleri de gösterir (data.js listReports yalnız açıkları döndürür → yerel sorgu).
+async function listAllReports() {
+  const snap = await getDocs(collection(db, "reports"));
+  const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const open = all.filter((r) => r.status !== "resolved");
+  const done = all.filter((r) => r.status === "resolved").sort((a, b) => (toMs(b.resolvedAt) || toMs(b.createdAt) || 0) - (toMs(a.resolvedAt) || toMs(a.createdAt) || 0)).slice(0, 150);
+  return [...open, ...done];
+}
 const keyOf = (it) => `${it.kind}:${it.id}`;
 const KIND_ORDER = { venue: 0, org: 1, name: 2, report: 3 };
 
@@ -126,7 +134,7 @@ const KIND_ORDER = { venue: 0, org: 1, name: 2, report: 3 };
 function loadAll(uid) {
   if (_cache.loading) return _cache.loading;
   const startedAt = Date.now();
-  _cache.loading = Promise.allSettled([listPendingByRole("venue"), listPendingByRole("organizer"), listReports()]).then((res) => {
+  _cache.loading = Promise.allSettled([listPendingByRole("venue"), listPendingByRole("organizer"), listAllReports()]).then((res) => {
     if (_cache.uid !== uid) return;
     const [ven, org, rep] = res;
     const fresh = [];
@@ -134,7 +142,11 @@ function loadAll(uid) {
     const src = { venue: ven.status === "rejected", org: org.status === "rejected", rep: rep.status === "rejected" };
     if (ven.status === "fulfilled") ven.value.forEach((r) => fresh.push(toItem("venue", r)));
     if (org.status === "fulfilled") org.value.forEach((r) => fresh.push(toItem("org", r)));
-    if (rep.status === "fulfilled") rep.value.forEach((r) => fresh.push(toItem(r.type === "name_change" ? "name" : "report", r)));
+    if (rep.status === "fulfilled") rep.value.forEach((r) => {
+      // çözülen ad isteği listeye girmez; çözülen sorun bildirimi kalır (yazışması / bağlamı her zaman açılabilsin)
+      if (r.status === "resolved" && r.type === "name_change") return;
+      fresh.push(toItem(r.type === "name_change" ? "name" : "report", r));
+    });
     [ven, org, rep].forEach((x) => { if (x.status === "rejected") console.error(x.reason); });
     const next = new Map();
     // Yarış koruması: yazımı süren (busy) ya da yenileme başladıktan SONRA karar verilen / geri alınan öğe AYNI nesneyle kalır —
@@ -144,7 +156,7 @@ function loadAll(uid) {
       const k = keyOf(it);
       const old = _cache.items.get(k);
       if (keep(old)) { next.set(k, old); return; }
-      it.status = "pending"; it.busy = null; it.decidedAt = 0;
+      it.status = it.raw?.status === "resolved" ? "resolved" : "pending"; it.busy = null; it.decidedAt = 0;
       next.set(k, it);
     });
     // Firestore'da artık bekleyen olmayan eski öğeler: bu oturumda karar verilenler yerinde kalır (rozet + "Geri al");
@@ -157,7 +169,8 @@ function loadAll(uid) {
     _cache.src = src;
     _cache.order = [...next.keys()].sort((a, b) => {
       const x = next.get(a), y = next.get(b);
-      return (KIND_ORDER[x.kind] - KIND_ORDER[y.kind]) || (y.createdMs - x.createdMs) || String(x.id).localeCompare(String(y.id));
+      return (KIND_ORDER[x.kind] - KIND_ORDER[y.kind]) || ((x.raw?.status === "resolved") - (y.raw?.status === "resolved"))
+        || (y.createdMs - x.createdMs) || String(x.id).localeCompare(String(y.id));
     });
     _cache.ready = true;
     _cache.at = Date.now();

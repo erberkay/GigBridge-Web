@@ -94,6 +94,9 @@ export const DESKTOP_ROUTES = [
   R("orgLegacy", "— (legacy-in-shell)", pre("#/organizer"), "organizer/legacy.js", "orgLegacyView", "panel", [...SH.panel], { role: "organizer", panel: "organizer", legacyShell: true, spec: "foundation.md §4" }),
 
   // ════ Yönetici (#/admin + sekme alt rotaları #/admin/ad|sorun) ════
+  R("adminKullanici", "WebAdminKullanicilar", is("#/admin/kullanicilar"), "admin/kullanicilar.js", "adminKullanicilarView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css"], { role: "admin", spec: "WebAdmin + kullanıcı yönetimi" }),
+  R("adminBildirim", "WebAdminBildirim", is("#/admin/bildirim"), "admin/bildirim.js", "adminBildirimView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css"], { role: "admin", spec: "WebAdmin + bildirim yönetimi" }),
+  R("adminEtkinlik", "WebAdminEtkinlikler", is("#/admin/etkinlikler"), "admin/etkinlikler.js", "adminEtkinliklerView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css"], { role: "admin", spec: "WebAdmin + katılımcı listesi" }),
   R("admin", "WebAdmin", pre("#/admin"), "admin/admin.js", "adminView", "panel", [...SH.panel, "css/dk-admin-panel.css"], { role: "admin", spec: "org-admin.md WebAdmin" }),
 ];
 
