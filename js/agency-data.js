@@ -13,6 +13,7 @@ import {
   db, storage, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, serverTimestamp,
   ref, uploadBytes, getDownloadURL, deleteObject,
 } from "./firebase.js";
+import { session } from "./store.js";
 
 export const AGENCY_COLOR = "#FBBF24";
 export const AGENCY_RGB = "251,191,36";
@@ -196,7 +197,9 @@ function toAgency(id, d) {
   };
 }
 // Görünür ajans: onaylı (alan yoksa onaylı sayılır), reddedilmemiş, kapatılmamış, silinmekte değil
-const listable = (d) => !!d && d.approved !== false && d.rejected !== true && d.banned !== true && d.pendingDeletion !== true && d.testAccount !== true;
+// Test hesabı (testAccount) gerçek kullanıcıya görünmez; test hesabıyla girilince görünür (kabul testleri).
+const listable = (d) => !!d && d.approved !== false && d.rejected !== true && d.banned !== true && d.pendingDeletion !== true
+  && (d.testAccount !== true || session.profile?.testAccount === true);
 
 export async function listAgencies() {
   const snap = await getDocs(query(collection(db, "users"), where("userType", "==", "agency")));

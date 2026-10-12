@@ -739,9 +739,20 @@ export function toast(msg, type = "ok") {
 }
 
 // Modal
+// Açık eski (mobil) modallar: rota değişince (sorgu dizgesi hariç) kapanır — denetim 12 Eki: sanatçı seçici açıkken
+// başka sayfaya geçilince modal sayfada kalıyordu. Masaüstü katmanları (desktop/shared/overlays.js) bunu zaten yapıyor.
+const _legacyModals = new Set();
+const _hashBase = () => (location.hash || "#/").split("?")[0];
+window.addEventListener("hashchange", () => {
+  const b = _hashBase();
+  [..._legacyModals].forEach((m) => { if (m.base !== b) m.close(); });
+});
 export function modal({ title, body, actions = [], onClose }) {
   const root = document.getElementById("modal-root");
-  const close = () => { overlay.remove(); onClose && onClose(); };
+  const rec = { base: _hashBase(), close: () => close() };
+  let closed = false;
+  const close = () => { if (closed) return; closed = true; _legacyModals.delete(rec); overlay.remove(); onClose && onClose(); };
+  _legacyModals.add(rec);
   const overlay = h("div", { class: "modal-overlay", onclick: (e) => { if (e.target === overlay) close(); } },
     h("div", { class: "modal" },
       h("div", { class: "modal-head" }, h("h3", {}, title),

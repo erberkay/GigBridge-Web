@@ -9,12 +9,15 @@ import { session } from "./store.js";
 export { serverTimestamp } from "./firebase.js";
 
 // ── Test hesapları (users.testAccount === true; app isRealArtist ile aynı kural) ──
-// Herkese açık dizinlerde (Keşfet, arama, sanatçı/mekan listeleri, Top 10, Akış önerileri) görünmez.
+// Herkese açık dizinlerde (Keşfet, arama, sanatçı/mekan listeleri, Top 10, Akış önerileri) görünmez — gerçek kullanıcıya.
+// Test hesabıyla girilince test hesapları birbirini GÖRÜR (teklif → kabul → etkinlik → ödeme kabul testleri; denetim 12 Eki).
 export const isTestAccount = (u) => u?.testAccount === true;
-const hideTest = (list) => list.filter((u) => !isTestAccount(u));
+const viewerIsTestAccount = () => isTestAccount(session.profile);
+const hideTest = (list) => (viewerIsTestAccount() ? list : list.filter((u) => !isTestAccount(u)));
 // Test hesabı kimlikleri (etkinlik / sunucu Top 10 süzgeci için; tek eşitlik sorgusu, 5 dk önbellek). Okunamazsa boş küme.
 let _testIds = null, _testIdsAt = 0;
 export function testAccountIds() {
+  if (viewerIsTestAccount()) return Promise.resolve(new Set());   // test hesabı test kayıtlarını görür
   if (!_testIds || Date.now() - _testIdsAt > 5 * 60e3) {
     _testIdsAt = Date.now();
     _testIds = getDocs(query(collection(db, "users"), where("testAccount", "==", true)))
