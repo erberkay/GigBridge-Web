@@ -64,34 +64,37 @@ export const DESKTOP_ROUTES = [
 
   // ════ Sanatçı paneli ════
   R("artistPanel", "WebSanatciPanel", is("#/artist"), "artist/panel.js", "artistPanelView", "panel", [...SH.panel, "css/dk-sanatci-panel.css"], { role: "artist", panel: "artist", nav: "home", spec: "sanatci.md WebSanatciPanel" }),
-  R("artistTeklif", "WebSanatciTeklif", sub("#/artist/teklif"), "artist/teklif.js", "artistTeklifView", "panel", [...SH.panel, "css/dk-sanatci-teklif.css"], { role: "artist", panel: "artist", nav: "home", spec: "sanatci.md WebSanatciTeklif" }),
+  R("artistTeklif", "WebSanatciTeklif", sub("#/artist/teklif"), "artist/teklif.js", "artistTeklifView", "panel", [...SH.panel, "css/dk-sanatci-teklif.css", "css/dk-odeme.css"], { role: "artist", panel: "artist", nav: "home", spec: "sanatci.md WebSanatciTeklif" }),
   R("artistKesfet", "WebSanatciKesfet", is("#/artist/kesfet"), "artist/kesfet.js", "artistKesfetView", "panel", [...SH.panel, "css/dk-sanatci-kesfet.css"], { role: "artist", panel: "artist", nav: "kesfet", spec: "sanatci.md WebSanatciKesfet" }),
   R("artistTop10", "WebSanatciTop10", is("#/artist/top10"), "artist/top10.js", "artistTop10View", "panel", [...SH.panel, "css/dk-sanatci-top10.css"], { role: "artist", panel: "artist", nav: "top10", spec: "sanatci.md WebSanatciTop10" }),
   R("artistMekanlar", "WebSanatciMekanlar", is("#/artist/mekanlar"), "artist/mekanlar.js", "artistMekanlarView", "panel", [...SH.panel, "css/dk-sanatci-mekanlar.css"], { role: "artist", panel: "artist", nav: "mekanlar", spec: "sanatci.md WebSanatciMekanlar" }),
   R("artistMesaj", "WebPanelMesajlar", is("#/artist/mesaj"), "messages/panel-mesajlar.js", "panelMesajlarView", "panel", [...SH.panel, "css/dk-panel-mesajlar.css"], { role: "artist", panel: "artist", nav: "mesaj", spec: "sanatci.md WebPanelMesajlar" }),
   R("artistAjans", "— (Ajans Bul; tasarım yok — ortak kit)", is("#/artist/ajans"), "agency/ajans-bul.js", "ajansBulView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "artist", panel: "artist", nav: "ajans", spec: "ajans-spec Ajans Bul" }),
+  R("artistOdeme", "— (Kazançlarım; tasarım yok — ortak kit)", is("#/artist/odemeler"), "payments/odemeler.js", "odemelerView", "panel", [...SH.panel, "css/dk-odeme.css"], { role: "artist", panel: "artist", nav: "odeme", spec: "odeme-spec PaymentsScreen + PayoutAccount + PaymentDispute" }),
   R("artistProfil", "WebSanatciProfil", is("#/artist/profil"), "artist/profil.js", "artistProfilView", "panel", [...SH.panel, "css/dk-sanatci-profil.css"], { role: "artist", panel: "artist", nav: "profil", spec: "sanatci.md WebSanatciProfil" }),
   // artboard'u olmayan sanatçı sekmeleri: sahnelerim, yorumlar, bildirimler, sanatci/:id (+ bilinmeyenler) → legacy-in-shell
   R("artistLegacy", "— (legacy-in-shell)", pre("#/artist"), "artist/legacy.js", "artistLegacyView", "panel", [...SH.panel], { role: "artist", panel: "artist", legacyShell: true, spec: "foundation.md §4" }),
 
   // ════ Mekan paneli ════
-  R("venuePanel", "WebMekanPanel", is("#/venue"), "venue/panel.js", "venuePanelView", "panel", [...SH.panel, "css/dk-mekan-panel.css"], { role: "venue", panel: "venue", nav: "home", spec: "mekan.md WebMekanPanel" }),
-  R("venueOlustur", "WebMekanEtkinlikOlustur", any(is("#/venue/olustur"), sub("#/venue/duzenle")), "venue/etkinlik-olustur.js", "venueEtkinlikOlusturView", "panel", [...SH.panel, "css/dk-mekan-etkinlik-olustur.css"], { role: "venue", panel: "venue", nav: "olustur", spec: "mekan.md WebMekanEtkinlikOlustur (#/venue/duzenle/:id = düzenleme modu, YENİ rota)" }),
+  R("venuePanel", "WebMekanPanel", is("#/venue"), "venue/panel.js", "venuePanelView", "panel", [...SH.panel, "css/dk-mekan-panel.css", "css/dk-odeme.css"], { role: "venue", panel: "venue", nav: "home", spec: "mekan.md WebMekanPanel" }),
+  R("venueOlustur", "WebMekanEtkinlikOlustur", any(is("#/venue/olustur"), sub("#/venue/duzenle")), "venue/etkinlik-olustur.js", "venueEtkinlikOlusturView", "panel", [...SH.panel, "css/dk-mekan-etkinlik-olustur.css", "css/dk-odeme.css"], { role: "venue", panel: "venue", nav: "olustur", spec: "mekan.md WebMekanEtkinlikOlustur (#/venue/duzenle/:id = düzenleme modu, YENİ rota)" }),
   R("venueSanatci", "WebMekanSanatciBul", is("#/venue/sanatci"), "venue/sanatci-bul.js", "venueSanatciBulView", "panel", [...SH.panel, "css/dk-mekan-sanatci-bul.css"], { role: "venue", panel: "venue", nav: "sanatci", spec: "mekan.md WebMekanSanatciBul" }),
   R("venueAjans", "— (Ajans Bul; tasarım yok — ortak kit)", is("#/venue/ajans"), "agency/ajans-bul.js", "ajansBulView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "venue", panel: "venue", nav: "ajans", spec: "ajans-spec Ajans Bul" }),
   R("venueAnalitik", "WebMekanAnalitik", is("#/venue/analitik"), "venue/analitik.js", "venueAnalitikView", "panel", [...SH.panel, "css/dk-mekan-analitik.css"], { role: "venue", panel: "venue", nav: "analitik", spec: "mekan.md WebMekanAnalitik" }),
   R("venueProfil", "WebMekanProfil", is("#/venue/profil"), "venue/profil.js", "venueProfilView", "panel", [...SH.panel, "css/dk-mekan-profil.css"], { role: "venue", panel: "venue", nav: "profil", spec: "mekan.md WebMekanProfil" }),
+  R("venueOdeme", "— (Ödemeler; tasarım yok — ortak kit)", is("#/venue/odemeler"), "payments/odemeler.js", "odemelerView", "panel", [...SH.panel, "css/dk-odeme.css"], { role: "venue", panel: "venue", nav: "odeme", spec: "odeme-spec PaymentsScreen + PayoutAccount + PaymentDispute" }),
   R("venueMesaj", "WebPanelMesajlar", is("#/venue/mesaj"), "messages/panel-mesajlar.js", "panelMesajlarView", "panel", [...SH.panel, "css/dk-panel-mesajlar.css"], { role: "venue", panel: "venue", nav: "mesaj", spec: "sanatci.md WebPanelMesajlar" }),
   // takip, performans/:id, degerlendir (+ bilinmeyenler) → legacy-in-shell
   R("venueLegacy", "— (legacy-in-shell)", pre("#/venue"), "venue/legacy.js", "venueLegacyView", "panel", [...SH.panel], { role: "venue", panel: "venue", legacyShell: true, spec: "foundation.md §4" }),
 
   // ════ Organizatör paneli ════
-  R("orgPanel", "WebOrgPanel", is("#/organizer"), "organizer/panel.js", "orgPanelView", "panel", [...SH.panel, "css/dk-org-panel.css"], { role: "organizer", panel: "organizer", nav: "home", spec: "org-admin.md WebOrgPanel" }),
-  R("orgEtkinlik", "WebOrgEtkinlikler", is("#/organizer/etkinlik"), "organizer/etkinlikler.js", "orgEtkinliklerView", "panel", [...SH.panel, "css/dk-org-etkinlikler.css"], { role: "organizer", panel: "organizer", nav: "etkinlik", spec: "org-admin.md WebOrgEtkinlikler" }),
+  R("orgPanel", "WebOrgPanel", is("#/organizer"), "organizer/panel.js", "orgPanelView", "panel", [...SH.panel, "css/dk-org-panel.css", "css/dk-odeme.css"], { role: "organizer", panel: "organizer", nav: "home", spec: "org-admin.md WebOrgPanel" }),
+  R("orgEtkinlik", "WebOrgEtkinlikler", is("#/organizer/etkinlik"), "organizer/etkinlikler.js", "orgEtkinliklerView", "panel", [...SH.panel, "css/dk-org-etkinlikler.css", "css/dk-odeme.css"], { role: "organizer", panel: "organizer", nav: "etkinlik", spec: "org-admin.md WebOrgEtkinlikler" }),
   R("orgMekan", "WebOrgMekanSec", is("#/organizer/mekan"), "organizer/mekan-sec.js", "orgMekanSecView", "panel", [...SH.panel, "css/dk-org-mekan-sec.css"], { role: "organizer", panel: "organizer", nav: "mekan", spec: "org-admin.md WebOrgMekanSec" }),
   R("orgAjans", "— (Ajans Bul; tasarım yok — ortak kit)", is("#/organizer/ajans"), "agency/ajans-bul.js", "ajansBulView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "organizer", panel: "organizer", nav: "ajans", spec: "ajans-spec Ajans Bul" }),
   R("orgEkip", "WebOrgEkip", is("#/organizer/ekip"), "organizer/ekip.js", "orgEkipView", "panel", [...SH.panel, "css/dk-org-ekip.css"], { role: "organizer", panel: "organizer", nav: "ekip", spec: "org-admin.md WebOrgEkip" }),
   R("orgProfil", "WebOrgProfil", is("#/organizer/profil"), "organizer/profil.js", "orgProfilView", "panel", [...SH.panel, "css/dk-org-profil.css"], { role: "organizer", panel: "organizer", nav: "profil", spec: "org-admin.md WebOrgProfil" }),
+  R("orgOdeme", "— (Ödemeler; tasarım yok — ortak kit)", is("#/organizer/odemeler"), "payments/odemeler.js", "odemelerView", "panel", [...SH.panel, "css/dk-odeme.css"], { role: "organizer", panel: "organizer", nav: "odeme", spec: "odeme-spec PaymentsScreen + PaymentDispute" }),
   R("orgMesaj", "WebPanelMesajlar", is("#/organizer/mesaj"), "messages/panel-mesajlar.js", "panelMesajlarView", "panel", [...SH.panel, "css/dk-panel-mesajlar.css"], { role: "organizer", panel: "organizer", nav: "mesaj", spec: "sanatci.md WebPanelMesajlar" }),
   // bildirim (+ bilinmeyenler) → legacy-in-shell
   R("orgLegacy", "— (legacy-in-shell)", pre("#/organizer"), "organizer/legacy.js", "orgLegacyView", "panel", [...SH.panel], { role: "organizer", panel: "organizer", legacyShell: true, spec: "foundation.md §4" }),
@@ -103,10 +106,11 @@ export const DESKTOP_ROUTES = [
   R("agencyMesaj", "WebPanelMesajlar", is("#/agency/mesajlar"), "messages/panel-mesajlar.js", "panelMesajlarView", "panel", [...SH.panel, "css/dk-panel-mesajlar.css"], { role: "agency", panel: "agency", nav: "mesaj", spec: "sanatci.md WebPanelMesajlar" }),
   R("agencyPanel", "— (AJANS Ana Sayfa; ortak kit)", pre("#/agency"), "agency/panel.js", "agencyPanelView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "agency", panel: "agency", nav: "home", spec: "ajans-spec" }),
 
-  // ════ Yönetici (#/admin + sekme alt rotaları #/admin/ad|sorun) ════
+  // ════ Yönetici (#/admin + sekme alt rotaları #/admin/ad|sorun; YÖNETİM: kullanicilar|bildirim|etkinlikler|odemeler) ════
   R("adminKullanici", "WebAdminKullanicilar", is("#/admin/kullanicilar"), "admin/kullanicilar.js", "adminKullanicilarView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css"], { role: "admin", spec: "WebAdmin + kullanıcı yönetimi" }),
   R("adminBildirim", "WebAdminBildirim", is("#/admin/bildirim"), "admin/bildirim.js", "adminBildirimView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css"], { role: "admin", spec: "WebAdmin + bildirim yönetimi" }),
   R("adminEtkinlik", "WebAdminEtkinlikler", is("#/admin/etkinlikler"), "admin/etkinlikler.js", "adminEtkinliklerView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css"], { role: "admin", spec: "WebAdmin + katılımcı listesi" }),
+  R("adminOdeme", "— (WebAdmin ÖDEMELER + ŞİKAYETLER; ortak kit)", is("#/admin/odemeler"), "admin/odemeler.js", "adminOdemelerView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css", "css/dk-odeme.css"], { role: "admin", spec: "odeme-spec AdminPaymentsTab + AdminDisputeModal" }),
   R("admin", "WebAdmin", pre("#/admin"), "admin/admin.js", "adminView", "panel", [...SH.panel, "css/dk-admin-panel.css"], { role: "admin", spec: "org-admin.md WebAdmin" }),
 ];
 

@@ -316,6 +316,9 @@ export async function createResidency(profile, artist, f) {
 }
 
 // ── Organizatör: mekana istek gönder (venueRequests) ──
+// MEKAN ÜCRETİ (rentalFee, ₺ tam sayı; isteğe bağlı — uygulama VenuesScreen/EventsScreen): yalnız > 0 ise yazılır, en çok 10.000.000.
+// Kabulden sonra ödeme tutarı sunucuda bu alandan okunur (functions/payments.js createPayment venue_rental).
+const rentalFeeField = (v) => { const n = parseInt(String(v ?? "").replace(/\D/g, ""), 10) || 0; return n > 0 ? { rentalFee: Math.min(n, 10000000) } : {}; };
 export async function createVenueRequest(profile, venue, f) {
   await addDoc(collection(db, "venueRequests"), {
     title: f.title,
@@ -325,6 +328,7 @@ export async function createVenueRequest(profile, venue, f) {
     organizerName: profile.orgName ?? profile.displayName ?? "",
     createdByUid: profile.id,
     venueId: venue.id, venueName: venue.displayName ?? "",
+    ...rentalFeeField(f.rentalFee),
     status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
   });
 }
@@ -614,6 +618,7 @@ export async function createOrgVenueRequest(profile, venue, f) {
     organizerName: profile.orgName ?? profile.displayName ?? "",
     createdByUid: profile.id,
     venueId: venue.id, venueName: venue.displayName ?? "",
+    ...rentalFeeField(f.rentalFee),
     status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
   });
 }

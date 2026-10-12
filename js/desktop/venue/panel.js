@@ -25,7 +25,8 @@
 // (data.sendNotification → fromUserId = auth uid; alan şekli app pushAppNotification ile aynı). Bildirim hatası akışı durdurmaz.
 import { h, openImageCropper } from "../../ui.js";
 import { session } from "../../store.js";
-import { db, collection, query, where, getDocs } from "../../firebase.js";
+import { db, collection, query, where, getDocs, doc, getDoc } from "../../firebase.js";
+import { payRowControl, openServiceTermsModal, needsTerms, toServiceTerms, termsSummary } from "../shared/payments.js";
 import {
   venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, venueResidencies, cancelResidencyDoc,
   listRealArtists, listGroups, venueAcceptedInvitations, getVenueReviews, findExistingInvitation, createInvitation,
@@ -566,7 +567,11 @@ export function venuePanelView(ctx) {
           h("span", { class: c("iname") }, name),
           h("span", { class: c("imeta") }, `${ev?.title || "Etkinliksiz teklif"} · ${fmtWhen(i.eventDate, i.eventTime)}`),
           h("span", { class: c("ifee") }, fee)),
-        h("span", { class: c("iright") }, h("span", { class: c("istat"), style: { color: S[1] } }, S[0]), msg)));
+        h("span", { class: c("iright") }, h("span", { class: c("istat"), style: { color: S[1] } }, S[0]),
+          // kabul edilmiş ücretli davet → sanatçı ödemesi (uygulama: Profil › Ödemeler / EditEvent ödeme paneli)
+          i.status === "accepted" ? payRowControl({ kind: "artist_booking", refId: i.id, amountTL: Number(i.fee) || 0, paymentStatus: i.paymentStatus ?? null, paymentId: i.paymentId ?? null,
+            title: `Sahne ücreti · ${name}`, when: fmtWhen(i.eventDate, i.eventTime), onPaid: () => { i.paymentStatus = "paid"; } }) : null,
+          msg)));
     });
   }
 
@@ -583,14 +588,29 @@ export function venuePanelView(ctx) {
     msg.addEventListener("click", () => openVenueChat(req.createdByUid || req.organizerId, req.organizerName || "Organizatör"));
     const rej = h("button", { type: "button", class: cx(c("rej"), "dk-press") }, "Reddet");
     const acc = h("button", { type: "button", class: cx(c("acc"), "dk-press") }, "Onayla");
+    // ücretli istek (rentalFee): kabulden önce HİZMET KAPSAMI zorunlu (uygulama venue/HomeScreen needsTerms → ServiceTerms)
+    const rentalFee = Number(req.rentalFee) || 0;
+    const termsLine = h("span", { class: "dk-pay-reqterms" });
+    const paintTerms = () => {
+      const ok = !!req.serviceTerms;
+      termsLine.style.color = ok ? "#7CE0B0" : "#FFB347";
+      termsLine.replaceChildren(raw(ok ? "check" : "info", 12), h("span", {}, ok ? "Hizmet kapsamı girildi" : "Kabul için hizmet kapsamını gir"));
+    };
+    if (rentalFee > 0) paintTerms();
     const card = h("div", { class: c("req") },
       h("div", { class: c("reqtop") },
         h("span", { class: c("reqcol") },
           h("span", { class: c("reqt") }, req.title || "Etkinlik"),
           h("span", { class: c("reqorg") }, raw("building", 12), h("span", {}, req.organizerName || "Organizatör")),
-          h("span", { class: c("reqd") }, when)),
+          h("span", { class: c("reqd") }, when),
+          rentalFee > 0 ? h("span", { class: "dk-pay-reqfee" }, `Mekan ücreti ${fmtTL(rentalFee)} · ödeme emanetli`) : null,
+          rentalFee > 0 ? termsLine : null),
         msg),
       h("div", { class: c("reqbtns") }, rej, acc));
+    const refreshReq = async () => {
+      try { const snap = await getDoc(doc(db, "venueRequests", req.id)); if (snap.exists()) Object.assign(req, snap.data() || {}); } catch (_) {}
+      if (rentalFee > 0) paintTerms();
+    };
     const resolve = (text) => {
       const box = emptyBox(text, true);
       const hadFocus = card.contains(document.activeElement);
@@ -608,12 +628,30 @@ export function venuePanelView(ctx) {
         notify(req.createdByUid ?? req.organizerId, { type: "venue_request_update", title: "Etkinlik İsteğin Reddedildi", body: `${p().displayName ?? "Mekan"}, "${req.title ?? "etkinlik"}" isteğini reddetti.` });
       } catch (_) { rej.disabled = acc.disabled = false; dkToast("İşlem başarısız", { type: "err" }); }
     });
-    acc.addEventListener("click", () => openAcceptModal(req, resolve));
+    acc.addEventListener("click", async () => {
+      if (needsTerms(req)) {
+        if (dkLoginGate("İsteği onaylamak")) return;
+        // önce kapsam: kaydedilince "Şimdi isteği kabul edebilirsin" (uygulama) → kart güncellenir, Onayla yeniden basılır
+        if (await openServiceTermsModal(req.id)) await refreshReq();
+        return;
+      }
+      openAcceptModal(req, resolve, refreshReq);
+    });
     return card;
   }
-  function openAcceptModal(req, resolve) {
+  function openAcceptModal(req, resolve, refreshReq) {
     if (dkLoginGate("İsteği onaylamak")) return;
     const hasArtist = !!(req.artistId || req.artistName);
+    const rentalFee = Number(req.rentalFee) || 0;
+    // HİZMET KAPSAMI özeti + DÜZENLE (uygulama kabul sayfası)
+    const termsSum = h("span", { class: "dk-mekan-panel-mnote-strong" }, termsSummary(toServiceTerms(req.serviceTerms)));
+    const termsBlock = rentalFee > 0 ? [
+      h("span", { class: c("mlabel") }, "HİZMET KAPSAMI"),
+      h("div", { class: c("mnote") }, svgIcon("fileText", { size: 15, sw: "1.8", color: "#FF8A2A" }), h("span", { class: "dk-pay-grow" }, termsSum, h("span", {}, ` · Mekan ücreti ${fmtTL(rentalFee)} · ödeme emanetli`)),
+        dkButton("Düzenle", { variant: "outline", size: 36, icon: "edit", onClick: async () => {
+          if (await openServiceTermsModal(req.id)) { await refreshReq?.(); termsSum.textContent = termsSummary(toServiceTerms(req.serviceTerms)); }
+        } })),
+    ] : [];
     // Tasarım: başlık satırı → p → SANATÇI etiketi → not kutusu → düğmeler (diyalog gap 18; gövde aynı aralıkla)
     const body = [
       h("p", { class: c("msub") }, [req.title || "Etkinlik", fmtDateTR(req.eventDate), req.eventTime].filter(Boolean).join(" · ")),
@@ -621,6 +659,7 @@ export function venuePanelView(ctx) {
       hasArtist
         ? h("div", { class: c("mnote") }, raw("mic", 15, "1.8", { color: "#FF8A2A" }), h("span", { class: c("mnote-strong") }, `${req.artistName || "Sanatçı"} — organizatörün seçtiği sanatçı`))
         : h("div", { class: c("mnote") }, raw("info", 15, "1.8", { color: "#8A8E97" }), h("span", {}, "Sanatçıyı organizatör belirler — etkinlik organizatöre aittir.")),
+      ...termsBlock,
     ];
     const m = dkModal({
       variant: "panel", size: 480, top: 200, title: "İsteği Onayla", cls: cx(c("modal"), c("mdlaccept")),

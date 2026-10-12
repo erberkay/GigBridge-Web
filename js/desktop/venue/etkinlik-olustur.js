@@ -30,6 +30,7 @@ import { cx, dkModal, dkToast, dkConfirm, dkSkeleton, dkEmpty, dkButton, dkAvata
 import { eventCard } from "../shared/cards.js";
 import { eventStartMs, fmtTime, isoDate, toMs, trUpper, trLower, fold, initials, MONTHS_TR, MONTHS_TR_SHORT } from "../shared/helpers.js";
 import { ALL_GENRES, genreColor, genreGrad, genreFamilyKey } from "../shared/genres.js";
+import { eventPaymentsPanel } from "../shared/payments.js";
 
 const NS = "dk-mekan-etkinlik-olustur";
 const c = (s) => `${NS}-${s}`;
@@ -795,6 +796,10 @@ export function venueEtkinlikOlusturView(ctx) {
     const dd = s != null ? new Date(s) : null;
     modeEdit.textContent = `Düzenle · ${e.title || "Etkinlik"}${dd ? ` ${dd.getDate()} ${MONTHS_TR_SHORT[dd.getMonth()]}` : ""}`;
     root.append(modeRow, lockNote, grid); // kilit notu formun üstünde: kullanıcı alanlara geçmeden görür
+    // ÖDEMELER (uygulama venue/EditEventScreen EventPaymentsPanel): kabul edilmiş ücretli davet → ödeme kartı, kiralama → emanet notu
+    const payPanel = eventPaymentsPanel({ role: "venue", uid, eventId, ibanHref: "#/venue/odemeler?bolum=iban" });
+    form.insertBefore(payPanel.node, errBox);
+    unsubs.push(() => payPanel.destroy());
     place();
     // kilitler (app EditEventScreen): başladı → kilitli · son düzenlemeden 2 gün geçmedi → kilitli · organizatör etkinliği → salt-okunur
     const last = toMs(e.lastEditedAt);

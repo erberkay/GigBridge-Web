@@ -8,8 +8,9 @@
 //                        setNotifications(items), search, destroy() }
 //   opts = {
 //     role:   "artist" | "venue" | "organizer" | "agency" | "admin",
-//     active: artist: home|kesfet|top10|mekanlar|mesaj|profil · venue: home|olustur(CTA)|sanatci|analitik|mesaj|profil
-//             organizer: home|etkinlik|mekan|ajans|ekip|mesaj|profil · agency: home|katalog|mesaj|profil (CTA yeni) · admin: onaylar|ad|sorun
+//     active: artist: home|kesfet|top10|mekanlar|mesaj|odeme|profil · venue: home|olustur(CTA)|sanatci|analitik|mesaj|odeme|profil
+//             organizer: home|etkinlik|mekan|ajans|ekip|mesaj|odeme|profil · agency: home|katalog|mesaj|profil (CTA yeni)
+//             admin: onaylar|ad|sorun|kullanici|bildirim|etkinlik|odeme
 //             (artist / venue nav'larında da "ajans" = Ajans Bul)
 //     title, subtitle (sanatçı: başlık üstte + alt satır), crumb (mekan: "Babylon Club / {crumb}" nav + h1; org/admin: mono eyebrow + başlık),
 //     search: { placeholder, onSubmit(q), onInput(q), value } | false  (mekan: "/" kısayolu + kbd çipi),
@@ -38,6 +39,7 @@ import { subscribeLive } from "./live.js";
 import { rgba, timeAgo, trUpper } from "./helpers.js";
 import { markNotifRead, listenArtistOffers, organizerRequests } from "../../data.js";
 import { routeReady, routeReadySync } from "../registry.js";
+import { paymentNotifHref, PAYMENT_NOTIF_TYPES } from "./pay-util.js";
 
 export const NOT_READY = false;
 
@@ -53,6 +55,7 @@ const ROLES = {
       ["mekanlar", "Mekanlar", "#/artist/mekanlar", "star", { stroke: true }],
       ["ajans", "Ajans Bul", "#/artist/ajans", "agency"],
       ["mesaj", "Mesajlar", "#/artist/mesaj", "chatBubble"],
+      ["odeme", "Kazançlarım", "#/artist/odemeler", "wallet"],
       ["profil", "Profilim", "#/artist/profil", "userCircle"],
     ],
     searchPh: "Teklif, mekan veya sanatçı ara", bell: { mode: "link", href: "#/artist/bildirimler" }, profileHref: "#/artist/profil", profileLabel: "Profilim",
@@ -67,6 +70,7 @@ const ROLES = {
       ["ajans", "Ajans Bul", "#/venue/ajans", "agency"],
       ["analitik", "Analitik", "#/venue/analitik", "chart"],
       ["mesaj", "Mesajlar", "#/venue/mesaj", "chatLines"],
+      ["odeme", "Ödemeler", "#/venue/odemeler", "wallet", { sw: "1.8" }],
       ["profil", "Profil", "#/venue/profil", "userVenue"],
     ],
     searchPh: "Etkinlik, sanatçı ara", kbd: "/", bell: { mode: "popover" }, profileHref: "#/venue/profil", profileLabel: "Mekan profili",
@@ -81,6 +85,7 @@ const ROLES = {
       ["ajans", "Ajans Bul", "#/organizer/ajans", "agency"],
       ["ekip", "Ekip", "#/organizer/ekip", "users"],
       ["mesaj", "Mesajlar", "#/organizer/mesaj", "chatSquare"],
+      ["odeme", "Ödemeler", "#/organizer/odemeler", "wallet"],
       ["profil", "Profil", "#/organizer/profil", "userProfile"],
     ],
     searchPh: "Etkinlik, mekan veya üye ara", bell: { mode: "popover", allHref: "#/organizer/bildirim" }, profileHref: "#/organizer/profil", profileLabel: "Profil",
@@ -111,6 +116,7 @@ const ROLES = {
         ["kullanici", "Kullanıcılar", "#/admin/kullanicilar", "users"],
         ["bildirim", "Bildirimler", "#/admin/bildirim", "bell"],
         ["etkinlik", "Etkinlikler", "#/admin/etkinlikler", "calendar"],
+        ["odeme", "Ödemeler", "#/admin/odemeler", "wallet"],
       ] },
       { label: "ÖNİZLEME", items: [["onizleme", "Keşfet ekranı", null, "compassAdmin"]] },
     ],
@@ -128,6 +134,8 @@ const narrowMq = typeof window !== "undefined" && window.matchMedia ? window.mat
 // Bildirim türü → ikon/renk (popover satırı; org-admin F4)
 const NOTIF_KIND = (n) => {
   const t = String(n.type || "");
+  // ödeme bildirimleri (uygulama notifCatalog ödeme grubu) → cüzdan; şikayet → bayrak
+  if (PAYMENT_NOTIF_TYPES.includes(t)) return /^dispute_/.test(t) ? { icon: "flag", color: "#FFB347" } : { icon: "wallet", color: "#7CE0B0" };
   if (/edit|permission|izin/i.test(t)) return { icon: "key", color: "#FF4FA3" };
   if (/accept|approved|onay/i.test(t)) return { icon: "check", color: "#7CE0B0" };
   if (/reject|red|cancel/i.test(t)) return { icon: "trash", color: "#FF5A6E" };
@@ -418,7 +426,8 @@ export function panelShell(opts = {}) {
   // canlı okunmamış: zil + Mesajlar rozeti (admin: görünüm setNotifications ile verir)
   if (role !== "admin" && opts.notifications !== "custom" && uid) {
     unsubs.push(subscribeLive(uid, (st) => {
-      if (R.bell.mode === "popover") notifItems = st.notifications || [];
+      // canlı bildirimler: ödeme türlerine web rotası (uygulama notificationRoutes karşılığı — Ödemeler / şikayet / IBAN)
+      if (R.bell.mode === "popover") notifItems = (st.notifications || []).map((n) => { const href = n.href || paymentNotifHref(n, role); return href ? { ...n, href } : n; });
       setBellState((st.unreadNotifs || 0) > 0);
       setBadge("mesaj", st.unreadMessages || 0);
     }));

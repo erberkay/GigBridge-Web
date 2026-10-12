@@ -18,6 +18,7 @@
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
 import { organizerEvents, organizerRequests, orgMembers, orgInvites } from "../../data.js";
+import { payRowControl } from "../shared/payments.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { cx, dkButton, dkKpi, dkPageHero, dkStatusBadge, dkEmpty, dkSkeleton, dkToast } from "../shared/ui.js";
 import { rgba, trUpper, toMs, timeAgo } from "../shared/helpers.js";
@@ -180,7 +181,10 @@ export function orgPanelView(ctx) {
         h("div", { class: `${P}-rcol` },
           h("span", { class: `${P}-rt` }, r.title || "Etkinlik"),
           h("span", { class: `${P}-rm` }, meta),
-          h("span", { class: `${P}-rb` }, dkStatusBadge(r.status === "accepted" ? "accepted" : r.status === "rejected" ? "rejected" : "pending", { variant: "pill" }))),
+          h("span", { class: cx(`${P}-rb`, r.status === "accepted" && Number(r.rentalFee) > 0 && "dk-pay-rbrow") }, dkStatusBadge(r.status === "accepted" ? "accepted" : r.status === "rejected" ? "rejected" : "pending", { variant: "pill" }),
+            // ücretli + kabul edilmiş istek → mekan ücreti ödemesi (uygulama: Profil › Ödemeler)
+            r.status === "accepted" ? payRowControl({ kind: "venue_rental", refId: r.id, amountTL: Number(r.rentalFee) || 0, paymentStatus: r.paymentStatus ?? null, paymentId: r.paymentId ?? null,
+              title: `Mekan kiralama · ${venue}`, when: meta, onPaid: () => { r.paymentStatus = "paid"; } }) : null)),
         r.venueId ? h("button", { type: "button", class: `${P}-rmsg dk-press`, "aria-label": `${venue} ile mesajlaş`, onclick: () => openVenueChat(r.venueId, r.venueName) }, ico("chat", 17)) : null);
     }));
   }

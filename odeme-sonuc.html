@@ -16,11 +16,37 @@
     "Bildirim URL" (Cloud Functions paytrCallback) ile gelir; uygulama ödemeyi payments/{oid} kaydından okur.
     Uygulama (react-native-webview) bu adrese yönlenmeyi yakalayıp ödeme ekranını kapatır. Sayfa PayTR iframe'i içinde
     açılırsa üst pencereye çıkar (uygulama üst pencere yönlenmesini yakalar).
+    WEB ÖDEME PENCERESİ (gigbridges.com masaüstü, js/desktop/shared/payments.js openPaytrCheckout): üst pencere ödeme açıkken
+    window.__gbPaytrCheckout koyar. Bu sayfa o pencerenin çerçevesindeyse üst pencereyi TAŞIMAZ (web uygulaması ödeme ortasında
+    sayfadan çıkmasın); bunun yerine parent/top'a postMessage({ gb: 'paytr', durum }, gigbridges.com kökeni) atar, sonucu
+    pencere payments/{oid} kaydından doğrular. Bayrak yoksa (uygulama WebView'i, doğrudan açılış) davranış eskisiyle aynı.
     Tasarım: sifirla.html (AuthSplit) dili — .as-* sınıfları; Firebase/Firestore YOK, harici betik YOK.
   -->
   <script>
-    // PayTR iframe'i içinde açıldıysa üst pencereye çık (yalnız aynı kaynaktan — uygulamanın ödeme sarmalayıcısı gigbridges.com)
-    try { if (window.top !== window.self) window.top.location.replace(window.location.href); } catch (_) {}
+    (function () {
+      var framed = false;
+      try { framed = window.top !== window.self; } catch (_) { framed = true; }
+      if (!framed) return;
+      var durum = '';
+      try { durum = new URLSearchParams(window.location.search).get('durum') || ''; } catch (_) { durum = ''; }
+      var host = window.location.hostname;
+      var webHost = host === 'gigbridges.com' || host === 'www.gigbridges.com' || host === '127.0.0.1' || host === 'localhost';
+      // Web ödeme penceresi bayrağı (yalnız aynı kökenli üst pencere okunabilir; çapraz kökende hata → bayrak yok)
+      var web = false;
+      try { web = webHost && !!window.top.__gbPaytrCheckout; } catch (_) { web = false; }
+      if (web) {
+        document.documentElement.className += ' is-framed';
+        var msg = { gb: 'paytr', durum: durum === 'fail' ? 'fail' : 'ok' };
+        var targets = [];
+        try { if (window.parent && window.parent !== window) targets.push(window.parent); } catch (_) {}
+        try { if (window.top && targets.indexOf(window.top) < 0) targets.push(window.top); } catch (_) {}
+        var origins = [window.location.origin, 'https://gigbridges.com', 'https://www.gigbridges.com'].filter(function (o, i, a) { return a.indexOf(o) === i; });
+        targets.forEach(function (w) { origins.forEach(function (o) { try { w.postMessage(msg, o); } catch (_) {} }); });
+        return;
+      }
+      // Uygulama / diğer çerçeve: üst pencereye çık (uygulamanın ödeme sarmalayıcısı gigbridges.com — üst pencere yönlenmesini yakalar)
+      try { window.top.location.replace(window.location.href); } catch (_) {}
+    })();
   </script>
   <style>
     :root {
@@ -78,6 +104,10 @@
     .as-btn-outline, .as-btn-outline:hover { border: 1px solid var(--hair-2); background: transparent; color: var(--ink); font-weight: 500; }
     .as-btns { display: flex; flex-direction: column; gap: 12px; }
     [hidden] { display: none !important; }
+    /* web ödeme penceresinin çerçevesinde: uygulama/site düğmeleri gizli (pencere sonucu kendisi gösterir) */
+    .is-framed .as-btns, .is-framed .as-legal, .is-framed .as-brand { display: none !important; }
+    .is-framed .as-main { min-height: 0; padding: 20px; }
+    .is-framed .as-center { padding: 8px 0; }
     @media (max-width: 768px) {
       .as-main { padding: 24px 20px 28px; }
       .as-center { align-items: flex-start; padding: 28px 0 32px; }

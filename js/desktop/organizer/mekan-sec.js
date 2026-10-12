@@ -572,10 +572,13 @@ export function orgMekanSecView(ctx) {
     const dIn = dkInput({ type: "date", attrs: { min: isoDate(Date.now()) } });
     const hIn = dkInput({ type: "time" });
     const xIn = dkTextarea({ rows: 3, placeholder: "…" });
+    // MEKAN ÜCRETİ (isteğe bağlı; uygulama VenuesScreen) — yalnız rakam, en çok 7 hane
+    const feeIn = dkInput({ placeholder: "Ör. 10000", inputmode: "numeric", maxlength: 7, autocomplete: "off" });
+    feeIn.addEventListener("input", () => { feeIn.value = feeIn.value.replace(/\D/g, "").slice(0, 7); });
     let busy = false;
     const send = async () => {
       if (busy) return false;
-      const f = { title: tIn.value.trim(), date: dIn.value.trim(), time: hIn.value.trim(), description: xIn.value.trim() };
+      const f = { title: tIn.value.trim(), date: dIn.value.trim(), time: hIn.value.trim(), description: xIn.value.trim(), rentalFee: feeIn.value.trim() };
       if (!f.title) { m.setError("Etkinlik adı gir"); tIn.focus(); return false; }
       if (!f.date || !f.time) { m.setError("Tarih ve saat gir"); (f.date ? hIn : dIn).focus(); return false; }
       busy = true;
@@ -608,6 +611,7 @@ export function orgMekanSecView(ctx) {
         h("div", { class: k("two") }, dkField({ label: "TARİH", input: dIn }).node, dkField({ label: "SAAT", input: hIn }).node),
         // artboard: <textarea> blok kap içinde inline-block → satır kutusu altında ~5 px; aynı ölçü için sarmalayıcı
         dkField({ label: "AÇIKLAMA (OPSİYONEL)", input: h("div", { class: k("tawrap") }, xIn) }).node,
+        dkField({ label: "MEKAN ÜCRETİ (₺) · OPSİYONEL", input: feeIn, hint: "Mekan kabul ederse ödemeyi Ödemeler sayfasından yaparsın; para etkinlik sonrasına kadar emanette tutulur." }).node,
       ],
       actions: [
         { label: "Vazgeç", variant: "outline" },

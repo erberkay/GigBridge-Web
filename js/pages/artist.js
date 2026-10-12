@@ -15,6 +15,7 @@ import {
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE, cityPickerField, profileTagline, profileResidency, accentOf, accentPicker, RES_DAYS, featuredSet, venueChips, featuredReview, availabilityBadge, AVAIL_OPTS, rowsEditor, chipMulti, rateCardBlock, suitabilityBlock, serviceAreaBlock, techRiderBlock, videoReel, EVENT_TYPES, SET_FORMATS, EQUIP_OPTS, LANGUAGES, PRICE_TYPE_OPTS, CANCELLATION_OPTS, languagesBlock, priceBadge, addOnsBlock, termsBlock, packagesEditorWithTypes, profileCompletionBar, trustedBadge } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
+import { paymentNotifHref } from "../desktop/shared/pay-util.js";
 
 const A = ROLE.artist; // #A855F7
 const MIN_STAGE_FEE = 3500;        // iş kuralı: altında sahne alınamaz
@@ -38,6 +39,7 @@ const NAV = [
   { key: "profil",   label: "Profilim",  icon: "person-circle-outline", href: "#/artist/profil" },
 ];
 const TITLES = {
+  odemeler: "Kazançlarım",
   home: "Sanatçı Paneli", kesfet: "Keşfet", top10: "Top 10", mekanlar: "Mekan Değerlendir", mesaj: "Mesajlar",
   profil: "Profilim", sahnelerim: "Sahnelerim", yorumlar: "Aldığım Yorumlar", bildirimler: "Bildirimler",
 };
@@ -212,6 +214,7 @@ export async function renderTab(tab, root) {
   if (tab === "sahnelerim") return renderStages(root);
   if (tab === "yorumlar") return renderReceivedReviews(root);
   if (tab === "bildirimler") return renderNotifs(root);
+  if (tab === "odemeler") { const m = await import("./payments-mobile.js"); return m.renderPaymentsMobile(root, "artist"); }
   clear(root);
   root.append(empty("construct-outline", "Yakında", "Bu bölüm bir sonraki güncellemede web'e geliyor."));
 }
@@ -1328,6 +1331,7 @@ async function renderProfile(root) {
   const menu = h("div", { class: "menu-card" },
     menuRow("star-outline", "Aldığım Yorumlar", () => go("#/artist/yorumlar")),
     menuRow("notifications-outline", "Bildirimler", () => go("#/artist/bildirimler")),
+    menuRow("wallet-outline", "Kazançlarım", () => go("#/artist/odemeler")),
     menuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal()),
     menuRow("key-outline", "Şifre Değiştir", () => changePasswordModal()),
     menuRow("alert-circle-outline", "Sorun Bildir", reportModal));
@@ -1410,7 +1414,8 @@ function renderNotifs(root) {
     if (!root.isConnected) { try { unsub(); } catch (_) {} return; }
     clear(box);
     if (!list.length) { box.append(empty("notifications-off-outline", "Bildirim yok", "Teklifler ve anlaşmalarla ilgili bildirimler burada görünür.")); return; }
-    list.forEach((n) => box.append(h("div", { class: "notif" + (n.read ? "" : " unread"), onclick: () => { if (!n.read) markNotifRead(n.id); } },
+    list.forEach((n) => box.append(h("div", { class: "notif" + (n.read ? "" : " unread"), style: paymentNotifHref(n, "artist") ? { cursor: "pointer" } : null,
+      onclick: () => { if (!n.read) markNotifRead(n.id); const pay = paymentNotifHref(n, "artist"); if (pay) location.hash = pay; } },
       h("div", { class: "notif-body" },
         h("div", { class: "notif-title" }, n.title || "Bildirim"),
         h("div", { class: "notif-text" }, n.body || ""),

@@ -1,0 +1,220 @@
+/* dk-odeme.css — ÖDEME bileşenleri (js/desktop/shared/payments.js) + Ödemeler sayfası (js/desktop/payments/odemeler.js) +
+   yönetici ÖDEMELER (js/desktop/admin/odemeler.js). Tasarım tuvalinde ödeme ekranı yok → YENİ görsel dil YOK: yalnız yerleşim;
+   renk/ölçüler mevcut panel kartlarıyla aynı (#0A0B0F / #0E1014 zemin, #14171D / #1F232B kenar, mono 10.5/700 etiketler, dk-ui düğmeleri). */
+
+/* ═════════ ortak kart (ödeme kartı / emanet notu) ═════════ */
+.dk-pay-card { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 10px; border: 1px solid #1F232B; background: #0E1014; min-width: 0; outline: none; }
+.dk-pay-card:empty { display: none; }
+.dk-pay-card.is-compact { padding: 14px; }
+.dk-pay-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.dk-pay-head > svg { flex-shrink: 0; }
+.dk-pay-title { flex-grow: 1; min-width: 0; font-size: 14.5px; font-weight: 600; color: #F2F1EE; }
+.dk-pay-text { margin: 0; font-size: 13.5px; line-height: 1.5; color: #A3A7AF; }
+.dk-pay-sub, .dk-pay-h, .dk-pay-tl, .dk-pay-kick { font-family: var(--dk-font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-pay-h { margin: 0; font-size: 10.5px; }
+.dk-pay-kick { color: var(--dk-role, #7CE0B0); letter-spacing: 0.16em; }
+.dk-pay-muted { font-size: 13px; line-height: 1.5; color: #8A8E97; }
+.dk-pay-body { font-size: 13.5px; line-height: 1.55; color: #C9CACD; overflow-wrap: anywhere; }
+.dk-pay-body.is-strong { color: #F2F1EE; font-weight: 600; }
+p.dk-pay-body, p.dk-pay-muted { margin: 0; }
+.dk-pay-pre { white-space: pre-line; }
+.dk-pay-fine { font-size: 12px; line-height: 1.5; color: #8A8E97; }
+.dk-pay-break { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid #14171D; }
+.dk-pay-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.dk-pay-rl { flex-grow: 1; min-width: 0; font-size: 13px; color: #8A8E97; }
+.dk-pay-rv { flex-shrink: 0; font-family: var(--dk-font-mono); font-size: 13px; color: #C9CACD; }
+.dk-pay-row.is-strong .dk-pay-rl, .dk-pay-row.is-strong .dk-pay-rv { color: #F2F1EE; font-weight: 600; }
+.dk-pay-note { display: flex; align-items: flex-start; gap: 7px; font-size: 13px; line-height: 1.45; }
+.dk-pay-note > svg { flex-shrink: 0; margin-top: 2px; }
+.dk-pay-acts { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid #14171D; }
+.dk-pay-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dk-pay-btns.is-split > * { flex: 1 1 0; }
+.dk-pay-linkbtn { align-self: flex-start; padding: 0 6px; }
+.dk-pay-amberbtn { align-self: flex-start; border-color: rgba(255,138,42,0.5); color: #FF8A2A !important; }
+.dk-pay-ibanwarn { box-sizing: border-box; min-height: 40px; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,179,71,0.45); background: rgba(255,179,71,0.08);
+  display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: #FFB347; text-decoration: none; }
+.dk .dk-pay-ibanwarn:hover { color: #FFB347; background: rgba(255,179,71,0.12); }
+.dk-pay-ibanwarn > span { flex-grow: 1; }
+.dk-pay-tbox { display: flex; flex-direction: column; gap: 10px; }
+.dk-pay-agree { height: auto; min-height: 40px; padding: 8px 0; align-items: flex-start; color: #F2F1EE; }
+.dk-pay-agree .dk-cbx-box { margin-top: 2px; }
+.dk-pay-err { font-size: 12.5px; color: #FF5A6E; }
+.dk-pay-err:empty { display: none; }
+
+/* hizmet kapsamı (salt okunur) */
+.dk-pay-terms { box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; }
+.dk-pay-tline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dk-pay-tv { font-family: var(--dk-font-mono); font-size: 12.5px; color: #F2F1EE; text-align: right; overflow-wrap: anywhere; }
+.dk-pay-tv.is-sans { font-family: var(--dk-font-sans); font-size: 14px; }
+.dk-pay-tblock { display: flex; flex-direction: column; gap: 5px; }
+.dk-pay-svc { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; line-height: 1.45; color: #C9CACD; }
+.dk-pay-svc > svg { flex-shrink: 0; margin-top: 3px; }
+
+/* ═════════ PayTR penceresi ═════════ */
+.dk-pay-ck-mdl { max-width: calc(100vw - 32px); }
+.dk-pay-ck { display: flex; flex-direction: column; gap: 14px; }
+.dk-pay-ck-top { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.dk-pay-ck-kick { font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #7CE0B0; }
+.dk-pay-ck-amt { font-family: var(--dk-font-mono); font-size: 15px; font-weight: 600; color: #F2F1EE; }
+.dk-pay-ck-test { display: inline-flex; align-items: center; gap: 6px; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; color: #FFB347; }
+.dk-pay-ck-test[hidden] { display: none; }
+.dk-pay-ck-box { border-radius: 8px; overflow: hidden; background: #FFFFFF; }
+.dk-pay-ck-box[hidden] { display: none; }
+.dk-pay-ck-frame { display: block; width: 100%; min-height: 600px; height: min(760px, calc(100vh - 300px)); border: 0; background: #FFFFFF; }
+.dk-pay-ck-frame.is-resized { height: auto; }
+.dk-pay-ck-state { min-height: 260px; padding: 24px 8px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; }
+.dk-pay-ck-state[hidden] { display: none; }
+.dk-pay-ck-ic { width: 64px; height: 64px; box-sizing: border-box; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid #2C303A; background: #0A0B0F; }
+.dk-pay-ck-ic.is-success { border-color: rgba(124,224,176,0.45); background: rgba(124,224,176,0.12); }
+.dk-pay-ck-ic.is-failed { border-color: rgba(255,90,110,0.45); background: rgba(255,90,110,0.1); }
+.dk-pay-ck-ic.is-slow { border-color: rgba(255,179,71,0.45); background: rgba(255,179,71,0.1); }
+.dk-pay-ck-st { font-size: 20px; font-weight: 600; color: #F2F1EE; }
+.dk-pay-ck-sb { max-width: 440px; font-size: 14px; line-height: 1.55; color: #A3A7AF; }
+.dk-pay-ck-state .dk-btn { margin-top: 6px; min-width: 160px; }
+
+/* ═════════ hizmet kapsamı formu ═════════ */
+.dk-pay-stf { display: flex; flex-direction: column; gap: 16px; }
+.dk-pay-fld { display: flex; flex-direction: column; gap: 8px; }
+.dk-pay-two { display: flex; align-items: flex-end; gap: 10px; }
+.dk-pay-two > label { flex: 1 1 0; }
+.dk-pay-sub2 { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: #8A8E97; }
+.dk-pay-dash { padding-bottom: 12px; color: #5E636D; }
+.dk-pay-svcs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; }
+.dk-pay-svcrow { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.dk-pay-svcrow.is-on { padding-bottom: 6px; }
+.dk-pay-fee { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; }
+.dk-pay-feev { font-family: var(--dk-font-mono); font-size: 18px; font-weight: 600; color: #F2F1EE; }
+
+/* ═════════ kanıtlar ═════════ */
+.dk-pay-gal { display: flex; flex-wrap: wrap; gap: 8px; }
+.dk-pay-cell { position: relative; width: 96px; height: 96px; padding: 0; margin: 0; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; overflow: hidden; cursor: zoom-in; }
+.dk-pay-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-pay-cellx { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.dk-pay-ctag { position: absolute; left: 4px; right: 4px; bottom: 4px; padding: 2px 4px; border-radius: 3px; background: rgba(6,7,10,0.78); color: #F2F1EE;
+  font-family: var(--dk-font-mono); font-size: 8.5px; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.dk-pay-picker { display: flex; flex-direction: column; gap: 10px; }
+.dk-pay-picks { display: flex; flex-direction: column; gap: 8px; }
+.dk-pay-picks:empty { display: none; }
+.dk-pay-pick { display: flex; align-items: flex-start; gap: 12px; padding: 10px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; }
+.dk-pay-pthumb { width: 72px; height: 72px; flex-shrink: 0; padding: 0; border: 0; border-radius: 6px; overflow: hidden; background: #14171D; cursor: zoom-in; }
+.dk-pay-pthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-pay-pbody { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.dk-pay-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dk-pay-rm { width: 32px; height: 32px; flex-shrink: 0; padding: 0; border-radius: 6px; border: 1px solid #1F232B; background: transparent; color: #8A8E97; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.dk-pay-add { box-sizing: border-box; height: 44px; padding: 0 14px; border-radius: 8px; border: 1px dashed #2C303A; background: transparent; color: #F2F1EE; display: flex; align-items: center; gap: 8px;
+  font-family: var(--dk-font-sans); font-size: 14px; font-weight: 500; cursor: pointer; }
+.dk-pay-add[hidden] { display: none; }
+.dk-pay-add > span:nth-child(2) { flex-grow: 1; text-align: left; }
+.dk-pay-addn { font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; }
+.dk-pay-vbody { display: flex; flex-direction: column; gap: 12px; }
+.dk-pay-vimg { min-height: 240px; max-height: calc(100vh - 300px); display: flex; align-items: center; justify-content: center; border-radius: 8px; background: #06070A; overflow: hidden; }
+.dk-pay-vimg img { max-width: 100%; max-height: calc(100vh - 300px); object-fit: contain; display: block; }
+.dk-pay-vcap { display: flex; flex-direction: column; gap: 4px; }
+.dk-pay-vcap:empty { display: none; }
+.dk-pay-vnav { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.dk-pay-vnav .dk-btn { width: 40px; padding: 0; }
+.dk-pay-vnav .dk-btn-l:empty { display: none; }
+.dk-pay-vcnt { font-family: var(--dk-font-mono); font-size: 12px; color: #8A8E97; }
+
+/* ═════════ şikayet çekmecesi ═════════ */
+.dk-pay-drw .dk-drw-head { height: auto; min-height: 80px; padding-top: 16px; padding-bottom: 16px; }
+.dk-pay-drw .dk-drw-head h2 { overflow-wrap: anywhere; }
+.dk-pay-dsp { display: flex; flex-direction: column; gap: 18px; }
+.dk-pay-lead { margin: 0; font-size: 14px; line-height: 1.5; color: #A3A7AF; }
+.dk-pay-sec { display: flex; flex-direction: column; gap: 10px; }
+.dk-pay-box { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0E1014; }
+.dk-pay-cats { display: flex; flex-direction: column; gap: 4px; }
+.dk-pay-cat { height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid #1F232B; }
+.dk-pay-cat.is-on { border-color: rgba(78,216,255,0.45); background: rgba(78,216,255,0.06); }
+.dk-pay-cnt { align-self: flex-end; font-family: var(--dk-font-mono); font-size: 10.5px; color: #8A8E97; }
+.dk-pay-cnt.is-warn { color: #FFB347; }
+.dk-pay-errbox { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+
+/* ═════════ ödeme bilgileri (IBAN) ═════════ */
+.dk-pay-acct { box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; padding: 20px; border-radius: 12px; border: 1px solid #1F232B; background: #0A0B0F; outline: none; scroll-margin-top: 96px; }
+.dk-pay-acct:focus-visible { border-color: var(--dk-role, #4ED8FF); }
+.dk-pay-acct-head { display: flex; flex-direction: column; gap: 8px; }
+.dk-pay-acct-t { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: #F2F1EE; }
+.dk-pay-acct-body { display: flex; flex-direction: column; gap: 12px; }
+.dk-pay-saved { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 8px; border: 1px solid #1F232B; background: #0E1014; }
+.dk-pay-saved .dk-btn { align-self: flex-start; margin-top: 4px; }
+.dk-pay-form { display: flex; flex-direction: column; gap: 14px; }
+.dk-pay-mono { font-family: var(--dk-font-mono); letter-spacing: 0.04em; }
+
+/* ═════════ etkinlik ödemeleri paneli (düzenleme ekranları) ═════════ */
+.dk-pay-evp { display: flex; flex-direction: column; gap: 12px; }
+.dk-pay-evp[hidden] { display: none; }
+.dk-pay-evi { display: flex; flex-direction: column; gap: 6px; }
+.dk-pay-evt { font-size: 14px; font-weight: 600; color: #F2F1EE; }
+.dk-pay-legal { display: flex; flex-direction: column; gap: 8px; }
+.dk-pay-legal a { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.dk-pay-mdl .dk-mdl-body { gap: 0; }
+/* liste satırı denetimi (payRowControl) — mevcut tablolarda kompakt */
+.dk-btn.dk-pay-rowbtn { height: 30px; padding: 0 10px; gap: 6px; font-size: 12.5px; }
+.dk-btn.dk-pay-rowbtn > svg { width: 13px; height: 13px; }
+.dk-pay-rowbadge { padding: 0; margin: 0; border: 0; background: none; cursor: pointer; display: inline-flex; }
+.dk-pay-c4 { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.dk-pay-rbrow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.dk-pay-reqfee { font-family: var(--dk-font-mono); font-size: 11px; color: #C9CACD; }
+.dk-pay-reqterms { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; }
+.dk-pay-reqterms > svg { flex-shrink: 0; }
+.dk-pay-grow { flex-grow: 1; min-width: 0; }
+
+/* ═════════ Ödemeler sayfası ═════════ */
+.dk-odeme-kpis { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 16px; }
+.dk-odeme-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
+.dk-odeme-main { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.dk-odeme-aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; position: sticky; top: 96px; }
+.dk-odeme-sec { display: flex; flex-direction: column; gap: 12px; }
+.dk-odeme-sec[hidden] { display: none; }
+.dk-odeme-h { margin: 0; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
+.dk-odeme-sbody { display: flex; flex-direction: column; gap: 12px; }
+.dk-odeme-empty { margin: 0; font-size: 14px; color: #8A8E97; }
+.dk-odeme-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.dk-odeme-due { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dk-odeme-duehead { display: flex; flex-direction: column; gap: 3px; }
+.dk-odeme-duet { font-size: 15px; font-weight: 600; color: #F2F1EE; overflow-wrap: anywhere; }
+.dk-odeme-duew { font-family: var(--dk-font-mono); font-size: 11px; color: #8A8E97; }
+.dk-odeme-skel { display: flex; flex-direction: column; gap: 8px; }
+.dk-odeme-hlist { border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; overflow: hidden; }
+.dk-odeme-hrow { display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px; border-bottom: 1px solid #14171D; }
+.dk-odeme-hrow:last-child { border-bottom: 0; }
+.dk-odeme-htile { width: 36px; height: 36px; flex-shrink: 0; box-sizing: border-box; border-radius: 8px; border: 1px solid #1F232B; background: #14171D; color: #8A8E97; display: flex; align-items: center; justify-content: center; }
+.dk-odeme-htile.is-in { color: #7CE0B0; }
+.dk-odeme-hbody { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dk-odeme-ht { font-size: 14.5px; font-weight: 600; color: #F2F1EE; overflow-wrap: anywhere; }
+.dk-odeme-hs { font-size: 12.5px; color: #8A8E97; }
+.dk-odeme-hf { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.dk-odeme-hb { font-size: 12px; color: #5E636D; }
+.dk-odeme-hrow .dk-pay-acts { margin-top: 6px; }
+.dk-odeme-hamt { flex-shrink: 0; font-family: var(--dk-font-mono); font-size: 14px; font-weight: 600; color: #F2F1EE; }
+.dk-odeme-hamt.is-in { color: #7CE0B0; }
+.dk-odeme-test { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; color: #FFB347; }
+.dk-odeme-info { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 12px; border: 1px solid #14171D; background: #0A0B0F; }
+.dk-odeme-steps { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 1.5; color: #A3A7AF; }
+@media (max-width: 1279px) {
+  .dk-odeme-grid { grid-template-columns: minmax(0, 1fr) 320px; }
+}
+@media (max-width: 1099px) {
+  .dk-odeme-grid { grid-template-columns: minmax(0, 1fr); }
+  .dk-odeme-aside { position: static; }
+  .dk-odeme-kpis { grid-template-columns: repeat(min(var(--n, 3), 2), minmax(0, 1fr)); }
+}
+
+/* ═════════ yönetici ÖDEMELER ═════════ */
+.dk-adm-pay-chips { padding: 0 20px 14px; border-bottom: 1px solid #14171D; }
+.dk-adm-pay-list { display: flex; flex-direction: column; }
+.dk-adm-pay-row { display: flex; flex-direction: column; gap: 4px; padding: 16px 20px; border-bottom: 1px solid #14171D; }
+.dk-adm-pay-row:last-child { border-bottom: 0; }
+.dk-adm-pay-row.is-busy { opacity: 0.7; }
+.dk-adm-pay-top { display: flex; align-items: center; gap: 10px; min-width: 0; margin-bottom: 2px; }
+.dk-adm-pay-t { flex-grow: 1; min-width: 0; font-size: 14.5px; font-weight: 600; color: #F2F1EE; overflow-wrap: anywhere; }
+.dk-adm-pay-meta { font-size: 12.5px; line-height: 1.45; color: #8A8E97; overflow-wrap: anywhere; }
+.dk-adm-pay-oid { font-family: var(--dk-font-mono); font-size: 10.5px; color: #5E636D; user-select: all; }
+.dk-adm-pay-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.dk-adm-pay-partial { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.dk-adm-pay-pin { width: 160px; font-family: var(--dk-font-mono); }
+.dk-adm-pay-pct { width: 88px; text-align: right; font-family: var(--dk-font-mono); }
+.dk-adm-pay-note { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.5; color: #8A8E97; }
+.dk-adm-pay-note > svg { flex-shrink: 0; margin-top: 2px; }
+.dk-pay-drw .dk-pay-btns .dk-inp { width: 160px; }

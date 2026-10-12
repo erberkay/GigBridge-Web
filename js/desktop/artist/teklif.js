@@ -22,6 +22,7 @@ import { cx, dkToast, dkSkeleton, dkEmpty } from "../shared/ui.js";
 import { rgba, trUpper, initials } from "../shared/helpers.js";
 import { genreColor } from "../shared/genres.js";
 import { routeReady } from "../registry.js";
+import { escrowNote } from "../shared/payments.js";
 import {
   STATUS, DOW_UP, DOW_LONG, isoToTR, toISOKey, toISODate, expandOccurrences, offerFromDoc, offerWhen, offerSortKey, meOf,
   rememberDecision, cachedOffer, cacheOffers,
@@ -103,7 +104,21 @@ export function artistTeklifView(ctx) {
   const left = h("div", { class: cls("left") }, hero,
     h("div", { class: cls("rowa") }, det, msg),
     h("div", { class: cls("rowb") }, week, ven));
-  const right = h("aside", { class: cls("right"), "aria-label": "Teklif yanıtı" }, resp, others);
+  // ÖDEME (uygulama OfferDetailScreen EscrowNote): kabul edilen ücretli teklifte emanet durumu + net tutar + IBAN uyarısı
+  const escrowSlot = h("div", { class: "dk-pay-slot", hidden: true });
+  let escrow = null;
+  function drawEscrow(x) {
+    const fee = Number(x?.fee) || 0;
+    const want = (x?.status ?? "pending") === "accepted" && fee > 0 && !String(uid || "").startsWith("demo_");
+    if (!want) { escrow?.destroy(); escrow = null; escrowSlot.hidden = true; escrowSlot.replaceChildren(); return; }
+    if (escrow) return;   // kart kendi teklif + ödeme dinleyicisiyle güncellenir
+    escrow = escrowNote({ kind: "artist_booking", refId: id, amountTL: fee, paymentStatus: x.paymentStatus ?? null, paymentId: x.paymentId ?? null, accepted: true, ibanHref: "#/artist/odemeler?bolum=iban",
+      onOpenDispute: (oid) => { location.hash = "#/artist/odemeler?sikayet=" + encodeURIComponent(oid); } });
+    escrowSlot.replaceChildren(escrow.node);
+    escrowSlot.hidden = false;
+  }
+  unsubs.push(() => escrow?.destroy());
+  const right = h("aside", { class: cls("right"), "aria-label": "Teklif yanıtı" }, resp, escrowSlot, others);
   const grid = h("div", { class: cls("grid") }, left, right);
   root.append(back, grid, bar);
   // <1400 tek kolonda yanıt kartı hero'nun hemen altında görünür → DOM sırası da öyle olmalı (CSS `order` sekme sırasını
@@ -421,6 +436,7 @@ export function artistTeklifView(ctx) {
         restoreGrid();
         const x = snap.data() || {};
         st.offer = offerFromDoc(snap.id, x);
+        drawEscrow(x);
         // yerel karar anlık görüntüden önce gelebilir (yazım gecikmesi) → kararı koru
         if (!(st.status && st.status !== "pending" && (x.status ?? "pending") === "pending")) st.status = x.status ?? "pending";
         if (st.ask && st.status !== "pending") st.ask = null;

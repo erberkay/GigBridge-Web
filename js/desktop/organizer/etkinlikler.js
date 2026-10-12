@@ -38,6 +38,7 @@ import { subscribeLive } from "../shared/live.js";
 import { fold, matchText, trUpper, toMs, isLive, eventStartMs, eventEndMs, writeQuery, hashBase, isoDate, MONTHS_TR_SHORT } from "../shared/helpers.js";
 import { genreColor } from "../shared/genres.js";
 import { isDesktop } from "../../viewport.js";
+import { paymentNotifHref, PAYMENT_NOTIF_TYPES, eventPaymentsPanel, payRowControl } from "../shared/payments.js";
 
 // ══════════════════════════════════════════════════════════════════════
 // ORTAK (panel.js de kullanır)
@@ -175,6 +176,8 @@ function vruStatus(n) {
 const VRU_TITLE = { accepted: "Mekan isteği onaylandı", rejected: "İstek reddedildi" }; // tasarım popover metni (spec WebOrgPanel §5)
 function notifHref(n) {
   const t = String(n.type || "");
+  const pay = paymentNotifHref(n, "organizer");   // ödeme bildirimleri → #/organizer/odemeler (?sikayet=)
+  if (pay) return pay;
   if (t === "edit_request" && n.eventId) {
     const sid = n.staffId || n.relatedUserId;
     return `#/organizer/etkinlik?duzenle=${enc(n.eventId)}${sid ? "&izin=" + enc(sid) : ""}`;
@@ -186,6 +189,7 @@ function notifHref(n) {
 }
 function notifKind(n) {
   const t = String(n.type || "");
+  if (PAYMENT_NOTIF_TYPES.includes(t)) return /^dispute_/.test(t) ? { icon: "flag", color: "#FFB347" } : { icon: "wallet", color: "#7CE0B0" };
   if (t === "edit_request") return { icon: "key", color: "#FF4FA3" };
   if (t === "edit_approved") return { icon: "check", color: "#7CE0B0" };
   if (t === "venue_request_update") {
@@ -362,10 +366,12 @@ export function orgEtkinliklerView(ctx) {
     const act = S.events.filter((e) => !isPastEv(e)).sort((a, b) => (evStart(a) ?? 0) - (evStart(b) ?? 0));
     const past = S.events.filter((e) => isPastEv(e)).sort((a, b) => (evStart(b) ?? 0) - (evStart(a) ?? 0));
     const reqs = S.reqs.filter((r) => r.status === "pending" || r.status === "rejected").sort((a, b) => (reqMs(a) ?? 0) - (reqMs(b) ?? 0));
+    // ücretli + kabul edilmiş mekan isteği → etkinlik satırında ödeme durumu / "Öde" (uygulama: Profil › Ödemeler + EditEvent ödeme paneli)
+    const paidReq = new Map(S.reqs.filter((r) => r.status === "accepted" && r.eventId && Number(r.rentalFee) > 0).map((r) => [r.eventId, r]));
     const evRow = (e) => {
       const ms = evStart(e);
       return { key: "e:" + e.id, kind: "event", id: e.id, title: e.title || "Etkinlik", artist: e.artistName || "", venue: e.venueName || "", venueId: e.venueId,
-        date: fmtDayMonYear(ms), time: evTime(e) || "—", st: evStatusKey(e), img: e.bannerUrl || "", ev: e };
+        date: fmtDayMonYear(ms), time: evTime(e) || "—", st: evStatusKey(e), img: e.bannerUrl || "", ev: e, payReq: paidReq.get(e.id) || null };
     };
     const reqRow = (r) => ({ key: "r:" + r.id, kind: "req", id: r.id, title: r.title || "Etkinlik", artist: r.artistName || "", venue: r.venueName || "", venueId: r.venueId,
       date: fmtDayMonYear(reqMs(r)), time: r.eventTime || "—", st: r.status === "rejected" ? "rejected" : "pending", img: r.bannerUrl || "", req: r });
@@ -404,7 +410,10 @@ export function orgEtkinliklerView(ctx) {
           h("span", { class: `${P}-meta` }, ico("pin", 12, { color: "#FF8A2A" }), h("span", { class: "dk-truncate" }, [r.venue || "—", r.date, r.time !== "—" ? r.time : ""].filter(Boolean).join(" · "))))),
       h("span", { role: "cell", class: `${P}-c2` }, ico("pin", 13, { color: "#FF8A2A" }), h("span", { class: "dk-truncate" }, r.venue || "—")),
       h("span", { role: "cell", class: `${P}-c3` }, h("span", { class: `${P}-d` }, r.date), h("span", { class: `${P}-h` }, r.time)),
-      h("span", { role: "cell", class: `${P}-c4` }, dkStatusBadge(r.st, { variant: "pill" })),
+      r.payReq && r.st !== "past"
+        ? h("span", { role: "cell", class: `${P}-c4 dk-pay-c4` }, dkStatusBadge(r.st, { variant: "pill" }), payRowControl({ kind: "venue_rental", refId: r.payReq.id, amountTL: Number(r.payReq.rentalFee) || 0,
+          paymentStatus: r.payReq.paymentStatus ?? null, paymentId: r.payReq.paymentId ?? null, title: `Mekan kiralama · ${r.payReq.venueName || "Mekan"}`, when: [r.date, r.time !== "—" ? r.time : ""].filter(Boolean).join(" · "), side: "payer" }))
+        : h("span", { role: "cell", class: `${P}-c4` }, dkStatusBadge(r.st, { variant: "pill" })),
       h("div", { role: "cell", class: `${P}-c5` }, editBtn, msgButton(r.venueId, r.venue)));
     if (r.kind === "event") {
       row.addEventListener("click", (e) => { if (e.target.closest("button,a,input")) return; startEdit(r.id); });
@@ -620,6 +629,9 @@ export function orgEtkinliklerView(ctx) {
     const hIn = dkInput({ id: `${P}-c-time`, type: "time", value: prefill.time || "" });
     // 7) açıklama
     const descIn = dkTextarea({ id: `${P}-c-desc`, rows: 3, placeholder: "Açıklama..." });
+    // 8) mekan ücreti (isteğe bağlı; uygulama EventsScreen "MEKAN ÜCRETİ (₺) · İSTEĞE BAĞLI") — rakam, en çok 7 hane
+    const feeIn = dkInput({ id: `${P}-c-fee`, placeholder: "Ör. 10000", inputmode: "numeric", maxlength: 7, autocomplete: "off" });
+    feeIn.addEventListener("input", () => { feeIn.value = feeIn.value.replace(/\D/g, "").slice(0, 7); });
 
     const lbl = (text, forId, id) => h(forId ? "label" : "span", { class: "dk-lbl", for: forId || null, id: id || null }, text);
     const body = h("div", { class: `${P}-form` },
@@ -633,6 +645,8 @@ export function orgEtkinliklerView(ctx) {
         h("div", { class: `${P}-fld` }, lbl("ETKİNLİK TARİHİ *", dIn.id), dIn),
         h("div", { class: `${P}-fld` }, lbl("SAAT", hIn.id), hIn)),
       h("div", { class: `${P}-fld` }, lbl("AÇIKLAMA", descIn.id), descIn),
+      h("div", { class: `${P}-fld` }, lbl("MEKAN ÜCRETİ (₺) · İSTEĞE BAĞLI", feeIn.id), feeIn,
+        h("span", { class: `${P}-help` }, "Mekan kabul ederse ödemeyi Ödemeler sayfasından yaparsın; para etkinlik sonrasına kadar emanette tutulur.")),
       h("div", { class: `${P}-callout` }, ico("info", 16, { color: "#4ED8FF" }),
         h("span", {}, "Aynı ad, mekan, tarih ve saatle bekleyen veya kabul edilmiş bir istek varsa yeni istek gönderilmez.")));
 
@@ -752,7 +766,7 @@ export function orgEtkinliklerView(ctx) {
 
     async function submit() {
       if (busy) return;
-      const f = { title: tIn.value.trim(), date: dIn.value.trim(), time: hIn.value.trim(), description: (descIn.input || descIn).value.trim() };
+      const f = { title: tIn.value.trim(), date: dIn.value.trim(), time: hIn.value.trim(), description: (descIn.input || descIn).value.trim(), rentalFee: feeIn.value.trim() };
       if (!f.title) { setErr("Etkinlik adı gir"); tIn.focus(); return; }
       if (!venueSel) { setErr("Mekan seç"); venueBtn.focus(); return; }
       if (!f.date) { setErr("Etkinlik tarihi seç"); dIn.focus(); return; }
@@ -891,11 +905,14 @@ export function orgEtkinliklerView(ctx) {
     const eD = dkTextarea({ id: `${P}-e-desc`, rows: 4, value: ev.description || "", placeholder: "Etkinlik hakkında kısa bilgi...", attrs: lock ? { disabled: "" } : {} });
     const lbl = (text, forId) => h("label", { class: "dk-lbl", for: forId }, text);
     const delBtn = isOwner ? dkButton("Etkinliği Sil", { variant: "danger-outline", size: 40, icon: ico("trash", 15, { color: "#FF5A6E" }), cls: `${P}-del`, onClick: () => askDelete() }) : null;
+    // ÖDEMELER (uygulama organizer/EditEventScreen EventPaymentsPanel): bu etkinliğe bağlı kabul edilmiş ücretli davet / mekan isteği
+    const payPanel = eventPaymentsPanel({ role: "organizer", uid, eventId: ev.id });
     const body = h("div", { class: `${P}-form` },
       approve, lockBanner, startedBanner, coverEl, dateRow, ownerLink,
       h("div", { class: `${P}-fld` }, lbl("ETKİNLİK ADI *", eT.id), eT),
       h("div", { class: `${P}-fld` }, lbl("MEKAN", eV.id), eV),
       h("div", { class: `${P}-fld` }, lbl("AÇIKLAMA", eD.id), eD),
+      payPanel.node,
       delBtn);
 
     const errEl = h("span", { role: "alert", class: `${P}-err` });
@@ -981,7 +998,7 @@ export function orgEtkinliklerView(ctx) {
       finally { reqBusy = false; if (primary?.isConnected) primary.dk.setBusy(false); }
     }
 
-    const rec = { kind: "edit", id: ev.id, izin: izin || null };
+    const rec = { kind: "edit", id: ev.id, izin: izin || null, cleanup: () => payPanel.destroy() };
     const d = dkDrawer({
       eyebrow: "ETKİNLİĞİ DÜZENLE", title: ev.title || "Etkinlik", body, footer: [errEl, closeBtn, primary].filter(Boolean), cls: `${P}-drw`,
       onClose: (reason) => afterClose(rec, reason),

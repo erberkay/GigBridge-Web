@@ -10,6 +10,7 @@ import {
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, ROLE } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
+import { paymentNotifHref } from "../desktop/shared/pay-util.js";
 
 const C = ROLE.organizer; // #F43F5E
 const NAV = [
@@ -19,7 +20,7 @@ const NAV = [
   { key: "mesaj", label: "Mesajlar", icon: "chatbubbles-outline", href: "#/organizer/mesaj" },
   { key: "profil", label: "Profil", icon: "person-outline", href: "#/organizer/profil" },
 ];
-const TITLES = { home: "Ana Sayfa", etkinlik: "Etkinlikler", mekan: "Mekan Seç", mesaj: "Mesajlar", profil: "Profil", ekip: "Ekip", bildirim: "Bildirimler" };
+const TITLES = { odemeler: "Ödemeler", home: "Ana Sayfa", etkinlik: "Etkinlikler", mekan: "Mekan Seç", mesaj: "Mesajlar", profil: "Profil", ekip: "Ekip", bildirim: "Bildirimler" };
 const GRADS = [["#A855F7", "#7C3AED"], ["#F59E0B", "#B45309"], ["#10B981", "#059669"], ["#3B82F6", "#1D4ED8"], ["#F43F5E", "#BE123C"], ["#06B6D4", "#0891B2"]];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TRX = { "ı": "i", "İ": "i", "ş": "s", "Ş": "s", "ç": "c", "Ç": "c", "ğ": "g", "Ğ": "g", "ö": "o", "Ö": "o", "ü": "u", "Ü": "u", "â": "a", "î": "i", "û": "u" };
@@ -49,7 +50,7 @@ export function organizerPage() {
   return page;
 }
 
-function tabFromHash() { const p = (location.hash || "").split("/"); return p[2] || "home"; }
+function tabFromHash() { const p = (location.hash || "").split("?")[0].split("/"); return p[2] || "home"; }
 
 export async function renderTab(tab, root) {
   if (tab === "profil") return renderProfile(root);
@@ -59,6 +60,7 @@ export async function renderTab(tab, root) {
   if (tab === "bildirim") return renderNotifs(root);
   if (tab === "mekan") return renderVenues(root);
   if (tab === "mesaj") { clear(root); return messagesView(root, C); }
+  if (tab === "odemeler") { const m = await import("./payments-mobile.js"); return m.renderPaymentsMobile(root, "organizer"); }
   clear(root);
   root.append(empty("construct-outline", "Yakında", "Bu bölüm bir sonraki güncellemede web'e geliyor."));
 }
@@ -657,6 +659,8 @@ function renderNotifs(root) {
 function notifRow(n) {
   return h("div", { class: "notif" + (n.read ? "" : " unread"), style: { cursor: "pointer" }, onclick: async () => {
     markNotifRead(n.id);
+    const pay = paymentNotifHref(n, "organizer");   // ödeme bildirimleri → Ödemeler
+    if (pay) { location.hash = pay; return; }
     if ((n.type === "edit_request" || n.type === "edit_approved") && n.eventId) {
       try {
         const ev = await eventById(n.eventId);
@@ -759,6 +763,7 @@ async function renderProfile(root) {
   const menu = h("div", { class: "menu-card" },
     profMenuRow("people-outline", "Ekip", () => { location.hash = "#/organizer/ekip"; }),
     profMenuRow("notifications-outline", "Bildirimler", () => { location.hash = "#/organizer/bildirim"; }),
+    profMenuRow("wallet-outline", "Ödemeler", () => { location.hash = "#/organizer/odemeler"; }),
     profMenuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal()),
     profMenuRow("key-outline", "Şifre Değiştir", () => changePasswordModal()),
     profMenuRow("trash-outline", "Hesabımı Sil", () => deleteAccountModal(), true),

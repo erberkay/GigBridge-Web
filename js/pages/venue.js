@@ -41,7 +41,7 @@ const NAV = [
   { key: "mesaj", label: "Mesajlar", icon: "chatbubbles-outline", href: "#/venue/mesaj" },
   { key: "profil", label: "Profil", icon: "person-outline", href: "#/venue/profil" },
 ];
-const TITLES = { home: "Mekan Paneli", olustur: "Etkinlik Oluştur", sanatci: "Sanatçı Bul", analitik: "Analitik", mesaj: "Mesajlar", profil: "Profil", takip: "Takip Ettiğim Sanatçılar", performans: "Sahne Performansı", degerlendir: "Sanatçı Değerlendir" };
+const TITLES = { odemeler: "Ödemeler", home: "Mekan Paneli", olustur: "Etkinlik Oluştur", sanatci: "Sanatçı Bul", analitik: "Analitik", mesaj: "Mesajlar", profil: "Profil", takip: "Takip Ettiğim Sanatçılar", performans: "Sahne Performansı", degerlendir: "Sanatçı Değerlendir" };
 const GENRE_FILTERS = ["Tümü", "Electronic", "Jazz", "Pop", "Rock", "Akustik", "Hip-Hop"];
 
 // App genreColors haritası (VenueHome tür etiketi gradyanları)
@@ -119,6 +119,7 @@ export function venuePage() {
     bottomnav(NAV, tab, AMBER));
   if (tab === "profil") renderProfile(content);
   else if (tab === "mesaj") { clear(content); messagesView(content, AMBER); }
+  else if (tab === "odemeler") import("./payments-mobile.js").then((m) => m.renderPaymentsMobile(content, "venue")).catch(() => { clear(content); content.append(empty("cloud-offline-outline", "Yüklenemedi", "Bağlantıyı kontrol edip yenile.")); });
   else { clear(content); content.append(empty("construct-outline", "Yakında", "Bu bölüm bir sonraki güncellemede web'e geliyor.")); }
   return page;
 }
@@ -548,7 +549,8 @@ export async function renderProfile(root) {
     sect("Sanatçılar", "mic-outline", 0,
       h("div", { class: "menu-card" },
         pMenuRow("eye-outline", "Takip Ettiğim Sanatçılar", "#/venue/takip"),
-        pMenuRow("star-outline", "Sanatçı Değerlendir", "#/venue/degerlendir"))),
+        pMenuRow("star-outline", "Sanatçı Değerlendir", "#/venue/degerlendir"),
+        pMenuRow("wallet-outline", "Ödemeler", "#/venue/odemeler"))),
     sect("Hesap", "settings-outline", 0,
       h("div", { class: "menu-card" },
         pMenuRow("mail-outline", "E-posta Değiştir", () => changeEmailModal()),
