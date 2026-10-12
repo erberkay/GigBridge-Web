@@ -2,7 +2,7 @@
 // + Takip/Favoriler/Katıldıklarım/Yorumlarım/Bildirimler. App backend'iyle birebir.
 import { session, logout, refreshProfile } from "../store.js";
 import {
-  discoverEvents, eventById, userById, listRealArtists, listVenues, saveProfile, uploadImage,
+  discoverEvents, eventById, userById, listRealArtists, listVenues, listDirectoryGroups, servesCity, saveProfile, uploadImage,
   isAttending, attendEvent, unattendEvent, attendedEvents, eventAttendees,
   isFollowing, followArtist, unfollowArtist, followingList, artistFollowerCount, venueTimeline,
   isFavVenue, favVenue, unfavVenue, favVenues, isFavEvent, favEvent, unfavEvent, favEvents,
@@ -425,24 +425,27 @@ function mkFollowBtn(a, fx, cls) {
   paint();
   return b;
 }
+// Grup (data.listDirectoryGroups: isGroup + groupHref): web'de grup sayfası yok → grubu kuran sanatçının sayfası; takip düğmesi yok
+const mkAHref = (a) => (a.isGroup ? a.groupHref || "#/kesfet" : "#/sanatci/" + a.id);
+const mkGroupMeta = (a) => "GRUP · " + (a.genres?.[0] ? mkGenreUp(a.genres[0]) + " · " : "") + (Number(a.memberCount) || 0) + " ÜYE";
 // Popüler Sanatçılar kartı (138px)
 function mkArtistCard(a, fx) {
   return h("div", { class: "mk-acard" },
-    h("a", { class: "mk-acard-link", href: "#/sanatci/" + a.id },
+    h("a", { class: "mk-acard-link", href: mkAHref(a) },
       mkAvatar(a, "mk-aphoto"),
       h("span", { class: "mk-acard-name" }, mkAName(a)),
-      h("span", { class: "mk-acard-meta" }, mkGenreUp(mkAGenre(a)) + " · " + H.kFmt(a.followerCount ?? 0))),
-    mkFollowBtn(a, fx, "mk-follow mk-follow-card"));
+      h("span", { class: "mk-acard-meta" }, a.isGroup ? mkGroupMeta(a) : mkGenreUp(mkAGenre(a)) + " · " + H.kFmt(a.followerCount ?? 0))),
+    a.isGroup ? null : mkFollowBtn(a, fx, "mk-follow mk-follow-card"));
 }
 // SANATÇILAR sekmesi / arama sonucu satırı
 function mkArtistRow(a, fx) {
   return h("div", { class: "mk-arow" },
-    h("a", { class: "mk-arow-link", href: "#/sanatci/" + a.id },
+    h("a", { class: "mk-arow-link", href: mkAHref(a) },
       mkAvatar(a, "mk-arow-photo"),
       h("span", { class: "mk-arow-text" },
         h("span", { class: "mk-arow-name" }, mkAName(a)),
-        h("span", { class: "mk-arow-meta" }, mkGenreUp(mkAGenre(a)) + " · " + H.kFmt(a.followerCount ?? 0) + " TAKİPÇİ"))),
-    mkFollowBtn(a, fx, "mk-follow mk-follow-row"));
+        h("span", { class: "mk-arow-meta" }, a.isGroup ? mkGroupMeta(a) : mkGenreUp(mkAGenre(a)) + " · " + H.kFmt(a.followerCount ?? 0) + " TAKİPÇİ"))),
+    a.isGroup ? null : mkFollowBtn(a, fx, "mk-follow mk-follow-row"));
 }
 
 // URL sorgusu — masaüstü WebKesfet ile aynı anahtarlar/slug'lar (kategori, sehir, tur, q): paylaşılan bağlantı telefonda da
@@ -778,7 +781,9 @@ async function renderKesfet(ui) {
 
   // ── Veri (legacy ile aynı 3 okuma + takip listesi) ──
   try {
-    [events, artists, venues] = await Promise.all([discoverEvents(), listRealArtists(), listVenues()]);
+    let groups;
+    [events, artists, venues, groups] = await Promise.all([discoverEvents(), listRealArtists(), listVenues(), listDirectoryGroups().catch(() => [])]);
+    artists = [...artists, ...groups]; // sanatçı grupları da sanatçı olarak listelenir/aranır (app HomeScreen ile aynı)
     if (authed()) { try { fx.followSet = new Set((await followingList(uid())).map((f) => f.artistId || f.id)); } catch (_) {} }
   } catch (e) {
     if (life.dead) return;
@@ -810,8 +815,9 @@ async function renderKesfet(ui) {
     heroStop?.(); heroStop = null;
     clear(body);
     const cityEvents = events.filter(inCity).filter(mg);
-    const fArtists = artists.filter(mg).sort(mkByPop);
-    const fVenues = venues.filter(mg);
+    // Şehir: sanatçı city | serviceCities, grup/mekan city (Türkçe katlamalı — data.servesCity); etkinlik davranışı aynı
+    const fArtists = artists.filter((a) => mg(a) && servesCity(a, activeCity)).sort(mkByPop);
+    const fVenues = venues.filter((v) => mg(v) && servesCity({ city: v.city || v.location?.city }, activeCity));
     const q = fold(term.trim());
     let view;
     if (q) view = searchView(cityEvents, fArtists, fVenues, q);
@@ -838,11 +844,15 @@ async function renderKesfet(ui) {
       vns.length ? grp("MEKANLAR", vns.length, h("div", { class: "mk-erows" }, ...vns.map(mkVenueRow))) : null);
   }
   function venuesView(list) {
-    if (!list.length) return h("div", { class: "mk-pad" }, mkEmpty(svgIcon("building", { size: 30, sw: "1.5" }), "Henüz mekan yok", "Mekanlar katıldıkça burada listelenecek."));
+    if (!list.length) return h("div", { class: "mk-pad" }, activeCity === "TÜMÜ"
+      ? mkEmpty(svgIcon("building", { size: 30, sw: "1.5" }), "Henüz mekan yok", "Mekanlar katıldıkça burada listelenecek.")
+      : mkEmpty(svgIcon("building", { size: 30, sw: "1.5" }), `${activeCity} için mekan yok`, "Başka bir şehir seç ya da tüm şehirlere bak."));
     return h("div", { class: "mk-vlist", "aria-label": "Mekanlar" }, ...list.map(mkVenueCard));
   }
   function artistsView(list) {
-    if (!list.length) return h("div", { class: "mk-pad" }, mkEmpty(svgIcon("mic", { size: 30, sw: "1.5" }), "Henüz sanatçı yok", "Sanatçılar katıldıkça burada görünecek."));
+    if (!list.length) return h("div", { class: "mk-pad" }, activeCity === "TÜMÜ"
+      ? mkEmpty(svgIcon("mic", { size: 30, sw: "1.5" }), "Henüz sanatçı yok", "Sanatçılar katıldıkça burada görünecek.")
+      : mkEmpty(svgIcon("mic", { size: 30, sw: "1.5" }), `${activeCity} için sanatçı yok`, "Başka bir şehir seç ya da tüm şehirlere bak."));
     return h("div", { class: "mk-alist", "aria-label": "Sanatçılar" }, ...list.map((a) => mkArtistRow(a, fx)));
   }
   // ETKİNLİKLER: tarih şeridi (TÜMÜ / BU HAFTA / BU AY + 14 gün; app EventsScreen/HomeScreen ile aynı süzgeç) + satırlar
@@ -1140,7 +1150,7 @@ async function eventDetail(id, root) {
   const hero = h("div", { class: "ed-hero", style: ev.bannerUrl ? { backgroundImage: `url(${ev.bannerUrl})` } : null },
     h("div", { class: "ed-tint" }), h("div", { class: "ed-scrim" }),
     h("div", { class: "ed-hero-top" },
-      h("button", { class: "ed-iconbtn", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "rgba(255,255,255,0.8)" })),
+      h("button", { class: "ed-iconbtn", "aria-label": "Geri", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "rgba(255,255,255,0.8)" })),
       heart),
     h("div", { class: "ed-hero-body" },
       (ev.vipStatus === "approved" || ev.isVip) ? h("span", { class: "ed-vip" }, icon("sparkles", { size: 12, color: "#fff" }), "VIP DENEYİM") : null,
@@ -1160,7 +1170,7 @@ async function eventDetail(id, root) {
     h("div", { class: "ed-stat", style: { background: "linear-gradient(135deg,#1E1040,#2D1B69)" } },
       icon("people", { size: 16, color: "#A78BFA" }), statVal, h("div", { class: "ed-stat-lbl" }, "Katılımcı")),
     h("div", { class: "ed-stat", style: { background: "linear-gradient(135deg,#F59E0BCC,#D97706CC)" } },
-      icon("ticket-outline", { size: 16, color: "#fff" }), h("div", { class: "ed-stat-val w" }, ev.ticketPrice ? fmtTL(ev.ticketPrice) : "Ücretsiz"), h("div", { class: "ed-stat-lbl w" }, "Bilet")),
+      icon("ticket-outline", { size: 16, color: "#fff" }), h("div", { class: "ed-stat-val w" }, ev.ticketPrice ? fmtTL(ev.ticketPrice) : "Ücretsiz"), h("div", { class: "ed-stat-lbl w" }, "Giriş")),
     h("div", { class: "ed-stat", style: { background: hot ? "linear-gradient(135deg,#1A2E1A,#0F3D1F)" : "linear-gradient(135deg,#1E1040,#2D1B69)" } },
       icon(hot ? "flame" : "sparkles", { size: 16, color: hot ? "#10B981" : "#A78BFA" }), h("div", { class: "ed-stat-val", style: hot ? { color: "#10B981" } : null }, hot ? "Sıcak" : "Yeni"), h("div", { class: "ed-stat-lbl" }, "Durum")));
 
@@ -1224,7 +1234,7 @@ async function eventDetail(id, root) {
     joinBtn.disabled = false;
   };
   const footer = h("div", { class: "ed-footer" },
-    h("div", { class: "grow" }, h("div", { class: "ed-price-lbl" }, "Bilet Fiyatı"), h("div", { class: "ed-price" }, ev.ticketPrice ? fmtTL(ev.ticketPrice) : "Ücretsiz")),
+    h("div", { class: "grow" }, h("div", { class: "ed-price-lbl" }, "Giriş Ücreti"), h("div", { class: "ed-price" }, ev.ticketPrice ? fmtTL(ev.ticketPrice) : "Ücretsiz")),
     joinBtn);
 
   root.append(hero, stats,
@@ -1269,7 +1279,7 @@ function attendeesPage(id) {
     };
     content.append(
       h("div", { class: "at-head" },
-        h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
+        h("button", { class: "ed-iconbtn dark", "aria-label": "Geri", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
         h("h1", { class: "at-title" }, "Katılımcılar"),
         h("div", { class: "at-sub" }, `${ev?.title || "Etkinlik"} • ${list.length} kişi`)),
       h("div", { class: "at-search" }, icon("search-outline", { size: 16, color: "var(--text-muted)" }), sInput),
@@ -1377,7 +1387,7 @@ async function artistDetail(id, root) {
   root.append(
     h("div", { class: "pd-hero pd-artist" + (a.bannerUrl ? " has-banner" : ""), style: a.accentColor ? { "--accent": a.accentColor } : null },
       a.bannerUrl ? h("div", { class: "pd-banner", style: { backgroundImage: `url(${a.bannerUrl})` } }) : null,
-      h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
+      h("button", { class: "ed-iconbtn dark", "aria-label": "Geri", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "pd-center" },
         a.photoURL ? h("div", { class: "pd-av round zoomable", style: { backgroundImage: `url(${a.photoURL})` }, title: "Büyüt", onclick: () => lightbox(a.photoURL) }) : h("div", { class: "pd-av round" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
         h("h1", { class: "pd-name" }, name),
@@ -1471,7 +1481,7 @@ async function venueDetail(id, root) {
 
   root.append(
     h("div", { class: "pd-hero pd-venue" },
-      h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
+      h("button", { class: "ed-iconbtn dark", "aria-label": "Geri", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "pd-center" },
         v.photoURL ? h("div", { class: "pd-av sq zoomable", style: { backgroundImage: `url(${v.photoURL})` }, title: "Büyüt", onclick: () => lightbox(v.photoURL) }) : h("div", { class: "pd-av sq" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
         h("h1", { class: "pd-name" }, name),
@@ -1771,6 +1781,16 @@ function renderAkis(root) {
     let list = posts;
     if (feedSrc === "takip") list = posts.filter((p) => p.authorId === uid() || followIds.has(p.authorId));
     else list = posts.filter((p) => myCity() && fold(p.authorCity) === fold(myCity()));
+    if (!list.length && feedSrc === "takip" && !authed()) {
+      // Misafir: Takip akışı hesap gerektirir → giriş / kayıt (Profil misafir ekranıyla aynı düğmeler)
+      listWrap.append(h("div", { class: "tl-empty" },
+        h("div", { class: "tl-empty-ic" }, icon("newspaper-outline", { size: 32, color: "var(--primary)" })),
+        h("div", { class: "tl-empty-title" }, "Takip akışı için giriş yap"),
+        h("div", { class: "tl-empty-sub" }, "Takip ettiğin sanatçıların paylaşımlarını görmek için giriş yap ya da ücretsiz hesap oluştur.")),
+        h("div", { class: "cta-row" }, btn("Giriş Yap", { ic: "log-in-outline", full: true, color: C, onClick: () => loginModal() })),
+        h("div", { class: "cta-row" }, btn("Yeni Hesap Oluştur", { variant: "ghost", ic: "person-add-outline", full: true, onClick: () => go("#/register") })));
+      return;
+    }
     if (!list.length) {
       listWrap.append(h("div", { class: "tl-empty" },
         h("div", { class: "tl-empty-ic" }, icon("newspaper-outline", { size: 32, color: "var(--primary)" })),
@@ -1971,7 +1991,7 @@ async function renderHarita(root) {
       cardBox.append(
         h("div", { class: "mp-card-top" },
           g ? h("span", { class: "mp-genre" }, g) : h("span", {}),
-          h("button", { class: "mp-close", onclick: () => { cardBox.style.display = "none"; } }, icon("close", { size: 14, color: "var(--text-muted)" }))),
+          h("button", { class: "mp-close", "aria-label": "Kapat", onclick: () => { cardBox.style.display = "none"; } }, icon("close", { size: 14, color: "var(--text-muted)" }))),
         h("div", { class: "mp-card-body" },
           h("div", { class: "grow" },
             h("div", { class: "mp-card-title" }, e.title || "Etkinlik"),
@@ -2319,7 +2339,7 @@ function detailShell(title, loader, id) {
   const page = dtlWrap(
     h("div", { class: "dsh-wrap" },
       h("div", { class: "dsh-head" },
-        h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "rgba(255,255,255,0.8)" })),
+        h("button", { class: "ed-iconbtn dark", "aria-label": "Geri", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "rgba(255,255,255,0.8)" })),
         h("h1", { class: "dsh-title" }, title),
         subEl),
       content));

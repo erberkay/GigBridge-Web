@@ -73,7 +73,7 @@ const FEATS = [
 // artboard'un "rock" görseli (Mekan) kaldırıldı → sahnede vokalist (mekan sahnesi) kullanılıyor.
 const ROLES = [
   { id: "customer", name: "Dinleyici", short: "Keşfet, katıl, takip et", c: "#4ED8FF", eyebrow: "DİNLEYİCİLER İÇİN", title: "Şehrin sahnesi, senin takviminde.", cta: "Dinleyici olarak katıl", img: IMG.jazzClub, pos: "50% 50%",
-    bullets: ["Etkinlikleri tarihe, türe ve şehre göre keşfet", "Etkinliğe katıl; biletin QR kod olarak Biletlerim'de", "Sanatçıları takip et, mekan ve etkinlikleri favorile", "Akış'ta katıldığın etkinlikler hakkında paylaş", "Sanatçı ve mekanlara puan ver, yorum yaz"] },
+    bullets: ["Etkinlikleri tarihe, türe ve şehre göre keşfet", "Etkinliğe ücretsiz katıl; QR katılım kaydın Biletlerim'de", "Sanatçıları takip et, mekan ve etkinlikleri favorile", "Akış'ta katıldığın etkinlikler hakkında paylaş", "Sanatçı ve mekanlara puan ver, yorum yaz"] },
   { id: "artist", name: "Sanatçı", short: "Profil, teklif, sahne", c: "#FF4FA3", eyebrow: "SANATÇILAR İÇİN", title: "Sahne bul, teklif al, dinleyicini büyüt.", cta: "Sanatçı olarak katıl", img: IMG.guitarist, pos: "57% 20%",
     bullets: ["Portföyünü, paketlerini ve fiyatlarını tek profilde topla", "Mekanlardan teklif al, mesajlarla anlaş", "Top 10 sıralamasında yerini gör", "Çaldığın mekanları değerlendir"] },
   { id: "venue", name: "Mekan", short: "Etkinlik yayınla, sanatçı bul", c: "#FF8A2A", eyebrow: "MEKANLAR İÇİN", title: "Sahnene uygun sanatçıyı dakikalar içinde bul.", cta: "Mekan olarak katıl", img: IMG.vocalist, pos: "55% 50%",
@@ -257,9 +257,9 @@ export function landingView(ctx) {
         h("div", { class: "dk-landing-app-text" },
           appEb,
           h("h2", { id: "dk-landing-h-app", class: "dk-landing-h2 dk-landing-h2-44" }, "GigBridge ", h("em", {}, "cebinde.")),
-          h("p", { class: "dk-landing-app-p" }, "QR biletin, takip ettiğin sanatçıların yeni etkinlik bildirimleri ve yakınındaki sahneler. Kapıda girişini uygulamayla doğrula.")),
+          h("p", { class: "dk-landing-app-p" }, "Ücretsiz QR katılım kaydın, takip ettiğin sanatçıların yeni etkinlik bildirimleri ve yakınındaki sahneler. Kapıda girişini uygulamayla doğrula.")),
         h("div", { class: "dk-landing-stores" },
-          // App Store kimliği yok → /indir/ (cihaz algılayan indirme sayfası); Google Play → mağaza (yeni sekme)
+          // App Store + Google Play → mağaza (yeni sekme); kimlik yoksa /indir/ (assets.appStoreHref)
           store(/^https?:/.test(appStore) ? appStore : relHref(appStore), P.phone, "App Store", /^https?:/.test(appStore)),
           store(play, P.play, "Google Play", /^https?:/.test(play))))));
 

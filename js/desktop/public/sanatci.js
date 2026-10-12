@@ -23,7 +23,7 @@
 //   sosyal liste, sıradaki etkinlik kartı, puan özeti, "Tüm yorumları gör".
 // Yazımlar legacy ile birebir (data.js işlevleri): following/followers (+ new_follower bildirimi, fromUserId = auth uid), reviews/{uid}_{id},
 //   conversations (+ messages). Arka uç bağımlı parça yok; etkinlik sorgusu başarısızsa Etkinlikler bölümü + sıradaki kartı gizlenir.
-import { h, soundEmbedInfo } from "../../ui.js";
+import { h, soundEmbedInfo, fmtMoneyText, fmtDurText, fmtPriceRange } from "../../ui.js";
 import { session } from "../../store.js";
 import {
   userById, artistReviews, isFollowing, artistFollowerCount, eventsByArtist, followArtist, unfollowArtist,
@@ -108,7 +108,7 @@ const residentVenueName = (p) => String(p.residentVenue || p.residencyVenue || "
 const AVAIL = { open: ["Rezervasyona açık", "#7CE0B0", "checkCircle"], limited: ["Sınırlı müsaitlik", "#FF8A2A", "clock"], busy: ["Şu an dolu", "#8A8E97", "lock"] };
 const EQ = { yes: "Ekipmanı getiriyor", no: "Ekipman mekandan", partial: "Kısmen getiriyor" };
 const CANCEL = { flexible: ["Esnek İptal", "#7CE0B0"], moderate: ["Orta İptal", "#FF8A2A"], strict: ["Katı İptal", "#FF5A6E"] };
-const moneyText = (v) => { const s = String(v ?? "").trim(); return s ? (/^[\d.]/.test(s) ? "₺" + s : s) : null; };   // rateCardBlock/addOnsBlock
+const moneyText = (v) => fmtMoneyText(v) || null;   // rateCardBlock/addOnsBlock — "7500"/"7000₺" → "₺7.500" (app formatMoneyText)
 function socialUrl(key, val) {
   const s = String(val || "").trim(); if (!s) return null;
   if (/^https?:\/\//i.test(s)) return s;
@@ -715,12 +715,14 @@ export function sanatciView(ctx) {
         const all = [...new Set([a.city, ...svc].filter(Boolean))];
         info.push(infoCard("HİZMET BÖLGESİ",
           all.length ? h("div", { class: "dk-sanatci-detay-ichips" }, ...all.map((c) => infoChip(c, "#4ED8FF"))) : null,
-          travel ? h("span", { class: "dk-sanatci-detay-travel" }, ico("car", 15, "1.9"), travel) : null));
+          travel ? h("span", { class: "dk-sanatci-detay-travel" }, ico("car", 15, "1.9"), "Şehir dışı yol ücreti: " + fmtMoneyText(travel)) : null));
       }
       const rider = [];
       if (a.equipmentBrings && EQ[a.equipmentBrings]) rider.push(["Ekipman", EQ[a.equipmentBrings]]);
-      if (String(a.minDuration || "").trim()) rider.push(["Min. Süre", a.minDuration]);
-      if (String(a.setupTime || "").trim()) rider.push(["Kurulum Süresi", a.setupTime]);
+      // Yalnız sayı girilmişse birim (app ile aynı alanlar): "1" → "1 saat", "30" → "30 dk"
+      if (String(a.minDuration || "").trim()) rider.push(["Min. Süre", fmtDurText(a.minDuration, "saat")]);
+      if (String(a.setupTime || "").trim()) rider.push(["Kurulum Süresi", fmtDurText(a.setupTime, "dk")]);
+      if (fmtPriceRange(a)) rider.push(["Performans Ücreti", fmtPriceRange(a)]);
       if (rider.length) info.push(infoCard("KURULUM & DETAYLAR", ...rider.map(([k, v]) => kvRow(k, v)), { kv: true }));
       const langs = (Array.isArray(a.languages) ? a.languages : []).filter(Boolean);
       const mc = !!a.mcAbility;
@@ -867,7 +869,7 @@ export function sanatciView(ctx) {
       h("span", { class: "dk-sanatci-detay-next-body" },
         h("span", { class: "dk-sanatci-detay-next-k" }, nextKicker(eventStartMs(nx), nxLive)),
         h("span", { class: "dk-sanatci-detay-next-t" }, evTitle(nx)),
-        h("span", { class: "dk-sanatci-detay-next-row" }, h("span", { class: "dk-sanatci-detay-next-v" }, nx.venueName || ""), h("span", { class: "dk-sanatci-detay-next-cta" }, "Bilet al →")))) : null;
+        h("span", { class: "dk-sanatci-detay-next-row" }, h("span", { class: "dk-sanatci-detay-next-v" }, nx.venueName || ""), h("span", { class: "dk-sanatci-detay-next-cta" }, "Katıl →")))) : null;
 
     const aside = h("aside", { class: "dk-sanatci-detay-aside", "aria-label": "Sanatçı özeti" }, summaryCard, socialCard, nextCard);
     const main = h("div", { class: "dk-sanatci-detay-left" }, ...sections.map((s) => s.node));

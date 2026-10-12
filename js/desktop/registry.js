@@ -139,13 +139,35 @@ export const routeByKey = (key) => DESKTOP_ROUTES.find((r) => r.key === key) || 
 // hedef görünüm NOT_READY iken bağlantı çıkmaz (legacy politika panel rollerini herkese açık sayfadan panele geri atar).
 const _mods = new Map();   // r.mod → Promise<module>
 const _ready = new Map();  // r.mod → boolean
+// Dinamik içe aktarım dayanıklılığı: tarayıcı başarısız ES modül içe aktarımını sayfa ömrü boyunca önbelleğe alır (aynı URL tekrar
+// istenmez → "Tekrar dene" de düşer). İlk hata → bir kez önbellek kıran sorguyla (?r=) yeniden dene; o da düşerse çağıran (app.js)
+// bir kez sayfayı yeniler (modül haritası sıfırlanır), ancak ondan sonra legacy görünüme düşer.
+export function importFresh(path) {
+  return import(path).catch((e) => {
+    console.warn("[modül] yeniden deneniyor:", path, e?.message || e);
+    return import(path + (path.includes("?") ? "&" : "?") + "r=" + Date.now());
+  });
+}
 export function loadRouteModule(r) {
   if (!_mods.has(r.mod)) {
-    const p = import("./" + r.mod).then((m) => { _ready.set(r.mod, moduleReady(r, m)); return m; });
+    const p = importFresh("./" + r.mod).then((m) => { _ready.set(r.mod, moduleReady(r, m)); return m; });
     p.catch(() => _mods.delete(r.mod));
     _mods.set(r.mod, p);
   }
   return _mods.get(r.mod);
+}
+// Modül indirme hatası mı (Chrome / Firefox / Safari iletileri) — sözdizimi/çalışma hatası DEĞİL
+export const isModuleFetchError = (e) => /dynamically imported module|Importing a module script failed|error loading dynamically imported module|Failed to fetch/i.test(String(e?.message || e || ""));
+// Sayfa ömrü boyunca sürmüş modül indirme hatası → bir kez tam yenile (5 dk içinde tekrar yok; çevrimdışıysa yenileme yok).
+export function reloadOnceForModuleError(e) {
+  if (!isModuleFetchError(e) || navigator.onLine === false) return false;
+  try {
+    const last = Number(sessionStorage.getItem("gb_modreload")) || 0;
+    if (Date.now() - last < 5 * 60e3) return false;
+    sessionStorage.setItem("gb_modreload", String(Date.now()));
+  } catch { return false; }   // sessionStorage yoksa döngü riskine girme
+  location.reload();
+  return true;
 }
 export const moduleReady = (r, m) => !!m && !m.NOT_READY && typeof m[r.fn] === "function";
 export const knownReady = (r) => _ready.get(r.mod);           // true | false | undefined

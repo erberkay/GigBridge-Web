@@ -216,7 +216,7 @@ export function login() {
   } }, "Şifremi unuttum");
   return h("main", { class: "au-wrap" },
     h("div", { class: "au-head" },
-      h("button", { class: "au-back", onclick: () => (location.hash = "#/") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
+      h("button", { class: "au-back", "aria-label": "Geri", onclick: () => (location.hash = "#/") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "au-logorow" },
         h("span", { class: "au-logo" }, icon("musical-notes", { size: 24, color: "#fff" })),
         h("span", { class: "au-appname" }, "GigBridge")),
@@ -360,7 +360,7 @@ export function register() {
 
   function draw() {
     clear(wrap);
-    const back = h("button", { class: "au-back", onclick: () => { if (step === 2) { step = 1; draw(); } else location.hash = "#/"; } },
+    const back = h("button", { class: "au-back", "aria-label": "Geri", onclick: () => { if (step === 2) { step = 1; draw(); } else location.hash = "#/"; } },
       icon("chevron-back", { size: 22, color: "var(--text-secondary)" }));
     const dots = h("div", { class: "au-steps" }, ...[1, 2].map((s) => h("span", { class: "au-dot" + (step >= s ? " on" : "") })));
 
@@ -791,7 +791,7 @@ export function agencyMobile() {
 // ── Desteklenmeyen rol ──
 export function unsupported() {
   return shell(hero("Bu panel için değil", null),
-    card(h("p", { class: "center muted" }, "Bu web paneli yalnızca mekan, organizatör ve yönetici hesapları içindir. Müşteri/sanatçı hesabıyla uygulamayı kullan."),
+    card(h("p", { class: "center muted" }, "Bu web paneli yalnızca mekan, organizatör ve yönetici hesapları içindir. Dinleyici/sanatçı hesabıyla uygulamayı kullan."),
       btn("Çıkış Yap", { variant: "ghost", ic: "log-out-outline", full: true, onClick: logout })));
 }
 

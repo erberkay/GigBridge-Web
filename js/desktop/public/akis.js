@@ -319,6 +319,12 @@ export function akisView(ctx) {
   }
   function emptyState() {
     const c = feedCity();
+    // Misafir: Takip akışı hesap gerektirir → "Profil > Takip Ettiklerim" yerine giriş / kayıt (sol raydaki AKIŞA KATIL ile aynı yollar)
+    if (src === "takip" && !authed) {
+      return h("div", { class: "dk-akis-empty" }, h("span", { class: "dk-akis-empty-t" }, "Takip akışı için giriş yap"),
+        h("span", { class: "dk-akis-empty-s" }, "Takip ettiğin sanatçıların paylaşımlarını görmek için ",
+          loginLink("dk-link", "giriş yap"), " ya da ", h("a", { href: "#/register", class: "dk-link" }, "ücretsiz hesap oluştur"), "."));
+    }
     const sub = src === "sehir"
       ? (c ? `${c} şehrinde henüz paylaşım yok.` : authed ? "Şehir akışı için profilinizde şehir bilgisi olmalı." : "Şehir akışı için üstten bir şehir seç.")
       : "Takip ettiğiniz kullanıcılar henüz paylaşım yapmamış. Profil > Takip Ettiklerim bölümünden kullanıcı takip edebilirsiniz.";

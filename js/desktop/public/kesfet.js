@@ -16,11 +16,12 @@
 // URL (paylaşılabilir, geri tuşu çalışır): #/kesfet?kategori=etkinlikler|mekanlar|sanatcilar&sehir=istanbul|tumu&tur=jazz|…&q=…
 //   kategori/sehir/tur → history.pushState (ayrık değişim) · q → replaceState (yazarken, gecikmeli) · update(query) geri/ileri'de uygular.
 //   sehir'siz kayıt → history.state.dkKesfetCity (geri/ileri) ya da güncel gb_city (bağlantı) — seçilen şehir sessizce sıfırlanmaz.
-// Veri (yeni sorgu YOK; legacy ile aynı üç okuma): discoverEvents(), listRealArtists(), listVenues() + girişliyse followingList(uid).
+// Veri: discoverEvents(), listRealArtists(), listVenues(), listDirectoryGroups() (gruplar sanatçı listesinde "GRUP" etiketiyle) + girişliyse
+//   followingList(uid). Şehir: etkinlik city; sanatçı city | serviceCities; grup/mekan city (data.servesCity). Arama: ad (Türkçe katlamalı).
 // Yazma: yalnız takip (legacy ile aynı followArtist/unfollowArtist → following + followers + new_follower bildirimi).
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
-import { discoverEvents, listRealArtists, listVenues, followingList, followArtist, unfollowArtist } from "../../data.js";
+import { discoverEvents, listRealArtists, listVenues, listDirectoryGroups, servesCity, followingList, followArtist, unfollowArtist } from "../../data.js";
 import { publicShell } from "../shared/public-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import {
@@ -301,8 +302,9 @@ export function kesfetView(ctx) {
     const ok = (gs) => !fk || matchesFamilies(gs, fk);
     const inCity = (e) => city === ALL_CITIES || sameCity(evCity(e), city);
     const cityEvents = data.events.filter((e) => inCity(e) && ok(eventGenres(e)));
-    const artists = data.artists.filter((a) => ok(artistGenres(a))).sort(byFollowers);
-    const venues = data.venues.filter((v) => ok(artistGenres(v))).sort(byRating);
+    // Sanatçı + grup: şehir = city VEYA serviceCities (Türkçe katlamalı; grupta yalnız city). Mekan: city (app ile aynı).
+    const artists = data.artists.filter((a) => ok(artistGenres(a)) && servesCity(a, city)).sort(byFollowers);
+    const venues = data.venues.filter((v) => ok(artistGenres(v)) && servesCity({ city: v.city || v.location?.city }, city)).sort(byRating);
     return { cityEvents, artists, venues };
   }
   // Şehir seçici sayıları (tüm etkinlikler; TÜMÜ = toplam — artboard DCLogic ile aynı)
@@ -424,11 +426,14 @@ export function kesfetView(ctx) {
   }
 
   // ── Özet (kategori çubuğunun sağı) ──
-  function paintSummary(d) {
+  function paintSummary(d, res) {
     if (!d) { summary.textContent = ""; return; }
-    summary.textContent = cat === "mekanlar" ? `${d.venues.length} MEKAN`
-      : cat === "sanatcilar" ? `${d.artists.length} SANATÇI`
-      : `${d.cityEvents.length} ETKİNLİK · ${cityUp(city)}`;
+    const at = city === ALL_CITIES ? "" : ` · ${cityUp(city)}`;
+    const n = res ? { ev: res.events.length, ar: res.artists.length, ve: res.venues.length } : { ev: d.cityEvents.length, ar: d.artists.length, ve: d.venues.length };
+    summary.textContent = cat === "mekanlar" ? `${n.ve} MEKAN${at}`
+      : cat === "sanatcilar" ? `${n.ar} SANATÇI${at}`
+      : cat === "etkinlikler" || !res ? `${n.ev} ETKİNLİK · ${cityUp(city)}`
+      : `${n.ev + n.ar + n.ve} SONUÇ${at}`;
   }
 
   // ── Top 10 izi ──
@@ -516,7 +521,7 @@ export function kesfetView(ctx) {
       return true;
     } catch (_) { dkToast("İşlem başarısız", { type: "err" }); return false; }
   }
-  const canFollow = (a) => a.id !== me() && canFollowRole();   // kendi kartında / mekan-organizatör-yöneticide düğme yok
+  const canFollow = (a) => !a.isGroup && a.id !== me() && canFollowRole();   // kendi kartında / grupta / mekan-organizatör-yöneticide düğme yok
   function artistCardEl(a) {
     const el = artistCard(a, { followed: followSet.has(a.id), onFollow: (next) => toggleFollow(a, next) });
     if (!canFollow(a)) el.querySelector(".dk-fol")?.remove();
@@ -548,12 +553,13 @@ export function kesfetView(ctx) {
       return;
     }
     const d = derive();
-    paintSummary(d);
+    const q = fold(term.trim());
+    const res = q ? searchResults(d, q) : null;
+    paintSummary(d, res);
     paintedCoords = lastCoords;
     t10 = null; ro?.disconnect();
-    const q = fold(term.trim());
     let content;
-    if (q) content = searchView(d, q);
+    if (res) content = searchView(res);
     else if (cat === "etkinlikler") content = eventsView(d);
     else if (cat === "mekanlar") content = venuesView(d);
     else if (cat === "sanatcilar") content = artistsView(d);
@@ -562,16 +568,32 @@ export function kesfetView(ctx) {
     swapAnim(body, "dk-sa", "dk-sb");
   }
 
-  // ── Arama sonuçları (başlık/mekan/sanatçı; şehir + tür süzgeçli — legacy ile aynı) ──
-  function searchView(d, q) {
-    const list = d.cityEvents.filter((e) => [e.title, e.venueName, e.artistName].some((x) => fold(x).includes(q)));
+  // ── Arama (Türkçe katlamalı ad araması; şehir + tür süzgeçli kümede; kategori sekmesi kapsamı belirler) ──
+  //   etkinlik: başlık/mekan/sanatçı adı · sanatçı + grup: ad/tür · mekan: ad/şehir (legacy mobil + app HomeScreen ile aynı alanlar)
+  function searchResults(d, q) {
+    const hit = (...xs) => xs.flat().some((x) => fold(x).includes(q));
+    const want = (k) => cat === "tumu" || cat === k;
+    return {
+      events: want("etkinlikler") ? d.cityEvents.filter((e) => hit(e.title, e.venueName, e.artistName)) : [],
+      artists: want("sanatcilar") ? d.artists.filter((a) => hit(a.displayName, artistGenres(a))) : [],
+      venues: want("mekanlar") ? d.venues.filter((v) => hit(v.displayName, v.name, v.city)) : [],
+    };
+  }
+  function searchView(res) {
+    const group = (label, n, grid) => h("div", { style: { display: "flex", flexDirection: "column", gap: "16px" } },
+      h("span", { class: "dk-eyebrow" }, `${label} · ${n}`), grid);
+    const blocks = [
+      res.events.length ? group("ETKİNLİKLER", res.events.length, h("div", { class: "dk-grid dk-grid-ev" }, ...res.events.map(overlay))) : null,
+      res.artists.length ? group("SANATÇILAR", res.artists.length, h("div", { class: "dk-kesfet-rows", style: { padding: "0" } }, ...res.artists.map(artistRowEl))) : null,
+      res.venues.length ? group("MEKANLAR", res.venues.length, h("div", { class: "dk-kesfet-g3" }, ...res.venues.map((v) => venueCard(v)))) : null,
+    ].filter(Boolean);
     return h("section", { class: "dk-kesfet-sec dk-kesfet-srch", "aria-labelledby": "dk-kesfet-h-srch" },
       h("div", { class: "dk-kesfet-srch-head" },
         h("span", { class: "dk-eyebrow" }, "ARAMA SONUÇLARI"),
         h("h2", { id: "dk-kesfet-h-srch", class: "dk-display dk-kesfet-srch-h" }, `“${term.trim()}”`)),
-      list.length
-        ? h("div", { class: "dk-grid dk-grid-ev" }, ...list.map(overlay))
-        : h("div", { class: "dk-kesfet-se", role: "status" }, svgRaw(P.search, { size: 32, sw: "1.6", attrs: MITER }), h("span", {}, "Sonuç bulunamadı")));
+      ...(blocks.length ? blocks
+        : [h("div", { class: "dk-kesfet-se", role: "status" }, svgRaw(P.search, { size: 32, sw: "1.6", attrs: MITER }),
+          h("span", {}, city === ALL_CITIES ? "Sonuç bulunamadı" : `${city} içinde sonuç bulunamadı`))]));
   }
 
   // ── TÜMÜ ──
@@ -618,14 +640,14 @@ export function kesfetView(ctx) {
     return h("section", { class: "dk-kesfet-sec dk-kesfet-cat", "aria-label": "Mekanlar" },
       d.venues.length
         ? h("div", { class: "dk-kesfet-g3" }, ...d.venues.map((v) => venueCard(v)))
-        : dashedEmpty({ icon: null, title: "Henüz mekan yok", sub: "Mekanlar katıldıkça burada listelenecek." }));
+        : dashedEmpty({ icon: null, title: city === ALL_CITIES ? "Henüz mekan yok" : `${city} için mekan yok`, sub: city === ALL_CITIES ? "Mekanlar katıldıkça burada listelenecek." : "Başka bir şehir seç ya da tüm şehirlere bak." }));
   }
   // ── SANATÇILAR ──
   function artistsView(d) {
     return h("section", { class: "dk-kesfet-rows", "aria-label": "Sanatçılar" },
       ...(d.artists.length
         ? d.artists.map(artistRowEl)
-        : [dashedEmpty({ icon: null, title: "Henüz sanatçı yok", sub: "Sanatçılar katıldıkça burada görünecek.", cls: "is-span" })]));
+        : [dashedEmpty({ icon: null, title: city === ALL_CITIES ? "Henüz sanatçı yok" : `${city} için sanatçı yok`, sub: city === ALL_CITIES ? "Sanatçılar katıldıkça burada görünecek." : "Başka bir şehir seç ya da tüm şehirlere bak.", cls: "is-span" })]));
   }
 
   // ── Uygulama tanıtımı (Keşfet varyantı) — SHARED-CANDIDATE: Landing'in AppPromo'su ile ortak bileşen olabilir (ölçüler farklı: 52/20) ──
@@ -642,9 +664,9 @@ export function kesfetView(ctx) {
       h("span", { class: "dk-kesfet-app-prism dk-prism", "aria-hidden": "true" }),
       h("div", { class: "dk-kesfet-app-t" },
         h("h2", { id: "dk-kesfet-h-app", class: "dk-kesfet-app-h" }, "GigBridge ", h("em", {}, "cebinde.")),
-        h("p", { class: "dk-kesfet-app-p" }, "QR biletin, favori sanatçılarının yeni etkinlik bildirimleri ve yakınındaki sahneler tek uygulamada.")),
+        h("p", { class: "dk-kesfet-app-p" }, "Ücretsiz QR katılım kaydın, favori sanatçılarının yeni etkinlik bildirimleri ve yakınındaki sahneler tek uygulamada.")),
       h("div", { class: "dk-kesfet-stores" },
-        // App Store kimliği yok → /indir/ (cihaz algılayan indirme sayfası); Google Play → mağaza (yeni sekme)
+        // App Store + Google Play → mağaza (yeni sekme); kimlik yoksa /indir/ (assets.appStoreHref)
         store(appStoreHref(), P.phone, "App Store"),
         store(playStoreHref(), P.play, "Google Play")));
   }
@@ -658,11 +680,11 @@ export function kesfetView(ctx) {
     data = null;
     paintHero(); paintBody();
     try {
-      const [events, artists, venues] = await Promise.all([discoverEvents(), listRealArtists(), listVenues()]);
+      const [events, artists, venues, groups] = await Promise.all([discoverEvents(), listRealArtists(), listVenues(), listDirectoryGroups().catch(() => [])]);
       let fs = new Set();
       if (isRealUser() && canFollowRole()) { try { fs = new Set((await followingList(me())).map((f) => f.artistId || f.id)); } catch (_) {} }
       if (dead || seq !== loadSeq) return;
-      data = { events, artists, venues };
+      data = { events, artists: [...artists, ...groups], venues };
       followSet = fs;
       if (pendingCitySlug) {   // il listesinde olmayan etkinlik şehri (veriyle çözülür)
         const c = cityFromSlug(pendingCitySlug); pendingCitySlug = null;

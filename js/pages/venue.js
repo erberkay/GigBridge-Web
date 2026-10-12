@@ -157,7 +157,7 @@ function pageHeader(title, sub, back) {
   const subEl = h("p", { class: "vx-pgsub" }, sub || "");
   const node = h("header", { class: "topbar vx-pghead" },
     h("div", { class: "grow" },
-      h("button", { class: "vx-back", onclick: () => { location.hash = back || "#/venue"; } }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
+      h("button", { class: "vx-back", "aria-label": "Geri", onclick: () => { location.hash = back || "#/venue"; } }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       titleEl,
       sub != null ? subEl : null));
   return { node, titleEl, subEl };
@@ -166,7 +166,7 @@ function pageHeader(title, sub, back) {
 // CreateEvent başlığı: koyu amber gradyan + ortalanmış 18px başlık
 function createHeader() {
   return h("header", { class: "topbar vx-crhead" },
-    h("button", { class: "vx-back", style: { margin: "0" }, onclick: () => { location.hash = "#/venue"; } }, icon("chevron-back", { size: 24, color: "var(--text)" })),
+    h("button", { class: "vx-back", "aria-label": "Geri", style: { margin: "0" }, onclick: () => { location.hash = "#/venue"; } }, icon("chevron-back", { size: 24, color: "var(--text)" })),
     h("h1", { class: "vx-crtitle" }, "Etkinlik Oluştur"),
     h("span", { style: { width: "40px", flex: "0 0 auto" } }));
 }
@@ -1341,7 +1341,7 @@ export async function renderReview(root) {
     }
 
     root.append(
-      h("button", { class: "vx-back", onclick: showList }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
+      h("button", { class: "vx-back", "aria-label": "Geri", onclick: showList }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "vx-fa-left", style: { margin: "4px 0 16px" } },
         h("div", { class: "vx-wav", style: { width: "48px", height: "48px", fontSize: "18px" } }, (a.artistName || "?").trim().charAt(0).toLocaleUpperCase("tr-TR")),
         h("div", {},

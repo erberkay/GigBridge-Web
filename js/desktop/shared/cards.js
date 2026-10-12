@@ -123,7 +123,7 @@ export function eventCardWide(e, o = {}) {
 // Standart (tarih karolu) kart — WebEtkinlikler 3.4 / public-b EventCard
 //   o.media: 184 (varsayılan) | 200 (Landing) | 168 (Sanatçı/Mekan) · o.kicker: "genre-when" (varsayılan, "JAZZ · BUGÜN 21:00") |
 //   "when" ("SAL 20:30", Sanatçı sayfası) | "genre-day" (tür + göreli gün, Mekan) · o.city (", Şehir" meta sonuna; Etkinlikler: true) ·
-//   o.footer: "attendees" ("{n} katılımcı") | "cta" ("Bilet al →") · o.corner: { label, color } (RESIDENT #FF4FA3 / BU GECE #FF5A6E) ·
+//   o.footer: "attendees" ("{n} katılımcı") | "cta" ("Katıl →"; platformda bilet satışı yok — ücretsiz QR katılım kaydı) · o.corner: { label, color } (RESIDENT #FF4FA3 / BU GECE #FF5A6E) ·
 //   o.titleSize: 19 (18 Sanatçı/Mekan) · o.badge: false → durum rozeti gizli
 export function eventCard(e, o = {}) {
   const g = primaryGenre(e);
@@ -145,7 +145,7 @@ export function eventCard(e, o = {}) {
       h("div", { class: "dk-ecd-foot" },
         priceEl(e, { size: 15, upper: false }),
         o.footer === "cta"
-          ? h("span", { class: "dk-ecd-cta" }, "Bilet al", svgIcon("arrowRight", { size: 14 }))
+          ? h("span", { class: "dk-ecd-cta" }, "Katıl", svgIcon("arrowRight", { size: 14 }))
           : h("span", { class: "dk-ecd-att" }, o.footer === "attendees-plain" ? null : svgRaw(PEOPLE, { size: 13, sw: "2" }), `${Number(e?.attendeeCount) || 0} katılımcı`))),
   ], o.onClick);
 }
@@ -170,10 +170,14 @@ export function eventRowMini(e, o = {}) {
 const artistName = (u) => u?.displayName || u?.name || "Sanatçı";
 const artistInitial = (u) => initials(String(artistName(u)).replace(/^DJ\s+/i, ""));
 const followers = (u) => shortNumTR(u?.followerCount ?? u?.followersCount ?? 0);
+// Grup (data.listDirectoryGroups: isGroup + groupHref) — web'de grup sayfası yok → grubu kuran sanatçının sayfası; takip düğmesi yok
+// (grup takibi app'te grup profilinden). Küçük "GRUP" etiketi tür satırında / meta başında.
+const artistHref = (u, o) => o.href || (u?.isGroup ? u.groupHref || "#/kesfet?kategori=sanatcilar" : "#/sanatci/" + encodeURIComponent(u?.id || ""));
+const groupCount = (u) => `${Number(u?.memberCount) || 0} üye`;
 
 // o: { followed, onFollow(next) → Promise<bool|void> (false → geri al), href, pos }
 export function artistCard(u, o = {}) {
-  const href = o.href || "#/sanatci/" + encodeURIComponent(u?.id || "");
+  const href = artistHref(u, o);
   const g = artistGenres(u)[0] || "";
   const photo = u?.photoURL
     ? h("img", { src: u.photoURL, alt: artistName(u), loading: "lazy", decoding: "async", class: "dk-arc-img", style: { objectPosition: o.pos || "center 25%" } })
@@ -183,21 +187,22 @@ export function artistCard(u, o = {}) {
     h("div", { class: "dk-arc-body" },
       h("div", { class: "dk-arc-col" },
         h("a", { href, class: "dk-arc-name" }, artistName(u)),
-        h("span", { class: "dk-arc-meta" }, [g, `${followers(u)} takipçi`].filter(Boolean).join(" · "))),
-      dkFollowButton({ followed: !!o.followed, onToggle: o.onFollow, variant: "card", name: artistName(u) })));
+        h("span", { class: "dk-arc-meta" }, (u?.isGroup ? ["GRUP", g, groupCount(u)] : [g, `${followers(u)} takipçi`]).filter(Boolean).join(" · "))),
+      u?.isGroup ? null : dkFollowButton({ followed: !!o.followed, onToggle: o.onFollow, variant: "card", name: artistName(u) })));
 }
 export function artistRow(u, o = {}) {
-  const href = o.href || "#/sanatci/" + encodeURIComponent(u?.id || "");
+  const href = artistHref(u, o);
   const g = artistGenres(u)[0] || "";
   const av = u?.photoURL
     ? h("img", { src: u.photoURL, alt: "", loading: "lazy", class: "dk-arr-av", style: { objectPosition: o.pos || "center" } })
     : h("span", { class: "dk-arr-av dk-arr-ph", "aria-hidden": "true" }, artistInitial(u));
+  const tag = [u?.isGroup ? "GRUP" : null, g ? genreLabel(g) : null].filter(Boolean).join(" · ");
   return h("div", { class: "dk-arr" }, av,
     h("div", { class: "dk-arr-col" },
       h("a", { href, class: "dk-arr-name" }, artistName(u)),
-      g ? h("span", { class: "dk-arr-g" }, genreLabel(g)) : null,
-      h("span", { class: "dk-arr-f" }, `${followers(u)} takipçi`)),
-    o.onFollow === false ? null : dkFollowButton({ followed: !!o.followed, onToggle: o.onFollow, variant: "row", name: artistName(u) }));
+      tag ? h("span", { class: "dk-arr-g" }, tag) : null,
+      h("span", { class: "dk-arr-f" }, u?.isGroup ? groupCount(u) : `${followers(u)} takipçi`)),
+    o.onFollow === false || u?.isGroup ? null : dkFollowButton({ followed: !!o.followed, onToggle: o.onFollow, variant: "row", name: artistName(u) }));
 }
 // o: { onClick }
 export function venueCard(v, o = {}) {

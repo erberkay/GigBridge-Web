@@ -6,7 +6,7 @@ import { landing, login, register, pending, adminLogin, unsupported, setup, veri
 import { customerPage } from "./pages/customer.js";
 import { mount, h } from "./ui.js";
 import { isDesktop, viewMode, onViewModeChange } from "./viewport.js";
-import { desktopRouteFor, legacyPanelRoute, BASE_CSS, DEV_DEMO, loadRouteModule, moduleReady, knownReady } from "./desktop/registry.js";
+import { desktopRouteFor, legacyPanelRoute, BASE_CSS, DEV_DEMO, loadRouteModule, moduleReady, knownReady, importFresh, reloadOnceForModuleError } from "./desktop/registry.js";
 import { ensureCssAll, ensureDesktopFonts } from "./desktop/css.js";
 
 const bootSpinner = () => h("div", { class: "boot" }, h("div", { class: "spinner" }));
@@ -17,9 +17,14 @@ function mountLazy(path, fn) {
   const at = base(location.hash);
   const seq = _seq; // yarış koruması: bu arada başka bir render olduysa (rota/mod/oturum) eski içe aktarım mount etmez
   mountNode(bootSpinner(), "spinner", at);
-  (_lazy[path] || (_lazy[path] = import(path))).then((m) => {
+  // importFresh registry.js içinde çağrılır → göreli yol app.js'e göre MUTLAK URL'ye çevrilir
+  (_lazy[path] || (_lazy[path] = importFresh(new URL(path, import.meta.url).href))).then((m) => {
     if (base(location.hash) === at && seq === _seq) mountNode(m[fn](), "legacy", at);
-  }).catch(() => { _lazy[path] = null; if (seq === _seq) mountNode(h("div", { class: "content" }, h("p", { class: "muted center" }, "Sayfa yüklenemedi. Bağlantını kontrol edip yenile.")), "legacy", at); });
+  }).catch((e) => {
+    _lazy[path] = null;
+    if (seq === _seq && reloadOnceForModuleError(e)) return;   // önbellek kıran tekrar da düştü → bir kez tam yenile
+    if (seq === _seq) mountNode(h("div", { class: "content" }, h("p", { class: "muted center" }, "Sayfa yüklenemedi. Bağlantını kontrol edip yenile.")), "legacy", at);
+  });
 }
 
 const PUBLIC = ["#/", "#/login", "#/register", "#/yonetici"];
@@ -251,7 +256,12 @@ async function tryMountDesktop(r, b, seq, hadFocus = false) {
   // Hazır olduğu biliniyorsa CSS modülle paralel yüklenir; bilinmiyorsa önce modül (NOT_READY yedeği boşuna stil indirmesin).
   let cssReady = knownReady(r) === true ? ensureCssAll(css) : null;
   let m;
-  try { m = await loadRouteModule(r); } catch (e) { console.error(e); return "error"; }
+  try { m = await loadRouteModule(r); } catch (e) {
+    console.error(e);
+    // registry bir kez ?r= ile yeniden denedi; yine indirilemediyse legacy'ye düşmeden önce bir kez tam yenile (modül haritası sıfırlanır)
+    if (!stale(seq, b) && reloadOnceForModuleError(e)) return "stale";
+    return "error";
+  }
   if (stale(seq, b)) return "stale";
   if (!moduleReady(r, m)) return "notready";
   if (!cssReady) cssReady = ensureCssAll(css);

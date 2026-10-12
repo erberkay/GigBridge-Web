@@ -43,7 +43,7 @@ import { eventCard } from "../shared/cards.js";
 import { invalidateAccountCounts } from "../shared/live.js";
 import { SITE_HOST } from "../shared/assets.js";
 import {
-  eventStartMs, isEventOver, isLive, toMs, fmtPrice, fmtInt, fmtRating, fold, initials, sameCity,
+  eventStartMs, isEventOver, isLive, toMs, fmtPrice, isFree, fmtInt, fmtRating, fold, initials, sameCity,
   haversineKm, latLngOf, directionsUrl, MONTHS_TR_SHORT, DAYS_TR_SHORT, AVATAR_GRADS, eventGenres,
 } from "../shared/helpers.js";
 import { genreFamily, genreFamilyKey, primaryGenre } from "../shared/genres.js";
@@ -457,7 +457,7 @@ export function etkinlikView(ctx) {
     const ticket = h("div", { class: "dk-etkinlik-ticket" },
       h("span", { class: "dk-etkinlik-ticket-bar dk-prism", "aria-hidden": "true" }),
       h("div", { class: "dk-etkinlik-price" },
-        h("span", { class: "dk-etkinlik-price-l" }, "BİLET FİYATI"),
+        h("span", { class: "dk-etkinlik-price-l" }, "GİRİŞ ÜCRETİ"),
         h("span", { class: "dk-etkinlik-price-v" }, fmtPrice(ev.ticketPrice))),
       h("div", { class: "dk-etkinlik-rows" },
         row(ic("calendar", 17, "1.9", "#8A8E97"), "Tarih", when ? weekdayLongP(when) : (ev.date || "—")),
@@ -467,7 +467,7 @@ export function etkinlikView(ctx) {
       joinBtn, helpEl, tixLink,
       h("div", { class: cx("dk-etkinlik-sec2", !(canAct || st.variant === "guest") && "is-single") }, canAct || st.variant === "guest" ? favBtn : null, shareBtn),
       shareStat);
-    const aside = h("aside", { class: "dk-etkinlik-aside", "aria-label": "Bilet" }, ticket,
+    const aside = h("aside", { class: "dk-etkinlik-aside", "aria-label": "Katılım" }, ticket,
       h("div", { class: "dk-etkinlik-note" }, ic("info", 17, "1.9", "#8A8E97", { cls: "dk-etkinlik-note-ic" }),
         h("span", {}, "Kapıda girişini GigBridge uygulamasındaki QR kod ile doğrularsın. Katılımlarda adını gizlemek için Profil › Gizlilik.")));
 
@@ -496,7 +496,8 @@ export function etkinlikView(ctx) {
       let help = "";
       if (st.variant === "panel") help = "Etkinliğe katılım dinleyici hesabıyla yapılır.";
       else if (cancelled) help = att && !over && !ticketUsed ? "Bu etkinlik iptal edildi; katılımını geri çekebilirsin." : "";
-      else if (!att && !over && !isFullNow()) help = "Katıldığında biletin QR kod olarak Biletlerim'de oluşur.";
+      // Platformda bilet satışı yok (iptal-ve-iade.html): katılım kaydı ücretsiz, giriş ücreti (varsa) kapıda mekan/organizatöre ödenir
+      else if (!att && !over && !isFullNow()) help = "Katılım kaydı ücretsizdir; QR kodun Biletlerim'de oluşur." + (isFree(ev.ticketPrice) ? "" : " Giriş ücreti kapıda mekan/organizatöre ödenir.");
       helpEl.textContent = help;
       helpEl.hidden = !help;
     };
