@@ -303,7 +303,7 @@ export function etkinlikView(ctx) {
     const artistCol = ev.artistName ? h("div", { class: "dk-etkinlik-pcol" },
       h("span", { class: "dk-etkinlik-lbl" }, "SANATÇI"),
       entCard({
-        href: ev.artistId ? "#/sanatci/" + encodeURIComponent(ev.artistId) : null,
+        href: (ev.artistId || ev.groupId) ? "#/sanatci/" + encodeURIComponent(ev.artistId || ev.groupId) : null,   // grup performansı → grup sayfası
         av: h("span", { class: "dk-etkinlik-ent-av is-artist", style: { background: legacyGrad(g) }, "aria-hidden": "true" }, initials(ev.artistName)),
         name: ev.artistName, sub: g || "Müzik",
       }),

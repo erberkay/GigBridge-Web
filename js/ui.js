@@ -310,7 +310,8 @@ export function availabilityBadge(p) {
   return h("span", { class: "pf-avail", style: { color: a[1], borderColor: a[1] + "66", background: a[1] + "1f" } }, icon(a[2], { size: 12, color: a[1] }), h("span", {}, a[0]));
 }
 // Teklif İste — yapılandırılmış talep formu. onSubmit(text) çağrılır (çağıran sendMessage yapar).
-export function bookingRequestModal({ artistName, onSubmit }) {
+// sub: açıklama metni (grup: iletinin grup yöneticisine gittiği) · lines: "🎫 Teklif İsteği" başlığından sonra eklenecek satırlar.
+export function bookingRequestModal({ artistName, onSubmit, sub, lines: extraLines }) {
   const fld = (label, input) => h("label", { class: "field" }, h("span", { class: "flabel" }, label), input);
   const date = h("input", { type: "date" });
   const type = h("select", {}, ...["Düğün", "Kurumsal Etkinlik", "Kulüp / Gece", "Özel Parti", "Festival", "Diğer"].map((t) => h("option", { value: t }, t)));
@@ -319,7 +320,7 @@ export function bookingRequestModal({ artistName, onSubmit }) {
   const budget = h("input", { placeholder: "örn. 8.000 ₺ (opsiyonel)" });
   const note = h("textarea", { rows: 3, placeholder: "Ek not (opsiyonel)" });
   const body = h("div", {},
-    h("p", { class: "muted small mb6" }, (artistName || "Sanatçı") + " için teklif isteğin mesaj olarak iletilir; iletişim GigBridge içinde kalır."),
+    h("p", { class: "muted small mb6" }, sub || (artistName || "Sanatçı") + " için teklif isteğin mesaj olarak iletilir; iletişim GigBridge içinde kalır."),
     h("div", { class: "frow" }, fld("Tarih", date), fld("Etkinlik Türü", type)),
     h("div", { class: "frow" }, fld("Şehir / Mekan", city), fld("Süre", dur)),
     fld("Bütçe", budget), fld("Not", note));
@@ -329,7 +330,7 @@ export function bookingRequestModal({ artistName, onSubmit }) {
       { label: "İptal", variant: "ghost", onClick: () => {} },
       { label: "Gönder", variant: "primary", ic: "send-outline", keepOpen: true, onClick: (close) => {
         if (!date.value && !city.value.trim() && !note.value.trim()) { toast("En az tarih ya da not gir.", "err"); return; }
-        const lines = ["🎫 Teklif İsteği"];
+        const lines = ["🎫 Teklif İsteği", ...(extraLines || [])];
         if (date.value) lines.push("• Tarih: " + date.value);
         lines.push("• Etkinlik: " + type.value);
         if (city.value.trim()) lines.push("• Yer: " + city.value.trim());

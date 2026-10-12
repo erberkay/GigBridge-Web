@@ -729,7 +729,7 @@ export function artistProfilView(ctx) {
 
   // ── Gruplarım ──
   const grList = h("div", { class: k("grlist") }, skeletonLines(2));
-  // Web'de grup sayfası yok (spec Q14): satırlar gezinmesiz; "Tüm gruplar" → Top 10 Gruplar sekmesi (notun işaret ettiği yer).
+  // Satır → panel içi grup sayfası (#/artist/sanatci/<grupId>); "Tüm gruplar" → Top 10 Gruplar sekmesi (notun işaret ettiği yer).
   const groups = h("section", { "aria-labelledby": `${NS}-h-grp`, class: k("card", "card12") },
     h("div", { class: k("chead") }, h("h2", { id: `${NS}-h-grp`, class: k("ch2") }, "GRUPLARIM"),
       h("a", { href: "#/artist/top10?tur=gruplar", class: cx(k("grlink"), "dk-link") }, "Tüm gruplar →")),
@@ -932,11 +932,11 @@ export function artistProfilView(ctx) {
     list.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "tr"));
     grList.replaceChildren(...list.map((g) => {
       const n = Array.isArray(g.memberIds) ? g.memberIds.length : 0;
-      const meta = [`${n} üye`, g.genre, g.city].filter(Boolean).join(" · ");
+      const meta = [`${n} üye`, (Array.isArray(g.genres) && g.genres[0]) || g.genre, g.city].filter(Boolean).join(" · ");
       const tile = h("span", { class: k("grtile"), "aria-hidden": "true" }, g.photoURL ? h("img", { src: g.photoURL, alt: "", loading: "lazy" }) : initials(g.name || "G"));
       const img = tile.querySelector("img");
       if (img) img.addEventListener("error", () => { tile.replaceChildren(initials(g.name || "G")); }, { once: true });
-      return h("div", { class: k("gr") }, tile,
+      return h("a", { href: "#/artist/sanatci/" + encodeURIComponent(g.id), class: cx(k("gr"), "dk-row") }, tile,
         h("span", { class: k("grcol") }, h("span", { class: k("grname") }, g.name || "Grup"), h("span", { class: k("grmeta") }, meta)));
     }));
   })();

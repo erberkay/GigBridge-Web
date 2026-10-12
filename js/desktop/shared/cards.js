@@ -170,7 +170,8 @@ export function eventRowMini(e, o = {}) {
 const artistName = (u) => u?.displayName || u?.name || "Sanatçı";
 const artistInitial = (u) => initials(String(artistName(u)).replace(/^DJ\s+/i, ""));
 const followers = (u) => shortNumTR(u?.followerCount ?? u?.followersCount ?? 0);
-// Grup (data.listDirectoryGroups: isGroup + groupHref) — web'de grup sayfası yok → grubu kuran sanatçının sayfası; takip düğmesi yok
+// Grup (data.listDirectoryGroups: isGroup + groupHref) → grubun kendi sayfası (#/sanatci/<grupId>); kartta takip düğmesi yok
+// (grup takibi grup sayfasında)
 // (grup takibi app'te grup profilinden). Küçük "GRUP" etiketi tür satırında / meta başında.
 const artistHref = (u, o) => o.href || (u?.isGroup ? u.groupHref || "#/kesfet?kategori=sanatcilar" : "#/sanatci/" + encodeURIComponent(u?.id || ""));
 const groupCount = (u) => `${Number(u?.memberCount) || 0} üye`;

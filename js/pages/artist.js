@@ -9,12 +9,13 @@ import {
   setResidencyStatus, syncResidentDenorm, pushAppNotification, artistAcceptedInvitations,
   artistVenueReviewsGiven, submitArtistVenueReview, fetchArtistRatings, listGroups, listDirectoryGroups, servesCity, foldTR,
   followArtist, unfollowArtist, isFollowing, artistFollowerCount,
-  bayesianScore, ratingsGlobalMean,
+  bayesianScore, ratingsGlobalMean, groupById, pickPerformer,
   serverTimestamp,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, field, photoPicker, bannerPresetPicker, modal, lightbox, fmtDate, ROLE, cityPickerField, profileTagline, profileResidency, accentOf, accentPicker, RES_DAYS, featuredSet, venueChips, featuredReview, availabilityBadge, AVAIL_OPTS, rowsEditor, chipMulti, rateCardBlock, suitabilityBlock, serviceAreaBlock, techRiderBlock, videoReel, EVENT_TYPES, SET_FORMATS, EQUIP_OPTS, LANGUAGES, PRICE_TYPE_OPTS, CANCELLATION_OPTS, languagesBlock, priceBadge, addOnsBlock, termsBlock, packagesEditorWithTypes, profileCompletionBar, trustedBadge } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
+import { renderGroupDetail } from "./group.js";
 import { paymentNotifHref } from "../desktop/shared/pay-util.js";
 
 const A = ROLE.artist; // #A855F7
@@ -683,7 +684,7 @@ async function renderTop10(root) {
 }
 
 function rankCard(it, i) {
-  return h("div", { class: "ax-rank" + (i < 3 ? " top" : ""), onclick: () => { if (!it.isGroup) go("#/artist/sanatci/" + it.id); } },
+  return h("div", { class: "ax-rank" + (i < 3 ? " top" : ""), onclick: () => go("#/artist/sanatci/" + encodeURIComponent(it.id)) },   // grup → grup sayfası
     i < 3
       ? h("div", { class: "ax-rankmedal" }, icon(MEDAL_ICONS[i], { size: 22, color: MEDAL_COLORS[i] }))
       : h("div", { class: "ax-rankno" }, String(i + 1)),
@@ -751,11 +752,14 @@ function artistDetailPage(id) {
 }
 export async function renderArtistDetail(id, root) {
   const myUid = session.user?.uid;
-  const [a, revs, following, follCount] = await Promise.all([
-    userById(id), artistReviews(id).catch(() => []),
+  const [u, grp, revs, following, follCount] = await Promise.all([
+    userById(id), groupById(id).catch(() => null), artistReviews(id).catch(() => []),
     myUid ? isFollowing(myUid, id).catch(() => false) : false,
     artistFollowerCount(id).catch(() => 0),
   ]);
+  // Grup kimliği (Keşfet / Top 10 / Gruplarım) → panel içi grup sayfası (pages/group.js)
+  const a = pickPerformer(u, grp);
+  if (a && a.isGroup) return renderGroupDetail(a, root, { viewer: "artist" });
   clear(root);
   if (!a) { root.append(empty("alert-circle-outline", "Sanatçı bulunamadı", "Bu sanatçı kaldırılmış olabilir.")); return; }
   const name = a.displayName || a.name || "Sanatçı";
@@ -880,7 +884,7 @@ async function renderDiscover(root) {
       const av = a.photoURL
         ? h("div", { class: "kx-av", style: { backgroundImage: `url(${a.photoURL})` } })
         : h("div", { class: "kx-av ph" }, it.name.charAt(0).toLocaleUpperCase("tr-TR"));
-      listBox.append(h("div", { class: "kx-row", onclick: () => go("#/artist/sanatci/" + (a.isGroup ? (a.ownerId || a.id) : a.id)) },
+      listBox.append(h("div", { class: "kx-row", onclick: () => go("#/artist/sanatci/" + encodeURIComponent(a.id)) },   // grup → grup sayfası
         av,
         h("div", { class: "kx-info" },
           h("div", { class: "kx-name" }, it.name),

@@ -257,7 +257,7 @@ const P = {
 };
 const ROLE_LABEL = { artist: "Sanatçı", venue: "Mekan", group: "Grup", organizer: "Organizatör", agency: "Ajans", customer: "Kullanıcı" };
 const roleOf = (it) => (it.kind === "user" ? (it.role === "organizer" || it.role === "agency" ? it.role : "customer") : it.kind);
-const hrefOf = (it) => (it.kind === "artist" ? "#/sanatci/" + encodeURIComponent(it.id) : it.kind === "venue" ? "#/mekan/" + encodeURIComponent(it.id) : null);
+const hrefOf = (it) => (it.kind === "artist" || it.kind === "group" ? "#/sanatci/" + encodeURIComponent(it.id) : it.kind === "venue" ? "#/mekan/" + encodeURIComponent(it.id) : null);
 const evKindOf = (it) => (it.kind === "user" ? (it.role === "organizer" ? "organizer" : null) : it.kind);
 
 // ══════════════════════════════════════════════════════════════════════

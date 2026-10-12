@@ -455,7 +455,7 @@ export async function listRealArtists() {
 
 // Keşfet / arama: sanatçı GRUPLARI da sanatçı olarak listelenir (app HomeScreen ile aynı süzgeç: adı olan, üyesi olan,
 // yasaklı olmayan; ayrıca test hesabının kurduğu grup gizli). Sanatçı kartı alanlarına uyarlanır: isGroup, displayName, genres.
-// Web'de grup profil sayfası yok → kart, grubu kuran sanatçının sayfasına gider (groupHref).
+// Kart grubun kendi sayfasına gider (groupHref = #/sanatci/<grupId> — sanatçı sayfası grup kimliğini de çözer).
 export async function listDirectoryGroups() {
   const [snap, testIds] = await Promise.all([getDocs(collection(db, "groups")), testAccountIds()]);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
@@ -464,11 +464,98 @@ export async function listDirectoryGroups() {
     .map((g) => {
       const owner = g.createdBy || (Array.isArray(g.adminIds) && g.adminIds[0]) || g.memberIds[0];
       return {
-        ...g, isGroup: true, displayName: String(g.name).trim(), genres: g.genre ? [g.genre] : [],
-        city: g.city || "", serviceCities: [], photoURL: g.photoURL || null, followerCount: Number(g.followerCount) || 0,
-        memberCount: g.memberIds.length, ownerId: owner || null, groupHref: owner ? "#/sanatci/" + encodeURIComponent(owner) : null,
+        ...g, isGroup: true, displayName: String(g.name).trim(), genres: groupGenres(g),
+        city: g.city || "", serviceCities: Array.isArray(g.serviceCities) ? g.serviceCities : [], photoURL: g.photoURL || null,
+        followerCount: Number(g.followerCount) || 0,
+        memberCount: g.memberIds.length, ownerId: owner || null, groupHref: groupHref(g.id),
       };
     });
+}
+
+// ── Sanatçı GRUPLARI (groups/{id}) — grup sayfası ──
+// Web'de ayrı rota yok: #/sanatci/<grupId> (masaüstü public/sanatci.js + mobil pages/group.js) kimliği önce users'ta, sonra
+// groups'ta arar. Etkinlikler grup performansında artistId = grupId yazdığı için eski "#/sanatci/<ev.artistId>" bağlantıları da çalışır.
+// Uygulama yükseltmesi: grup dokümanı sanatçı profil alanlarını users/{uid} sanatçı dokümanıyla AYNI adlarla taşır (tagline, bio,
+// genres[] — eski tek `genre`, city, district, packages, social …) + sunucu sayaçları avgRating/reviewCount/followerCount.
+export const groupHref = (id) => "#/sanatci/" + encodeURIComponent(id);
+export function groupGenres(g) {
+  const list = Array.isArray(g?.genres) ? g.genres.filter((x) => typeof x === "string" && x.trim()) : [];
+  return list.length ? list : (typeof g?.genre === "string" && g.genre.trim() ? [g.genre.trim()] : []);
+}
+export async function groupById(id) { const s = await getDoc(doc(db, "groups", id)); return s.exists() ? { id, ...s.data() } : null; }
+// Grup dokümanını sanatçı sayfası alanlarına uyarla (isGroup + displayName + genres[]; diğer alanlar aynı adla gelir).
+export function asGroupProfile(g) {
+  const name = String(g.name || g.displayName || "").trim() || "Grup";
+  return {
+    ...g, isGroup: true, name, displayName: name, genres: groupGenres(g),
+    memberIds: Array.isArray(g.memberIds) ? g.memberIds : [], adminIds: Array.isArray(g.adminIds) ? g.adminIds : [],
+  };
+}
+// #/sanatci/:id çözümleyici: users/{id} sanatçıysa (ya da userType'sız eski kayıt) sanatçı; değilse groups/{id} (yasaklı değilse) grup.
+// Kimlikler çakışmaz (auth uid ↔ otomatik doküman kimliği); grup kimliğiyle oluşmuş taslak users dokümanı (userType'sız) grubu gölgelemez.
+export function pickPerformer(u, g) {
+  if (g && g.banned !== true && (!u || u.userType !== "artist")) return asGroupProfile(g);
+  return u;
+}
+// Grup iletişim kişisi (mesaj / serbest teklif isteği alıcısı): ödemeyi alan yönetici (geçerliyse) → kurucu → ilk yönetici → ilk üye.
+export function groupContactId(g) {
+  const admins = Array.isArray(g?.adminIds) ? g.adminIds : [], members = Array.isArray(g?.memberIds) ? g.memberIds : [];
+  const pay = typeof g?.payoutAdminId === "string" && admins.includes(g.payoutAdminId) && members.includes(g.payoutAdminId) ? g.payoutAdminId : null;
+  return pay || (typeof g?.createdBy === "string" && g.createdBy) || admins[0] || members[0] || null;
+}
+// Üye profilleri (memberIds → users) — sırayla: kurucu, yöneticiler, diğerleri. Okunamayan üye yedek adla kalır.
+export async function groupMembers(g) {
+  const ids = [...new Set(Array.isArray(g?.memberIds) ? g.memberIds : [])];
+  const admins = Array.isArray(g?.adminIds) ? g.adminIds : [];
+  const rank = (id) => (id === g?.createdBy ? 0 : admins.includes(id) ? 1 : 2);
+  const list = await Promise.all(ids.map(async (id) => {
+    const u = await userById(id).catch(() => null);
+    return { id, user: u, name: String(u?.displayName || u?.name || "").trim() || "Sanatçı", photoURL: u?.photoURL || null,
+      role: id === g?.createdBy ? "founder" : admins.includes(id) ? "admin" : "member" };
+  }));
+  return list.sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name, "tr"));
+}
+// Grup etkinlikleri: grup performansı artistId = grupId yazar; bazı kayıtlar groupId taşır → iki tek alanlı sorgu birleşir (yeni indeks yok).
+export async function eventsByGroup(gid) {
+  const [a, b] = await Promise.all([
+    getDocs(query(collection(db, "events"), where("artistId", "==", gid))),
+    getDocs(query(collection(db, "events"), where("groupId", "==", gid))).catch(() => null),
+  ]);
+  const m = new Map();
+  [...a.docs, ...(b ? b.docs : [])].forEach((d) => { if (!m.has(d.id)) m.set(d.id, { id: d.id, ...d.data() }); });
+  return [...m.values()];
+}
+// Grup yorumları: reviews targetId == grupId. Grup sayfasından yazılan targetType "group"; etkinlik sayfasının "Değerlendir"i grup
+// performansında da "artist" yazıyor → ikisi de okunur (mekan yorumu tipi yok).
+export async function groupReviews(gid) {
+  const s = await getDocs(query(collection(db, "reviews"), where("targetId", "==", gid)));
+  return s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((r) => ["group", "artist"].includes(r.targetType ?? "group")).sort(byMs);
+}
+// targetType "group": sunucunun sanatçı puan tetikleyicisi (targetType "artist" → users/{targetId} set/merge) grup kimliğiyle taslak
+// users dokümanı OLUŞTURMASIN. Kimlik kuralı aynı: `${uid}_${grupId}`.
+export async function submitGroupReview(uid, authorName, group, rating, comment, ev) {
+  await setDoc(doc(db, "reviews", `${uid}_${group.id}`), { authorId: uid, authorName, authorType: "customer", targetId: group.id, targetName: group.displayName ?? group.name ?? "", targetType: "group", rating, comment: comment ?? "", eventId: ev?.id ?? null, event: ev?.title ?? "", createdAt: serverTimestamp() });
+}
+// Grup takibi (favori) — app services/follow.ts: users/{uid}/followingGroups/{gid} + ayna groups/{gid}/followers/{uid}
+// (web Top 10 / Favoriler / Takip ile aynı şekil; users/{gid}/followers aynasına yazılmaz → sahte users dokümanı yok).
+export async function isFollowingGroup(uid, gid) { try { return (await getDoc(doc(db, "users", uid, "followingGroups", gid))).exists(); } catch { return false; } }
+export async function followGroup(uid, g) {
+  const genre = (Array.isArray(g.genres) ? g.genres[0] : g.genre) ?? "";
+  await setDoc(doc(db, "users", uid, "followingGroups", g.id), {
+    groupId: g.id, groupName: g.name ?? g.displayName ?? "", targetType: "group", genre: genre || "", photoURL: g.photoURL ?? null, notifyEvents: true, followedAt: serverTimestamp(),
+  });
+  setDoc(doc(db, "groups", g.id, "followers", uid), { followedAt: serverTimestamp(), notifyEvents: true }).catch(() => {});
+}
+export async function unfollowGroup(uid, gid) {
+  await deleteDoc(doc(db, "users", uid, "followingGroups", gid));
+  deleteDoc(doc(db, "groups", gid, "followers", uid)).catch(() => {});
+}
+// Canlı takipçi sayısı (groups/{gid}/followers aynası); sunucu sayacı (followerCount) daha büyükse o (v2 aynası users/{gid}/followers).
+export async function groupFollowerCount(g) {
+  let live = null;
+  try { live = (await getDocs(collection(db, "groups", g.id, "followers"))).size; } catch { live = null; }
+  const server = Number(g.followerCount) || 0;
+  return live == null ? server : Math.max(live, server);
 }
 
 // ── Katılım (events/{id}/attendees/{uid} + attendeeCount ±1) ──

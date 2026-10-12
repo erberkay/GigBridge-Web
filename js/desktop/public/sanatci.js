@@ -23,12 +23,21 @@
 //   sosyal liste, sıradaki etkinlik kartı, puan özeti, "Tüm yorumları gör".
 // Yazımlar legacy ile birebir (data.js işlevleri): following/followers (+ new_follower bildirimi, fromUserId = auth uid), reviews/{uid}_{id},
 //   conversations (+ messages). Arka uç bağımlı parça yok; etkinlik sorgusu başarısızsa Etkinlikler bölümü + sıradaki kartı gizlenir.
+// GRUP SAYFASI (aynı rota #/sanatci/:id): users/{id} sanatçı değilse ve groups/{id} varsa grup çizilir (data.pickPerformer). Grup dokümanı
+//   sanatçı profil alanlarını aynı adlarla taşır → bölümler aynı; farklar: "GRUP" etiketi + üye sayısı hapı, Üyeler bölümü (üyelerin
+//   sanatçı sayfalarına bağlantı), yorumlar reviews targetId == grupId (yeni yorum targetType "group"), etkinlikler artistId|groupId == grupId,
+//   takip users/{uid}/followingGroups + groups/{gid}/followers (data.followGroup), Mesaj / serbest teklif isteği grubun iletişim kişisine
+//   (data.groupContactId), mekan "Teklif Gönder" → mevcut grup daveti (venue/panel.js openInviteModal → data.createGroupInvitation, aynen).
+//   Grup üyesi kendi grubunu "kendi sayfası" gibi görür (aksiyon yok).
 import { h, soundEmbedInfo, fmtMoneyText, fmtDurText, fmtPriceRange } from "../../ui.js";
 import { session } from "../../store.js";
 import {
   userById, artistReviews, isFollowing, artistFollowerCount, eventsByArtist, followArtist, unfollowArtist,
   submitArtistReview, updateMyReview, sendMessage, convIdFor,
+  groupById, pickPerformer, groupReviews, submitGroupReview, isFollowingGroup, followGroup, unfollowGroup, groupFollowerCount,
+  groupMembers, eventsByGroup, groupContactId,
 } from "../../data.js";
+import { ensureCss } from "../css.js";
 import { requestChat as legacyRequestChat } from "../../pages/messages.js";
 import { publicShell } from "../shared/public-shell.js";
 import { svgRaw } from "../shared/icons.js";
@@ -36,7 +45,7 @@ import {
   cx, dkBreadcrumb, dkGenreTag, dkSegmented, dkEmpty, dkSkeleton, dkModal, dkToast, dkLoginGate, dkField, dkInput, dkSelect, dkButton,
 } from "../shared/ui.js";
 import { isRealUser } from "../shared/overlays.js";
-import { eventCard, evTitle, evHref, evImage } from "../shared/cards.js";
+import { eventCard, evTitle, evHref, evImage, artistRow } from "../shared/cards.js";
 import { invalidateAccountCounts } from "../shared/live.js";
 import {
   artistGenres, eventStartMs, isEventOver, isLive, toMs, fmtTime, fmtTL, shortNumTR, trUpper, initials, rgba,
@@ -72,6 +81,8 @@ const P = {
   award: '<circle cx="12" cy="9" r="5.5"></circle><path d="m8.5 13.5-2 7.5 5.5-3 5.5 3-2-7.5"></path>',
   trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0z"></path><path d="M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 14v4M8 21h8M9.5 18h5"></path>',
   lock: '<rect x="5" y="11" width="14" height="9.5" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path>',
+  // grup (üyeler) — venue/panel.js "Gruplar" ikonuyla aynı gövde
+  users: '<path d="M9 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3.5 19a5.5 5.5 0 0 1 11 0M17 12.3a2.3 2.3 0 1 0 0-4.6M15.5 14.6A4.5 4.5 0 0 1 21 19"></path>',
 };
 const ico = (k, size, sw = "2", color) => svgRaw(P[k], { size, sw, color });
 const starSvg = (size, fill = "#FFD700", extra) => svgRaw(P.star, { size, fill: fill !== "none", color: fill === "none" ? "#FFD700" : fill, ...(extra || {}) });
@@ -91,6 +102,10 @@ function memberInfo(u) {          // memberChip
 function membershipLabel(u) {     // membershipText → "1 yıldır" / "7 aydır"
   const y = yearsSince(u.createdAt); if (y == null) return null;
   return y >= 1 ? Math.floor(y) + " yıldır" : Math.max(1, Math.floor(y * 12)) + " aydır";
+}
+function foundedLabel(g) {        // grup kuruluşu (createdAt) → "Eki 2026"
+  const t = toMs(g.createdAt); if (t == null) return null;
+  const d = new Date(t); return `${MONTHS_TR_SHORT[d.getMonth()]} ${d.getFullYear()}`;
 }
 function residencyText(p) {       // profileResidency: önce aktif anlaşma (residentVenue/residentDays), yoksa elle girilen
   const rv = String(p.residentVenue || "").trim();
@@ -253,7 +268,8 @@ function reviewModal(a, existing, onDone) {
           if (editing) await updateMyReview("reviews", existing.id, { rating, comment: text });
           else {
             const myName = session.profile?.displayName || session.user?.displayName || "Kullanıcı";
-            await submitArtistReview(me, myName, a, rating, text);
+            if (a.isGroup) await submitGroupReview(me, myName, a, rating, text);   // targetType "group"
+            else await submitArtistReview(me, myName, a, rating, text);
           }
           invalidateAccountCounts(me);
           dkToast(editing ? "Yorum güncellendi" : "Yorumun gönderildi");
@@ -280,7 +296,8 @@ function reviewModal(a, existing, onDone) {
 }
 
 // Legacy bookingRequestModal (ui.js) — aynı alanlar, seçenekler, doğrulama ve mesaj metni; yeni modal görünümü.
-function bookingModal(artistName, onSubmit) {
+// opts.sub: alt yazı (grup: iletinin grup yöneticisine gittiği) · opts.lines: "🎫 Teklif İsteği" başlığından sonra eklenecek satırlar.
+function bookingModal(artistName, onSubmit, opts = {}) {
   const date = dkInput({ type: "date", size: 44 });
   const typeSel = dkSelect({ size: 44, options: ["Düğün", "Kurumsal Etkinlik", "Kulüp / Gece", "Özel Parti", "Festival", "Diğer"], value: "Düğün" });
   const type = typeSel.querySelector("select");
@@ -292,7 +309,7 @@ function bookingModal(artistName, onSubmit) {
   let busy = false;
   const m = dkModal({
     title: "Teklif İste", variant: "panel", size: 520, serifTitle: true, cls: "dk-sanatci-detay-mdl dk-sanatci-detay-bkm",
-    sub: (artistName || "Sanatçı") + " için teklif isteğin mesaj olarak iletilir; iletişim GigBridge içinde kalır.",
+    sub: opts.sub || (artistName || "Sanatçı") + " için teklif isteğin mesaj olarak iletilir; iletişim GigBridge içinde kalır.",
     body: [
       h("div", { class: "dk-sanatci-detay-bkm-row" }, f("Tarih", date), f("Etkinlik Türü", typeSel)),
       h("div", { class: "dk-sanatci-detay-bkm-row" }, f("Şehir / Mekan", city), f("Süre", dur)),
@@ -305,7 +322,7 @@ function bookingModal(artistName, onSubmit) {
         if (busy) return false;
         if (!date.value && !city.value.trim() && !note.value.trim()) { m.setError("En az tarih ya da not gir."); return false; }
         m.setError("");
-        const lines = ["🎫 Teklif İsteği"];
+        const lines = ["🎫 Teklif İsteği", ...(opts.lines || [])];
         if (date.value) lines.push("• Tarih: " + date.value);
         lines.push("• Etkinlik: " + type.value);
         if (city.value.trim()) lines.push("• Yer: " + city.value.trim());
@@ -385,29 +402,43 @@ export function sanatciView(ctx) {
     const me = session.user?.uid;
     let a;
     try {
-      const [u, revs, following, follCount, events] = await Promise.all([
+      const [u, grp, revs, following, follCount, events] = await Promise.all([
         userById(id),
+        groupById(id).catch(() => null),          // grup kimliği (etkinlik / Keşfet / Top 10 bağlantıları aynı rotayı kullanır)
         artistReviews(id).catch(() => []),
         real && me && me !== id ? isFollowing(me, id) : false,
         artistFollowerCount(id),
         eventsByArtist(id).catch(() => null),   // başarısızsa Etkinlikler bölümü + sıradaki kartı gizli
       ]);
-      a = u;
+      a = pickPerformer(u, grp);
       if (dead) return;
-      // Yalnız sanatçı profilleri (legacy her users/{id}'yi sanatçı gibi çiziyordu → mekana "Takip Et" = yanlış new_follower bildirimi).
-      // Mekan → kendi detay sayfası; dinleyici/organizatör/yönetici → bulunamadı. userType'ı olmayan eski kayıtlar sanatçı sayılır.
-      if (a && a.userType && a.userType !== "artist") {
-        if (a.userType === "venue") { location.replace("#/mekan/" + encodeURIComponent(id)); return; }
-        a = null;
+      if (a && a.isGroup) {
+        // Grup: yorum / takip / takipçi / etkinlik kaynakları farklı + üye profilleri (ikinci tur; sanatçı yolu değişmedi)
+        const [gRevs, gFollowing, gFollCount, gEvents, members] = await Promise.all([
+          groupReviews(id).catch(() => []),
+          real && me ? isFollowingGroup(me, id) : false,
+          groupFollowerCount(a).catch(() => Number(a.followerCount) || 0),
+          eventsByGroup(id).catch(() => events),
+          groupMembers(a).catch(() => []),
+        ]);
+        if (dead) return;
+        S = { a, revs: gRevs || [], following: !!gFollowing, follCount: gFollCount, events: gEvents, members: members || [] };
+      } else {
+        // Yalnız sanatçı profilleri (legacy her users/{id}'yi sanatçı gibi çiziyordu → mekana "Takip Et" = yanlış new_follower bildirimi).
+        // Mekan → kendi detay sayfası; dinleyici/organizatör/yönetici → bulunamadı. userType'ı olmayan eski kayıtlar sanatçı sayılır.
+        if (a && a.userType && a.userType !== "artist") {
+          if (a.userType === "venue") { location.replace("#/mekan/" + encodeURIComponent(id)); return; }
+          a = null;
+        }
+        if (!a) { paintError(true); return; }
+        S = { a, revs: revs || [], following: !!following, follCount, events };
       }
-      if (!a) { paintError(true); return; }
-      S = { a, revs: revs || [], following: !!following, follCount, events };
     } catch (_) {
       if (!dead) paintError(false);
       return;
     }
     paint(refresh);
-    setTitle(S.a.displayName || S.a.name || "Sanatçı");
+    setTitle(S.a.displayName || S.a.name || (S.a.isGroup ? "Grup" : "Sanatçı"));
     if (refocus) {
       const sel = refocus; refocus = null;
       const el = root.querySelector(sel);
@@ -419,18 +450,28 @@ export function sanatciView(ctx) {
   function paint(refresh) {
     cleanupPaint();
     const { a, revs, events } = S;
+    const G = !!a.isGroup;                 // grup sayfası (aynı düzen; farklar aşağıda G ile)
+    const members = S.members || [];
+    const memberCount = G ? a.memberIds.length : 0;
     const me = session.user?.uid;
     const real = isRealUser();
     const role = !real ? "guest" : session.isAdmin ? "admin" : (session.profile?.userType || "customer");
-    const self = real && me === id;
+    // Grup üyesi kendi grubunu "kendi sayfası" gibi görür (takip / mesaj / teklif / yorum yok)
+    const self = real && (me === id || (G && !!me && a.memberIds.includes(me)));
+    // Grup: mesaj + serbest teklif isteği grubun iletişim kişisine (ödemeyi alan yönetici → kurucu → ilk yönetici); mekan ise mevcut
+    // grup davetini (openInviteModal → createGroupInvitation) kullanır.
+    const contactId = G ? groupContactId(a) : id;
+    const contactName = G ? (members.find((m) => m.id === contactId)?.name || "Grup yöneticisi") : null;
+    const groupInvite = G && role === "venue";
     const canFollow = !self && (role === "guest" || role === "customer" || role === "artist");
-    const canMsg = !self && role !== "admin";
+    const canMsg = !self && role !== "admin" && !!contactId && contactId !== me;
     // Teklif İste = serbest metinli teklif isteği mesajı (legacy bookingRequestModal → sendMessage). Spec + artboard: dinleyici, misafir (giriş
     // kapısı) ve sanatçı arayan panel rolleri (mekan / organizatör); sanatçı başka sanatçıya teklif istemez (legacy renderArtistDetail).
-    const canOffer = !self && (role === "guest" || role === "customer" || role === "venue" || role === "organizer");
+    const canOffer = !self && (role === "guest" || role === "customer" || role === "venue" || role === "organizer")
+      && (groupInvite || (!!contactId && contactId !== me));
     const canReview = role === "guest" || role === "customer";
 
-    const name = a.displayName || a.name || "Sanatçı";
+    const name = a.displayName || a.name || (G ? "Grup" : "Sanatçı");
     const genres = artistGenres(a);
     const g0 = genres[0] || "";
     const rated = revs.filter((r) => (r.rating || 0) > 0);
@@ -453,26 +494,39 @@ export function sanatciView(ctx) {
     // Legacy `pending` (js/pages/messages.js) yalnız chat.js yüklenemezse doldurulur: o durumda yönlendirici de legacy mesaj görünümüne düşer.
     // Aksi halde masaüstünün hiç okumadığı bayat hedef kalır ve sonra mobilde / başka oturumda o sohbeti açardı.
     const goMessages = () => {
-      const t = { otherId: id, otherName: name };
+      const t = { otherId: contactId, otherName: G ? contactName : name };
       const my = session.user?.uid;
-      const url = (MSG_ROUTE[role] || "#/mesajlar") + (my ? "?c=" + encodeURIComponent(convIdFor(my, id)) : "");
+      const url = (MSG_ROUTE[role] || "#/mesajlar") + (my ? "?c=" + encodeURIComponent(convIdFor(my, contactId)) : "");
       import("../messages/chat.js")
         .then((m) => { if (typeof m.requestChat !== "function") throw new Error("no requestChat"); m.requestChat(t); })
         .catch(() => { try { legacyRequestChat(t); } catch (_) {} })
         .finally(() => { if (!dead) location.hash = url; });
     };
     const onMsg = () => { if (dkLoginGate("Mesaj göndermek")) return; goMessages(); };
-    const onOffer = () => {
+    // Mekan → grup: mevcut grup daveti (Sanatçı Bul / Mekan Paneli ile aynı modal ve yazım; CSS'i panelin dosyasında)
+    const openGroupInvite = async () => {
       if (dkLoginGate("Teklif göndermek")) return;
+      try {
+        const [m] = await Promise.all([import("../venue/panel.js"), ensureCss("css/dk-mekan-panel.css")]);
+        if (dead) return;
+        const mdl = m.openInviteModal(a);
+        // public kabuk data-role="customer" (camgöbeği) → modal mekan panelindeki gibi mekan rengiyle (Gönder düğmesi "role" varyantı)
+        mdl?.dialog?.style.setProperty("--dk-role", "var(--dk-role-venue)");
+      } catch (_) { dkToast("Teklif penceresi açılamadı", { type: "err" }); }
+    };
+    const onOffer = () => {
+      if (groupInvite) { openGroupInvite(); return; }
+      if (dkLoginGate("Teklif göndermek")) return;
+      const toName = G ? contactName : name;
       bookingModal(name, async (text) => {
         try {
           const uidMe = session.user.uid;
-          await sendMessage({ fromId: uidMe, fromName: session.profile?.displayName || "Ben", fromType: session.profile?.userType, toId: id, toName: name, text, convId: convIdFor(uidMe, id), isGroup: false });
+          await sendMessage({ fromId: uidMe, fromName: session.profile?.displayName || "Ben", fromType: session.profile?.userType, toId: contactId, toName, text, convId: convIdFor(uidMe, contactId), isGroup: false });
           dkToast("Teklif isteğin gönderildi");
           goMessages();
           return true;
         } catch (_) { dkToast("Gönderilemedi", { type: "err" }); return false; }
-      });
+      }, G ? { sub: `${name} için teklif isteğin grup yöneticisine (${contactName}) mesaj olarak iletilir; iletişim GigBridge içinde kalır.`, lines: ["• Grup: " + name] } : {});
     };
     // Kendi mevcut yorumu (doc id `${uid}_${artistId}`) → modal önceden dolu "Yorumunu güncelle"
     const mine = real && me ? revs.find((r) => r.id === `${me}_${id}` && r.authorId === me) || null : null;
@@ -499,7 +553,8 @@ export function sanatciView(ctx) {
       followBusy = true;
       followBtns.forEach((b) => b.setAttribute("aria-busy", "true"));   // kimlik satırı + yan kart düğmesi (sanatçı görünümü) birlikte
       try {
-        if (next) await followArtist(me, a); else await unfollowArtist(me, id);
+        if (G) { if (next) await followGroup(me, a); else await unfollowGroup(me, id); }
+        else if (next) await followArtist(me, a); else await unfollowArtist(me, id);
         invalidateAccountCounts(me);   // hesap kabuğunun "Takip" sayacı
         dkToast(next ? "Takip ediliyor" : "Takipten çıkıldı");
       } catch (_) {
@@ -526,7 +581,7 @@ export function sanatciView(ctx) {
       h("span", { class: "dk-sanatci-detay-cover-scrim", "aria-hidden": "true" }),
       h("div", { class: "dk-container dk-sanatci-detay-cover-in" },
         dkBreadcrumb({ variant: "mono-overlay", back: () => { if (history.length > 1) history.back(); else location.hash = "#/kesfet"; },
-          items: [{ label: "Keşfet", href: "#/kesfet" }, { label: "Sanatçılar" }, { label: name }] })));
+          items: [{ label: "Keşfet", href: "#/kesfet" }, { label: G ? "Gruplar" : "Sanatçılar" }, { label: name }] })));
 
     // ════════ 2. KİMLİK ════════
     const avatarInner = a.photoURL
@@ -545,24 +600,30 @@ export function sanatciView(ctx) {
       nameParts.length > 1 ? [nameParts.slice(0, -1).join(" ") + " ", h("em", {}, nameParts[nameParts.length - 1])] : name);
     const trusted = avgNum != null && avgNum >= 4.5 && rated.length >= 5;
     const av = AVAIL[a.availabilityStatus];
-    const mem = memberInfo(a);
-    const memText = membershipLabel(a);
+    // Üyelik rozeti hesabın yaşı → grupta yok; yerine kuruluş tarihi (app GroupProfile "KURULUŞ · Ay Yıl")
+    const mem = G ? null : memberInfo(a);
+    const memText = G ? null : membershipLabel(a);
+    const founded = G ? foundedLabel(a) : null;
     const badges = [
-      trusted ? pillChip("Güvenilir Sanatçı", "#7CE0B0", "shieldCheck") : null,
+      G ? pillChip(`${memberCount} üyeli grup`, "#A78BFA", "users") : null,
+      trusted ? pillChip(G ? "Güvenilir Grup" : "Güvenilir Sanatçı", "#7CE0B0", "shieldCheck") : null,
       av ? pillChip(av[0], av[1], av[2], { bdA: 0.4, bgA: 0.08 }) : null,
       mem ? pillChip(mem.label, mem.c, mem.ic) : null,
       memText ? h("span", { class: "dk-sanatci-detay-memtext" }, "GigBridge üyesi · " + memText) : null,
+      founded ? h("span", { class: "dk-sanatci-detay-memtext" }, "Kuruluş · " + founded) : null,
     ].filter(Boolean);
+    const offerLabel = groupInvite ? "Teklif Gönder" : "Teklif İste";
+    const msgAria = G ? `Mesaj — grup yöneticisi ${contactName}` : null;
     const actions = [];
     if (canFollow) actions.push(followButton());
-    if (canMsg) actions.push(h("button", { type: "button", class: "dk-sanatci-detay-act dk-press", onclick: onMsg }, ico("chat", 17, "1.9"), h("span", {}, "Mesaj")));
-    if (canOffer) actions.push(h("button", { type: "button", class: "dk-sanatci-detay-act is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, "Teklif İste")));
+    if (canMsg) actions.push(h("button", { type: "button", class: "dk-sanatci-detay-act dk-press", onclick: onMsg, "aria-label": msgAria, title: msgAria }, ico("chat", 17, "1.9"), h("span", {}, "Mesaj")));
+    if (canOffer) actions.push(h("button", { type: "button", class: "dk-sanatci-detay-act is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, offerLabel)));
     const identity = h("section", { class: "dk-container dk-sanatci-detay-id", "aria-labelledby": "dk-sanatci-detay-h-name" },
       h("div", { class: "dk-sanatci-detay-avwrap dk-rise" }, avatar,
         a.availabilityStatus === "open" ? h("span", { class: "dk-sanatci-detay-avdot", "aria-hidden": "true" }) : null),
       h("div", { class: "dk-sanatci-detay-info dk-rise", style: { "--dk-delay": "80ms" } },
         h("div", { class: "dk-sanatci-detay-eb" },
-          h("span", { class: "dk-sanatci-detay-eb-role" }, "SANATÇI"),
+          h("span", { class: "dk-sanatci-detay-eb-role" }, G ? "GRUP" : "SANATÇI"),
           g0 ? dkGenreTag(g0, { variant: "pill" }) : null,
           loc ? h("span", { class: "dk-sanatci-detay-loc" }, ico("pin", 14, "2", "#4ED8FF"), loc) : null),
         h1,
@@ -582,6 +643,8 @@ export function sanatciView(ctx) {
         h("div", { class: "dk-sanatci-detay-stat" }, follStat, h("span", { class: "dk-sanatci-detay-stat-l" }, "TAKİPÇİ")),
         h("span", { class: "dk-sanatci-detay-stat-div", "aria-hidden": "true" }),
         h("div", { class: "dk-sanatci-detay-stat" }, h("span", { class: "dk-sanatci-detay-stat-v" }, String(revs.length)), h("span", { class: "dk-sanatci-detay-stat-l" }, "YORUM")),
+        G ? h("span", { class: "dk-sanatci-detay-stat-div", "aria-hidden": "true" }) : null,
+        G ? h("div", { class: "dk-sanatci-detay-stat" }, h("span", { class: "dk-sanatci-detay-stat-v" }, String(memberCount)), h("span", { class: "dk-sanatci-detay-stat-l" }, "ÜYE")) : null,
         resText ? h("div", { class: "dk-sanatci-detay-res" }, h("span", { class: "dk-sanatci-detay-res-tag" }, "RESIDENT"), h("span", { class: "dk-sanatci-detay-res-t" }, resText)) : null));
 
     // ════════ 4. BÖLÜMLER (sol kolon) ════════
@@ -609,18 +672,34 @@ export function sanatciView(ctx) {
 
     // ── 01 HAKKINDA ──
     {
-      const head = secHead("hakkinda", "HAKKINDA", ["Sahnenin arkasındaki ", h("em", {}, "isim")]);
+      const head = secHead("hakkinda", "HAKKINDA", ["Sahnenin arkasındaki ", h("em", {}, G ? "ekip" : "isim")]);
       const meta = [];
       if (a.experienceYears) meta.push(h("span", { class: "dk-sanatci-detay-exp" }, ico("clock", 15, "1.9"), a.experienceYears + " yıl deneyim"));
       if (a.experienceYears && genres.length) meta.push(h("span", { class: "dk-sanatci-detay-vdiv", "aria-hidden": "true" }));
       if (genres.length) meta.push(monoLabel("MÜZİK TARZLARI"), h("div", { class: "dk-sanatci-detay-chips" }, ...genres.map((g) => h("span", { class: "dk-sanatci-detay-gchip" }, g))));
       addSection("hakkinda", "Hakkında", head,
-        h("p", { class: cx("dk-sanatci-detay-bio", !a.bio && "is-dim") }, a.bio || "Sanatçı henüz biyografi eklememiş."),
+        h("p", { class: cx("dk-sanatci-detay-bio", !a.bio && "is-dim") }, a.bio || (G ? "Grup henüz tanıtım eklememiş." : "Sanatçı henüz biyografi eklememiş.")),
         meta.length ? h("div", { class: "dk-sanatci-detay-meta" }, ...meta) : null,
         // etkinlik sorgusu başarısızsa (02 gizli) mekan çipleri burada kalır — legacy özelliği kaybolmasın
         !Array.isArray(events) && reviewVenues.size ? h("div", { class: "dk-sanatci-detay-vblock" }, monoLabel("ÇALDIĞI MEKANLAR", "is-14"), venueChipList([...reviewVenues.entries()].slice(0, 10))) : null,
         featuredSetCard(a.featuredSetUrl),
         featuredReviewFigure(featuredReviewOf(revs)));
+    }
+
+    // ── (grup) ÜYELER — ortak sanatçı satırı (cards.artistRow, dk-ui.css); satır üyenin sanatçı sayfasına gider ──
+    if (G) {
+      const ROLE_TXT = { founder: "KURUCU", admin: "YÖNETİCİ" };
+      const head = secHead("uyeler", "ÜYELER", [`${memberCount} kişilik `, h("em", {}, "kadro")]);
+      const rows = members.map((m) => {
+        const u = m.user || {};
+        const row = artistRow({ id: m.id, displayName: m.name, photoURL: m.photoURL, genres: u.genres, genre: u.genre, followerCount: u.followerCount },
+          { onFollow: false, href: "#/sanatci/" + encodeURIComponent(m.id), pos: "center 25%" });
+        const f = row.querySelector(".dk-arr-f");
+        if (f && ROLE_TXT[m.role]) f.textContent = `${ROLE_TXT[m.role]} · ${f.textContent}`;
+        return row;
+      });
+      addSection("uyeler", "Üyeler", head,
+        rows.length ? h("div", { class: "dk-sanatci-detay-infogrid" }, ...rows) : h("div", { class: "dk-sanatci-detay-noev" }, "Üye bilgisi yüklenemedi."));
     }
 
     // ── 02 ETKİNLİKLER ──
@@ -824,13 +903,15 @@ export function sanatciView(ctx) {
     const facts = [
       ["Puan", avgNum != null ? `${avg} · ${revs.length} yorum` : revs.length ? `— · ${revs.length} yorum` : "—"],
       ["Takipçi", (() => { const s = h("span", {}); followerTextEls.push(s); return s; })()],
+      G ? ["Üye", `${memberCount} kişi`] : null,
       resText ? ["Resident", resText] : null,
       (Array.isArray(a.languages) && a.languages.filter(Boolean).length) ? ["Diller", a.languages.filter(Boolean).join(", ")] : null,
       memText ? ["Üyelik", memText] : null,
+      founded ? ["Kuruluş", founded] : null,
     ].filter(Boolean);
     const ctas = [];
-    if (canOffer) ctas.push(h("button", { type: "button", class: "dk-sanatci-detay-cta is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, "Teklif İste")));
-    if (canMsg) ctas.push(h("button", { type: "button", class: "dk-sanatci-detay-cta dk-press", onclick: onMsg }, ico("chat", 16, "1.9"), h("span", {}, "Mesaj gönder")));
+    if (canOffer) ctas.push(h("button", { type: "button", class: "dk-sanatci-detay-cta is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, offerLabel)));
+    if (canMsg) ctas.push(h("button", { type: "button", class: "dk-sanatci-detay-cta dk-press", onclick: onMsg }, ico("chat", 16, "1.9"), h("span", {}, G ? "Yöneticiye mesaj" : "Mesaj gönder")));
     if (canFollow && !canOffer) ctas.unshift((() => { const b = followButton(); b.classList.add("is-cta"); return b; })());
     const summaryCard = h("div", { class: "dk-sanatci-detay-sum" },
       h("span", { class: "dk-sanatci-detay-sum-bar dk-prism", "aria-hidden": "true" }),
@@ -845,7 +926,9 @@ export function sanatciView(ctx) {
       h("div", { class: "dk-sanatci-detay-facts" }, ...facts.map(([k, v]) => h("div", { class: "dk-sanatci-detay-fact" },
         h("span", { class: "dk-sanatci-detay-fact-k" }, k), h("span", { class: "dk-sanatci-detay-fact-v" }, v)))),
       ctas.length ? h("div", { class: "dk-sanatci-detay-ctas" }, ...ctas) : null,
-      canOffer ? h("p", { class: "dk-sanatci-detay-foot" }, "Teklif isteğin mesaj olarak iletilir; iletişim GigBridge içinde kalır.") : null);
+      canOffer ? h("p", { class: "dk-sanatci-detay-foot" }, groupInvite ? "Teklif, grubun tüm üyelerine sahne daveti olarak iletilir."
+        : G ? `Teklif isteğin grup yöneticisine (${contactName}) mesaj olarak iletilir; iletişim GigBridge içinde kalır.`
+          : "Teklif isteğin mesaj olarak iletilir; iletişim GigBridge içinde kalır.") : null);
 
     const SOC = [["instagram", "Instagram"], ["soundcloud", "SoundCloud"], ["spotify", "Spotify"], ["youtube", "YouTube"]];
     const socRows = SOC.map(([k, label]) => {
@@ -871,7 +954,7 @@ export function sanatciView(ctx) {
         h("span", { class: "dk-sanatci-detay-next-t" }, evTitle(nx)),
         h("span", { class: "dk-sanatci-detay-next-row" }, h("span", { class: "dk-sanatci-detay-next-v" }, nx.venueName || ""), h("span", { class: "dk-sanatci-detay-next-cta" }, "Katıl →")))) : null;
 
-    const aside = h("aside", { class: "dk-sanatci-detay-aside", "aria-label": "Sanatçı özeti" }, summaryCard, socialCard, nextCard);
+    const aside = h("aside", { class: "dk-sanatci-detay-aside", "aria-label": G ? "Grup özeti" : "Sanatçı özeti" }, summaryCard, socialCard, nextCard);
     const main = h("div", { class: "dk-sanatci-detay-left" }, ...sections.map((s) => s.node));
     const body = h("div", { class: "dk-container dk-sanatci-detay-grid" }, main, aside);
 

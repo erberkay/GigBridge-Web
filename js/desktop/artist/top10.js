@@ -108,7 +108,7 @@ export function artistTop10View(ctx) {
     if (!cache.has(key)) cache.set(key, data.reviewsOk ? aggregateReviews(data.reviews, windowOf(per, Date.now(), { baseline })) : new Map());
     return cache.get(key);
   };
-  const hrefOf = (it) => (it.isGroup ? null : it.id === myUid ? "#/artist/profil" : "#/artist/sanatci/" + encodeURIComponent(it.id));
+  const hrefOf = (it) => (!it.isGroup && it.id === myUid ? "#/artist/profil" : "#/artist/sanatci/" + encodeURIComponent(it.id));   // grup → panel içi grup sayfası
   const rank = (baseline = false) => rankLegacy({ kind, artists: data.artists, groups: data.groups, ratings: ratingsFor(baseline), city, district });
 
   function drawMe(full, ratingsOff = false) {

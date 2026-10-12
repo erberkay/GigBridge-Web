@@ -156,8 +156,8 @@ export function artistKesfetView(ctx) {
   shell.content.append(root);
 
   // ── yardımcılar ──
-  // Grup: web'de grup sayfası yok → grubu kuran sanatçının panel içi sayfası
-  const artistHref = (a) => "#/artist/sanatci/" + encodeURIComponent(a.isGroup ? (a.ownerId || a.id) : a.id);
+  // Grup → panel içi grup sayfası (#/artist/sanatci/<grupId>: legacy renderArtistDetail grup kimliğini de çözer)
+  const artistHref = (a) => "#/artist/sanatci/" + encodeURIComponent(a.id);
   const paintPill = () => {
     pill.hidden = !followReady;
     pillText.textContent = `${following.size} sanatçıyı takip ediyorsun`;

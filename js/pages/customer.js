@@ -9,11 +9,12 @@ import {
   artistReviews, submitArtistReview, getVenueReviews, submitVenueReview, myReviews, updateMyReview, deleteMyReview,
   listenTimeline, createPost, isLiked, toggleLike, listenComments, addComment,
   listenNotifications, markNotifRead, deleteNotif, deleteMyAccount, serverTimestamp,
-  sendMessage, convIdFor,
+  sendMessage, convIdFor, groupById, pickPerformer,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, card, badge, modal, lightbox, fmtDate, fmtTL, ROLE, profileTagline, profileResidency, featuredSet, venueChips, featuredReview, availabilityBadge, bookingRequestModal, rateCardBlock, suitabilityBlock, serviceAreaBlock, techRiderBlock, videoReel, languagesBlock, priceBadge, addOnsBlock, termsBlock, trustedBadge } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
 import { loginModal, changeEmailModal, changePasswordModal } from "./auth.js";
+import { renderGroupDetail } from "./group.js";
 // Mobil Keşfet (Kesfet.dc.html) — CSS tembel yükleyici (css.js app.js'te zaten statik). Ortak SAF yardımcılar/ikonlar/tür
 // renkleri/canlı sayaç YALNIZ Keşfet açılınca dinamik yüklenir (mkLoadMods).
 import { ensureCss } from "../desktop/css.js";
@@ -425,8 +426,8 @@ function mkFollowBtn(a, fx, cls) {
   paint();
   return b;
 }
-// Grup (data.listDirectoryGroups: isGroup + groupHref): web'de grup sayfası yok → grubu kuran sanatçının sayfası; takip düğmesi yok
-const mkAHref = (a) => (a.isGroup ? a.groupHref || "#/kesfet" : "#/sanatci/" + a.id);
+// Grup (data.listDirectoryGroups: isGroup + groupHref) → grubun kendi sayfası (#/sanatci/<grupId>); kartta takip düğmesi yok
+const mkAHref = (a) => (a.isGroup ? a.groupHref || "#/sanatci/" + encodeURIComponent(a.id) : "#/sanatci/" + a.id);
 const mkGroupMeta = (a) => "GRUP · " + (a.genres?.[0] ? mkGenreUp(a.genres[0]) + " · " : "") + (Number(a.memberCount) || 0) + " ÜYE";
 // Popüler Sanatçılar kartı (138px)
 function mkArtistCard(a, fx) {
@@ -1244,7 +1245,7 @@ async function eventDetail(id, root) {
       infoCard((ev.venueName || "M").charAt(0).toLocaleUpperCase("tr-TR"), ["#0D3B5E", "#1A5276"], ev.venueName || "Mekan", ev.city || ev.location?.city || "Mekan profilini görüntüle", ev.venueId ? () => go("#/mekan/" + ev.venueId) : null),
       ev.venueId ? btn("Değerlendir", { variant: "ghost", ic: "star-outline", onClick: () => { if (loginGate("Değerlendirme yapmak")) return; reviewModal("venue", { id: ev.venueId, name: ev.venueName }, () => eventDetail(id, root), { id, title: ev.title }); } }) : null),
     ev.artistName ? h("div", { class: "ed-sect" }, sectTitle("Sanatçı"),
-      infoCard(ev.artistName.charAt(0).toLocaleUpperCase("tr-TR"), [g1, g2], ev.artistName, g || "Müzik", ev.artistId ? () => go("#/sanatci/" + ev.artistId) : null),
+      infoCard(ev.artistName.charAt(0).toLocaleUpperCase("tr-TR"), [g1, g2], ev.artistName, g || "Müzik", (ev.artistId || ev.groupId) ? () => go("#/sanatci/" + encodeURIComponent(ev.artistId || ev.groupId)) : null),   // grup performansı: artistId = grupId → grup sayfası
       ev.artistId ? btn("Değerlendir", { variant: "ghost", ic: "star-outline", onClick: () => { if (loginGate("Değerlendirme yapmak")) return; reviewModal("artist", { id: ev.artistId, name: ev.artistName }, () => eventDetail(id, root), { id, title: ev.title }); } }) : null) : null,
     verWrap,
     h("div", { class: "ed-sect" }, attHead),
@@ -1352,11 +1353,14 @@ function artistDetailPage(id) {
   return page;
 }
 async function artistDetail(id, root) {
-  const [a, revs, following, follCount] = await Promise.all([
-    userById(id), artistReviews(id),
+  const [u, grp, revs, following, follCount] = await Promise.all([
+    userById(id), groupById(id).catch(() => null), artistReviews(id),
     authed() ? isFollowing(uid(), id) : false,
     artistFollowerCount(id),
   ]);
+  // Grup kimliği (Keşfet / etkinlik / takip bağlantıları aynı rotayı kullanır) → grup sayfası (pages/group.js)
+  const a = pickPerformer(u, grp);
+  if (a && a.isGroup) return renderGroupDetail(a, root, { viewer: "customer" });
   clear(root);
   if (!a) { root.append(empty("alert-circle-outline", "Sanatçı bulunamadı")); return; }
   const name = a.displayName || a.name || "Sanatçı";

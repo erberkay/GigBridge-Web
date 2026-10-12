@@ -12,7 +12,7 @@
 // zil sallanma animasyonu + toast'lar.
 // App eşliği (spec §7): takip edilen GRUPLAR (users/{uid}/followingGroups) Sanatçılar sekmesinde sanatçılardan sonra;
 // grup zili app setGroupFollowNotify ile birebir (followingGroups/{id} + groups/{id}/followers/{uid} aynası); kalp =
-// app unfollowGroup. Webde grup sayfası yok → grup kartında profil bağlantısı yok.
+// app unfollowGroup. Grup kartı grubun sayfasına gider (#/sanatci/<grupId>).
 //
 // Kaldırma yazımı HEMEN yapılır (yenileme/kapatma/çıkışta kaybolmaz); "GERİ AL" silinen belgelerin anlık görüntüsünü aynen
 // geri yazar (takip.js removeEntry — followArtist çağrılmaz → new_follower bildirimi tekrar gitmez).
@@ -190,7 +190,7 @@ export function favorilerView(ctx) {
   // Sanatçı + grup kartı (FavArtistCard)
   function artistCard(it) {
     const isGroup = it.kind === "group";
-    const href = isGroup ? null : "#/sanatci/" + encodeURIComponent(it.id);
+    const href = "#/sanatci/" + encodeURIComponent(it.id);   // grup kimliği de aynı rotada çözülür
     const ph = () => h("span", { class: "dk-favoriler-ph is-artist" }, cardInitial(it.name));
     const gchip = h("span", { class: "dk-favoriler-gchip" });
     const bchip = h("span", { class: "dk-favoriler-bchip" }, svgPath(BELL, { size: 11, sw: "2.2" }), "BİLDİRİM AÇIK");

@@ -26,8 +26,8 @@
 // URL: #/top10?tur=gruplar&donem=hafta|ay&sehir=…&ilce=… (history.replaceState; update(query) uygular).
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
-import { db, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, serverTimestamp } from "../../firebase.js";
-import { listRealArtists, listGroups, followArtist, unfollowArtist, testAccountIds } from "../../data.js";
+import { db, doc, getDoc, setDoc, updateDoc, collection, onSnapshot, serverTimestamp } from "../../firebase.js";
+import { listRealArtists, listGroups, followArtist, unfollowArtist, followGroup, unfollowGroup, groupHref, testAccountIds } from "../../data.js";
 import { publicShell } from "../shared/public-shell.js";
 import { svgRaw } from "../shared/icons.js";
 import { cx, dkToast, dkPopover, dkLoginGate } from "../shared/ui.js";
@@ -94,17 +94,7 @@ async function computeLocalRankings() {
   return out;
 }
 
-// ── Grup favorisi + zil (app services/follow.ts ile aynı şekil) ──
-async function followGroup(uid, g) {
-  await setDoc(doc(db, "users", uid, "followingGroups", g.id), {
-    groupId: g.id, groupName: g.name, targetType: "group", genre: g.genre ?? "", photoURL: g.photoURL ?? null, notifyEvents: true, followedAt: serverTimestamp(),
-  });
-  setDoc(doc(db, "groups", g.id, "followers", uid), { followedAt: serverTimestamp(), notifyEvents: true }).catch(() => {});
-}
-async function unfollowGroup(uid, gid) {
-  await deleteDoc(doc(db, "users", uid, "followingGroups", gid));
-  deleteDoc(doc(db, "groups", gid, "followers", uid)).catch(() => {});
-}
+// ── Grup favorisi (data.js followGroup/unfollowGroup — grup sayfasıyla ortak) + zil (app services/follow.ts ile aynı şekil) ──
 // SHARED-CANDIDATE: account/favoriler.js da aynı zil yazımını yerel tutuyor (data.js'te setFollowNotify yok) → data.js'e taşınmalı.
 async function setFollowNotify(uid, targetId, on) {
   await updateDoc(doc(db, "users", uid, "following", targetId), { notifyEvents: on, notifyUpdatedAt: serverTimestamp() });
@@ -350,7 +340,7 @@ export function top10View(ctx) {
     const rows = visible.map((x, i) => ({
       ...x, sub: x.isGroup ? `${x.memberCount ?? 0} üye${x.genre ? ` · ${x.genre}` : ""}` : [x.genre, x.district || x.city].filter(Boolean).join(" · "),
       isMe: !x.isGroup && x.id === myUid, rank: i + 1,
-      href: x.isGroup ? null : "#/sanatci/" + encodeURIComponent(x.id),   // web'de grup sayfası yok → grup satırı gezinmez
+      href: x.isGroup ? groupHref(x.id) : "#/sanatci/" + encodeURIComponent(x.id),   // grup → grup sayfası (#/sanatci/<grupId>)
       delta: x.prevRank != null && x.rank != null ? x.prevRank - x.rank : null,
     }));
     const kids = [];
