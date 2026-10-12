@@ -26,7 +26,7 @@ import { h, openImageCropper } from "../../ui.js";
 import { session } from "../../store.js";
 import { db, collection, query, where, getDocs } from "../../firebase.js";
 import {
-  listArtists, listGroups, watchedArtists, watchArtist, unwatchArtist,
+  listArtists, listGroups, servesCity, watchedArtists, watchArtist, unwatchArtist,
   createInvitation, createGroupInvitation, createResidency, findExistingInvitation, uploadImage, sendNotification,
 } from "../../data.js";
 import { panelShell } from "../shared/panel-shell.js";
@@ -313,9 +313,9 @@ export function venueSanatciBulView(ctx) {
     const cf = st.sehir ? fold(st.sehir) : null;
     let p = st.tip === "group" ? groups : st.tip === "artist" ? artists : [...artists, ...groups];
     p = p.filter((x) => {
-      if (t && !(nameOf(x).toLocaleLowerCase("tr-TR").includes(t) || String(x.city || "").toLocaleLowerCase("tr-TR").includes(t))) return false;
+      if (t && !(fold(nameOf(x)).includes(fold(t)) || fold(x.city).includes(fold(t)))) return false;   // Türkçe katlamalı ad/şehir araması
       if (fam && genreFamily(genreOf(x)).key !== fam) return false;
-      if (cf && fold(String(x.city || "").trim()) !== cf) return false;
+      if (cf && !servesCity(x, st.sehir)) return false;   // sanatçı: city VEYA serviceCities · grup: city
       if (st.butce < BUDGET_MAX) { const r = feeRange(x); if (r && r.min > st.butce) return false; } // ücretsiz/ücreti yok → geçer (spec)
       if (st.puan && ratingOf(x) < st.puan) return false;
       return true;

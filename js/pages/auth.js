@@ -215,7 +215,7 @@ export function login() {
   } }, "Şifremi unuttum");
   return h("main", { class: "au-wrap" },
     h("div", { class: "au-head" },
-      h("button", { class: "au-back", onclick: () => (location.hash = "#/") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
+      h("button", { class: "au-back", "aria-label": "Geri", onclick: () => (location.hash = "#/") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "au-logorow" },
         h("span", { class: "au-logo" }, icon("musical-notes", { size: 24, color: "#fff" })),
         h("span", { class: "au-appname" }, "GigBridge")),
@@ -275,7 +275,7 @@ export function loginModal() {
 
 // ── Kayıt — app RegisterScreen birebir (2 adım: rol kartları → bilgiler) ──
 const REG_TYPES = [
-  ["customer", "Müşteri", "Etkinlikleri keşfet, sanatçıları takip et", "headset-outline", ["#06B6D4", "#0891B2"]],
+  ["customer", "Dinleyici", "Etkinlikleri keşfet, sanatçıları takip et", "headset-outline", ["#06B6D4", "#0891B2"]],
   ["artist", "Sanatçı", "Profilini oluştur, mekanlardan teklif al", "mic-outline", ["#A855F7", "#7C3AED"]],
   ["venue", "Mekan", "Sanatçıları bul, etkinlik planla", "business-outline", ["#F59E0B", "#D97706"]],
   ["organizer", "Organizatör", "Ekip kur, etkinlik yönet, mekanlarla çalış", "calendar-outline", ["#F43F5E", "#BE123C"]],
@@ -287,7 +287,7 @@ export function register() {
 
   function draw() {
     clear(wrap);
-    const back = h("button", { class: "au-back", onclick: () => { if (step === 2) { step = 1; draw(); } else location.hash = "#/"; } },
+    const back = h("button", { class: "au-back", "aria-label": "Geri", onclick: () => { if (step === 2) { step = 1; draw(); } else location.hash = "#/"; } },
       icon("chevron-back", { size: 22, color: "var(--text-secondary)" }));
     const dots = h("div", { class: "au-steps" }, ...[1, 2].map((s) => h("span", { class: "au-dot" + (step >= s ? " on" : "") })));
 
@@ -585,7 +585,7 @@ export function setup() {
   // Google yeni kullanıcı TÜM rolleri seçebilmeli (önceden yalnız mekan/organizatör vardı
   // → sanatçı ve müşteri Google ile açılamıyordu). App AccountTypeScreen ile parite.
   const seg = h("div", { class: "segrow wrap4" },
-    roleBtn("customer", "Müşteri", "headset-outline"),
+    roleBtn("customer", "Dinleyici", "headset-outline"),
     roleBtn("artist", "Sanatçı", "mic-outline"),
     roleBtn("venue", "Mekan", "business-outline"),
     roleBtn("organizer", "Organizatör", "megaphone-outline"));
@@ -699,7 +699,7 @@ export function adminLogin() {
 // ── Desteklenmeyen rol ──
 export function unsupported() {
   return shell(hero("Bu panel için değil", null),
-    card(h("p", { class: "center muted" }, "Bu web paneli yalnızca mekan, organizatör ve yönetici hesapları içindir. Müşteri/sanatçı hesabıyla uygulamayı kullan."),
+    card(h("p", { class: "center muted" }, "Bu web paneli yalnızca mekan, organizatör ve yönetici hesapları içindir. Dinleyici/sanatçı hesabıyla uygulamayı kullan."),
       btn("Çıkış Yap", { variant: "ghost", ic: "log-out-outline", full: true, onClick: logout })));
 }
 

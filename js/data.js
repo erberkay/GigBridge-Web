@@ -4,8 +4,42 @@ import {
   query, where, orderBy, limit, onSnapshot, serverTimestamp, arrayRemove, increment, writeBatch,
   storage, ref, uploadBytes, getDownloadURL, deleteObject, auth, deleteUser,
 } from "./firebase.js";
+import { session } from "./store.js";
 // Sayfaların data.js üzerinden alabilmesi için yeniden dışa aktar (artist.js isim cooldown damgası).
 export { serverTimestamp } from "./firebase.js";
+
+// ── Test hesapları (users.testAccount === true; app isRealArtist ile aynı kural) ──
+// Herkese açık dizinlerde (Keşfet, arama, sanatçı/mekan listeleri, Top 10, Akış önerileri) görünmez.
+export const isTestAccount = (u) => u?.testAccount === true;
+const hideTest = (list) => list.filter((u) => !isTestAccount(u));
+// Test hesabı kimlikleri (etkinlik / sunucu Top 10 süzgeci için; tek eşitlik sorgusu, 5 dk önbellek). Okunamazsa boş küme.
+let _testIds = null, _testIdsAt = 0;
+export function testAccountIds() {
+  if (!_testIds || Date.now() - _testIdsAt > 5 * 60e3) {
+    _testIdsAt = Date.now();
+    _testIds = getDocs(query(collection(db, "users"), where("testAccount", "==", true)))
+      .then((s) => new Set(s.docs.map((d) => d.id)))
+      .catch(() => { _testIds = null; return new Set(); });
+  }
+  return _testIds;
+}
+
+// ── Şehir eşleşmesi (Türkçe katlamalı): sanatçı city VEYA serviceCities (ilçe metni içerebilir: "İzmir (Kuşadası)") ──
+const _TRX = { "ı": "i", "İ": "i", "ş": "s", "Ş": "s", "ç": "c", "Ç": "c", "ğ": "g", "Ğ": "g", "ö": "o", "Ö": "o", "ü": "u", "Ü": "u", "â": "a", "Â": "a", "î": "i", "Î": "i", "û": "u", "Û": "u" };
+const _fold = (s) => String(s ?? "").replace(/[ıİşŞçÇğĞöÖüÜâÂîÎûÛ]/g, (c) => _TRX[c] || c).toLowerCase().trim();
+export const foldTR = _fold;   // arama anahtarı: "İlkay Şahin" → "ilkay sahin" (desktop helpers.fold ile aynı)
+function _placeMatches(text, want) {
+  const t = _fold(text);
+  if (!t || !want) return false;
+  return t === want || t.split(/[^a-z0-9]+/).includes(want) || (want.includes(" ") && t.includes(want));
+}
+// city: seçili şehir ("TÜMÜ"/boş → her zaman true). Gruplar yalnız city taşır (serviceCities yok) → aynı fonksiyon.
+export function servesCity(a, city) {
+  const want = _fold(city);
+  if (!want || want === "tumu") return true;
+  const svc = Array.isArray(a?.serviceCities) ? a.serviceCities : [];
+  return [a?.city, ...svc].some((c) => _placeMatches(c, want));
+}
 
 // ── Yardımcılar (app utils/price.ts + eventDate.ts karşılığı) ──
 // TL ayrıştır: sayıysa aynen; "2.500" gibi string ise rakamları toplar (nokta binlik ayraç).
@@ -133,7 +167,7 @@ export async function saveOrganizerProfile(uid, patch, org) {
 // Mekan listesi (organizatörün istek göndereceği mekanlar)
 export async function listVenues() {
   const snap = await getDocs(query(collection(db, "users"), where("userType", "==", "venue")));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((v) => v.approved !== false);
+  return hideTest(snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((v) => v.approved !== false));
 }
 
 // ── Admin ──
@@ -271,7 +305,7 @@ export async function venueStats(uid) {
 // ── Mekan: sanatçı bul + davet ──
 export async function listArtists() {
   const snap = await getDocs(query(collection(db, "users"), where("userType", "==", "artist")));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return hideTest(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
 }
 export async function createInvitation(venue, artist, f) {
   const genre = (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "";
@@ -395,9 +429,14 @@ export async function markRead(convId, uid) { try { await updateDoc(doc(db, "con
 
 // Keşfet: yaklaşan etkinlikler (bugün 12s öncesinden itibaren), en yakın önce.
 export async function discoverEvents() {
-  const snap = await getDocs(query(collection(db, "events"), where("status", "==", "upcoming")));
+  // Test hesabının (mekan/organizatör) etkinlikleri herkese açık listelerde/haritada görünmez; test hesabıyla girilince görünür (test akışları).
+  const viewerIsTest = isTestAccount(session.profile);
+  const [snap, testIds] = await Promise.all([
+    getDocs(query(collection(db, "events"), where("status", "==", "upcoming"))),
+    viewerIsTest ? Promise.resolve(new Set()) : testAccountIds(),
+  ]);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-    .filter((e) => !isEventOver(e))
+    .filter((e) => !isEventOver(e) && ![e.venueId, e.organizerId, e.createdBy].some((x) => x && testIds.has(x)))
     .sort((a, b) => msOf(a) - msOf(b));
 }
 export async function eventById(id) { const s = await getDoc(doc(db, "events", id)); return s.exists() ? { id, ...s.data() } : null; }
@@ -406,8 +445,26 @@ export async function userById(id) { const s = await getDoc(doc(db, "users", id)
 // Popüler sanatçılar (gerçek/tamamlanmış kayıtlar)
 export async function listRealArtists() {
   const snap = await getDocs(query(collection(db, "users"), where("userType", "==", "artist")));
+  return hideTest(snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    .filter((a) => (a.displayName || "").trim() && (a.createdAt != null || (a.email || "").includes("@"))));
+}
+
+// Keşfet / arama: sanatçı GRUPLARI da sanatçı olarak listelenir (app HomeScreen ile aynı süzgeç: adı olan, üyesi olan,
+// yasaklı olmayan; ayrıca test hesabının kurduğu grup gizli). Sanatçı kartı alanlarına uyarlanır: isGroup, displayName, genres.
+// Web'de grup profil sayfası yok → kart, grubu kuran sanatçının sayfasına gider (groupHref).
+export async function listDirectoryGroups() {
+  const [snap, testIds] = await Promise.all([getDocs(collection(db, "groups")), testAccountIds()]);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-    .filter((a) => (a.displayName || "").trim() && (a.createdAt != null || (a.email || "").includes("@")));
+    .filter((g) => String(g.name || "").trim() && Array.isArray(g.memberIds) && g.memberIds.length > 0 && g.banned !== true
+      && !(g.createdBy && testIds.has(g.createdBy)))
+    .map((g) => {
+      const owner = g.createdBy || (Array.isArray(g.adminIds) && g.adminIds[0]) || g.memberIds[0];
+      return {
+        ...g, isGroup: true, displayName: String(g.name).trim(), genres: g.genre ? [g.genre] : [],
+        city: g.city || "", serviceCities: [], photoURL: g.photoURL || null, followerCount: Number(g.followerCount) || 0,
+        memberCount: g.memberIds.length, ownerId: owner || null, groupHref: owner ? "#/sanatci/" + encodeURIComponent(owner) : null,
+      };
+    });
 }
 
 // ── Katılım (events/{id}/attendees/{uid} + attendeeCount ±1) ──

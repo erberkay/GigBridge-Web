@@ -27,7 +27,7 @@
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
 import { db, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, serverTimestamp } from "../../firebase.js";
-import { listRealArtists, listGroups, followArtist, unfollowArtist } from "../../data.js";
+import { listRealArtists, listGroups, followArtist, unfollowArtist, testAccountIds } from "../../data.js";
 import { publicShell } from "../shared/public-shell.js";
 import { svgRaw } from "../shared/icons.js";
 import { cx, dkToast, dkPopover, dkLoginGate } from "../shared/ui.js";
@@ -60,7 +60,8 @@ function parseItems(raw) {
 }
 async function loadServerRankings() {
   try {
-    const snaps = await Promise.all(PERIODS.map((p) => getDoc(doc(db, "rankings", `artists_${p.cf}`))));
+    // Sunucu öğeleri testAccount taşımaz → test hesabı kimlikleri ayrıca süzülür (sıra numarası görünümde index'ten verilir)
+    const [snaps, testIds] = await Promise.all([Promise.all(PERIODS.map((p) => getDoc(doc(db, "rankings", `artists_${p.cf}`)))), testAccountIds()]);
     const out = {};
     for (let i = 0; i < PERIODS.length; i++) {
       const s = snaps[i];
@@ -68,7 +69,7 @@ async function loadServerRankings() {
       const d = s.data();
       const at = toMs(d.updatedAt) ?? (typeof d.computedAtMs === "number" ? d.computedAtMs : null);
       if (at == null || Date.now() - at > STALE_MS) return null;
-      const items = parseItems(d.items);
+      const items = parseItems(d.items).filter((x) => !testIds.has(x.id));
       out[PERIODS[i].key] = { artists: items.filter((x) => !x.isGroup), groups: items.filter((x) => x.isGroup) };
     }
     return out;

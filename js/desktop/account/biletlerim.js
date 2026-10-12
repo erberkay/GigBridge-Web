@@ -711,7 +711,7 @@ export function biletlerimView(ctx) {
   // ── Başlık + sayaç ──
   const countTxt = h("span", {});
   const count = h("span", { class: P + "count", "aria-live": "polite" }, h("span", { class: P + "dot", "aria-hidden": "true" }), countTxt);
-  const head = dkPageHead({ title: "Bilet", em: "lerim", lead: "Katıldığın etkinliklerin e-biletleri. Girişte bileti aç, QR kodu görevliye okut.", right: count });
+  const head = dkPageHead({ title: "Bilet", em: "lerim", lead: "Katıldığın etkinliklerin ücretsiz QR katılım kayıtları. Girişte aç, QR kodu görevliye okut; giriş ücreti varsa mekana ödenir.", right: count });
 
   // ── Sekmeler ──
   const seg = dkSegmented({

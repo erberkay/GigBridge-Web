@@ -35,9 +35,9 @@ export const LOGO_ICON = "assets/logo-icon.svg";          // legacy logo dosyas�
 export const LOGO_HORIZONTAL = "assets/logo-horizontal.svg";
 export const OG_COVER = "assets/og-cover.png";
 
-// Mağaza bağlantıları (App Store kimliği henüz yok → /indir/ sayfasına düş; indir/index.html cihazı algılar)
+// Mağaza bağlantıları (App Store'da yayında; indir/index.html + statik şehir/rehber sayfaları aynı adresi kullanır)
 export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.erberkay.gigbridge";
-export const APP_STORE_URL = null;                       // TODO(owner): App Store ID gelince doldur
+export const APP_STORE_URL = "https://apps.apple.com/tr/app/gigbridge/id6787107727";
 export const DOWNLOAD_PAGE = "/indir/";
 export const appStoreHref = () => APP_STORE_URL || DOWNLOAD_PAGE;
 export const playStoreHref = () => PLAY_STORE_URL;

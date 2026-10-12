@@ -97,7 +97,7 @@ export function messagesView(root, color = ROLE.venue) {
     };
     root.append(
       h("div", { class: "ms-head" },
-        h("button", { class: "ms-back", onclick: showList }, icon("close", { size: 26, color: "var(--text)" })),
+        h("button", { class: "ms-back", "aria-label": "Kapat", onclick: showList }, icon("close", { size: 26, color: "var(--text)" })),
         h("div", { class: "ms-title grow" }, "Yeni Mesaj")),
       h("div", { class: "ms-search" }, icon("search-outline", { size: 16, color: "var(--text-muted)" }), sInp),
       listBox);
@@ -121,7 +121,7 @@ export function messagesView(root, color = ROLE.venue) {
     const sendBtn = h("button", { class: "ms-send", onclick: () => doSend() }, icon("arrow-forward", { size: 20, color: "#fff" }));
     const view = h("div", { class: "chat" },
       h("div", { class: "ms-chathead" },
-        h("button", { class: "ms-back", onclick: showList }, icon("chevron-back", { size: 22, color: "var(--text)" })),
+        h("button", { class: "ms-back", "aria-label": "Geri", onclick: showList }, icon("chevron-back", { size: 22, color: "var(--text)" })),
         msAv(conv.otherName, 40, conv.isGroup ? "artist" : myType === "venue" ? "artist" : "venue", conv.otherPhoto),
         h("div", {}, h("div", { class: "ms-name" }, conv.otherName), h("div", { class: "ms-status" }, conv.isGroup ? "Grup sohbeti" : "GigBridge"))),
       list,

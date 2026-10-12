@@ -407,7 +407,7 @@ export function serviceAreaBlock(p) {
   const all = [...new Set([p.city, ...cities].filter(Boolean))];
   return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Hizmet Bölgesi"),
     all.length ? h("div", { class: "pf-tags" }, ...all.map((c) => h("span", { class: "pf-tag2 cyan" }, c))) : null,
-    travel ? h("div", { class: "pf-travel" }, icon("car-outline", { size: 14, color: "var(--text-secondary)" }), h("span", {}, travel)) : null);
+    travel ? h("div", { class: "pf-travel" }, icon("car-outline", { size: 14, color: "var(--text-secondary)" }), h("span", {}, "Şehir dışı yol ücreti: " + fmtMoneyText(travel))) : null);
 }
 
 // Tech rider / mini-SSS — kurulum & detaylar
@@ -415,8 +415,9 @@ export function techRiderBlock(p) {
   const EQ = { yes: "Ekipmanı getiriyor", no: "Ekipman mekandan", partial: "Kısmen getiriyor" };
   const rows = [];
   if (p.equipmentBrings && EQ[p.equipmentBrings]) rows.push(["Ekipman", EQ[p.equipmentBrings]]);
-  if (String(p.minDuration || "").trim()) rows.push(["Min. Süre", p.minDuration]);
-  if (String(p.setupTime || "").trim()) rows.push(["Kurulum Süresi", p.setupTime]);
+  if (String(p.minDuration || "").trim()) rows.push(["Min. Süre", fmtDurText(p.minDuration, "saat")]);
+  if (String(p.setupTime || "").trim()) rows.push(["Kurulum Süresi", fmtDurText(p.setupTime, "dk")]);
+  if (fmtPriceRange(p)) rows.push(["Performans Ücreti", fmtPriceRange(p)]);
   if (!rows.length) return null;
   return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Kurulum & Detaylar"),
     h("div", { class: "pf-kv" }, ...rows.map((r) => h("div", { class: "pf-kv-row" }, h("span", { class: "pf-kv-k" }, r[0]), h("span", { class: "pf-kv-v" }, r[1])))));
@@ -490,7 +491,7 @@ export function addOnsBlock(p) {
   return h("div", { class: "ed-sect" }, h("h2", { class: "ed-secttitle" }, "Ek Hizmetler"),
     h("div", { class: "pf-kv" }, ...list.map((a) => h("div", { class: "pf-kv-row" },
       h("span", { class: "pf-kv-k" }, a.name || "Ek hizmet"),
-      a.price ? h("span", { class: "pf-kv-v" }, /^[\d.]/.test(String(a.price).trim()) ? "₺" + a.price : a.price) : null))));
+      a.price ? h("span", { class: "pf-kv-v" }, fmtMoneyText(a.price)) : null))));
 }
 
 // ŞARTLAR — kapora notu + iptal politikası rozeti (flexible=yeşil / moderate=amber / strict=kırmızı)
@@ -516,7 +517,7 @@ export function rateCardBlock(packages) {
   const union = [...new Set(pkgTypes.flat())];
   const pkgEl = (p, i) => h("div", { class: "pf-pkg", dataset: { pkgi: String(i) } },
     h("div", { class: "pf-pkg-top" }, h("span", { class: "pf-pkg-name" }, p.name || "Paket"),
-      p.price ? h("span", { class: "pf-pkg-price" }, /^[\d.]/.test(String(p.price).trim()) ? "₺" + p.price : p.price) : null),
+      p.price ? h("span", { class: "pf-pkg-price" }, fmtMoneyText(p.price)) : null),
     p.includes ? h("div", { class: "pf-pkg-inc" }, ...String(p.includes).split(/[,;]/).map((t) => t.trim()).filter(Boolean).map((t) => h("span", { class: "pf-pkg-tag" }, t))) : null,
     pkgTypes[i].length ? h("div", { class: "pf-pkg-inc" }, ...pkgTypes[i].map((t) => h("span", { class: "pf-pkg-tag amber" }, t))) : null,
     p.desc ? h("p", { class: "pf-pkg-desc" }, p.desc) : null);
@@ -743,7 +744,7 @@ export function modal({ title, body, actions = [], onClose }) {
   const overlay = h("div", { class: "modal-overlay", onclick: (e) => { if (e.target === overlay) close(); } },
     h("div", { class: "modal" },
       h("div", { class: "modal-head" }, h("h3", {}, title),
-        h("button", { class: "modal-x", onclick: close }, icon("close", { size: 20 }))),
+        h("button", { class: "modal-x", type: "button", "aria-label": "Kapat", onclick: close }, icon("close", { size: 20 }))),
       h("div", { class: "modal-body" }, body),
       actions.length ? h("div", { class: "modal-actions" },
         ...actions.map((a) => btn(a.label, { variant: a.variant || "primary", ic: a.ic,
@@ -776,6 +777,25 @@ export function fmtDate(v) {
     if (isNaN(d)) return typeof v === "string" ? v : ""; return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" }); } catch { return ""; }
 }
 export function fmtTL(n) { const x = Number(n); return isFinite(x) && x > 0 ? "₺" + x.toLocaleString("tr-TR") : "—"; }
+// Serbest metin para alanı (paket/ek hizmet fiyatı, yol ücreti — app formatMoneyText karşılığı, ₺ sonda/TL de tanınır):
+// "7500" | "7.500" | "7000₺" | "₺ 7500" | "7500 TL" → "₺7.500"; başka metin ("İstanbul dışı +2.000₺") aynen.
+export function fmtMoneyText(v) {
+  const s = String(v ?? "").trim();
+  if (!s) return "";
+  const m = s.match(/^(?:₺\s*)?(\d{1,3}(?:\.\d{3})+|\d+)\s*(?:₺|tl)?$/i);
+  if (m) { const n = parseInt(m[1].replace(/\./g, ""), 10); if (isFinite(n) && n > 0) return "₺" + n.toLocaleString("tr-TR"); }
+  return s;
+}
+// Süre alanı yalnız sayıysa birim ekle: fmtDurText("1", "saat") → "1 saat", fmtDurText("30", "dk") → "30 dk"; "2 saat" aynen.
+export function fmtDurText(v, unit) {
+  const s = String(v ?? "").trim();
+  return /^\d+(?:[.,]\d+)?$/.test(s) ? `${s} ${unit}` : s;
+}
+// Performans ücreti aralığı (priceMin–priceMax; app ArtistDetail "Performans Ücreti"): "₺3.500 – ₺10.000" | "₺3.500" | ""
+export function fmtPriceRange(p) {
+  const lo = fmtMoneyText(p?.priceMin), hi = fmtMoneyText(p?.priceMax);
+  return lo && hi && lo !== hi ? `${lo} – ${hi}` : (lo || hi);
+}
 
 // Leaflet haritasını tek sefer dinamik yükle → window.L (harita + konum pin)
 let _leaflet = null;

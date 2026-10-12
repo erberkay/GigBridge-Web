@@ -20,7 +20,7 @@
 // Yazma: yalnız takip — data.js followArtist/unfollowArtist (legacy ile aynı şekil: following + followers aynası + new_follower bildirimi).
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
-import { listRealArtists, fetchArtistRatings, followingList, followArtist, unfollowArtist } from "../../data.js";
+import { listRealArtists, listDirectoryGroups, servesCity, fetchArtistRatings, followingList, followArtist, unfollowArtist } from "../../data.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgRaw } from "../shared/icons.js";
 import { cx, dkToast, dkPopover, dkLoginGate, dkSkeleton } from "../shared/ui.js";
@@ -156,7 +156,8 @@ export function artistKesfetView(ctx) {
   shell.content.append(root);
 
   // ── yardımcılar ──
-  const artistHref = (a) => "#/artist/sanatci/" + encodeURIComponent(a.id);
+  // Grup: web'de grup sayfası yok → grubu kuran sanatçının panel içi sayfası
+  const artistHref = (a) => "#/artist/sanatci/" + encodeURIComponent(a.isGroup ? (a.ownerId || a.id) : a.id);
   const paintPill = () => {
     pill.hidden = !followReady;
     pillText.textContent = `${following.size} sanatçıyı takip ediyorsun`;
@@ -226,11 +227,11 @@ export function artistKesfetView(ctx) {
       h("div", { class: "dk-sanatci-kesfet-cbody" },
         h("div", { class: "dk-sanatci-kesfet-info" },
           h("a", { href, class: "dk-sanatci-kesfet-name", tabindex: "-1" }, name),
-          h("span", { class: "dk-sanatci-kesfet-meta" }, [genre, a.city].filter(Boolean).join(" · ") || "Sanatçı"),
+          h("span", { class: "dk-sanatci-kesfet-meta" }, [a.isGroup ? "GRUP" : null, genre, a.city].filter(Boolean).join(" · ") || "Sanatçı"),
           count > 0
             ? h("span", { class: "dk-sanatci-kesfet-rate" }, `★ ${agg.avg.toFixed(1)} · ${count} yorum`)
             : h("span", { class: "dk-sanatci-kesfet-rate is-new" }, "Yeni")),
-        followBtn(a)));
+        a.isGroup ? null : followBtn(a)));   // grup takibi app'te grup profilinden
   }
 
   function skeleton() {
@@ -267,10 +268,11 @@ export function artistKesfetView(ctx) {
       return;
     }
     grid.removeAttribute("aria-busy");
-    const ql = q.trim().toLocaleLowerCase("tr-TR");
+    // Ad/tür araması Türkçe katlamalı ("sahin" ≡ "Şahin"); şehir = city VEYA serviceCities (grupta city)
+    const ql = fold(q.trim());
     const list = artists.filter((a) =>
-      (!city || (a.city || "") === city) &&
-      (!ql || `${a.displayName || ""} ${genreOf(a)}`.toLocaleLowerCase("tr-TR").includes(ql)));
+      servesCity(a, city) &&
+      (!ql || fold(`${a.displayName || ""} ${genreOf(a)}`).includes(ql)));
     countEl.textContent = `${list.length} SANATÇI` + (city ? ` · ${trUpper(city)}` : "");
     const key = ql + "|" + city;
     const changed = key !== lastKey;
@@ -320,9 +322,9 @@ export function artistKesfetView(ctx) {
     failed = false; artists = null;
     draw();
     try {
-      const [list, rt] = await Promise.all([listRealArtists(), fetchArtistRatings().catch(() => new Map())]);
+      const [list, rt, groups] = await Promise.all([listRealArtists(), fetchArtistRatings().catch(() => new Map()), listDirectoryGroups().catch(() => [])]);
       if (!alive) return;
-      artists = list.filter((a) => a.id !== myUid);   // kendini gösterme (legacy)
+      artists = [...list.filter((a) => a.id !== myUid), ...groups];   // kendini gösterme (legacy) · gruplar da listelenir (app DiscoverScreen)
       ratings = rt;
     } catch (_) {
       if (!alive) return;

@@ -492,7 +492,7 @@ export function profilView(ctx) {
     const add = (ms, kind, text, href) => { if (ms != null && ms <= now + 60000) acts.push({ ms, kind, text, href }); };
     (att || []).forEach((e) => {
       const title = e.title || "Etkinlik";
-      add(toMs(e._att?.joinedAt), "ticket", `${[title, e.venueName].filter(Boolean).join(" · ")} için bilet aldın`, "#/biletlerim");
+      add(toMs(e._att?.joinedAt), "ticket", `${[title, e.venueName].filter(Boolean).join(" · ")} için katılım kaydı oluşturdun`, "#/biletlerim");
       if (e._att?.ticketStatus === "used" || e._att?.checkedInAt) add(toMs(e._att?.checkedInAt), "check", `${title} etkinliğine katıldın`, "#/katildiklarim");
     });
     (rv || []).forEach((r) => {

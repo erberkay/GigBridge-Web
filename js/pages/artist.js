@@ -7,7 +7,7 @@ import {
   artistReviews, listRealArtists, listenNotifications, markNotifRead, deleteNotif,
   listenArtistOffers, listenArtistAccepted, listenArtistResidencies, respondToOffer,
   setResidencyStatus, syncResidentDenorm, pushAppNotification, artistAcceptedInvitations,
-  artistVenueReviewsGiven, submitArtistVenueReview, fetchArtistRatings, listGroups,
+  artistVenueReviewsGiven, submitArtistVenueReview, fetchArtistRatings, listGroups, listDirectoryGroups, servesCity, foldTR,
   followArtist, unfollowArtist, isFollowing, artistFollowerCount,
   bayesianScore, ratingsGlobalMean,
   serverTimestamp,
@@ -497,9 +497,9 @@ async function renderStages(root) {
     }));
     calBox.append(h("div", { class: "ax-cal" },
       h("div", { class: "ax-cal-head" },
-        h("button", { class: "ax-cal-nav", onclick: () => shift(-1) }, icon("chevron-back", { size: 20 })),
+        h("button", { class: "ax-cal-nav", "aria-label": "Önceki ay", onclick: () => shift(-1) }, icon("chevron-back", { size: 20 })),
         h("div", { class: "ax-cal-month" }, `${MONTHS_TR[monthDate.getMonth()]} ${monthDate.getFullYear()}`),
-        h("button", { class: "ax-cal-nav", onclick: () => shift(1) }, icon("chevron-forward", { size: 20 }))),
+        h("button", { class: "ax-cal-nav", "aria-label": "Sonraki ay", onclick: () => shift(1) }, icon("chevron-forward", { size: 20 }))),
       h("div", { class: "ax-cal-week" }, ...WEEK_HEADER.map((w) => h("span", {}, w))),
       grid));
 
@@ -787,7 +787,7 @@ export async function renderArtistDetail(id, root) {
   root.append(
     h("div", { class: "pd-hero pd-artist" + (a.bannerUrl ? " has-banner" : ""), style: a.accentColor ? { "--accent": a.accentColor } : null },
       a.bannerUrl ? h("div", { class: "pd-banner", style: { backgroundImage: `url(${a.bannerUrl})` } }) : null,
-      h("button", { class: "ed-iconbtn dark", onclick: () => history.length > 1 ? history.back() : go("#/artist/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
+      h("button", { class: "ed-iconbtn dark", "aria-label": "Geri", onclick: () => history.length > 1 ? history.back() : go("#/artist/kesfet") }, icon("chevron-back", { size: 22, color: "var(--text-secondary)" })),
       h("div", { class: "pd-center" },
         a.photoURL ? h("div", { class: "pd-av round zoomable", style: { backgroundImage: `url(${a.photoURL})` }, title: "Büyüt", onclick: () => lightbox(a.photoURL) }) : h("div", { class: "pd-av round" }, name.charAt(0).toLocaleUpperCase("tr-TR")),
         h("h1", { class: "pd-name" }, name),
@@ -839,47 +839,49 @@ async function renderDiscover(root) {
       h("div", { class: "field" }, h("span", { class: "flabel" }, "Şehir"), cityPicker.el)),
     listBox);
 
-  let artists = [], ratings = new Map();
+  let artists = [], ratings = new Map(), groups = [];
   try {
-    [artists, ratings] = await Promise.all([listRealArtists(), fetchArtistRatings().catch(() => new Map())]);
+    [artists, ratings, groups] = await Promise.all([listRealArtists(), fetchArtistRatings().catch(() => new Map()), listDirectoryGroups().catch(() => [])]);
   } catch (_) { clear(listBox); listBox.append(errBox()); return; }
-  artists = artists.filter((a) => a.id !== myUid);   // kendini gösterme
+  artists = [...artists.filter((a) => a.id !== myUid), ...groups];   // kendini gösterme · gruplar da listelenir (app DiscoverScreen)
   const genreOf = (a) => (Array.isArray(a.genres) ? (a.genres[0] || "") : (a.genre || ""));
 
   function draw() {
     clear(listBox);
-    const q = (searchIn.value || "").trim().toLocaleLowerCase("tr-TR");
-    const cityVal = cityPicker.value;   // "" = tüm şehirler
+    const q = foldTR(searchIn.value || "");   // Türkçe katlamalı ("sahin" ≡ "Şahin")
+    const cityVal = cityPicker.value;   // "" = tüm şehirler · sanatçı: city VEYA serviceCities, grup: city
     const list = artists.filter((a) =>
-      (!cityVal || (a.city || "") === cityVal) &&
-      (!q || `${a.displayName || ""} ${genreOf(a)}`.toLocaleLowerCase("tr-TR").includes(q)));
+      servesCity(a, cityVal) &&
+      (!q || foldTR(`${a.displayName || ""} ${genreOf(a)}`).includes(q)));
     if (!list.length) { listBox.append(empty("people-outline", "Sanatçı bulunamadı", q ? "Aramanı değiştirmeyi dene." : "Yakında keşfedilecek sanatçılar burada.")); return; }
     list.forEach((a) => {
       const agg = ratings.get(a.id);
       const genre = genreOf(a);
       const it = { id: a.id, name: a.displayName || "Sanatçı", sub: genre, rating: agg?.avg ?? 0, reviewCount: agg?.count ?? 0 };
-      const fbtn = h("button", { class: "btn btn-ghost kx-fbtn", type: "button" }, "…");
+      const fbtn = a.isGroup ? null : h("button", { class: "btn btn-ghost kx-fbtn", type: "button" }, "…");   // grup takibi app'te grup profilinden
       let fol = false, busy = false;
       const paint = () => { clear(fbtn); fbtn.append(h("span", {}, fol ? "Takipte" : "Takip Et")); fbtn.classList.toggle("on", fol); };
-      if (myUid) isFollowing(myUid, a.id).then((v) => { fol = v; paint(); }).catch(() => paint()); else paint();
-      fbtn.onclick = async (e) => {
-        e.stopPropagation();
-        if (busy || !myUid) return; busy = true;
-        try {
-          if (fol) { await unfollowArtist(myUid, a.id); fol = false; }
-          else { await followArtist(myUid, { id: a.id, name: it.name, genre }); fol = true; }
-          toast(fol ? "Takip edildi" : "Takipten çıkıldı");
-        } catch (_) { toast("İşlem başarısız", "err"); }
-        finally { busy = false; paint(); }
-      };
+      if (fbtn) {
+        if (myUid) isFollowing(myUid, a.id).then((v) => { fol = v; paint(); }).catch(() => paint()); else paint();
+        fbtn.onclick = async (e) => {
+          e.stopPropagation();
+          if (busy || !myUid) return; busy = true;
+          try {
+            if (fol) { await unfollowArtist(myUid, a.id); fol = false; }
+            else { await followArtist(myUid, { id: a.id, name: it.name, genre }); fol = true; }
+            toast(fol ? "Takip edildi" : "Takipten çıkıldı");
+          } catch (_) { toast("İşlem başarısız", "err"); }
+          finally { busy = false; paint(); }
+        };
+      }
       const av = a.photoURL
         ? h("div", { class: "kx-av", style: { backgroundImage: `url(${a.photoURL})` } })
         : h("div", { class: "kx-av ph" }, it.name.charAt(0).toLocaleUpperCase("tr-TR"));
-      listBox.append(h("div", { class: "kx-row", onclick: () => go("#/artist/sanatci/" + a.id) },
+      listBox.append(h("div", { class: "kx-row", onclick: () => go("#/artist/sanatci/" + (a.isGroup ? (a.ownerId || a.id) : a.id)) },
         av,
         h("div", { class: "kx-info" },
           h("div", { class: "kx-name" }, it.name),
-          h("div", { class: "kx-meta" }, [genre, a.city].filter(Boolean).join(" · ") || "Sanatçı"),
+          h("div", { class: "kx-meta" }, [a.isGroup ? "GRUP" : null, genre, a.city].filter(Boolean).join(" · ") || "Sanatçı"),
           h("div", { class: "kx-rate" }, it.reviewCount > 0 ? `★ ${it.rating.toFixed(1)} · ${it.reviewCount} yorum` : "Yeni")),
         fbtn));
     });
@@ -1022,7 +1024,7 @@ async function renderVenueReview(root) {
       } });
 
       root.append(
-        h("button", { class: "icon-btn", style: { marginBottom: "12px" }, onclick: drawList }, icon("chevron-back", { size: 20 })),
+        h("button", { class: "icon-btn", "aria-label": "Geri", style: { marginBottom: "12px" }, onclick: drawList }, icon("chevron-back", { size: 20 })),
         h("div", { class: "ax-vleft", style: { marginBottom: "14px" } },
           h("div", { class: "ax-vcardav sm" }, it.name.charAt(0).toUpperCase()),
           h("div", {},
