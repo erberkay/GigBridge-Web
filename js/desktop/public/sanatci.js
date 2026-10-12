@@ -25,7 +25,7 @@
 //   conversations (+ messages). Arka uç bağımlı parça yok; etkinlik sorgusu başarısızsa Etkinlikler bölümü + sıradaki kartı gizlenir.
 // GRUP SAYFASI (aynı rota #/sanatci/:id): users/{id} sanatçı değilse ve groups/{id} varsa grup çizilir (data.pickPerformer). Grup dokümanı
 //   sanatçı profil alanlarını aynı adlarla taşır → bölümler aynı; farklar: "GRUP" etiketi + üye sayısı hapı, Üyeler bölümü (üyelerin
-//   sanatçı sayfalarına bağlantı), yorumlar reviews targetId == grupId (yeni yorum targetType "group"), etkinlikler artistId|groupId == grupId,
+//   sanatçı sayfalarına bağlantı), yorumlar reviews targetId == grupId (targetType "artist"), etkinlikler artistId|groupId == grupId,
 //   takip users/{uid}/followingGroups + groups/{gid}/followers (data.followGroup), Mesaj / serbest teklif isteği grubun iletişim kişisine
 //   (data.groupContactId), mekan "Teklif Gönder" → mevcut grup daveti (venue/panel.js openInviteModal → data.createGroupInvitation, aynen).
 //   Grup üyesi kendi grubunu "kendi sayfası" gibi görür (aksiyon yok).
@@ -268,7 +268,7 @@ function reviewModal(a, existing, onDone) {
           if (editing) await updateMyReview("reviews", existing.id, { rating, comment: text });
           else {
             const myName = session.profile?.displayName || session.user?.displayName || "Kullanıcı";
-            if (a.isGroup) await submitGroupReview(me, myName, a, rating, text);   // targetType "group"
+            if (a.isGroup) await submitGroupReview(me, myName, a, rating, text);   // targetType "artist" (sunucu grubu tanır)
             else await submitArtistReview(me, myName, a, rating, text);
           }
           invalidateAccountCounts(me);

@@ -525,16 +525,16 @@ export async function eventsByGroup(gid) {
   [...a.docs, ...(b ? b.docs : [])].forEach((d) => { if (!m.has(d.id)) m.set(d.id, { id: d.id, ...d.data() }); });
   return [...m.values()];
 }
-// Grup yorumları: reviews targetId == grupId. Grup sayfasından yazılan targetType "group"; etkinlik sayfasının "Değerlendir"i grup
-// performansında da "artist" yazıyor → ikisi de okunur (mekan yorumu tipi yok).
+// Grup yorumları: reviews targetId == grupId, targetType "artist" (uygulama ve etkinlik sayfasıyla aynı). Bir süre "group"
+// yazan sürüm olabilir → ikisi de okunur (mekan yorumu tipi yok).
 export async function groupReviews(gid) {
   const s = await getDocs(query(collection(db, "reviews"), where("targetId", "==", gid)));
   return s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((r) => ["group", "artist"].includes(r.targetType ?? "group")).sort(byMs);
 }
-// targetType "group": sunucunun sanatçı puan tetikleyicisi (targetType "artist" → users/{targetId} set/merge) grup kimliğiyle taslak
-// users dokümanı OLUŞTURMASIN. Kimlik kuralı aynı: `${uid}_${grupId}`.
+// targetType "artist": sunucu (functions/groupStats.js) grup kimliğini tanır ve puanı groups/{gid}.avgRating/reviewCount'a
+// yazar (users/{gid} oluşturmaz); Top 10 / sıralama yalnız "artist" yorumlarını sayar. Kimlik kuralı: `${uid}_${grupId}`.
 export async function submitGroupReview(uid, authorName, group, rating, comment, ev) {
-  await setDoc(doc(db, "reviews", `${uid}_${group.id}`), { authorId: uid, authorName, authorType: "customer", targetId: group.id, targetName: group.displayName ?? group.name ?? "", targetType: "group", rating, comment: comment ?? "", eventId: ev?.id ?? null, event: ev?.title ?? "", createdAt: serverTimestamp() });
+  await setDoc(doc(db, "reviews", `${uid}_${group.id}`), { authorId: uid, authorName, authorType: "customer", targetId: group.id, targetName: group.displayName ?? group.name ?? "", targetType: "artist", rating, comment: comment ?? "", eventId: ev?.id ?? null, event: ev?.title ?? "", createdAt: serverTimestamp() });
 }
 // Grup takibi (favori) — app services/follow.ts: users/{uid}/followingGroups/{gid} + ayna groups/{gid}/followers/{uid}
 // (web Top 10 / Favoriler / Takip ile aynı şekil; users/{gid}/followers aynasına yazılmaz → sahte users dokümanı yok).
@@ -840,9 +840,11 @@ export async function createGroupInvitation(venue, group, f) {
     message: f.message ?? "", photoUrl: f.photoUrl ?? null, eventId: f.eventId ?? null,
     status: "pending", createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
   };
-  const members = Array.isArray(group.memberIds) ? group.memberIds : [];
-  if (!members.length) { await addDoc(collection(db, "invitations"), base); return; }
-  for (const mid of members) await addDoc(collection(db, "invitations"), { ...base, artistId: mid });
+  // TEK davet (uygulama venue/FindArtistScreen ile aynı model: groupId, artistId YOK). Grubun YÖNETİCİSİ kabul / ret /
+  // karşı teklif yapar, tüm üyeler görür; sunucu (notify handleNewInvitation) üyelerin hepsine bildirim gönderir; ödeme
+  // tek tahsilat → grubun "ödemeyi alan yöneticisi"ne (functions/payments.js groupPayee). Eski üye başına (artistId'li)
+  // davetler okunmaya devam eder.
+  await addDoc(collection(db, "invitations"), base);
 }
 
 // ── Mekan → sanatçı değerlendirmesi (reviews, {uid}_{artistId} deterministik id — kural uyumlu) ──

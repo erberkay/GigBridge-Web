@@ -2,7 +2,7 @@
 // Rota ayrı değil: #/sanatci/<grupId> (dinleyici/misafir: customer.js artistDetail) ve #/artist/sanatci/<grupId> (sanatçı:
 // artist.js renderArtistDetail) kimliği users'ta bulamayınca groups/{id}'yi çizer (data.pickPerformer). Görsel yapı müşteri sanatçı
 // detayıyla aynı (pd-* / ed-* / rv-* sınıfları, ui.js ortak bloklar) + GRUP rozeti, Üyeler, Yaklaşan Etkinlikler.
-// Veri: reviews targetId == grupId (yeni yorum targetType "group"), takip users/{uid}/followingGroups + groups/{gid}/followers,
+// Veri: reviews targetId == grupId (targetType "artist"), takip users/{uid}/followingGroups + groups/{gid}/followers,
 // etkinlikler artistId|groupId == grupId; Mesaj / Teklif İste grubun iletişim kişisine (data.groupContactId) mesaj olarak gider.
 import { session } from "../store.js";
 import {
@@ -83,7 +83,7 @@ function evWhen(ev) {
 }
 const UNPUBLISHED = new Set(["cancelled", "canceled", "draft", "deleted", "pending", "rejected", "archived", "completed", "past"]);
 
-// Puan & Yorum (customer.js reviewModal ile aynı form; yazım targetType "group")
+// Puan & Yorum (customer.js reviewModal ile aynı form; yazım targetType "artist")
 function groupReviewModal(g, onDone) {
   let rating = 0;
   const starRow = h("div", { class: "rv-starpick" });
