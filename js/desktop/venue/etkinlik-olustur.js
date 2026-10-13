@@ -33,7 +33,7 @@ import { cx, dkModal, dkToast, dkConfirm, dkSkeleton, dkEmpty, dkButton, dkAvata
 import { eventCard } from "../shared/cards.js";
 import { eventStartMs, fmtTime, isoDate, toMs, trUpper, trLower, fold, initials, MONTHS_TR, MONTHS_TR_SHORT } from "../shared/helpers.js";
 import { ALL_GENRES, genreColor, genreGrad, genreFamilyKey } from "../shared/genres.js";
-import { posterField } from "../shared/poster.js";
+import { posterField, COVER_LABEL, COVER_SUB } from "../shared/poster.js";
 import { eventPaymentsPanel } from "../shared/payments.js";
 
 const NS = "dk-mekan-etkinlik-olustur";
@@ -226,9 +226,11 @@ export function venueEtkinlikOlusturView(ctx) {
     posterSlot.replaceChildren(poster.node);
     if (lock) poster.setDisabled(true);
   }
-  const s01 = section("01", "Kapak Fotoğrafı", "OPSİYONEL",
+  // İki ayrı görsel (Berkay 13 Eki): yatay kapak → Bu Gece / etkinlik sayfası / kartlar · dikey afiş → Bu Hafta
+  const s01 = section("01", "Kapak & Afiş", "OPSİYONEL",
     h("div", { class: c("covergrid") }, coverBox,
-      h("div", { class: c("covercol") }, helpEl("Fotoğraf seç ve kaydırarak konumlandır (16:9). Kapak, etkinlik kartında ve haritada görünür."), tiles, fileIn)),
+      h("div", { class: c("covercol") }, h("span", { class: c("lbl") }, COVER_LABEL),
+        helpEl(`${COVER_SUB} Fotoğraf seç ve kaydırarak konumlandır; etkinlik kartında ve haritada da kullanılır.`), tiles, fileIn)),
     posterSlot);
 
   // ── 02 Bilgiler ──

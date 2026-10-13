@@ -41,7 +41,7 @@ import { isDesktop } from "../../viewport.js";
 import { paymentNotifHref, PAYMENT_NOTIF_TYPES, eventPaymentsPanel, payRowControl } from "../shared/payments.js";
 // Dikey afiş (Instagram, isteğe bağlı; kırpmasız): yeni istekte venueRequests.posterUrl/posterThumbUrl (mekan kabul edince etkinliğe
 // geçer — data.acceptOrgRequest) · düzenlemede events/{id} alanları değişir/kaldırılır (updateEventFields)
-import { posterField } from "../shared/poster.js";
+import { posterField, COVER_LABEL } from "../shared/poster.js";
 
 // ══════════════════════════════════════════════════════════════════════
 // ORTAK (panel.js de kullanır)
@@ -586,7 +586,7 @@ export function orgEtkinliklerView(ctx) {
 
     // 2) kapak
     const fileIn = h("input", { type: "file", accept: "image/*", hidden: true });
-    const coverInner = () => [ico("image", 24, { color: "#8A8E97" }), h("span", {}, "Kapak fotoğrafı ekle (16:9, opsiyonel)"), h("span", { class: `${P}-covsub` }, "JPG · PNG")];
+    const coverInner = () => [ico("image", 24, { color: "#8A8E97" }), h("span", {}, "Yatay kapak ekle (16:9, isteğe bağlı)"), h("span", { class: `${P}-covsub` }, "BU GECE · ETKİNLİK SAYFASI · JPG · PNG")];
     const cover = h("button", { type: "button", class: `${P}-cover dk-press` }, ...coverInner());
     let previewUrl = null;
     cover.addEventListener("click", () => fileIn.click());
@@ -640,7 +640,7 @@ export function orgEtkinliklerView(ctx) {
     const poster = posterField({});
     const body = h("div", { class: `${P}-form` },
       steps,
-      h("div", { class: `${P}-covwrap` }, cover, fileIn),
+      h("div", { class: `${P}-fld` }, h("span", { class: "dk-lbl" }, COVER_LABEL), h("div", { class: `${P}-covwrap` }, cover, fileIn)),
       poster.node,
       h("div", { class: `${P}-fld` }, lbl("ETKİNLİK ADI *", tIn.id), tIn),
       h("div", { class: `${P}-fld` }, lbl("MEKAN *", null, `${P}-c-venue-lbl`), venueBtn, venueDrop,

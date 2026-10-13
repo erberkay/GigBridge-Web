@@ -9,7 +9,7 @@ import {
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, ROLE } from "../ui.js";
 // Dikey afiş (Instagram, isteğe bağlı, kırpmasız) — masaüstüyle ortak alan (uygulama feat/dikey-afis paritesi)
-import { posterField } from "../desktop/shared/poster.js";
+import { posterField, COVER_SUB } from "../desktop/shared/poster.js";
 import { messagesView, requestChat } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
 import { paymentNotifHref } from "../desktop/shared/pay-util.js";
@@ -275,7 +275,7 @@ function evCard(ev, refresh) {
 function openCreateEvent(onDone) {
   const p = session.profile || { id: session.user?.uid };
   let venueSel = null, artistSel = null, busy = false;
-  const pic = photoPicker("Kapak fotoğrafı ekle (16:9, opsiyonel)", undefined, { aspect: 16 / 9 });
+  const pic = photoPicker(`Yatay kapak (16:9, isteğe bağlı) — ${COVER_SUB}`, undefined, { aspect: 16 / 9 });
 
   const venueLbl = h("span", { class: "grow" }, "Mekan Seç * (istek gönderilir)");
   const venueBtn = h("button", { type: "button", class: "ox-selbtn", onclick: openVenuePick },
@@ -710,7 +710,7 @@ function venueRow(vn) {
       h("button", { class: "act ok", onclick: () => requestModal(vn) }, icon("paper-plane-outline", { size: 15 }), h("span", {}, "İstek"))));
 }
 function requestModal(vn) {
-  const pic = photoPicker("Etkinlik fotoğrafı (opsiyonel)", undefined, { aspect: 16 / 9 });
+  const pic = photoPicker(`Yatay kapak (16:9, isteğe bağlı) — ${COVER_SUB}`, undefined, { aspect: 16 / 9 });
   const poster = posterField({ variant: "m" });
   const body = h("div", {}, pic.node, poster.node,
     field({ label: "Etkinlik Adı", id: "rqtitle", placeholder: "Örn. Yaz Festivali" }),

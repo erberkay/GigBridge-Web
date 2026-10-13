@@ -12,7 +12,7 @@ import { venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, save
   submitVenueArtistReview } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, fmtTL, ROLE, loadLeaflet } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
-import { posterField } from "../desktop/shared/poster.js";   // dikey afiş (Instagram) — isteğe bağlı, kırpmasız
+import { posterField, COVER_SUB } from "../desktop/shared/poster.js";   // dikey afiş (Instagram) — isteğe bağlı, kırpmasız
 import { rankCities, canonicalProvince, searchProvinces, locateProvince, cachedGeoProvince, takeGeoPreselect, skipGeoPreselect } from "../desktop/shared/city-geo.js";
 import { changeEmailModal, changePasswordModal } from "./auth.js";
 
@@ -621,10 +621,10 @@ export async function renderCreate(root) {
   let artistSel = null, artistKind = null, genreSel = "";
 
   // Kapak fotoğrafı (16:9)
-  const pic = photoPicker("Fotoğraf seç ve kaydırarak konumlandır (16:9)", undefined, { aspect: 16 / 9 });
+  const pic = photoPicker(`${COVER_SUB} Fotoğraf seç ve kaydırarak konumlandır.`, undefined, { aspect: 16 / 9 });
   const poster = posterField({ variant: "m" });
   const cover = h("div", { class: "vx-cover" },
-    h("span", { class: "vx-lbl" }, "Kapak Fotoğrafı"), pic.node, poster.node);
+    h("span", { class: "vx-lbl" }, "Yatay kapak (16:9)"), pic.node, poster.node);
 
   // Etkinlik adı
   const titleF = field({ label: "Etkinlik Adı", id: "ctitle", placeholder: "örn: Cumartesi Canlı Müzik" });
