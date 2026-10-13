@@ -29,14 +29,21 @@
 //   takip users/{uid}/followingGroups + groups/{gid}/followers (data.followGroup), Mesaj / serbest teklif isteği grubun iletişim kişisine
 //   (data.groupContactId), mekan "Teklif Gönder" → mevcut grup daveti (venue/panel.js openInviteModal → data.createGroupInvitation, aynen).
 //   Grup üyesi kendi grubunu "kendi sayfası" gibi görür (aksiyon yok).
+// MEKAN İZLEYİCİ (Sanatçı Bul kartından gelir — uygulama ArtistDetail paritesi, Berkay 13 Eki): solo sanatçıda "Teklif İste" yerine
+//   "Davet Et" → Sanatçı Bul / Mekan Paneli ile AYNI davet modalı (venue/panel.js openInviteModal: Tek Etkinlik + Uzun Dönem,
+//   createInvitation / createResidency; ETKİNLİK seçimi mekanın sanatçısız yaklaşan etkinliklerinden, bekleyen/kabul edilmiş teklife bağlı
+//   olanlar hariç) + "Gizli takip" (uygulamada mekanın Takip Et'i = users/{uid}/watchedArtists; takipçi sayısına girmez). Kırıntı
+//   "Sanatçı Bul" → geri history.back() (filtreler URL'de korunur; geçmiş yoksa #/venue/sanatci).
+// Fiyat: yan kartta priceType yoksa ücret aralığı (priceMin–priceMax, Sanatçı Bul kartıyla aynı veri), o da yoksa paketlerin en küçüğü.
 import { h, soundEmbedInfo, fmtMoneyText, fmtDurText, fmtPriceRange } from "../../ui.js";
 import { session } from "../../store.js";
 import {
   userById, artistReviews, isFollowing, artistFollowerCount, eventsByArtist, followArtist, unfollowArtist,
   submitArtistReview, updateMyReview, sendMessage, convIdFor,
   groupById, pickPerformer, groupReviews, submitGroupReview, isFollowingGroup, followGroup, unfollowGroup, groupFollowerCount,
-  groupMembers, eventsByGroup, groupContactId,
+  groupMembers, eventsByGroup, groupContactId, watchedArtists, watchArtist, unwatchArtist,
 } from "../../data.js";
+import { db, collection, query, where, getDocs } from "../../firebase.js";
 import { ensureCss } from "../css.js";
 import { requestChat as legacyRequestChat } from "../../pages/messages.js";
 import { publicShell } from "../shared/public-shell.js";
@@ -83,6 +90,8 @@ const P = {
   lock: '<rect x="5" y="11" width="14" height="9.5" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path>',
   // grup (üyeler) — venue/panel.js "Gruplar" ikonuyla aynı gövde
   users: '<path d="M9 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3.5 19a5.5 5.5 0 0 1 11 0M17 12.3a2.3 2.3 0 1 0 0-4.6M15.5 14.6A4.5 4.5 0 0 1 21 19"></path>',
+  // gizli takip (mekan) — Sanatçı Bul göz düğmesiyle aynı gövde
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle>',
 };
 const ico = (k, size, sw = "2", color) => svgRaw(P[k], { size, sw, color });
 const starSvg = (size, fill = "#FFD700", extra) => svgRaw(P.star, { size, fill: fill !== "none", color: fill === "none" ? "#FFD700" : fill, ...(extra || {}) });
@@ -147,12 +156,17 @@ function videoInfo(url) {         // ui.js videoInfo (dışa aktarılmıyor) —
   return null;
 }
 const parsePrice = (v) => { const s = String(v ?? "").trim(); if (!/^[\d.]+(,\d+)?$/.test(s)) return null; const n = Number(s.replace(/\./g, "").replace(",", ".")); return n > 0 ? n : null; };
-function startPrice(a) {          // priceBadge değeri; yoksa paketlerin en küçük sayısal fiyatı
+function startPrice(a) {          // priceBadge değeri; yoksa ücret aralığı / tek ücret; yoksa paketlerin en küçük sayısal fiyatı
   if (a.priceType && (a.priceMin || a.priceMax)) {
     const v = a.priceMin || a.priceMax;
     const n = parsePrice(v);
     return { fixed: a.priceType === "fixed", text: n ? fmtTL(n) : moneyText(v) };
   }
+  // priceType seçilmemiş ama aralık girilmiş (Sanatçı Bul kartı da bunu gösterir) → "ÜCRET ARALIĞI"
+  const range = fmtPriceRange(a);
+  if (range) return { label: "ÜCRET ARALIĞI", text: range };
+  const one = parsePrice(a.price ?? a.stageFee ?? a.fee);
+  if (one) return { label: "ÜCRET", text: fmtTL(one) };
   const nums = (Array.isArray(a.packages) ? a.packages : []).map((p) => parsePrice(p?.price)).filter((n) => n != null);
   return nums.length ? { fixed: false, text: fmtTL(Math.min(...nums)) } : null;
 }
@@ -400,8 +414,11 @@ export function sanatciView(ctx) {
     if (!refresh) paintSkeleton();
     const real = isRealUser();
     const me = session.user?.uid;
-    let a;
+    const venueViewer = real && !!me && !session.isAdmin && session.profile?.userType === "venue";
+    let a, watchedP = null;
     try {
+      // mekan: gizli takip durumu (uygulama ArtistDetail — mekanın "Takip Et"i watchedArtists); yalnız solo sanatçıda kullanılır
+      if (venueViewer && me !== id) watchedP = watchedArtists(me).then((l) => l.some((w) => (w.artistId || w.id) === id)).catch(() => false);
       const [u, grp, revs, following, follCount, events] = await Promise.all([
         userById(id),
         groupById(id).catch(() => null),          // grup kimliği (etkinlik / Keşfet / Top 10 bağlantıları aynı rotayı kullanır)
@@ -431,7 +448,8 @@ export function sanatciView(ctx) {
           a = null;
         }
         if (!a) { paintError(true); return; }
-        S = { a, revs: revs || [], following: !!following, follCount, events };
+        S = { a, revs: revs || [], following: !!following, follCount, events, watched: watchedP ? await watchedP : false };
+        if (dead) return;
       }
     } catch (_) {
       if (!dead) paintError(false);
@@ -470,6 +488,8 @@ export function sanatciView(ctx) {
     const canOffer = !self && (role === "guest" || role === "customer" || role === "venue" || role === "organizer")
       && (groupInvite || (!!contactId && contactId !== me));
     const canReview = role === "guest" || role === "customer";
+    // Mekan → solo sanatçı: "Davet Et" (Sanatçı Bul davet modalı) + "Gizli takip" (watchedArtists)
+    const venueSolo = !G && !self && role === "venue";
 
     const name = a.displayName || a.name || (G ? "Grup" : "Sanatçı");
     const genres = artistGenres(a);
@@ -514,7 +534,30 @@ export function sanatciView(ctx) {
         mdl?.dialog?.style.setProperty("--dk-role", "var(--dk-role-venue)");
       } catch (_) { dkToast("Teklif penceresi açılamadı", { type: "err" }); }
     };
+    // Mekan → solo sanatçı: Sanatçı Bul / Mekan Paneli davet modalı (Tek Etkinlik + Uzun Dönem). ETKİNLİK seçimi: mekanın sanatçısız
+    // yaklaşan etkinlikleri; bekleyen / kabul edilmiş bir teklife zaten bağlı olanlar hariç (Sanatçı Bul ile aynı çift rezervasyon önlemi).
+    const offerBtns = [];
+    let inviteBusy = false;
+    const openSoloInvite = async () => {
+      if (dkLoginGate("Davet göndermek")) return;
+      if (inviteBusy) return;
+      inviteBusy = true;
+      try {
+        const [m, , evs, invs] = await Promise.all([
+          import("../venue/panel.js"), ensureCss("css/dk-mekan-panel.css"),
+          getDocs(query(collection(db, "events"), where("venueId", "==", me))).then((q) => q.docs.map((d) => ({ id: d.id, ...d.data() }))).catch(() => []),
+          getDocs(query(collection(db, "invitations"), where("venueId", "==", me))).then((q) => q.docs.map((d) => d.data())).catch(() => []),
+        ]);
+        if (dead) return;
+        const linked = new Set(invs.filter((v) => v.eventId && (v.status === "pending" || v.status === "accepted")).map((v) => v.eventId));
+        const mdl = m.openInviteModal({ ...a, id }, { events: evs.filter((e) => !linked.has(e.id)),
+          onSent: () => offerBtns.forEach((b) => { const t = b.querySelector("span"); if (t) t.textContent = "Gönderildi ✓"; }) });
+        mdl?.dialog?.style.setProperty("--dk-role", "var(--dk-role-venue)");
+      } catch (_) { dkToast("Davet penceresi açılamadı", { type: "err" }); }
+      finally { inviteBusy = false; }
+    };
     const onOffer = () => {
+      if (venueSolo) { openSoloInvite(); return; }
       if (groupInvite) { openGroupInvite(); return; }
       if (dkLoginGate("Teklif göndermek")) return;
       const toName = G ? contactName : name;
@@ -569,6 +612,33 @@ export function sanatciView(ctx) {
       followBtns.push(b);
       return b;
     };
+    // Mekan gizli takibi (Sanatçı Bul göz düğmesiyle aynı yazım; takipçi sayacı değişmez)
+    let watched = !!S.watched, watchBusy = false;
+    const watchBtns = [];
+    const paintWatch = () => watchBtns.forEach((b) => {
+      b.classList.toggle("is-on", watched);
+      b.setAttribute("aria-pressed", watched ? "true" : "false");
+      b.replaceChildren(ico("eye", 17, "1.9"), h("span", {}, watched ? "Gizli takipte" : "Gizli takip"));
+    });
+    const onWatch = async () => {
+      if (watchBusy) return;
+      const next = !watched;
+      watched = next; S.watched = next; paintWatch();
+      watchBusy = true; watchBtns.forEach((b) => b.setAttribute("aria-busy", "true"));
+      try {
+        if (next) await watchArtist(me, { ...a, id }); else await unwatchArtist(me, id);
+        dkToast(next ? "Gizli takibe alındı" : "Takipten çıkarıldı");
+      } catch (_) {
+        watched = !next; S.watched = watched; paintWatch();
+        dkToast("İşlem başarısız", { type: "err" });
+      } finally { watchBusy = false; watchBtns.forEach((b) => b.removeAttribute("aria-busy")); }
+    };
+    const watchButton = () => {
+      const b = h("button", { type: "button", class: "dk-sanatci-detay-act dk-sanatci-detay-follow dk-press", title: "Gizli takip — yalnız sen görürsün" });
+      b.addEventListener("click", onWatch);
+      watchBtns.push(b);
+      return b;
+    };
 
     // ════════ 1. KAPAK ════════
     const cover = h("section", { class: "dk-sanatci-detay-cover", "aria-label": "Kapak" },
@@ -580,8 +650,9 @@ export function sanatciView(ctx) {
       h("span", { class: "dk-sanatci-detay-cover-tint", "aria-hidden": "true" }),
       h("span", { class: "dk-sanatci-detay-cover-scrim", "aria-hidden": "true" }),
       h("div", { class: "dk-container dk-sanatci-detay-cover-in" },
-        dkBreadcrumb({ variant: "mono-overlay", back: () => { if (history.length > 1) history.back(); else location.hash = "#/kesfet"; },
-          items: [{ label: "Keşfet", href: "#/kesfet" }, { label: G ? "Gruplar" : "Sanatçılar" }, { label: name }] })));
+        // mekan Sanatçı Bul'dan gelir → kırıntı + yedek geri hedefi panelin Sanatçı Bul'u (history.back filtreleri korur)
+        dkBreadcrumb({ variant: "mono-overlay", back: () => { if (history.length > 1) history.back(); else location.hash = role === "venue" ? "#/venue/sanatci" : "#/kesfet"; },
+          items: [role === "venue" ? { label: "Sanatçı Bul", href: "#/venue/sanatci" } : { label: "Keşfet", href: "#/kesfet" }, { label: G ? "Gruplar" : "Sanatçılar" }, { label: name }] })));
 
     // ════════ 2. KİMLİK ════════
     const avatarInner = a.photoURL
@@ -612,12 +683,13 @@ export function sanatciView(ctx) {
       memText ? h("span", { class: "dk-sanatci-detay-memtext" }, "GigBridge üyesi · " + memText) : null,
       founded ? h("span", { class: "dk-sanatci-detay-memtext" }, "Kuruluş · " + founded) : null,
     ].filter(Boolean);
-    const offerLabel = groupInvite ? "Teklif Gönder" : "Teklif İste";
+    const offerLabel = groupInvite ? "Teklif Gönder" : venueSolo ? "Davet Et" : "Teklif İste";
     const msgAria = G ? `Mesaj — grup yöneticisi ${contactName}` : null;
     const actions = [];
     if (canFollow) actions.push(followButton());
+    if (venueSolo && me) actions.push(watchButton());
     if (canMsg) actions.push(h("button", { type: "button", class: "dk-sanatci-detay-act dk-press", onclick: onMsg, "aria-label": msgAria, title: msgAria }, ico("chat", 17, "1.9"), h("span", {}, "Mesaj")));
-    if (canOffer) actions.push(h("button", { type: "button", class: "dk-sanatci-detay-act is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, offerLabel)));
+    if (canOffer) actions.push((() => { const b = h("button", { type: "button", class: "dk-sanatci-detay-act is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, offerLabel)); offerBtns.push(b); return b; })());
     const identity = h("section", { class: "dk-container dk-sanatci-detay-id", "aria-labelledby": "dk-sanatci-detay-h-name" },
       h("div", { class: "dk-sanatci-detay-avwrap dk-rise" }, avatar,
         a.availabilityStatus === "open" ? h("span", { class: "dk-sanatci-detay-avdot", "aria-hidden": "true" }) : null),
@@ -910,7 +982,7 @@ export function sanatciView(ctx) {
       founded ? ["Kuruluş", founded] : null,
     ].filter(Boolean);
     const ctas = [];
-    if (canOffer) ctas.push(h("button", { type: "button", class: "dk-sanatci-detay-cta is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, offerLabel)));
+    if (canOffer) ctas.push((() => { const b = h("button", { type: "button", class: "dk-sanatci-detay-cta is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, offerLabel)); offerBtns.push(b); return b; })());
     if (canMsg) ctas.push(h("button", { type: "button", class: "dk-sanatci-detay-cta dk-press", onclick: onMsg }, ico("chat", 16, "1.9"), h("span", {}, G ? "Yöneticiye mesaj" : "Mesaj gönder")));
     if (canFollow && !canOffer) ctas.unshift((() => { const b = followButton(); b.classList.add("is-cta"); return b; })());
     const summaryCard = h("div", { class: "dk-sanatci-detay-sum" },
@@ -921,12 +993,13 @@ export function sanatciView(ctx) {
           h("span", { class: "dk-sanatci-detay-sum-n" }, name),
           [g0, a.district || a.city].filter(Boolean).length ? h("span", { class: "dk-sanatci-detay-sum-s" }, [g0, a.district || a.city].filter(Boolean).join(" · ")) : null)),
       sp ? h("div", { class: "dk-sanatci-detay-price" },
-        monoLabel(sp.fixed ? "SABİT FİYAT" : "BAŞLANGIÇ FİYATI"),
+        monoLabel(sp.label || (sp.fixed ? "SABİT FİYAT" : "BAŞLANGIÇ FİYATI")),
         h("span", { class: "dk-sanatci-detay-price-v" }, sp.text)) : null,
       h("div", { class: "dk-sanatci-detay-facts" }, ...facts.map(([k, v]) => h("div", { class: "dk-sanatci-detay-fact" },
         h("span", { class: "dk-sanatci-detay-fact-k" }, k), h("span", { class: "dk-sanatci-detay-fact-v" }, v)))),
       ctas.length ? h("div", { class: "dk-sanatci-detay-ctas" }, ...ctas) : null,
-      canOffer ? h("p", { class: "dk-sanatci-detay-foot" }, groupInvite ? "Teklif, grubun tüm üyelerine sahne daveti olarak iletilir."
+      canOffer ? h("p", { class: "dk-sanatci-detay-foot" }, venueSolo ? "Davet, sanatçıya sahne teklifi olarak iletilir — tek etkinlik ya da uzun dönem anlaşma."
+        : groupInvite ? "Teklif, grubun tüm üyelerine sahne daveti olarak iletilir."
         : G ? `Teklif isteğin grup yöneticisine (${contactName}) mesaj olarak iletilir; iletişim GigBridge içinde kalır.`
           : "Teklif isteğin mesaj olarak iletilir; iletişim GigBridge içinde kalır.") : null);
 
@@ -1031,6 +1104,7 @@ export function sanatciView(ctx) {
       root.removeEventListener("focusin", onFocusIn); root.removeEventListener("focusout", onFocusOut);
     });
     paintFollow();
+    paintWatch();
     setFollowerText();
 
     // Aktif sekme izleme — kaydırma konumundan (rAF ile seyreltilmiş): üst %40'a girmiş son bölüm; hiçbiri yoksa ilki; sayfa sonunda sonuncusu.
