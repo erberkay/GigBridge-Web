@@ -10,10 +10,13 @@
 //   · Konum: birincil yol KOORDİNAT alanı (Google Haritalar'dan "38.0123, 27.1234" ya da bağlantı yapıştır) + ayrı Enlem/Boylam;
 //     harita pini tıkla/sürükle ile eşzamanlı; "Adresten bul" (Nominatim). users.location = {lat, lng, address, city, district}.
 //   · ?duzenle=<uid> → mevcut mekanı düzenleme (fotoğraf/konum sonradan eklenebilir) — callable adminUpdateVenue.
-// Yazımlar yalnız sunucuda: adminCreateVenue / adminUpdateVenue (functions/adminVenues.js; fotoğraflar base64 → Storage).
+//   · Düzenlemede GİRİŞ BİLGİLERİ: giriş e-postasını sahibinin kendi adresine çevir (+ isteğe bağlı yeni şifre) — callable
+//     adminSetVenueLogin (emailVerified:true; eski adresle giriş kapanır). "Şifre belirleme bağlantısı gönder" mevcut markalı
+//     sendPasswordReset callable'ını kullanır (Resend, gigbridges.com/sifirla.html). Yeni şifre de yalnız sonuç kartında (bellekte).
+// Yazımlar yalnız sunucuda: adminCreateVenue / adminUpdateVenue / adminSetVenueLogin (functions/adminVenues.js; fotoğraflar base64 → Storage).
 import { h, openImageCropper, loadLeaflet } from "../../ui.js";
 import { session } from "../../store.js";
-import { db, collection, getDocs, getDoc, doc, query, where, functions, httpsCallable } from "../../firebase.js";
+import { db, collection, getDocs, getDoc, doc, query, where, functions, httpsCallable, sendPasswordResetMail } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import { dkPageHero, dkButton, dkInput, dkTextarea, dkField, dkPasswordInput, dkChip, dkSegmented, dkAvatar, dkToast, dkConfirm, dkSkeleton } from "../shared/ui.js";
@@ -30,6 +33,7 @@ const OSM = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const MAX_GENRES = 15;
 const createFn = httpsCallable(functions, "adminCreateVenue", { timeout: 120000 });
 const updateFn = httpsCallable(functions, "adminUpdateVenue", { timeout: 120000 });
+const loginFn = httpsCallable(functions, "adminSetVenueLogin", { timeout: 60000 });
 const PIN_SVG = '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"></path><circle cx="12" cy="10" r="2.3"></circle>';
 const COPY_SVG = '<rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path>';
 
@@ -92,9 +96,20 @@ export function adminMekanEkleView(ctx) {
   const emailNote = h("div", { class: "dk-ame-enote", "aria-live": "polite" });
   const pwInput = dkPasswordInput({ placeholder: "En az 6 karakter", autocomplete: "new-password", maxlength: 128, attrs: { spellcheck: "false" } });
   const pwF = dkField({ label: "Şifre", required: true, input: pwInput, hint: "Mekana sen ileteceksin; hiçbir yerde saklanmaz." });
-  const emailRO = h("div", { class: "dk-ame-ro", hidden: true });
   const credRow = h("div", { class: "dk-ame-g2" }, h("div", { class: "dk-ame-col" }, emailF.node, emailNote), pwF.node);
-  const secAccount = section("HESAP", "Giriş bilgileri", [nameF.node, credRow, emailRO]);
+  // düzenleme modu: giriş e-postası / yeni şifre / şifre belirleme bağlantısı (formun Kaydet'inden BAĞIMSIZ, anında uygulanır)
+  const loginEmailF = dkField({ label: "Giriş e-postası", input: { type: "email", placeholder: "sahibin@ornek.com", maxlength: 254, autocomplete: "off", attrs: { spellcheck: "false" } } });
+  const loginPw = dkPasswordInput({ placeholder: "Boş bırakılırsa şifre değişmez", autocomplete: "new-password", maxlength: 128, attrs: { spellcheck: "false" } });
+  const loginPwF = dkField({ label: "Yeni şifre (isteğe bağlı)", input: loginPw });
+  const loginBtn = dkButton("E-postayı değiştir", { variant: "violet", size: 40, icon: "mail" });
+  const linkBtn = dkButton("Şifre belirleme bağlantısı gönder", { variant: "outline", size: 40, icon: "send" });
+  const loginCur = h("span", { class: "dk-ame-rov" });
+  const loginBox = h("div", { class: "dk-ame-login", hidden: true },
+    h("div", { class: "dk-ame-lhead" }, h("span", { class: "dk-admin-etk-lbl" }, "ŞU ANKİ GİRİŞ"), loginCur),
+    h("div", { class: "dk-ame-g2" }, loginEmailF.node, loginPwF.node),
+    h("span", { class: "dk-admin-etk-sum" }, "Mekan sahibinin kendi e-postasını yaz. Değişince eski adresle giriş kapanır, yenisi doğrulanmış sayılır (doğrulama ekranı çıkmaz). Şifreyi sen belirleyebilir ya da sahibine bağlantı gönderip kendisinin belirlemesini sağlayabilirsin."),
+    h("div", { class: "dk-ame-lbtns" }, loginBtn, linkBtn));
+  const secAccount = section("HESAP", "Giriş bilgileri", [nameF.node, credRow, loginBox]);
 
   // ── 2) MEKAN ──
   const typeF = dkField({ label: "Mekan türü", input: { placeholder: "Listeden seç ya da yaz", maxlength: 40, autocomplete: "off", attrs: { list: "dk-ame-types" } } });
@@ -395,7 +410,7 @@ export function adminMekanEkleView(ctx) {
     emailTouched = false; emailSeq++; clearTimeout(emailTimer);
     fillForm(null);
     emailF.input.value = ""; pwInput.input.value = ""; setEmailNote("idle", "");
-    credRow.hidden = false; emailRO.hidden = true;
+    credRow.hidden = false; loginBox.hidden = true; loginPw.input.value = "";
     modeBar.hidden = true;
     submitBtn.dk.setLabel("Mekanı oluştur");
     resetBtn.dk.setLabel("Formu temizle");
@@ -416,9 +431,7 @@ export function adminMekanEkleView(ctx) {
     revokeLocal(); photo = null; cover = null; photoRemoved = false; coverRemoved = false;
     fillForm(editDoc);
     credRow.hidden = true; pwInput.input.value = ""; setEmailNote("idle", "");
-    emailRO.hidden = false;
-    emailRO.replaceChildren(h("span", { class: "dk-admin-etk-lbl" }, "E-POSTA (GİRİŞ)"), h("span", { class: "dk-ame-rov" }, str(editDoc.email) || "—"),
-      h("span", { class: "dk-admin-etk-sum" }, "E-posta ve şifre buradan değiştirilmez."));
+    fillLogin();
     modeBar.replaceChildren(svgIcon("edit", { size: 16, color: VIOLET }),
       h("span", {}, "Düzenleniyor: ", h("b", {}, str(editDoc.displayName) || "Mekan")),
       editDoc.createdByAdmin ? h("span", { class: "dk-admin-etk-tag" }, "ADMİN İLE AÇILDI") : h("span", { class: "dk-admin-etk-tag dk-ame-tagself" }, "KENDİ KAYDOLDU"),
@@ -517,6 +530,71 @@ export function adminMekanEkleView(ctx) {
     } finally { busy = false; submitBtn.dk.setBusy(false); }
   });
 
+  // ════════════════ giriş bilgileri (düzenleme modu) ════════════════
+  let loginBusy = false, linkBusy = false;
+  function fillLogin() {
+    const cur = str(editDoc?.email);
+    loginCur.textContent = cur || "—";
+    loginEmailF.input.value = cur; loginPw.input.value = "";
+    loginEmailF.setError(null); loginPwF.setError(null);
+    loginBox.hidden = false;
+    loginLabel();
+  }
+  function loginLabel() {
+    const cur = str(editDoc?.email).toLowerCase(), em = loginEmailF.input.value.trim().toLowerCase(), pw = loginPw.input.value;
+    const ch = !!em && em !== cur;
+    loginBtn.dk.setLabel(ch && pw ? "E-postayı ve şifreyi değiştir" : !ch && pw ? "Şifreyi değiştir" : "E-postayı değiştir");
+    return { cur, em, pw, ch };
+  }
+  loginEmailF.input.addEventListener("input", () => { loginEmailF.setError(null); loginLabel(); });
+  loginPw.input.addEventListener("input", () => { loginPwF.setError(null); loginLabel(); });
+  loginBtn.addEventListener("click", async () => {
+    if (!editId || !editDoc || loginBusy) return;
+    const { cur, em, pw, ch } = loginLabel();
+    if (!EMAIL_RE.test(em)) { loginEmailF.setError("Geçerli bir e-posta gir."); loginEmailF.input.focus(); return; }
+    if (pw && pw.length < 6) { loginPwF.setError("Şifre en az 6 karakter olmalı."); loginPw.input.focus(); return; }
+    if (!ch && !pw) { loginEmailF.setError("Yeni bir e-posta ya da yeni şifre gir."); loginEmailF.input.focus(); return; }
+    const body = h("div", { class: "dk-admin-etk-cbody" },
+      ch ? h("p", { class: "dk-mdl-p" }, `Giriş e-postası ${cur || "—"} → ${em} olarak değişecek. Eski adresle giriş kapanır.`) : null,
+      pw ? h("p", { class: "dk-mdl-p" }, "Şifre de değişecek; mekanın açık oturumları kapanır.") : null);
+    if (!(await dkConfirm({ title: "Giriş bilgileri değişsin mi?", body, confirmLabel: "Değiştir" }))) return;
+    loginBusy = true; loginBtn.dk.setBusy(true, "Değiştiriliyor…");
+    try {
+      const r = await loginFn({ uid: editId, email: em, ...(pw ? { password: pw } : {}) });
+      if (!alive) return;
+      editDoc.email = r.data.email;
+      result = { kind: "login", uid: editId, name: str(editDoc.displayName) || "Mekan", email: r.data.email, password: pw || null, previousEmail: r.data.previousEmail };
+      renderResult();
+      fillLogin();
+      dkToast(r.data.emailChanged ? "Giriş e-postası değişti — eski adresle giriş kapandı" : "Şifre değişti");
+      _cache.list = null; loadList(true);
+      resultBox.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) {
+      console.error(e?.code || e);
+      if (!alive) return;
+      if (e?.code === "functions/already-exists" || /e-posta|adres/i.test(e?.message || "")) loginEmailF.setError(errText(e));
+      else if (/Şifre/.test(e?.message || "")) loginPwF.setError(errText(e));
+      dkToast(errText(e), { type: "err" });
+    } finally { loginBusy = false; loginBtn.dk.setBusy(false); loginLabel(); }
+  });
+  linkBtn.addEventListener("click", async () => {
+    if (!editDoc || linkBusy) return;
+    const cur = str(editDoc.email).toLowerCase();
+    const typed = loginEmailF.input.value.trim().toLowerCase();
+    if (!EMAIL_RE.test(cur)) { dkToast("Mekanın kayıtlı bir giriş e-postası yok", { type: "err" }); return; }
+    if (typed && typed !== cur) { loginEmailF.setError("Önce “E-postayı değiştir” ile yeni adresi kaydet; bağlantı kayıtlı adrese gider."); return; }
+    const body = h("div", { class: "dk-admin-etk-cbody" },
+      h("p", { class: "dk-mdl-p" }, `${cur} adresine GigBridge şifre belirleme e-postası gönderilecek. Sahibi bağlantıdan kendi şifresini belirler; mevcut şifre, yenisi belirlenene kadar çalışmaya devam eder.`),
+      /^berkayer032\+/.test(cur) ? h("p", { class: "dk-mdl-p" }, "Not: bu adres hâlâ senin (berkayer032+…) gelen kutuna düşer — önce sahibinin e-postasını kaydet.") : null);
+    if (!(await dkConfirm({ title: "Şifre belirleme bağlantısı gönderilsin mi?", body, confirmLabel: "Gönder" }))) return;
+    linkBusy = true; linkBtn.dk.setBusy(true, "Gönderiliyor…");
+    try {
+      await sendPasswordResetMail({ email: cur });
+      if (alive) dkToast(`Bağlantı gönderildi: ${cur}`);
+    } catch (e) { console.error(e?.code || e); if (alive) dkToast(errText(e), { type: "err" }); }
+    finally { linkBusy = false; linkBtn.dk.setBusy(false); }
+  });
+
   // ════════════════ sonuç kartı (şifre yalnız burada, bellekte) ════════════════
   function renderResult() {
     if (!result) { resultBox.hidden = true; resultBox.replaceChildren(); return; }
@@ -526,18 +604,26 @@ export function adminMekanEkleView(ctx) {
       btn.prepend(svgRaw(COPY_SVG, { size: 15, sw: "1.9" }));
       return h("div", { class: "dk-ame-rrow" }, h("span", { class: "dk-admin-etk-lbl" }, k), h("div", { class: "dk-ame-rval" }, h("code", { class: "dk-ame-code" }, v), btn));
     };
-    const msg = `GigBridge mekan hesabınız hazır.\nMekan: ${r.name}\nGiriş: gigbridges.com ya da GigBridge uygulaması\nE-posta: ${r.email}\nŞifre: ${r.password}\nGirişten sonra şifrenizi Profil › Şifre değiştir bölümünden yenilemenizi öneririz.`;
+    const login = r.kind === "login";
+    const msg = [
+      login ? "GigBridge mekan hesabınızın giriş bilgileri güncellendi." : "GigBridge mekan hesabınız hazır.",
+      `Mekan: ${r.name}`, "Giriş: gigbridges.com ya da GigBridge uygulaması", `E-posta: ${r.email}`,
+      r.password ? `Şifre: ${r.password}` : "Şifre: mevcut şifreniz (ya da e-postanıza gelen şifre belirleme bağlantısıyla kendiniz belirleyin)",
+      r.password ? "Girişten sonra şifrenizi Profil › Şifre değiştir bölümünden yenilemenizi öneririz." : "",
+    ].filter(Boolean).join("\n");
     const allBtn = dkButton("Mesajı kopyala (tümü)", { variant: "violet", size: 40, full: true, onClick: async () => { const ok = await copyText(msg); dkToast(ok ? "Mesaj kopyalandı — mekana ilet" : "Kopyalanamadı", { type: ok ? "ok" : "err" }); } });
     allBtn.prepend(svgRaw(COPY_SVG, { size: 16, sw: "1.9" }));
     resultBox.hidden = false;
     resultBox.replaceChildren(
-      h("div", { class: "dk-ame-rhead" }, svgIcon("checkCircle", { size: 20, color: "#7CE0B0" }), h("span", {}, "Hesap açıldı · Mekana iletin")),
+      h("div", { class: "dk-ame-rhead" }, svgIcon("checkCircle", { size: 20, color: "#7CE0B0" }), h("span", {}, login ? "Giriş bilgileri güncellendi · Mekana iletin" : "Hesap açıldı · Mekana iletin")),
       h("span", { class: "dk-ame-rname" }, r.name),
-      row("E-POSTA", r.email), row("ŞİFRE", r.password),
+      login && r.previousEmail && r.previousEmail !== r.email ? h("span", { class: "dk-admin-etk-sum" }, `Eski giriş adresi (artık çalışmaz): ${r.previousEmail}`) : null,
+      row("E-POSTA", r.email), r.password ? row("ŞİFRE", r.password) : null,
       allBtn,
-      h("span", { class: "dk-admin-etk-sum" }, "Şifre hiçbir yerde saklanmadı; yalnız bu ekranda görünür. Sayfadan çıkınca kaybolur."),
+      h("span", { class: "dk-admin-etk-sum" }, r.password ? "Şifre hiçbir yerde saklanmadı; yalnız bu ekranda görünür. Sayfadan çıkınca kaybolur."
+        : "Şifre değişmedi. Sahibi kendi şifresini belirlesin istersen “Şifre belirleme bağlantısı gönder”i kullan."),
       h("div", { class: "dk-ame-rbtns" },
-        dkButton("Fotoğraf / konum düzenle", { variant: "outline", size: 36, icon: "edit", onClick: () => { writeQuery({ duzenle: r.uid }); openEdit(r.uid); } }),
+        login ? null : dkButton("Fotoğraf / konum düzenle", { variant: "outline", size: 36, icon: "edit", onClick: () => { writeQuery({ duzenle: r.uid }); openEdit(r.uid); } }),
         dkButton("Kartı kapat", { variant: "ghost", size: 36, onClick: () => { result = null; renderResult(); } })),
     );
   }
@@ -600,7 +686,7 @@ export function adminMekanEkleView(ctx) {
     destroy() {
       alive = false;
       result = null;                         // şifre bellekte kalmasın
-      try { pwInput.input.value = ""; } catch (_) {}
+      try { pwInput.input.value = ""; loginPw.input.value = ""; } catch (_) {}
       clearTimeout(emailTimer);
       revokeLocal();
       cleanups.forEach((fn) => { try { fn(); } catch (_) {} });

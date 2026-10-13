@@ -26,6 +26,10 @@
 .dk-ame-mode[hidden] { display: none; }
 .dk-ame-mode b { color: #F2F1EE; font-weight: 600; }
 .dk-ame-mode .dk-btn { margin-left: auto; }
+/* düzenleme: giriş bilgileri */
+.dk-ame-login { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 10px; border: 1px solid rgba(167,139,250,0.28); background: rgba(167,139,250,0.05); }
+.dk-ame-lhead { display: flex; flex-direction: column; gap: 4px; }
+.dk-ame-lbtns { display: flex; gap: 10px; flex-wrap: wrap; }
 .dk-ame-ro { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 8px; border: 1px dashed #2C303A; }
 .dk-ame-ro[hidden] { display: none; }
 .dk-ame-rov { font-family: var(--dk-font-mono); font-size: 14px; color: #F2F1EE; overflow-wrap: anywhere; }
