@@ -249,6 +249,7 @@ export async function acceptOrgRequest(req, venue) {
     startTime: req.eventTime ?? "",
     description: req.description ?? null,
     bannerUrl: req.bannerUrl ?? req.photoUrl ?? null,
+    ...posterFields(req),   // organizatörün istekte yüklediği dikey afiş etkinliğe geçer
     genre: [],
     location: loc,
     city: venue?.city ?? venue?.location?.city ?? null,
@@ -260,6 +261,16 @@ export async function acceptOrgRequest(req, venue) {
   });
   await updateDoc(doc(db, "venueRequests", req.id), { status: "accepted", eventId: ref.id, updatedAt: serverTimestamp() });
   return ref.id;
+}
+
+// Dikey afiş (Instagram ~9:16; isteğe bağlı) — shared/poster.js uploadPoster çıktısı. Yalnız kuralın (firestore.rules posterFieldOk)
+// kabul ettiği Storage indirme URL'i yazılır: geçersiz değer tüm etkinlik/istek yazımını reddettirirdi → sessizce atlanır.
+// Desen poster.js POSTER_URL_RE ile aynı (uygulama src/utils/posters.ts) — kural değişirse üçü birlikte.
+const _POSTER_RE = /^(https:\/\/firebasestorage\.googleapis\.com|http:\/\/(127\.0\.0\.1|localhost|10\.0\.2\.2):[0-9]+)\/v0\/b\/[^/]+\/o\/event_banners%2F[^/?%]+%2F[^/?]+\?.*$/;
+const _okPoster = (v) => (typeof v === "string" && v.length <= 2000 && _POSTER_RE.test(v) ? v : null);
+function posterFields(x) {
+  const posterUrl = _okPoster(x?.posterUrl);
+  return posterUrl ? { posterUrl, posterThumbUrl: _okPoster(x?.posterThumbUrl) || posterUrl } : {};
 }
 
 // ── Mekan: etkinlik oluştur (CreateEventScreen addDoc ile uyumlu) ──
@@ -278,6 +289,7 @@ export async function createEvent(venue, f) {
     ticketPrice: f.price ? Number(f.price) : null,
     description: f.description ?? "",
     bannerUrl: f.bannerUrl ?? null,
+    ...posterFields(f),
     status: "upcoming",
     isNew: true,
     attendeeCount: 0,
@@ -361,6 +373,7 @@ export async function createVenueRequest(profile, venue, f) {
     title: f.title,
     eventDate: f.date, eventTime: f.time, description: f.description ?? "",
     bannerUrl: f.bannerUrl ?? null,
+    ...posterFields(f),
     organizerId: profile.orgId ?? profile.id,
     organizerName: profile.orgName ?? profile.displayName ?? "",
     createdByUid: profile.id,
@@ -760,6 +773,7 @@ export async function createOrgVenueRequest(profile, venue, f) {
     title: f.title,
     eventDate: f.date, eventTime: f.time ?? "", description: f.description ?? "",
     bannerUrl: f.bannerUrl ?? null,
+    ...posterFields(f),
     artistId: f.artistId ?? null, artistName: f.artistName ?? "",
     organizerId: profile.orgId ?? profile.id,
     organizerName: profile.orgName ?? profile.displayName ?? "",

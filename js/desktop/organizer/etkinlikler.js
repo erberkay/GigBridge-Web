@@ -39,6 +39,9 @@ import { fold, matchText, trUpper, toMs, isLive, eventStartMs, eventEndMs, write
 import { genreColor } from "../shared/genres.js";
 import { isDesktop } from "../../viewport.js";
 import { paymentNotifHref, PAYMENT_NOTIF_TYPES, eventPaymentsPanel, payRowControl } from "../shared/payments.js";
+// Dikey afiş (Instagram, isteğe bağlı; kırpmasız): yeni istekte venueRequests.posterUrl/posterThumbUrl (mekan kabul edince etkinliğe
+// geçer — data.acceptOrgRequest) · düzenlemede events/{id} alanları değişir/kaldırılır (updateEventFields)
+import { posterField } from "../shared/poster.js";
 
 // ══════════════════════════════════════════════════════════════════════
 // ORTAK (panel.js de kullanır)
@@ -634,9 +637,11 @@ export function orgEtkinliklerView(ctx) {
     feeIn.addEventListener("input", () => { feeIn.value = feeIn.value.replace(/\D/g, "").slice(0, 7); });
 
     const lbl = (text, forId, id) => h(forId ? "label" : "span", { class: "dk-lbl", for: forId || null, id: id || null }, text);
+    const poster = posterField({});
     const body = h("div", { class: `${P}-form` },
       steps,
       h("div", { class: `${P}-covwrap` }, cover, fileIn),
+      poster.node,
       h("div", { class: `${P}-fld` }, lbl("ETKİNLİK ADI *", tIn.id), tIn),
       h("div", { class: `${P}-fld` }, lbl("MEKAN *", null, `${P}-c-venue-lbl`), venueBtn, venueDrop,
         h("span", { class: `${P}-help` }, "Seçtiğin mekana istek gönderilir. ", h("a", { href: "#/organizer/mekan", class: `${P}-helpa` }, "Mekanları haritada gör"))),
@@ -779,6 +784,7 @@ export function orgEtkinliklerView(ctx) {
         if (dup) { setErr("Bu istek zaten gönderilmiş"); return; }
         if (artistSel) { f.artistId = artistSel.id; f.artistName = artistSel.name; }
         try { if (file) f.bannerUrl = await uploadImage(file, uid); } catch (_) { /* foto olmadan devam (legacy) */ }
+        try { if (poster.hasNew()) Object.assign(f, await poster.commit(uid)); } catch (_) { dkToast("Afiş yüklenemedi — istek afişsiz gönderiliyor", { type: "err" }); }
         await createOrgVenueRequest(profile, venueSel, f);
         dkToast("İstek gönderildi — " + (venueSel.displayName || "Mekan"));
         d.close("action");
@@ -788,6 +794,7 @@ export function orgEtkinliklerView(ctx) {
         load();
       } catch (e) {
         console.warn("[org create]", e);
+        poster.afterFail();
         dkToast("İstek gönderilemedi", { type: "err" });
       } finally {
         busy = false;
@@ -904,6 +911,8 @@ export function orgEtkinliklerView(ctx) {
     const eV = dkInput({ id: `${P}-e-venue`, value: ev.venueName || "", placeholder: "Mekan adı", disabled: lock });
     const eD = dkTextarea({ id: `${P}-e-desc`, rows: 4, value: ev.description || "", placeholder: "Etkinlik hakkında kısa bilgi...", attrs: lock ? { disabled: "" } : {} });
     const lbl = (text, forId) => h("label", { class: "dk-lbl", for: forId }, text);
+    const ePoster = posterField({ url: ev.posterUrl || "", thumb: ev.posterThumbUrl || "" });
+    if (lock) ePoster.setDisabled(true);
     const delBtn = isOwner ? dkButton("Etkinliği Sil", { variant: "danger-outline", size: 40, icon: ico("trash", 15, { color: "#FF5A6E" }), cls: `${P}-del`, onClick: () => askDelete() }) : null;
     // ÖDEMELER (uygulama organizer/EditEventScreen EventPaymentsPanel): bu etkinliğe bağlı kabul edilmiş ücretli davet / mekan isteği
     const payPanel = eventPaymentsPanel({ role: "organizer", uid, eventId: ev.id });
@@ -912,6 +921,7 @@ export function orgEtkinliklerView(ctx) {
       h("div", { class: `${P}-fld` }, lbl("ETKİNLİK ADI *", eT.id), eT),
       h("div", { class: `${P}-fld` }, lbl("MEKAN", eV.id), eV),
       h("div", { class: `${P}-fld` }, lbl("AÇIKLAMA", eD.id), eD),
+      ePoster.node,
       payPanel.node,
       delBtn);
 
@@ -936,8 +946,9 @@ export function orgEtkinliklerView(ctx) {
       setErr("");
       confirmDlg({ title: "Emin misiniz?", body: `Etkinlik “${when || "—"}” tarihinde yayınlanacak. Değişiklikleri kaydetmek istiyor musunuz?`, cta: "Kaydet ve Yayınla",
         run: async () => {
-          try { await updateEventFields(ev.id, patch); }
-          catch (e) { console.warn("[org save]", e); dkToast("Kaydedilemedi", { type: "err" }); return false; }
+          if (ePoster.changed()) { try { Object.assign(patch, await ePoster.commit(uid)); } catch (_) { dkToast("Afiş yüklenemedi — diğer değişiklikler kaydediliyor", { type: "err" }); } }
+          try { await updateEventFields(ev.id, patch); ePoster.afterSave(uid); }
+          catch (e) { console.warn("[org save]", e); ePoster.afterFail(); dkToast("Kaydedilemedi", { type: "err" }); return false; }
           dkToast("Etkinlik güncellendi");
           setTimeout(() => d.close("action"), 0);
           load();

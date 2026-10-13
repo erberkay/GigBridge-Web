@@ -18,6 +18,9 @@
 // Tasarımın ekledikleri: iki kolon + canlı Keşfet kartı önizlemesi (cards.eventCard — tek kaynak), yayın kontrol listesi, süre
 // göstergesi, Ücretsiz anahtarı, kapak ön ayarları (ui.BANNER_PRESETS — ücretsiz, yüklemesiz) + Yükle (16:9 kırpıcı),
 // "Taslak kaydet" (YALNIZ tarayıcı: localStorage "gb:venueDraft:{uid}[:{eventId}]" — Firestore şeması yok), açılışta geri yükleme.
+// DİKEY AFİŞ (uygulama feat/dikey-afis): 01 Kapak bölümünde isteğe bağlı "Dikey afiş (Instagram)" — kırpılmaz, tarayıcıda küçültülür
+//   (uzun kenar ≤1600 JPEG + ≈540 px küçük) → event_banners/{uid}/{ts}_poster(_t).jpg → posterUrl + posterThumbUrl (shared/poster.js).
+//   Düzenlemede değiştir / kaldır (kaldır → alanlar null). Taslağa yazılmaz (dosya); kilitliyken devre dışı.
 import { h, openImageCropper, BANNER_PRESETS } from "../../ui.js";
 import { session } from "../../store.js";
 import {
@@ -30,6 +33,7 @@ import { cx, dkModal, dkToast, dkConfirm, dkSkeleton, dkEmpty, dkButton, dkAvata
 import { eventCard } from "../shared/cards.js";
 import { eventStartMs, fmtTime, isoDate, toMs, trUpper, trLower, fold, initials, MONTHS_TR, MONTHS_TR_SHORT } from "../shared/helpers.js";
 import { ALL_GENRES, genreColor, genreGrad, genreFamilyKey } from "../shared/genres.js";
+import { posterField } from "../shared/poster.js";
 import { eventPaymentsPanel } from "../shared/payments.js";
 
 const NS = "dk-mekan-etkinlik-olustur";
@@ -214,9 +218,18 @@ export function venueEtkinlikOlusturView(ctx) {
     changed({ cover: true });
   });
   tiles.append(uploadBtn);
+  // Dikey afiş (Instagram) — oluştur: hemen; düzenle: etkinlik yüklenince mevcut afişle kurulur (mountPoster)
+  const posterSlot = h("div", {});
+  let poster = null;
+  function mountPoster(e) {
+    poster = posterField({ url: e?.posterUrl || "", thumb: e?.posterThumbUrl || "", onChange: () => changed() });
+    posterSlot.replaceChildren(poster.node);
+    if (lock) poster.setDisabled(true);
+  }
   const s01 = section("01", "Kapak Fotoğrafı", "OPSİYONEL",
     h("div", { class: c("covergrid") }, coverBox,
-      h("div", { class: c("covercol") }, helpEl("Fotoğraf seç ve kaydırarak konumlandır (16:9). Kapak, etkinlik kartında ve haritada görünür."), tiles, fileIn)));
+      h("div", { class: c("covercol") }, helpEl("Fotoğraf seç ve kaydırarak konumlandır (16:9). Kapak, etkinlik kartında ve haritada görünür."), tiles, fileIn)),
+    posterSlot);
 
   // ── 02 Bilgiler ──
   const titleIn = track(input({ placeholder: "örn: Cumartesi Canlı Müzik", maxlength: "120", autocomplete: "off" }), "title");
@@ -625,6 +638,8 @@ export function venueEtkinlikOlusturView(ctx) {
     try {
       if (st.cover.kind === "upload" && st.cover.file) f.bannerUrl = await uploadImage(st.cover.file, uid);
       else if (st.cover.kind === "preset") f.bannerUrl = st.cover.url;
+      // afiş yüklenemezse etkinlik afişsiz yayınlanır (uygulama preparePosterPatch: failed → diğer alanlar yine kaydedilir)
+      if (poster?.hasNew()) { setBusy(true, "Afiş yükleniyor…"); try { Object.assign(f, await poster.commit(uid)); } catch (_) { dkToast("Afiş yüklenemedi — etkinlik afişsiz yayınlanıyor", { type: "err" }); } }
       setBusy(true, "Yayınlanıyor…");
       const newId = await createEvent(p, f);
       if (end) { // bitiş → endAt (canlı pin); gece devrilirse ertesi güne taşır (legacy birebir)
@@ -652,6 +667,7 @@ export function venueEtkinlikOlusturView(ctx) {
       return true;
     } catch (e) {
       console.warn("[venue create]", e);
+      poster?.afterFail();   // yüklenen afiş öksüz kalmasın
       setBusy(false);
       showErr("Oluşturulamadı.");
       return false;
@@ -701,8 +717,13 @@ export function venueEtkinlikOlusturView(ctx) {
         const cur = st.cover.kind === "none" ? null : st.cover.url;
         if (cur !== origCover) patch.bannerUrl = cur;
       }
+      if (poster?.changed()) {
+        setBusy(true, poster.hasNew() ? "Afiş yükleniyor…" : "Kaydediliyor…");
+        try { Object.assign(patch, await poster.commit(uid)); } catch (_) { dkToast("Afiş yüklenemedi — diğer değişiklikler kaydediliyor", { type: "err" }); }
+      }
       setBusy(true, "Kaydediliyor…");
       await saveEventEdits(eventId, patch);
+      poster?.afterSave(uid);   // değiştirilen / kaldırılan eski afiş dosyaları (yalnız kendi klasörümüzdeyse) silinir
       dropDraft(DKEY);
       dirty = false;
       dkToast("Etkinlik güncellendi");
@@ -710,6 +731,7 @@ export function venueEtkinlikOlusturView(ctx) {
       return true;
     } catch (e) {
       console.warn("[venue edit]", e);
+      poster?.afterFail();
       setBusy(false);
       showErr("Etkinlik güncellenemedi.");
       return false;
@@ -718,7 +740,7 @@ export function venueEtkinlikOlusturView(ctx) {
   // Düzenleme: form yüklenen etkinlikle aynıysa "Değişiklikleri kaydet" kapalı
   const formKey = (x) => JSON.stringify([x.title.trim(), x.desc.trim(), x.artist ? [x.artist.kind, x.artist.id || null, x.artist.name] : null, x.genre.trim(),
     x.free ? "" : String(x.price ?? "").trim(), !!x.free, String(x.cap ?? "").trim(), x.cover.kind === "none" ? null : x.cover.kind + ":" + x.cover.url]);
-  const editChanged = () => !!orig && formKey(st) !== formKey(orig);
+  const editChanged = () => !!orig && (formKey(st) !== formKey(orig) || !!poster?.changed());
   function syncPub() {
     pubBtn.disabled = busy || locked(); draftBtn.disabled = busy || locked();
   }
@@ -733,6 +755,7 @@ export function venueEtkinlikOlusturView(ctx) {
     lock = l;
     const off = !!l;
     [...allInputs].forEach((el) => { el.disabled = off; });
+    poster?.setDisabled(off);
     [dateIn, startIn, endIn].forEach((el) => { el.disabled = true; });
     if (!off) [dateIn, startIn, endIn].forEach((el) => { el.disabled = isEdit; });
     priceIn.disabled = off || st.free;
@@ -753,6 +776,7 @@ export function venueEtkinlikOlusturView(ctx) {
   // ══════════════════════════════════════════════════════════════════════
   async function init() {
     if (!isEdit) {
+      mountPoster(null);
       root.append(modeRow, grid);
       place();
       const d = readDraft(DKEY);
@@ -793,6 +817,7 @@ export function venueEtkinlikOlusturView(ctx) {
       cover: presetHit ? { kind: "preset", url: banner } : banner ? { kind: "existing", url: banner } : { kind: "none" },
     });
     orig = { ...st, cover: { ...st.cover } };
+    mountPoster(e);
     const dd = s != null ? new Date(s) : null;
     modeEdit.textContent = `Düzenle · ${e.title || "Etkinlik"}${dd ? ` ${dd.getDate()} ${MONTHS_TR_SHORT[dd.getMonth()]}` : ""}`;
     root.append(modeRow, lockNote, grid); // kilit notu formun üstünde: kullanıcı alanlara geçmeden görür

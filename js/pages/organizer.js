@@ -8,6 +8,8 @@ import {
   updateEventFields, deleteEventById, sendNotification, createOrgVenueRequest, approveEventEdit, eventStartMs,
 } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, ROLE } from "../ui.js";
+// Dikey afiş (Instagram, isteğe bağlı, kırpmasız) — masaüstüyle ortak alan (uygulama feat/dikey-afis paritesi)
+import { posterField } from "../desktop/shared/poster.js";
 import { messagesView, requestChat } from "./messages.js";
 import { changeEmailModal, changePasswordModal, deleteAccountModal } from "./auth.js";
 import { paymentNotifHref } from "../desktop/shared/pay-util.js";
@@ -287,8 +289,10 @@ function openCreateEvent(onDone) {
   const artistNote = h("div", { class: "ox-selnote", style: { display: "none" } },
     icon("checkmark-circle", { size: 13, color: "#10B981" }), "Kayıtlı sanatçı seçildi — kabul edilince teklif gönderilir");
 
+  const poster = posterField({ variant: "m" });
   const body = h("div", {},
     pic.node,
+    poster.node,
     field({ label: "Etkinlik Adı *", id: "oxctitle", placeholder: "Örn. Yaz Festivali" }),
     venueBtn,
     h("div", { class: "ox-selrow" }, artistBtn, artistClear),
@@ -316,10 +320,11 @@ function openCreateEvent(onDone) {
         if (dup) { busy = false; return toast("Bu istek zaten gönderilmiş", "err"); }
         if (artistSel) { f.artistId = artistSel.id; f.artistName = artistSel.name; }
         try { if (pic.getFile()) f.bannerUrl = await uploadImage(pic.getFile(), session.user.uid); } catch (_) { /* foto olmadan devam */ }
+        try { if (poster.hasNew()) Object.assign(f, await poster.commit(session.user.uid)); } catch (_) { toast("Afiş yüklenemedi — istek afişsiz gönderiliyor", "err"); }
         await createOrgVenueRequest(p, venueSel, f);
         toast("İstek gönderildi — " + (venueSel.displayName || "Mekan"));
         close(); onDone && onDone();
-      } catch (e) { toast("İstek gönderilemedi", "err"); }
+      } catch (e) { poster.afterFail(); toast("İstek gönderilemedi", "err"); }
       busy = false;
     } },
   ] });
@@ -414,6 +419,8 @@ function openEditEvent(ev, opts = {}) {
   const fVenue = field({ label: "Mekan", id: "oxevenue", value: ev.venueName || "", placeholder: "Mekan adı" });
   const fDesc = field({ label: "Açıklama", id: "oxedesc", value: ev.description || "", placeholder: "Etkinlik hakkında kısa bilgi...", multiline: true });
   if (!canEdit || started) [fTitle, fVenue, fDesc].forEach((f) => { const inp = f.querySelector("input, textarea"); if (inp) inp.disabled = true; });
+  const ePoster = posterField({ variant: "m", url: ev.posterUrl || "", thumb: ev.posterThumbUrl || "" });
+  if (!canEdit || started) ePoster.setDisabled(true);
 
   let banner = null;
   if (isOwner && opts.approveStaffId) {
@@ -450,6 +457,7 @@ function openEditEvent(ev, opts = {}) {
           icon("swap-horizontal", { size: 15, color: "#F59E0B" }), "Tarihi değiştir (iptal et ve yeniden oluştur)")
       : h("div", { class: "ox-hint" }, "Tarih değişikliği ve silme yalnızca organizasyon sahibinde."),
     fTitle, fVenue, fDesc,
+    ePoster.node,
     isOwner ? h("button", { class: "ox-delbtn", onclick: confirmDelete }, icon("trash-outline", { size: 16 }), "Etkinliği Sil") : null);
 
   const m = modal({ title: "Etkinliği Düzenle", body, actions: started ? [
@@ -470,8 +478,9 @@ function openEditEvent(ev, opts = {}) {
       actions: [
         { label: "Vazgeç", variant: "ghost", onClick: () => {} },
         { label: "Kaydet ve Yayınla", ic: "checkmark", keepOpen: true, onClick: async (close) => {
-          try { await updateEventFields(ev.id, patch); toast("Etkinlik güncellendi"); close(); closeEdit(); onDone(); }
-          catch (_) { toast("Kaydedilemedi", "err"); }
+          if (ePoster.changed()) { try { Object.assign(patch, await ePoster.commit(session.user.uid)); } catch (_) { toast("Afiş yüklenemedi — diğer değişiklikler kaydediliyor", "err"); } }
+          try { await updateEventFields(ev.id, patch); ePoster.afterSave(session.user.uid); toast("Etkinlik güncellendi"); close(); closeEdit(); onDone(); }
+          catch (_) { ePoster.afterFail(); toast("Kaydedilemedi", "err"); }
         } },
       ] });
   }
@@ -702,7 +711,8 @@ function venueRow(vn) {
 }
 function requestModal(vn) {
   const pic = photoPicker("Etkinlik fotoğrafı (opsiyonel)", undefined, { aspect: 16 / 9 });
-  const body = h("div", {}, pic.node,
+  const poster = posterField({ variant: "m" });
+  const body = h("div", {}, pic.node, poster.node,
     field({ label: "Etkinlik Adı", id: "rqtitle", placeholder: "Örn. Yaz Festivali" }),
     h("div", { class: "frow" }, field({ label: "Tarih", id: "rqdate", type: "date" }), field({ label: "Saat", id: "rqtime", type: "time" })),
     field({ label: "Açıklama (opsiyonel)", id: "rqdesc", placeholder: "…", multiline: true }));
@@ -712,7 +722,11 @@ function requestModal(vn) {
       const f = { title: v("#rqtitle"), date: v("#rqdate"), time: v("#rqtime"), description: v("#rqdesc") };
       if (!f.title) return toast("Etkinlik adı gir", "err");
       if (!f.date || !f.time) return toast("Tarih ve saat gir", "err");
-      try { if (pic.getFile()) f.bannerUrl = await uploadImage(pic.getFile(), session.user.uid); await createVenueRequest(session.profile, vn, f); toast("İstek gönderildi"); close(); } catch (e) { toast("Gönderilemedi", "err"); }
+      try {
+        if (pic.getFile()) f.bannerUrl = await uploadImage(pic.getFile(), session.user.uid);
+        if (poster.hasNew()) { try { Object.assign(f, await poster.commit(session.user.uid)); } catch (_) { toast("Afiş yüklenemedi — istek afişsiz gönderiliyor", "err"); } }
+        await createVenueRequest(session.profile, vn, f); toast("İstek gönderildi"); close();
+      } catch (e) { poster.afterFail(); toast("Gönderilemedi", "err"); }
     } },
   ] });
 }

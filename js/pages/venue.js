@@ -12,6 +12,7 @@ import { venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, save
   submitVenueArtistReview } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, fmtTL, ROLE, loadLeaflet } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
+import { posterField } from "../desktop/shared/poster.js";   // dikey afiş (Instagram) — isteğe bağlı, kırpmasız
 import { rankCities, canonicalProvince, searchProvinces, locateProvince, cachedGeoProvince, takeGeoPreselect, skipGeoPreselect } from "../desktop/shared/city-geo.js";
 import { changeEmailModal, changePasswordModal } from "./auth.js";
 
@@ -621,8 +622,9 @@ export async function renderCreate(root) {
 
   // Kapak fotoğrafı (16:9)
   const pic = photoPicker("Fotoğraf seç ve kaydırarak konumlandır (16:9)", undefined, { aspect: 16 / 9 });
+  const poster = posterField({ variant: "m" });
   const cover = h("div", { class: "vx-cover" },
-    h("span", { class: "vx-lbl" }, "Kapak Fotoğrafı"), pic.node);
+    h("span", { class: "vx-lbl" }, "Kapak Fotoğrafı"), pic.node, poster.node);
 
   // Etkinlik adı
   const titleF = field({ label: "Etkinlik Adı", id: "ctitle", placeholder: "örn: Cumartesi Canlı Müzik" });
@@ -706,6 +708,10 @@ export async function renderCreate(root) {
     submit.disabled = true;
     try {
       if (pic.getFile()) { msgEl.textContent = "Fotoğraf yükleniyor…"; msgEl.className = "msg"; f.bannerUrl = await uploadImage(pic.getFile(), session.user.uid); }
+      if (poster.hasNew()) {
+        msgEl.textContent = "Afiş yükleniyor…"; msgEl.className = "msg";
+        try { Object.assign(f, await poster.commit(session.user.uid)); } catch (_) { toast("Afiş yüklenemedi — etkinlik afişsiz yayınlanıyor", "err"); }
+      }
       const eventId = await createEvent(session.profile, f);
       if (end) { // Bitiş saati → endAt (canlı pin için); gece devrilirse ertesi güne taşır
         const startAt = new Date(`${date}T${time || "00:00"}:00`);
@@ -718,7 +724,7 @@ export async function renderCreate(root) {
       }
       toast((artistSel && artistKind === "artist") ? "Yayınlandı — sanatçıya teklif gönderildi" : "Etkinlik yayınlandı");
       location.hash = "#/venue";
-    } catch (e) { fail(msgEl, "Oluşturulamadı."); submit.disabled = false; }
+    } catch (e) { poster.afterFail(); fail(msgEl, "Oluşturulamadı."); submit.disabled = false; }
   }
 
   root.append(h("form", { class: "form-card", onsubmit: (e) => e.preventDefault() },
