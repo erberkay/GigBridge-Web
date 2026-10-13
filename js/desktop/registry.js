@@ -1,5 +1,6 @@
 // MASAÜSTÜ ROTA KAYDI — rota → tembel modül + görünüm fonksiyonu + CSS dosyaları.
 // js/app.js yalnız ≥769 px'te (viewport.isDesktop) bu tabloya bakar; eşleşme yoksa legacy görünüm AYNEN çizilir.
+// İSTİSNA: yönetici rotaları (#/admin…) her genişlikte buradan çizilir (app.js adminDesk; ≤768 düzeni CSS'te).
 // Bir modül `export const NOT_READY = true` verirse router legacy'ye düşer (panel rotalarında önce legacy-in-shell).
 //
 // Görünüm sözleşmesi (her js/desktop/** modülü):

@@ -83,6 +83,7 @@
 .dk[data-area="panel"]:is([data-role="organizer"], [data-role="admin"], [data-role="venue"], [data-role="agency"]) { --dk-inp-fs: 14.5px; }
 .dk-inp-44 { height: 44px; padding: 0 14px; font-size: 14.5px; }
 .dk-inp-40 { height: 40px; padding: 0 12px; font-size: 14px; }
+.dk-inp-36 { height: 36px; padding: 0 12px; font-size: 13.5px; }   /* dkInput({size:36}) — yönetici Ödemeler "Kısmi iade" (sınıf eksikti → UA boyutu) */
 .dk-inp-bg-void { background: #06070A; }
 .dk-inp-bg-rail { background: #0A0B0F; }
 .dk-inp:hover:not(:focus), .dk-ta:hover:not(:focus), .dk-sel:hover:not(:focus) { border-color: #2C303A; }
@@ -557,6 +558,35 @@
 .dk-vc-meta { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #C9CACD; }
 .dk-vc-tags { display: flex; gap: 6px; }
 .dk-vc-tag { height: 20px; padding: 0 7px; display: flex; align-items: center; border-radius: 3px; border: 1px solid #2C303A; font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #C9CACD; }
+
+/* ---------- ≤768 TELEFON (mobil web) — bu genişlikte dk bileşenlerini yalnız YÖNETİCİ paneli kullanır (app.js adminDesk) ----------
+   Modallar ekran kenarına 12 px kalan tam genişlik kart (üstten), çekmece zaten min(…, 100vw) → tam ekran sayfa; dolgular 16;
+   toast'lar iki yana 12 px; iOS odakta yakınlaştırmasın diye yönetici alanında form denetimleri 16 px. */
+@media (max-width: 768px) {
+  .dk-ovl { padding: 12px; }
+  .dk-ovl-top, .dk-ovl-panel.dk-ovl-top { padding-top: max(24px, 6vh); }
+  .dk-mdl { max-width: calc(100vw - 24px); }
+  .dk-mdl-account, .dk-mdl-panel, .dk-mdl-confirm { padding: 20px; }
+  .dk-mdl-t { font-size: 19px; }
+  .dk-mdl-head { height: 60px; padding: 0 16px; }
+  .dk-mdl-fbody { padding: 16px; max-height: calc(100vh - 200px); }
+  .dk-mdl-foot { padding: 12px 16px; flex-wrap: wrap; }
+  .dk-mdl-acts { flex-wrap: wrap; }
+  .dk-mdl-acts > .dk-btn { flex: 1 1 auto; }
+  .dk-drw-head { height: 64px; padding: 0 16px; }
+  .dk-drw-tcol h2 { font-size: 19px; }
+  .dk-drw-body { padding: 16px 16px max(24px, env(safe-area-inset-bottom)); }
+  .dk-drw-foot { padding: 12px 16px; flex-wrap: wrap; }
+  .dk-tst-light, .dk-tst-artist, .dk-tst-venue, .dk-tst-account { left: 12px; right: 12px; min-width: 0; max-width: none; }
+  .dk-tst-light { bottom: max(16px, env(safe-area-inset-bottom)); height: auto; min-height: 52px; padding-top: 8px; padding-bottom: 8px; }
+  .dk[data-role="admin"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select) { font-size: 16px; }
+  /* dokunma hedefi ≥40: küçük düğme/çip/segment boyları telefonda 40'a çıkar (görünüm aynı aile) */
+  .dk[data-role="admin"] :is(.dk-btn-36, .dk-inp-36) { height: 40px; }
+  .dk[data-role="admin"] .dk-chip { height: 40px; border-radius: 20px; }
+  .dk[data-role="admin"] .dk-seg-b { height: 40px; }
+  .dk[data-role="admin"] .dk-sw { position: relative; }
+  .dk[data-role="admin"] .dk-sw::after { content: ""; position: absolute; inset: -8px; }   /* anahtar: görünmez 40+ dokunma alanı */
+}
 
 @media (prefers-reduced-motion: reduce) {
   .dk-skel { animation: none; }

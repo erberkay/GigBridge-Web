@@ -29,7 +29,8 @@
 //   ≤1023: arama 40×40 ikon düğmesine katlanır; tıklayınca ya da "/" ile üst barda genişler (ESC / boşken odak kaybı kapatır).
 //   node = .dk kökü (class "dk dk-panel dk-ps", data-role, data-area="panel"); content = görünüm içeriği (max 1280, sola hizalı)
 //   destroy = bildirim/okunmamış dinleyicileri, belge klavye/tık dinleyicileri, açık popover → kapat.
-// 769–1023: kenar çubuğu ekran dışı çekmece + üst barda hamburger.
+// ≤1023: kenar çubuğu ekran dışı çekmece + üst barda hamburger. ≤768 (yalnız yönetici; app.js adminDesk): telefon düzeni
+//   (dk-panel-shell.css ≤768 bloğu — üst bar 64, dolgu 16, avatar gizli).
 import { h } from "../../ui.js";
 import { session, logout } from "../../store.js";
 import { svgIcon, svgRaw } from "./icons.js";
@@ -190,8 +191,9 @@ export function panelShell(opts = {}) {
   }
   if (R.sections) {
     R.sections.forEach((sec, i) => {
-      asideKids.push(h("span", { class: cx("dk-ps-sec", i && "is-next") }, sec.label));
       const list = sec.items.filter(([k]) => k !== "onizleme" || opts.onPreview).map(mkItem);
+      if (!list.length) return;   // ör. ÖNİZLEME: onPreview vermeyen yönetici alt sayfalarında boş başlık kalmasın
+      asideKids.push(h("span", { class: cx("dk-ps-sec", i && "is-next") }, sec.label));
       asideKids.push(sec.navLabel ? h("nav", { "aria-label": sec.navLabel, class: "dk-ps-nav" }, ...list) : h("div", { class: "dk-ps-nav" }, ...list));
     });
   } else {

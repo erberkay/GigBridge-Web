@@ -2,7 +2,8 @@
 // Spec: specs/org-admin.md § WebAdmin (+ F3–F7). Artboard: design/WebAdmin.dc.html (sahibi notu yok; WebAdminGiris notu: rol rengi #A78BFA).
 // CSS: css/dk-admin-panel.css — kök sınıf .dk-admin-panel (kabuğun <main id="dk-main">'ine eklenir); kabuk dışındaki parçalar
 //   (üst bar "Keşfet önizleme" düğmesi, portal çekmecesi) .dk-admin-panel-* sınıflarıyla kapsanır.
-// ≤768: legacy js/pages/admin.js adminPage() aynen kalır (router bu modülü mobilde yüklemez).
+// ≤768 (mobil web): bu görünüm AYNEN kullanılır (app.js adminDesk; duyarlı kabuk + ≤768 kuralları CSS'te). Legacy
+//   js/pages/admin.js adminPage() yalnız modül yükleme hatasında yedek.
 //
 // Legacy özellikleri (hepsi korundu): mekan + organizatör onayı (approveUser / rejectUser) ·
 //   mekan adı istekleri (approveNameChange / rejectNameChange) · sorun bildirimleri (resolveReport; mesaj metni artık detay panelinde) ·

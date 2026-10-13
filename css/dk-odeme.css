@@ -219,3 +219,12 @@ p.dk-pay-body, p.dk-pay-muted { margin: 0; }
 .dk-adm-pay-note { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.5; color: #8A8E97; }
 .dk-adm-pay-note > svg { flex-shrink: 0; margin-top: 2px; }
 .dk-pay-drw .dk-pay-btns .dk-inp { width: 160px; }
+
+/* ---------- ≤768 TELEFON (mobil web yönetici paneli › Ödemeler; diğer roller ≤768'de bu dosyayı kullanmaz) ---------- */
+@media (max-width: 768px) {
+  .dk-adm-pay-chips { padding: 0 16px 14px; }
+  .dk-adm-pay-row { padding: 14px 16px; }
+  .dk-adm-pay-acts > .dk-btn { flex: 1 1 auto; }
+  .dk-adm-pay-partial { flex-wrap: wrap; }
+  .dk-adm-pay-pin { flex: 1 1 140px; width: auto; min-width: 0; }
+}

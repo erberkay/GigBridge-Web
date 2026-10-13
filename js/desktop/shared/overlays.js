@@ -280,7 +280,9 @@ export function dkDrawer(opts = {}) {
   portalRoot().append(wrap);
   register(rec);
   lockScroll();
-  requestAnimationFrame(() => { const t = panel.querySelector("[autofocus]") || panel.querySelector("input,textarea,select") || panel.querySelector(".dk-mdl-x"); try { t?.focus({ preventScroll: true }); } catch (_) {} });
+  // Telefonda (≤768 — mobil web yönetici paneli) ilk metin alanına odaklanma: klavye açılıp çekmeceyi kapatıyordu → kapat düğmesi.
+  const phone = window.matchMedia("(max-width: 768px)").matches;
+  requestAnimationFrame(() => { const t = panel.querySelector("[autofocus]") || (!phone && panel.querySelector("input,textarea,select")) || panel.querySelector(".dk-mdl-x"); try { t?.focus({ preventScroll: true }); } catch (_) {} });
   return { node: wrap, panel, body: bodyEl, footer: footEl, close, setTitle(t) { panel.querySelector("#" + tid).textContent = t; } };
 }
 

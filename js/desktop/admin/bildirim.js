@@ -54,6 +54,7 @@ export function adminBildirimView(ctx) {
   const checkB = dkButton("Alıcı sayısını gör", { variant: "outline", size: 40, icon: "users" });
   const sendB = dkButton("Gönder", { variant: "violet", size: 40, icon: "send" });
   const tplB = dkButton("Hazır şablon: sanatçılara dinleyici hesabı duyurusu", { variant: "ghost", size: 36, icon: "sparkles" });
+  tplB.classList.add("dk-admin-etk-tpl");   // dar ekranda uzun etiket satır kırar (dk-admin-etkinlik.css)
 
   function drawAudience() {
     audBox.replaceChildren(...[["all", "Herkes"], ["roles", "Rol seç"], ["user", "Tek kullanıcı"]].map(([k, l]) =>
@@ -163,7 +164,7 @@ export function adminBildirimView(ctx) {
         try { _cfg = (await cfgFn({ action: "set", type: t.type, enabled: on })).data; drawCfg(_cfg); toast(on ? "Açıldı" : "Kapatıldı"); }
         catch (e) { revert(); toast(errText(e), { type: "err" }); }
       } });
-    const head = h("div", { class: "dk-admin-etk-row" },
+    const head = h("div", { class: "dk-admin-etk-row dk-admin-etk-cfgrow" },
       h("span", { class: "dk-admin-etk-who" },
         h("span", { class: "dk-admin-etk-n" }, t.label, t.locked ? h("span", { class: "dk-admin-etk-tag" }, "ZORUNLU") : null, (t.title || t.body) ? h("span", { class: "dk-admin-etk-tag" }, "DÜZENLENDİ") : null),
         h("span", { class: "dk-admin-etk-e" }, t.description)),

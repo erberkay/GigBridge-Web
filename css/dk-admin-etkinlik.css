@@ -49,3 +49,28 @@
 @media (max-width: 1179px) { .dk-admin-etk-g2 { grid-template-columns: minmax(0, 1fr); } }
 /* yeni yönetici sayfalarında detay paneli dar ekranda gizlenmez, listenin altına iner (çekmece yok) */
 @media (max-width: 1179px) { .dk-admin-etk .dk-admin-panel-detail { display: flex; position: relative; top: auto; } }
+/* "Metni düzenle" (Bildirimler › otomatik bildirim satırı) bağlantı görünümlü <button>: UA düğme zemini/kenarı kalıyordu */
+.dk-admin-etk-edit { margin: 0; padding: 0 4px; border: 0; background: none; font-family: var(--dk-font-sans); min-height: 32px; }
+
+/* ---------- ≤768 TELEFON (mobil web yönetici paneli) ---------- */
+@media (max-width: 768px) {
+  .dk-admin-etk-bar { padding: 12px 16px; overflow-x: auto; scrollbar-width: none; }
+  .dk-admin-etk-bar::-webkit-scrollbar { display: none; }
+  .dk-admin-etk-bar .dk-seg { flex-shrink: 0; }
+  .dk-admin-etk-att { padding: 16px; }
+  .dk-admin-etk-q { height: 40px; }
+  .dk-admin-etk-tools > .dk-btn { flex-shrink: 0; }
+  .dk-admin-etk-form { padding: 0 16px 16px; }
+  .dk-admin-etk-ch { padding: 14px 16px; }
+  .dk-admin-etk-pad { padding: 0 16px 12px; }
+  .dk-admin-etk-prev { max-width: none; }
+  /* Bildirimler: uzun "Hazır şablon" etiketi satır kırar; gönder/sayaç düğmeleri tam genişlik */
+  .dk-admin-etk-tpl { height: auto; min-height: 40px; padding-top: 8px; padding-bottom: 8px; white-space: normal; text-align: left; justify-content: flex-start; }
+  .dk-admin-etk-form > .dk-admin-etk-tools > .dk-btn { flex: 1 1 140px; }
+  /* otomatik bildirim satırı: [ad + açıklama | anahtar] üstte, "Metni düzenle" altta */
+  .dk-admin-etk-cfgrow { flex-wrap: wrap; row-gap: 4px; }
+  .dk-admin-etk-cfgrow > .dk-admin-etk-who { flex: 1 1 calc(100% - 72px); }
+  .dk-admin-etk-cfgrow > .dk-admin-etk-edit { order: 2; min-height: 40px; padding: 0; }
+  .dk-admin-etk-cfgopen .dk-btn { flex: 1 1 auto; }
+}
+@media (max-width: 768px) { .dk-admin-etk-tools > .dk-admin-etk-sum:empty { display: none; } }

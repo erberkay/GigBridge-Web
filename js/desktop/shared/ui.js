@@ -572,7 +572,7 @@ export function dkTable({ columns = [], rows = [], rowKey = (r) => r.id, onRowCl
       const k = rowKey(r);
       const row = h("div", { role: "row", class: cx("dk-tbl-row", "dk-row", k === sel && "is-sel"), dataset: { key: String(k) },
         style: { gridTemplateColumns: tpl, gap: gap + "px", padding: `12px ${pad}px`, minHeight: rowMinHeight + "px" } },
-      ...columns.map((c) => { const v = c.render ? c.render(r) : r[c.key]; return h("div", { role: "cell", class: "dk-tbl-td", style: { justifyContent: c.align === "right" ? "flex-end" : null, textAlign: c.align || null } }, v instanceof Node ? v : v ?? ""); }));
+      ...columns.map((c) => { const v = c.render ? c.render(r) : r[c.key]; return h("div", { role: "cell", class: "dk-tbl-td", "data-label": c.label || null, style: { justifyContent: c.align === "right" ? "flex-end" : null, textAlign: c.align || null } }, v instanceof Node ? v : v ?? ""); }));
       if (onRowClick) row.addEventListener("click", (e) => { if (e.target.closest("button,a,input,select,textarea") && e.target.closest(".dk-tbl-td") !== e.target.closest(".dk-tbl-td:first-child")) return; onRowClick(r, row); });
       body.append(row);
     });
@@ -582,6 +582,7 @@ export function dkTable({ columns = [], rows = [], rowKey = (r) => r.id, onRowCl
   return node;
 }
 
+// (hücreler data-label taşır: dar ekranda satır karta dönünce sütun adı hücrenin önünde gösterilebilir — dk-admin-panel.css ≤768)
 // ══════════════════════════════════════════════════════════════════════
 // EMPTY STATE — dashed (hesap/public: border 1px dashed #2C303A r12; ikon çemberi opsiyonel) | plain (org tablo içi, ikon #5E636D)
 // ══════════════════════════════════════════════════════════════════════
