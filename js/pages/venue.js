@@ -12,6 +12,7 @@ import { venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, save
   submitVenueArtistReview } from "../data.js";
 import { h, clear, icon, btn, topbar, bottomnav, empty, spinner, toast, avatar, field, photoPicker, modal, fmtDate, fmtTL, ROLE, loadLeaflet } from "../ui.js";
 import { messagesView, requestChat } from "./messages.js";
+import { rankCities, canonicalProvince, searchProvinces, locateProvince, cachedGeoProvince, takeGeoPreselect, skipGeoPreselect } from "../desktop/shared/city-geo.js";
 import { changeEmailModal, changePasswordModal } from "./auth.js";
 
 const AMBER = ROLE.venue; // #F59E0B — mekan vurgu rengi
@@ -963,9 +964,9 @@ export async function renderArtists(root) {
   const myCity = (session.profile?.city || "").trim();
   let term = "", sortKey = "rating", typeF = null, genre = "Tümü", cityFilter = null;
 
-  // Sanatçısı olan şehirler (mekanın şehri önce)
-  const cities = [...new Set(artists.map((a) => (a.city || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "tr"));
-  if (myCity) cities.sort((a, b) => (lc(a) === lc(myCity) ? -1 : lc(b) === lc(myCity) ? 1 : 0));
+  // Şehir (masaüstü Sanatçı Bul ile aynı kural — shared/city-geo.js): Tüm Şehirler + [konum şehri | mekanın şehri] + en çok
+  // sanatçısı/grubu olan şehirler (toplam 6, eşitlikte takipçi) + seçili şehir; diğer 81 il "Şehir ara" kutusundan.
+  let geoCity = cachedGeoProvince();
 
   const listBox = h("div", {});
   const ratingOf = (a) => Number(a.avgRating) || 0;
@@ -980,7 +981,7 @@ export async function renderArtists(root) {
     pool = pool.filter((x) => {
       const matchT = !t || lc(nameOf(x)).includes(t) || lc(x.city).includes(t);
       const matchG = !g || genreOf(x) === g;
-      const matchC = !cf || lc((x.city || "").trim()) === cf;
+      const matchC = !cf || lc(canonicalProvince(x.city) || (x.city || "").trim()) === cf;
       return matchT && matchG && matchC;
     });
     pool.sort((a, b) => sortKey === "rating" ? ratingOf(b) - ratingOf(a) : attOf(b) - attOf(a));
@@ -1033,21 +1034,45 @@ export async function renderArtists(root) {
     h("span", { class: "vx-chipdiv" }),
     ...GENRE_FILTERS.map(mkGenre));
 
-  // Şehir chip'leri (koşullu)
+  // Şehir chip'leri + şehir araması (yazınca satır arama sonuçlarını gösterir; seçilen şehir çip olarak kalır)
   const cityChips = [];
-  const mkCity = (label, val, ic) => {
+  const mkCity = (label, val, ic, icColor) => {
     const c = h("button", { class: "vx-chip" + ((cityFilter || "") === (val || "") ? " on" : ""), onclick: () => {
-      cityFilter = val; cityChips.forEach((x) => x.el.classList.toggle("on", (cityFilter || "") === (x.val || ""))); draw();
-    } }, ic ? icon(ic, { size: 11 }) : null, h("span", {}, label));
+      cityFilter = val; skipGeoPreselect(); cityInput.value = ""; drawCityRow(); draw();
+    } }, ic ? icon(ic, { size: 11, color: icColor }) : null, h("span", {}, label));
     cityChips.push({ val, el: c });
     return c;
   };
-  const cityRow = cities.length
-    ? h("div", { class: "vx-chiprow" }, mkCity("Tüm Şehirler", null), ...cities.map((c) => mkCity(c, c, "location-outline")))
-    : null;
+  const cityRow = h("div", { class: "vx-chiprow" });
+  const cityInput = h("input", { placeholder: "Şehir ara (81 il)...", "aria-label": "Şehir ara", autocomplete: "off", oninput: () => drawCityRow() });
+  const citySearch = h("div", { class: "vx-fa-search" }, icon("location-outline", { size: 16, color: "var(--text-muted)" }), cityInput);
+  function drawCityRow() {
+    clear(cityRow); cityChips.length = 0;
+    const q = cityInput.value.trim();
+    if (q) {
+      const res = searchProvinces(q, 8);
+      if (!res.length) cityRow.append(h("span", { class: "muted", style: { fontSize: "13px", padding: "6px 2px" } }, "Şehir bulunamadı"));
+      res.forEach((c) => cityRow.append(mkCity(c, c, "search-outline")));
+      return;
+    }
+    const anchor = geoCity || canonicalProvince(myCity) || myCity;
+    const list = anchor ? [anchor] : [];
+    for (const r of rankCities([...artists, ...groups])) { if (list.length >= 6) break; if (!list.some((c) => lc(c) === lc(r.name))) list.push(r.name); }
+    if (cityFilter && !list.some((c) => lc(c) === lc(cityFilter))) list.push(cityFilter);
+    cityRow.append(mkCity("Tüm Şehirler", null),
+      ...list.map((c) => (geoCity && c === geoCity ? mkCity(`${c} · Konumun`, c, "navigate", "#4ED8FF") : mkCity(c, c, "location-outline"))));
+  }
 
-  root.append(searchBar, sortRow, chipRow, cityRow, listBox);
+  root.append(searchBar, sortRow, chipRow, citySearch, cityRow, listBox);
+  drawCityRow();
   draw();
+  // Konum (yalnız bu sayfa): en yakın il → ilk çip; oturumdaki ilk ziyarette ön seçili. İzin yok / hata → sessiz.
+  locateProvince().then((c) => {
+    if (!c || !root.isConnected) return;
+    geoCity = c;
+    if (!cityFilter && takeGeoPreselect()) { cityFilter = c; draw(); }
+    if (!cityInput.value.trim()) drawCityRow();
+  }).catch(() => {});
 
   // Sanatçı / grup kartı
   function faCard(x, rank) {

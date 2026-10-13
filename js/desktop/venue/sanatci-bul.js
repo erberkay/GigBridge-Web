@@ -4,9 +4,9 @@
 //
 // Legacy (js/pages/venue.js renderArtists + faCard + inviteModal) özellikleri — KORUNDU:
 //   sanatçı + grup havuzu (listArtists / listGroups), TİP (Sanatçılar/Gruplar, tekrar tık temizler), TÜR (7 çip, ilk tür),
-//   dinamik ŞEHİR çipleri (mekanın şehri önce), ada/şehre göre arama (tr küçük harf), Puan / Katılım sıralaması, ilk 3 solo
+//   ŞEHİR çipleri, ada/şehre göre arama (tr küçük harf), Puan / Katılım sıralaması, ilk 3 solo
 //   madalyası, gizli takip (watchArtist / unwatchArtist, "Gizli takibe alındı" / "Takipten çıkarıldı" / "İşlem başarısız"),
-//   kart tıklaması → #/venue/performans/{id} (solo), biyografi (başlık ipucu olarak), takipçi + katılım + ücret bilgisi,
+//   biyografi (başlık ipucu olarak), takipçi + katılım + ücret bilgisi,
 //   boş durum metinleri, davet modalı: Tek Etkinlik / Uzun Dönem; tarih+saat / ücret ≥ ₺3.500 / aynı gün çift teklif kontrolü
 //   (findExistingInvitation) / 16:9 kırpıcılı etkinlik fotoğrafı (uploadImage) / createInvitation (+ sohbete teklif mesajı,
 //   data.js içinde) · createGroupInvitation (tek grup daveti) · createResidency; "Davet gönderildi" / "Anlaşma teklifi gönderildi" /
@@ -17,6 +17,13 @@
 //   metin ve alanlar — sendNotification ile, fromUserId = oturum; grupta YOK: üye başına artistId'li davetler onNewInvitation ile zaten
 //   push alır, ek bildirim çift push olurdu), grup için aynı gün çift davet kontrolü, gruba uzun dönem anlaşma YOK (düğme gizli, sekme kapalı).
 //
+// ŞEHİR (Berkay 13 Eki): "Tüm Şehirler" + en çok 6 şehir çipi = konum şehri (ilk, "Konumun" işaretli) + listede en çok sanatçısı/grubu
+//   olan şehirler (eşitlikte toplam takipçi); seçili şehir listede yoksa çip olarak eklenir. Diğer 81 il "Şehir ara" kutusundan (Türkçe
+//   duyarsız). Konum: yalnız bu sayfada navigator.geolocation → en yakın il merkezi (shared/city-geo.js; dış servis yok, ret sessiz);
+//   ?sehir= yoksa oturumdaki ilk ziyarette konum şehri ön seçilir. Konum yoksa mekanın profil şehri öne alınır (legacy davranış).
+// Kart / satır / ad tıklaması (solo + grup) → tam profil #/sanatci/{id} (public/sanatci.js; grup kimliği de aynı rota). Geri: profilin
+//   geri düğmesi history.back() → filtreler URL'de korunduğu için aynı sonuçlara döner. (Eski hedef #/venue/performans/{id} yalnız
+//   geçmiş performans özetiydi; Takip Ettiklerim'den hâlâ açılır.)
 // URL: #/venue/sanatci?q=&tip=artist|group&tur=Jazz&sehir=İzmir&butce=8000&puan=4.5&sira=katilim&gorunum=liste (replaceState;
 //   update(query) geri/ileri ve üst bar araması için). Üst bar araması bu sayfada canlı süzer (filtre panelindeki aramayla eşli).
 // Okumalar: listArtists, listGroups, watchedArtists + yerel salt-okuma sorgular (tek alan eşitliği, yeni indeks YOK):
@@ -34,6 +41,7 @@ import { svgRaw } from "../shared/icons.js";
 import { cx, dkModal, dkDrawer, dkToast, dkSkeleton } from "../shared/ui.js";
 import { fold, trUpper, fmtInt, shortNumTR, writeQuery, swapAnim, isoDate, MONTHS_TR, MONTHS_TR_SHORT, DAYS_TR_SHORT, eventStartMs } from "../shared/helpers.js";
 import { genreFamily, GENRE_FAMILIES } from "../shared/genres.js";
+import { rankCities, cityCountMap, canonicalProvince, searchProvinces, locateProvince, cachedGeoProvince, takeGeoPreselect, skipGeoPreselect } from "../shared/city-geo.js";
 
 // ══════════════════════════════════════════════════════════════════════
 // Sabitler (artboard DCLogic + legacy)
@@ -92,7 +100,9 @@ function feeLabel(x) {
 }
 const initialOf = (name) => trUpper(String(name || "?").replace(/^DJ\s+/i, "").trim().charAt(0) || "?");
 const membersOf = (g) => (Array.isArray(g.memberIds) ? g.memberIds.length : 0);
-const perfHref = (x) => "#/venue/performans/" + encodeURIComponent(x.id);
+// Tam profil (solo + grup aynı rota; public/sanatci.js grubu groups/{id}'den çizer)
+const profHref = (x) => "#/sanatci/" + encodeURIComponent(x.id);
+const CITY_CHIPS = 6; // "Tüm Şehirler" dışındaki çip sayısı (konum şehri dahil)
 // app isoToTRDate ("2026-07-15" → "15 Temmuz 2026") + formatTL ("₺2.500") + residencies.formatDays (Pzt öncelikli, ", ")
 function isoToTRDate(iso) {
   const m = String(iso || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -195,6 +205,12 @@ export function venueSanatciBulView(ctx) {
   });
   const cityWrap = h("div", { class: "dk-mekan-sanatci-bul-chips" });
   let cityChips = [];
+  // Şehir arama (81 il, Türkçe duyarsız) — sonuçlar ortak şehir seçici listesi görünümünde (dk-ui .dk-cp-*), seçince çip olur
+  const cityListId = "dk-msb-cities-" + (++_mid);
+  const cityInp = h("input", { type: "text", role: "combobox", "aria-label": "Şehir ara", "aria-autocomplete": "list", "aria-expanded": "false", "aria-controls": cityListId,
+    placeholder: "Şehir ara (81 il)...", class: "dk-mekan-sanatci-bul-finp", autocomplete: "off", spellcheck: "false" });
+  const cityList = h("div", { role: "listbox", id: cityListId, "aria-label": "Şehir sonuçları", class: "dk-cp-list dk-mekan-sanatci-bul-citylist", hidden: true });
+  const citySearch = h("label", { class: "dk-mekan-sanatci-bul-fsearch is-city" }, ico("pin", 16, { color: "#8A8E97" }), cityInp);
   const ratingChips = RATINGS.map(([k, l]) => {
     const b = chipBtn(l, { star: true, pressed: st.puan === k, onClick: () => bump({ puan: k }) });
     b.dataset.k = String(k); return b;
@@ -215,7 +231,7 @@ export function venueSanatciBulView(ctx) {
     h("label", { class: "dk-mekan-sanatci-bul-fsearch" }, ico("search", 16, { color: "#8A8E97" }), fSearch),
     group("TİP", "Tip", typeChips),
     group("TÜR", "Tür", genreChips),
-    h("div", { role: "group", "aria-label": "Şehir", class: "dk-mekan-sanatci-bul-fgroup" }, h("span", { class: "dk-mekan-sanatci-bul-flabel" }, "ŞEHİR"), cityWrap),
+    h("div", { role: "group", "aria-label": "Şehir", class: "dk-mekan-sanatci-bul-fgroup" }, h("span", { class: "dk-mekan-sanatci-bul-flabel" }, "ŞEHİR"), citySearch, cityList, cityWrap),
     h("div", { class: "dk-mekan-sanatci-bul-fgroup" },
       h("div", { class: "dk-mekan-sanatci-bul-budgethead" }, h("span", { class: "dk-mekan-sanatci-bul-flabel" }, "BÜTÇE · MAKS. ÜCRET"), budgetVal),
       budget,
@@ -285,25 +301,90 @@ export function venueSanatciBulView(ctx) {
     sync(); draw();
   }
   function reset() {
+    if (st.sehir) skipGeoPreselect();
     st = { ...st, term: "", tip: "", tur: "Tümü", sehir: "", butce: BUDGET_MAX, puan: 0, sira: "puan" };
     fSearch.value = ""; if (shell.search?.input) shell.search.input.value = "";
     budget.value = String(BUDGET_MAX);
-    flip = !flip; sync(); draw(true);
+    flip = !flip; sync();
+    if (loaded) buildCities();
+    draw(true);
   }
   function focusResults() { try { results.focus({ preventScroll: false }); } catch (_) {} }
 
-  // ── şehir çipleri (sanatçı + grup şehirleri; mekanın şehri önce — legacy) ──
+  // ── şehir çipleri: Tüm Şehirler + [konum şehri | mekanın şehri] + en çok sanatçısı olan şehirler (toplam 6) + seçili şehir ──
+  let geoCity = cachedGeoProvince();   // konumdan en yakın il (oturum önbelleği; yoksa locate() doldurur)
   function buildCities() {
-    const seen = new Map();
-    [...artists, ...groups].forEach((x) => { const c = String(x.city || "").trim(); if (c && !seen.has(fold(c))) seen.set(fold(c), c); });
-    let list = [...seen.values()].sort((a, b) => a.localeCompare(b, "tr"));
-    if (myCity) list.sort((a, b) => (fold(a) === fold(myCity) ? -1 : fold(b) === fold(myCity) ? 1 : 0));
-    if (st.sehir && !seen.has(fold(st.sehir))) list.push(st.sehir); // paylaşılan link: veride olmayan şehir de seçili görünsün
+    const anchor = geoCity || canonicalProvince(myCity) || myCity || "";
+    const list = anchor ? [anchor] : [];
+    for (const r of rankCities([...artists, ...groups], { withService: true })) {
+      if (list.length >= CITY_CHIPS) break;
+      if (!list.some((c) => fold(c) === fold(r.name))) list.push(r.name);
+    }
+    // aramadan seçilen / paylaşılan linkteki şehir listede yoksa seçili çip olarak eklenir
+    if (st.sehir && !list.some((c) => fold(c) === fold(st.sehir))) list.push(canonicalProvince(st.sehir) || st.sehir);
+    const had = cityWrap.contains(document.activeElement) ? document.activeElement.dataset?.k : null;
     cityChips = [["", "Tüm Şehirler"], ...list.map((c) => [c, c])].map(([k, l]) => {
-      const b = chipBtn(l, { pressed: fold(st.sehir) === fold(k), onClick: () => bump({ sehir: k }) });
+      const isGeo = !!k && !!geoCity && fold(k) === fold(geoCity);
+      const b = isGeo
+        ? h("button", { type: "button", class: "dk-mekan-sanatci-bul-chip is-geo dk-press", "aria-pressed": "false", title: "Konumuna en yakın il", "aria-label": `${l} (konumun)`, onclick: () => setCity(k) },
+          ico("pin", 12, { color: "#4ED8FF", sw: "2" }), l, h("span", { class: "dk-mekan-sanatci-bul-chiploc", "aria-hidden": "true" }, "Konumun"))
+        : chipBtn(l, { onClick: () => setCity(k) });
+      setPressed(b, fold(st.sehir) === fold(k));
       b.dataset.k = k; return b;
     });
     cityWrap.replaceChildren(...cityChips);
+    if (had != null) { const nb = cityChips.find((b) => b.dataset.k === had); try { nb?.focus({ preventScroll: true }); } catch (_) {} }
+  }
+  function setCity(k) {
+    skipGeoPreselect();   // kullanıcı seçti → bu oturumda konum ön seçimi bir daha zorlanmaz
+    st = { ...st, sehir: k }; flip = !flip; sync();
+    if (loaded) buildCities();
+    draw(true);
+  }
+  // Şehir arama listesi (yazdıkça; Enter = ilk sonuç, ↓/↑ gezinme, Esc temizler)
+  function drawCityList() {
+    const q = cityInp.value.trim();
+    const names = searchProvinces(q, 8);
+    const show = !!q;
+    cityList.hidden = !show; cityInp.setAttribute("aria-expanded", show ? "true" : "false");
+    if (!show) { cityList.replaceChildren(); return; }
+    if (!names.length) { cityList.replaceChildren(h("span", { class: "dk-cp-empty" }, "Şehir bulunamadı")); return; }
+    const counts = cityCountMap([...artists, ...groups], { withService: true });   // sayı = o şehirde süzgecin göstereceği kayıt
+    cityList.replaceChildren(...names.map((c) => {
+      const on = fold(c) === fold(st.sehir), n = counts.get(fold(c)) || 0;
+      return h("button", { type: "button", role: "option", "aria-selected": on ? "true" : "false", class: cx("dk-cp-opt", on && "is-on"), onclick: () => pickCity(c) },
+        h("span", {}, c), h("span", { class: "dk-cp-n" }, loaded ? (n ? `${n} sanatçı` : "—") : ""));
+    }));
+  }
+  function pickCity(c) {
+    cityInp.value = ""; drawCityList();
+    setCity(c);
+    const nb = cityChips.find((b) => fold(b.dataset.k) === fold(c));
+    try { (nb || cityInp).focus({ preventScroll: true }); } catch (_) {}
+  }
+  cityInp.addEventListener("input", drawCityList);
+  cityInp.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); cityList.querySelector("button")?.click(); }
+    else if (e.key === "ArrowDown") { const b = cityList.querySelector("button"); if (b) { e.preventDefault(); b.focus(); } }
+    else if (e.key === "Escape" && cityInp.value) { e.preventDefault(); e.stopPropagation(); cityInp.value = ""; drawCityList(); }
+  });
+  cityList.addEventListener("keydown", (e) => {
+    const opts = [...cityList.querySelectorAll("button")]; const i = opts.indexOf(document.activeElement);
+    if (e.key === "ArrowDown" && i < opts.length - 1) { e.preventDefault(); opts[i + 1].focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); (i > 0 ? opts[i - 1] : cityInp).focus(); }
+    else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); cityInp.value = ""; drawCityList(); cityInp.focus(); }
+  });
+
+  // Konum (yalnız bu sayfa): en yakın il → ilk çip; ?sehir= yoksa oturumdaki ilk ziyarette ön seçili. İzin yok / hata → sessiz.
+  const urlHadCity = !!st.sehir;
+  if (urlHadCity) skipGeoPreselect();
+  async function locate() {
+    const c = await locateProvince().catch(() => null);
+    if (!alive || !c) return;
+    const changed = c !== geoCity;
+    geoCity = c;
+    if (!st.sehir && takeGeoPreselect()) { st = { ...st, sehir: c }; flip = !flip; sync(); if (loaded) { buildCities(); draw(true); } else paintControls(); return; }
+    if (changed && loaded) { buildCities(); draw(); }
   }
 
   // ── süzme + sıralama (tümü istemci tarafı) ──
@@ -390,13 +471,12 @@ export function venueSanatciBulView(ctx) {
         // artboard: "#" ve sıra ayrı esnek öğeler (gap 5 → "# 1")
         h("span", { "aria-hidden": "true" }, "#"), h("span", { "aria-hidden": "true" }, String(rank + 1))) : null,
       isG ? null : watchBtn(x, "card"));
-    const nameEl = isG
-      ? h("span", { class: "dk-mekan-sanatci-bul-name" }, h("span", { class: "dk-mekan-sanatci-bul-nm", title: titleOf(x) }, name), h("span", { class: "dk-mekan-sanatci-bul-grp" }, "Grup"))
-      : h("span", { class: "dk-mekan-sanatci-bul-name" }, h("a", { href: perfHref(x), class: "dk-mekan-sanatci-bul-nm", title: titleOf(x) }, name));
+    const nameEl = h("span", { class: "dk-mekan-sanatci-bul-name" }, h("a", { href: profHref(x), class: "dk-mekan-sanatci-bul-nm", title: titleOf(x) }, name),
+      isG ? h("span", { class: "dk-mekan-sanatci-bul-grp" }, "Grup") : null);
     const followers = x.followerCount != null || !isG ? h("span", { class: "dk-mekan-sanatci-bul-fol" }, shortNumTR(x.followerCount ?? 0) + " takipçi") : null;
     const att = attOf(x);
     // .dk-card YOK: dk-base'in `.dk-card:hover img { scale(1.05) }` kuralı artboard'da yok (.gb-card yalnız kaldırır + kenar)
-    const art = h("article", { class: cx("dk-mekan-sanatci-bul-card", !isG && "is-link") },
+    const art = h("article", { class: "dk-mekan-sanatci-bul-card is-link" },
       media,
       h("div", { class: "dk-mekan-sanatci-bul-body" },
         h("div", { class: "dk-mekan-sanatci-bul-idcol" }, nameEl,
@@ -410,22 +490,23 @@ export function venueSanatciBulView(ctx) {
           h("span", { class: "dk-mekan-sanatci-bul-fee" }, feeLabel(x))),
         // gruba uzun dönem anlaşma yok (app paritesi) → grupta tekrar düğmesi devre dışı (artboard yerleşimi korunur)
         h("div", { class: "dk-mekan-sanatci-bul-acts" }, longBtn(x, "card"), inviteBtn(x, "card"))));
-    if (!isG) art.addEventListener("click", (e) => { if (e.target.closest("button,a")) return; location.hash = perfHref(x); });
+    // kart (fotoğraf / ad / bilgi alanı) → tam profil; düğmeler (Davet et / uzun dönem / göz) ve bağlantılar kendi işini yapar
+    art.addEventListener("click", (e) => { if (e.target.closest("button,a")) return; location.hash = profHref(x); });
     return art;
   }
   function row(x) {
     const isG = !!x._group, name = nameOf(x), g = genreOf(x), fam = genreFamily(g), r = ratingOf(x), att = attOf(x);
-    const el = h("div", { role: "row", class: cx("dk-mekan-sanatci-bul-tr dk-mekan-sanatci-bul-row dk-row", !isG && "is-link") },
+    const el = h("div", { role: "row", class: "dk-mekan-sanatci-bul-tr dk-mekan-sanatci-bul-row dk-row is-link" },
       h("span", { role: "cell", class: "dk-mekan-sanatci-bul-who" }, mediaOf(x, "row"),
         h("span", { class: "dk-mekan-sanatci-bul-whocol" },
-          isG ? h("span", { class: "dk-mekan-sanatci-bul-rn", title: titleOf(x) }, name) : h("a", { href: perfHref(x), class: "dk-mekan-sanatci-bul-rn", title: titleOf(x) }, name),
+          h("a", { href: profHref(x), class: "dk-mekan-sanatci-bul-rn", title: titleOf(x) }, name),
           h("span", { class: "dk-mekan-sanatci-bul-rsub", style: { color: fam.color } }, (isG ? "Grup · " : "") + (g || "Müzik")))),
       h("span", { role: "cell", class: "dk-mekan-sanatci-bul-rcity c-city" }, x.city || "—"),
       h("span", { role: "cell", class: "dk-mekan-sanatci-bul-rrate" }, starIco(12, "#FF8A2A"), r ? r.toFixed(1) : "Yeni"),
       h("span", { role: "cell", class: "dk-mekan-sanatci-bul-ratt c-att" }, att ? fmtInt(att) : "—"),
       h("span", { role: "cell", class: cx("dk-mekan-sanatci-bul-rfee", !feeRange(x) && "is-none"), title: feeRange(x) ? null : feeLabel(x) }, feeLabel(x)),
       h("span", { role: "cell", class: "dk-mekan-sanatci-bul-racts c-act" }, isG ? null : watchBtn(x, "row"), longBtn(x, "row"), inviteBtn(x, "row")));
-    if (!isG) el.addEventListener("click", (e) => { if (e.target.closest("button,a")) return; location.hash = perfHref(x); });
+    el.addEventListener("click", (e) => { if (e.target.closest("button,a")) return; location.hash = profHref(x); });
     return el;
   }
 
@@ -455,7 +536,7 @@ export function venueSanatciBulView(ctx) {
     if (st.sehir) parts.push(st.sehir);
     if (st.butce < BUDGET_MAX) parts.push("≤ ₺" + NF.format(st.butce));
     if (st.puan) parts.push(st.puan + "+ puan");
-    noteEl.textContent = failed ? "" : parts.length ? "· " + parts.join(" · ") : myCity ? `· ${myName} şehri önce: ${myCity}` : "";
+    noteEl.textContent = failed ? "" : parts.length ? "· " + parts.join(" · ") : geoCity ? `· Konumun: ${geoCity}` : myCity ? `· ${myName} şehri önce: ${myCity}` : "";
     let body;
     if (failed) body = errEl;
     else if (!list.length) {
@@ -762,6 +843,7 @@ export function venueSanatciBulView(ctx) {
 
   paintControls();
   if (uid) load(); else { loaded = true; failed = true; draw(); }
+  locate();
 
   return {
     node: shell.node,

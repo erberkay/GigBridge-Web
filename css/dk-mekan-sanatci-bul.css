@@ -37,6 +37,12 @@
 .dk-mekan-sanatci-bul-chip { height: 32px; box-sizing: border-box; padding: 0 12px; border-radius: 16px; border: 1px solid #1F232B; background: transparent; color: #A3A7AF; display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; white-space: nowrap; }
 .dk-mekan-sanatci-bul-chip[aria-pressed="true"] { border-color: #FF8A2A; background: rgba(255,138,42,0.12); color: #FF8A2A; }
 .dk-mekan-sanatci-bul-chipdot { width: 6px; height: 6px; border-radius: 50%; display: block; }
+/* ŞEHİR: arama kutusu (40) + sonuç listesi (dk-ui .dk-cp-list/.dk-cp-opt) + konum çipi ("Konumun" etiketi, camgöbeği iğne) */
+.dk-mekan-sanatci-bul-fsearch.is-city { height: 40px; }
+.dk-mekan-sanatci-bul-citylist { max-height: 228px; margin-top: -4px; padding: 4px; border-radius: 8px; border: 1px solid #1F232B; background: #0A0B0F; }
+.dk-mekan-sanatci-bul-chiploc { font-family: var(--dk-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4ED8FF; opacity: .85; }
+.dk-mekan-sanatci-bul-chip.is-geo { border-color: rgba(78,216,255,0.35); }
+.dk-mekan-sanatci-bul-chip.is-geo[aria-pressed="true"] { border-color: #FF8A2A; }
 
 /* Bütçe */
 .dk-mekan-sanatci-bul-budgethead { display: flex; align-items: center; justify-content: space-between; }
@@ -68,7 +74,7 @@
 .dk-mekan-sanatci-bul-card { display: flex; flex-direction: column; border: 1px solid #1F232B; border-radius: 10px; overflow: hidden; background: #0E1014; min-width: 0;
   transition: transform 260ms var(--dk-ease), border-color 200ms ease; }  /* .gb-card */
 .dk-mekan-sanatci-bul-card:hover { transform: translateY(-4px); border-color: #2C303A; }
-.dk-mekan-sanatci-bul-card.is-link .dk-mekan-sanatci-bul-media { cursor: pointer; }
+.dk-mekan-sanatci-bul-card.is-link .dk-mekan-sanatci-bul-media, .dk-mekan-sanatci-bul-card.is-link .dk-mekan-sanatci-bul-idcol { cursor: pointer; }
 .dk-mekan-sanatci-bul-media { position: relative; height: 150px; overflow: hidden; background: #14171D; }
 .dk-mekan-sanatci-bul-img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; display: block; }
 .dk-mekan-sanatci-bul-ini { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 52px; font-weight: 600; letter-spacing: -0.04em; color: #F2F1EE; }
