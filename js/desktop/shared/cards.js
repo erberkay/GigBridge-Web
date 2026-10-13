@@ -16,6 +16,7 @@ import { svgIcon, svgRaw } from "./icons.js";
 import { cx, dkEventBadge, dkFollowButton, dkAvatar } from "./ui.js";
 import { eventStartMs, fmtTime, fmtDayLabel, isToday, isTomorrow, DAYS_TR_SHORT, MONTHS_TR_SHORT, trUpper, fmtPrice, isFree, fmtRating, shortNumTR, artistGenres, initials } from "./helpers.js";
 import { genreColor, genreSoft, genreGrad, genreLabel, primaryGenre } from "./genres.js";
+import { posterBackdrop } from "./poster.js";   // banner yoksa dikey afiş geri dönüşü (bulanık zemin + tam afiş)
 
 // ── ortak alan okuyucular ──
 export const evTitle = (e) => e?.title || "Etkinlik";
@@ -38,8 +39,13 @@ const evDay = (e) => { const s = eventStartMs(e); return s == null ? null : new 
 const PEOPLE = '<circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"></path>';
 
 // Görsel ya da yer tutucu (tür gradyanı + serif baş harf). pos: object-position
+// Banner yok ama dikey afiş varsa: bulanık afiş zemini + ortada TAM afiş (poster.posterBackdrop — kırpma/zoom yok)
 function media(e, { cls, pos, initialSize = 96, alt } = {}) {
   const src = evImage(e);
+  if (!src) {
+    const pb = posterBackdrop(e, { cls: cx("dk-ec-img", cls), alt: alt ?? evTitle(e), onError: () => pb.replaceWith(placeholder(e, { cls, initialSize })) });
+    if (pb) return pb;
+  }
   if (src) {
     const img = h("img", { src, alt: alt ?? evTitle(e), loading: "lazy", decoding: "async", class: cx("dk-ec-img", cls), style: pos ? { objectPosition: pos } : null });
     img.addEventListener("error", () => img.replaceWith(placeholder(e, { cls, initialSize })), { once: true });

@@ -40,7 +40,7 @@ import {
   fmtPrice, isFree, initials, haversineKm, latLngOf, fmtKm, debounce, swapAnim, writeQuery, hashBase, clamp,
 } from "../shared/helpers.js";
 import { appStoreHref, playStoreHref } from "../shared/assets.js";
-import { posterRow, pickWeekPosters } from "../shared/poster.js";
+import { posterRow, pickWeekPosters, posterBackdrop } from "../shared/poster.js";
 
 // ── Artboard SVG gövdeleri (birebir; kayıtta farklı sürümü olanlar) ──
 const P = {
@@ -371,7 +371,8 @@ export function kesfetView(ctx) {
     const g = primaryGenre(e);
     const ph = () => h("span", { class: "dk-kesfet-hs-img dk-kesfet-hs-ph", style: { background: genreGrad(g, 150) }, "aria-hidden": "true" }, initials(evTitle(e)));
     const src = evImage(e);
-    if (!src) return ph();
+    // banner yoksa dikey afiş: bulanık zemin + ortada tam afiş (Ken Burns / cover zoom YOK)
+    if (!src) { const pb = posterBackdrop(e, { cls: "dk-kesfet-hs-img", full: true, onError: () => pb.replaceWith(ph()) }); return pb || ph(); }
     const img = h("img", { src, alt: "", decoding: "async", class: "dk-kesfet-hs-img dk-kb" });
     img.addEventListener("error", () => img.replaceWith(ph()), { once: true });
     return img;

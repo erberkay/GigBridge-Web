@@ -283,6 +283,9 @@ function mkDist(ev) {
 // Etkinlik görseli; bannerUrl yoksa tür rengiyle koyu gradyan (sahte görsel YOK)
 function mkImg(ev, cls, alt, eager) {
   if (ev.bannerUrl) return h("img", { class: cls, src: ev.bannerUrl, alt: alt ?? "", loading: eager ? null : "lazy", decoding: "async" });
+  // banner yoksa dikey afiş: bulanık zemin + ortada tam afiş (Ken Burns / cover zoom YOK) — PST Keşfet modülleriyle yüklenir
+  const pb = PST?.posterBackdrop(ev, { cls: cls.replace(/\s*mk-kb\b/, ""), alt: alt ?? "" });
+  if (pb) return pb;
   const c = famColor((Array.isArray(ev.genre) ? ev.genre[0] : ev.genre) || "");
   return h("span", { class: cls + " mk-noimg", style: { background: `linear-gradient(150deg, ${H.rgba(c, 0.3)}, #0E1014 78%)` } });
 }
@@ -920,7 +923,7 @@ async function renderKesfet(ui) {
     const weekAll = cityEvents.filter((e) => { const ms = msOf(e); return ms != null && ms <= Date.now() + 7 * 86400e3; }).sort((a, b) => (msOf(a) ?? 0) - (msOf(b) ?? 0));
     const week = PST.pickWeekPosters(weekAll, featured);
     if (week.length) wrap.append(mkSection({ title: "Bu Hafta", sub: activeCity !== "TÜMÜ" ? activeCity : null, right: toEvents("week") },
-      PST.posterRow(week, { hrefOf: mkHref, cls: "is-m", label: "Bu haftanın etkinlik afişleri", onSeeAll: () => { dateKey = "week"; setCategory("ETKİNLİKLER"); } }).node));
+      PST.posterRow(week, { hrefOf: mkHref, cls: "is-m", dots: true, label: "Bu haftanın etkinlik afişleri", onSeeAll: () => { dateKey = "week"; setCategory("ETKİNLİKLER"); } }).node));
     // Popüler Sanatçılar + tasarımın altın TOP 10 çipi. Uygulamada dinleyici Top 10'a (DinleyiciTop10) gider; mobil webde o rota
     // yok (app.js ≤768: #/top10 → #/kesfet) → spec'in geçici yedeği: bu sayfadaki "GigBridge Top 10" bölümüne kaydırıp başlığa
     // odaklanır (farklı sıralama: katılımcı sayısı). Top 10 bölümü yoksa (şehirde etkinlik yok) çip gizli.
@@ -1153,9 +1156,7 @@ async function eventDetail(id, root) {
   const metaRow = (ic, text, dim) => h("div", { class: "ed-meta" },
     h("span", { class: "ed-meta-ic" }, icon(ic, { size: 14, color: "#fff" })),
     h("span", { class: "ed-meta-tx" + (dim ? " dim" : "") }, text));
-  // banner yoksa dikey afiş hero zemini olur (uygulama EventDetail: banner ?? poster)
-  const heroBg = ev.bannerUrl || (typeof ev.posterUrl === "string" && ev.posterUrl) || null;
-  const hero = h("div", { class: "ed-hero", style: heroBg ? { backgroundImage: `url(${heroBg})` } : null },
+  const hero = h("div", { class: "ed-hero", style: ev.bannerUrl ? { backgroundImage: `url(${ev.bannerUrl})` } : null },
     h("div", { class: "ed-tint" }), h("div", { class: "ed-scrim" }),
     h("div", { class: "ed-hero-top" },
       h("button", { class: "ed-iconbtn", "aria-label": "Geri", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "rgba(255,255,255,0.8)" })),
@@ -1172,6 +1173,11 @@ async function eventDetail(id, root) {
         metaRow("time", eventWhen(ev)))));
   // "Afişi gör" (posterUrl varsa) → tam ekran görüntüleyici (uygulama PosterViewer); modül yalnız afişli etkinlikte yüklenir
   if (ev.posterUrl) import("../desktop/shared/poster.js").then(async (m) => {
+    // başlık YATAY kapak gösterir; kapak yoksa dikey afiş: bulanık zemin + ortada tam afiş (cover zoom YOK)
+    if (!ev.bannerUrl) {
+      const pb = m.posterBackdrop(ev, { full: true });
+      if (pb) { pb.style.position = "absolute"; pb.style.inset = "0"; hero.prepend(pb); }
+    }
     await m.ensurePosterCss();
     const b = m.posterSeeButton(ev);
     if (b) hero.querySelector(".ed-hero-body")?.append(h("div", { style: { marginTop: "16px" } }, b));

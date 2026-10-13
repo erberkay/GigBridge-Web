@@ -95,3 +95,14 @@ a.gb-pst-card:hover .gb-pst-img { transform: scale(1.03); }
 /* mobil (legacy form-card) */
 .gb-pst-field.is-m { margin: 4px 0 14px; }
 .gb-pst-field.is-m .gb-pst-fhelp { font-size: 12px; }
+
+/* iki görsel ipucu ("En iyi görünüm için iki ayrı tasarım yükle…") */
+.gb-pst-fhint { display: flex; align-items: flex-start; gap: 7px; margin-top: 4px; font-size: 12px; line-height: 1.45; color: #4ED8FF; }
+.gb-pst-fhint svg { flex-shrink: 0; margin-top: 1px; }
+/* mobil sayfa noktaları (uygulama PosterSwipeRow: 6 px, etkin 18 px pembe) */
+.gb-pst-wrap { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.gb-pst-dots { display: flex; justify-content: center; align-items: center; gap: 6px; }
+.gb-pst-dots[hidden] { display: none; }
+.gb-pst-dot { width: 6px; height: 6px; border-radius: 3px; background: #3A3846; transition: width 200ms ease, background-color 200ms ease; }
+.gb-pst-dot.is-on { width: 18px; background: #FF4FA3; }
+@media (prefers-reduced-motion: reduce) { .gb-pst-dot { transition: none; } }

@@ -49,6 +49,33 @@ export async function deletePosterFiles(urls, selfUid) {
   await Promise.all(list.map((u) => deleteObject(ref(storage, u)).catch(() => {})));
 }
 
+// ── Form metinleri (Berkay 13 Eki: iki ayrı tasarım — yatay kapak "Bu Gece"/etkinlik sayfası, dikey afiş "Bu Hafta") ──
+export const COVER_LABEL = "YATAY KAPAK (16:9)";
+export const COVER_SUB = "Bu Gece ve etkinlik sayfasında görünür.";
+export const POSTER_LABEL = "DİKEY AFİŞ (9:16, INSTAGRAM)";
+export const POSTER_SUB = "Bu Hafta'da görünür. Kırpılmaz — Instagram için hazırladığın afişi olduğu gibi yükle.";
+export const DUAL_HINT = "En iyi görünüm için iki ayrı tasarım yükle; yalnız birini yüklersen diğer yerde otomatik uyarlanır.";
+
+/** YATAY YUVA GERİ DÖNÜŞÜ (hero / karusel / etkinlik başlığı / etkinlik kartı): bannerUrl YOK ama dikey afiş VARSA afiş cover ile
+ *  zoomlanmaz — bulanık + karartılmış afiş zemini, ortada TAM afiş (contain). Afiş yoksa null (çağıran kendi yer tutucusunu çizer).
+ *  Grid yığını + satır içi stiller: CSS dosyası beklemez; konum/boyut çağıranın sınıfından (cls) gelir (ör. "dk-ec-img").
+ *  full: tam boy afiş (detay başlığı / büyük hero) · aksi hâlde küçük kopya. onError: ön plan görseli yüklenemezse. */
+export function posterBackdrop(e, { cls = "", full = false, alt = "", onError } = {}) {
+  const big = okPosterUrl(e?.posterUrl), small = big ? okPosterUrl(e?.posterThumbUrl) : null;
+  const fg = full ? big : (small || big);
+  if (!fg) return null;
+  const st = (o) => ({ gridArea: "1 / 1", position: "relative", top: "auto", left: "auto", width: "100%", height: "100%", minWidth: "0", minHeight: "0", display: "block", ...o });
+  const bg = h("img", { src: small || fg, alt: "", decoding: "async", loading: "lazy", "aria-hidden": "true",
+    style: st({ objectFit: "cover", filter: "blur(22px) saturate(1.1)", transform: "scale(1.25)" }) });
+  const dim = h("span", { "aria-hidden": "true", style: st({ background: "rgba(6,7,10,0.5)" }) });
+  const img = h("img", { src: fg, alt, decoding: "async", style: st({ objectFit: "contain", transform: "none", animation: "none" }) });
+  if (onError) img.addEventListener("error", onError, { once: true });
+  return h("span", { class: ["gb-pst-fb", cls].filter(Boolean).join(" "), "aria-hidden": alt ? null : "true",
+    style: { display: "grid", overflow: "hidden", background: "#06070A", animation: "none" } }, bg, dim, img);
+}
+/** Yatay yuvada gösterilecek görsel: bannerUrl (aynen) — yoksa yukarıdaki afiş geri dönüşü çağrılmalı */
+export const hasBanner = (e) => !!(e && !e.bannerCleaned && str(e.bannerUrl));
+
 /** Afiş alanları var mı (posterUrl zorunlu; thumb isteğe bağlı) */
 export const hasPoster = (e) => !!str(e?.posterUrl);
 const isToday = (ms, now = Date.now()) => { const a = new Date(ms), b = new Date(now); return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); };
@@ -113,7 +140,7 @@ export function posterCard(e, { href } = {}) {
 
 /** Yatay kaydırmalı afiş satırı (scroll-snap; sonraki kartın kenarı görünür). Gerçek etkinlik 3'ten azsa uygulamadaki gibi yer tutucu
  *  kartlar eklenir (YAKINDA + TÜM ETKİNLİKLER). Dönüş: { node, track, page(dir), onState(cb) } — masaüstü ok düğmeleri page()/onState kullanır. */
-export function posterRow(events, { hrefOf = (e) => "#/etkinlik/" + encodeURIComponent(e.id), seeAllHref = null, onSeeAll = null, label = "Bu haftanın afişleri", cls = "" } = {}) {
+export function posterRow(events, { hrefOf = (e) => "#/etkinlik/" + encodeURIComponent(e.id), seeAllHref = null, onSeeAll = null, label = "Bu haftanın afişleri", cls = "", dots = false } = {}) {
   ensurePosterCss();
   const items = events.map((e) => posterCard(e, { href: hrefOf(e) }));
   if (items.length < 3) {
@@ -127,16 +154,36 @@ export function posterRow(events, { hrefOf = (e) => "#/etkinlik/" + encodeURICom
   }
   const track = h("ul", { class: ["gb-pst-track", cls].filter(Boolean).join(" "), "aria-label": label }, ...items.map((el) => h("li", { class: "gb-pst-li" }, el)));
   const subs = [];
+  // Sayfa noktaları (uygulama PosterSwipeRow): sayfa = gerçekte ulaşılabilen yapışma konumu (son kartlar ekrana birlikte sığar →
+  // son konum kırpılır); etkin nokta uzun + pembe. Yalnız mobil (dots: true); tek sayfada gizli.
+  const dotsEl = dots ? h("div", { class: "gb-pst-dots", role: "img" }) : null;
+  let dotN = -1, dotI = -1;
+  const paintDots = () => {
+    if (!dotsEl) return;
+    const li = track.querySelector(".gb-pst-li");
+    const gap = parseFloat(getComputedStyle(track).columnGap) || 12;
+    const step = li ? li.getBoundingClientRect().width + gap : 0;
+    const maxX = Math.max(0, track.scrollWidth - track.clientWidth);
+    const offs = [];
+    if (step > 0) for (let i = 0; i < track.children.length; i++) { const x = Math.min(i * step, maxX); if (!offs.length || x - offs[offs.length - 1] > 1) offs.push(x); }
+    let best = 0;
+    offs.forEach((x, i) => { if (Math.abs(x - track.scrollLeft) < Math.abs(offs[best] - track.scrollLeft)) best = i; });
+    if (offs.length !== dotN) { dotN = offs.length; dotsEl.replaceChildren(...offs.map(() => h("span", { class: "gb-pst-dot" }))); dotI = -1; }
+    dotsEl.hidden = offs.length < 2;
+    if (best !== dotI) { dotI = best; [...dotsEl.children].forEach((d, i) => d.classList.toggle("is-on", i === best)); dotsEl.setAttribute("aria-label", `Sayfa ${best + 1} / ${offs.length}`); }
+  };
   const state = () => {
     const max = track.scrollWidth - track.clientWidth;
     subs.forEach((f) => f(track.scrollLeft <= 2, track.scrollLeft >= max - 2));
+    paintDots();
   };
   let raf = 0;
   track.addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; state(); }); }, { passive: true });
   if (typeof ResizeObserver === "function") new ResizeObserver(state).observe(track);
   const reduce = () => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (_) { return false; } };
+  if (dotsEl) requestAnimationFrame(state);
   return {
-    node: track, track,
+    node: dotsEl ? h("div", { class: "gb-pst-wrap" }, track, dotsEl) : track, track,
     page(dir) {
       const card = track.querySelector(".gb-pst-li");
       const step = card ? card.getBoundingClientRect().width + 16 : 240;
@@ -261,7 +308,7 @@ export async function uploadPoster({ full, thumb }, ownerUid) {
  *    afterSave(selfUid) → yazım BAŞARILI: değiştirilen/kaldırılan ESKİ dosyalar silinir (yalnız kendi klasöründeyse — uygulama
  *    preparePosterPatch.stale), afterFail() → yazım BAŞARISIZ: yeni yüklenen dosyalar silinir (öksüz kalmasın), setDisabled(b) }
  *  opts: { url, thumb } mevcut afiş · variant "dk" (masaüstü) | "m" (mobil) · onChange() (form "kirli" bayrağı için) */
-export function posterField({ url = "", thumb = "", variant = "dk", onChange, label = "DİKEY AFİŞ (INSTAGRAM)" } = {}) {
+export function posterField({ url = "", thumb = "", variant = "dk", onChange, label = POSTER_LABEL, hint = true } = {}) {
   ensurePosterCss();
   const orig = str(url);
   const origThumb = str(thumb);
@@ -274,7 +321,8 @@ export function posterField({ url = "", thumb = "", variant = "dk", onChange, la
   const pickBtn = h("button", { type: "button", class: "gb-pst-fbtn" }, svg(I.upload, 15, "1.9"), pickLbl);
   const delBtn = h("button", { type: "button", class: "gb-pst-fbtn is-del" }, svg(I.trash, 15, "1.9"), h("span", {}, "Kaldır"));
   const err = h("span", { class: "gb-pst-ferr", role: "alert" });
-  const help = h("span", { class: "gb-pst-fhelp" }, "İsteğe bağlı · Instagram için hazırladığın dikey afiş (≈9:16). Kırpılmaz; Keşfet “Bu Hafta”da ve etkinlik sayfasında “Afişi gör” ile görünür.");
+  const help = h("span", { class: "gb-pst-fhelp" }, POSTER_SUB);
+  const hintEl = hint ? h("span", { class: "gb-pst-fhint" }, svg('<circle cx="12" cy="12" r="8.5"></circle><path d="M12 11v5M12 8v.01"></path>', 14, "1.9"), h("span", {}, DUAL_HINT)) : null;
   const paint = () => {
     const src = st.kind === "new" ? st.preview : st.kind === "existing" ? st.thumb : "";
     prev.replaceChildren(src ? h("img", { src, alt: "" }) : svg(I.poster, 22, "1.6"));
@@ -310,10 +358,10 @@ export function posterField({ url = "", thumb = "", variant = "dk", onChange, la
   const node = h("div", { class: ["gb-pst-field", variant === "m" ? "is-m" : "is-dk"].join(" ") },
     prev,
     h("div", { class: "gb-pst-fcol" },
-      h("span", { class: "gb-pst-flbl" }, label, h("span", { class: "gb-pst-fopt" }, " · OPSİYONEL")),
+      h("span", { class: "gb-pst-flbl" }, label, h("span", { class: "gb-pst-fopt" }, " · İSTEĞE BAĞLI")),
       help,
       h("div", { class: "gb-pst-fbtns" }, pickBtn, delBtn),
-      err),
+      err, hintEl),
     fileIn);
   paint();
   return {
