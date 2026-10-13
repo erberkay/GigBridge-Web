@@ -1,0 +1,97 @@
+/* DİKEY AFİŞ — js/desktop/shared/poster.js (Keşfet "Bu Hafta" afiş satırı, tam ekran görüntüleyici, oluştur/düzenle yükleyicisi).
+   Masaüstü (≥769) + legacy mobil (≤768) ORTAK; tüm seçiciler .gb-pst-* (başka bölümleri etkilemez). Ölçüler uygulama PosterSwipeRow /
+   PosterViewer ile aynı dil: kart r8 #1F232B kenar, alt gradyan, mono tarih çipi (pembe kenar), 16/600 başlık, 12 alt satır. */
+.gb-pst-track {
+  --gb-pst-w: 220px; --gb-pst-gap: 16px;
+  list-style: none; margin: -4px 0; padding: 4px 2px; display: flex; gap: var(--gb-pst-gap);
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: 2px;
+  scrollbar-width: none;
+}
+.gb-pst-track::-webkit-scrollbar { display: none; }
+.gb-pst-track.is-m { --gb-pst-w: clamp(160px, 42.3vw, 180px); --gb-pst-gap: 12px; padding: 4px 20px; scroll-padding-inline: 20px; }
+.gb-pst-li { flex-shrink: 0; width: var(--gb-pst-w); scroll-snap-align: start; display: flex; }
+
+.gb-pst-card {
+  position: relative; box-sizing: border-box; width: 100%; aspect-ratio: 9 / 16; overflow: hidden; display: block;
+  border-radius: 8px; border: 1px solid #1F232B; background: #0E1014; color: #F2F1EE; text-decoration: none;
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+a.gb-pst-card:hover, button.gb-pst-card:hover { border-color: #2C303A; }
+a.gb-pst-card:hover .gb-pst-img { transform: scale(1.03); }
+.gb-pst-card:focus-visible { outline: 2px solid #4ED8FF; outline-offset: 2px; }
+.gb-pst-media { position: absolute; inset: 0; overflow: hidden; }
+.gb-pst-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 400ms ease; }
+.gb-pst-blur { position: absolute; inset: -12%; width: 124%; height: 124%; object-fit: cover; filter: blur(18px) saturate(1.1); }
+.gb-pst-dim { position: absolute; inset: 0; background: rgba(6,7,10,0.45); }
+/* geri dönüş: kırpılmamış 16:9 banner, kartın üst ~%30'unda ortalı (uygulama bannerMid) */
+.gb-pst-mid { position: absolute; left: 0; right: 0; top: 30%; width: 100%; aspect-ratio: 16 / 9; height: auto; object-fit: contain; transform: translateY(-50%); }
+.gb-pst-grad { position: absolute; inset: 0; background: linear-gradient(135deg, #1C2029, #0E1014); }
+.gb-pst-shade { position: absolute; left: 0; right: 0; bottom: 0; height: 52%; pointer-events: none;
+  background: linear-gradient(180deg, rgba(6,7,10,0) 0%, rgba(6,7,10,0.72) 50%, rgba(6,7,10,0.97) 100%); }
+.gb-pst-meta { position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.gb-pst-chip { align-self: flex-start; height: 20px; box-sizing: border-box; padding: 0 7px; border-radius: 4px; display: inline-flex; align-items: center;
+  background: rgba(6,7,10,0.72); border: 1px solid rgba(255,79,163,0.55);
+  font-family: var(--dk-font-mono, "JetBrains Mono", ui-monospace, monospace); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; color: #F2F1EE; white-space: nowrap; }
+.gb-pst-chip.is-ghost { border-color: #2C303A; }
+.gb-pst-title { font-size: 16px; line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; color: #F2F1EE;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.gb-pst-sub { font-size: 12px; line-height: 1.3; color: #C9CACD; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gb-pst-sub.is-wrap { white-space: normal; }
+
+/* yer tutucular (gerçek etkinlik < 3) */
+.gb-pst-card.is-filler { background: linear-gradient(135deg, rgba(78,216,255,0.10), rgba(255,79,163,0.10) 55%, rgba(255,138,42,0.06)), #0E1014; }
+.gb-pst-fill-ic { position: absolute; top: 14px; left: 12px; width: 38px; height: 38px; box-sizing: border-box; border-radius: 6px;
+  border: 1px solid rgba(255,79,163,0.28); background: rgba(255,79,163,0.08); color: #FF4FA3; display: flex; align-items: center; justify-content: center; }
+.gb-pst-card.is-all { border-style: dashed; border-color: #2C303A; background: #0B0C10; cursor: pointer; padding: 0 12px; font: inherit;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.gb-pst-all-c { width: 44px; height: 44px; box-sizing: border-box; border-radius: 50%; border: 1px solid rgba(255,79,163,0.55); background: rgba(255,79,163,0.10);
+  display: flex; align-items: center; justify-content: center; color: #F2F1EE; }
+.gb-pst-all-t { font-family: var(--dk-font-mono, "JetBrains Mono", ui-monospace, monospace); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #FF4FA3; }
+.gb-pst-all-s { font-size: 12px; color: #8A8E97; text-align: center; }
+
+/* "Afişi gör" düğmesi (etkinlik detayı hero'su) */
+.gb-pst-see { height: 36px; box-sizing: border-box; padding: 0 14px; border-radius: 18px; border: 1px solid rgba(242,241,238,0.22); background: rgba(6,7,10,0.6);
+  color: #F2F1EE; display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.gb-pst-see:hover { border-color: rgba(255,79,163,0.6); }
+.gb-pst-see:focus-visible { outline: 2px solid #4ED8FF; outline-offset: 2px; }
+.gb-pst-see svg { color: #FF4FA3; }
+.gb-pst-see.is-lg { height: 44px; border-radius: 22px; padding: 0 18px; font-size: 14px; }   /* masaüstü etkinlik hero'su (44'lük yuvarlak düğmelerle aynı hiza) */
+
+/* tam ekran görüntüleyici */
+.gb-pst-viewer { position: fixed; inset: 0; z-index: 4000; background: #06070A; display: flex; flex-direction: column; padding: max(8px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom)); box-sizing: border-box; animation: gbPstIn 180ms ease; }
+@keyframes gbPstIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .gb-pst-viewer { animation: none; } .gb-pst-img, .gb-pst-card { transition: none; } }
+.gb-pst-vbar { flex-shrink: 0; height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.gb-pst-vkick { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--dk-font-mono, "JetBrains Mono", ui-monospace, monospace);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #8A8E97; }
+.gb-pst-vclose { flex-shrink: 0; width: 42px; height: 42px; box-sizing: border-box; padding: 0; border-radius: 6px; border: 1px solid rgba(242,241,238,0.14);
+  background: rgba(6,7,10,0.62); color: #F2F1EE; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.gb-pst-vclose:focus-visible { outline: 2px solid #4ED8FF; outline-offset: 2px; }
+.gb-pst-vbox { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; padding-bottom: 16px; }
+.gb-pst-vimg { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
+
+/* yükleyici alanı (oluştur / düzenle) */
+.gb-pst-sr { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.gb-pst-field { display: flex; align-items: flex-start; gap: 14px; }
+.gb-pst-fprev { flex-shrink: 0; width: 72px; aspect-ratio: 9 / 16; box-sizing: border-box; border-radius: 6px; overflow: hidden; border: 1px solid #1F232B; background: #0A0B0F;
+  display: flex; align-items: center; justify-content: center; color: #5E636D; }
+.gb-pst-fprev.is-empty { border-style: dashed; border-color: #2C303A; }
+.gb-pst-fprev img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gb-pst-fcol { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.gb-pst-flbl { font-family: var(--dk-font-mono, "JetBrains Mono", ui-monospace, monospace); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #A3A7AF; }
+.gb-pst-fopt { color: #5E636D; }
+.gb-pst-fhelp { font-size: 12.5px; line-height: 1.45; color: #8A8E97; }
+.gb-pst-fbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.gb-pst-fbtn { height: 36px; box-sizing: border-box; padding: 0 14px; border-radius: 6px; border: 1px solid #2C303A; background: transparent; color: #F2F1EE;
+  display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.gb-pst-fbtn:hover:not(:disabled) { border-color: #FF4FA3; }
+.gb-pst-fbtn:disabled { opacity: .5; cursor: default; }
+.gb-pst-fbtn.is-del { color: #FF8A9A; }
+.gb-pst-fbtn[hidden] { display: none; }
+.gb-pst-fbtn:focus-visible { outline: 2px solid #4ED8FF; outline-offset: 2px; }
+.gb-pst-ferr { font-size: 12.5px; color: #FFB347; }
+.gb-pst-ferr:empty { display: none; }
+.gb-pst-field.is-busy .gb-pst-fprev { opacity: .6; }
+/* mobil (legacy form-card) */
+.gb-pst-field.is-m { margin: 4px 0 14px; }
+.gb-pst-field.is-m .gb-pst-fhelp { font-size: 12px; }

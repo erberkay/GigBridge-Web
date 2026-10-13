@@ -37,6 +37,7 @@ import {
 } from "../../data.js";
 import { db, doc, getDoc, getDocs, collection, query, orderBy, limit } from "../../firebase.js";
 import { publicShell, headerVariant } from "../shared/public-shell.js";
+import { posterSeeButton } from "../shared/poster.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import { cx, dkBreadcrumb, dkGenreTag, dkKpi, dkSectionHead, dkEmpty, dkSkeleton, dkModal, dkToast, dkLoginGate, dkStars } from "../shared/ui.js";
 import { eventCard } from "../shared/cards.js";
@@ -241,8 +242,10 @@ export function etkinlikView(ctx) {
     // ── Hero ──
     const heroFav = h("button", { type: "button", class: "dk-etkinlik-hbtn dk-press dk-press-o" });
     const heroShare = h("button", { type: "button", class: "dk-etkinlik-hbtn dk-press dk-press-o", "aria-label": "Paylaş" }, ic("share", 18, "1.9"));
-    const media = ev.bannerUrl && !ev.bannerCleaned
-      ? h("img", { class: "dk-etkinlik-hero-img dk-kb", src: ev.bannerUrl, alt: `${title}, ${venueName} sahnesi`, decoding: "async" })
+    // banner yoksa dikey afiş hero'yu kaplar (uygulama EventDetail: banner ?? poster)
+    const heroSrc = ev.bannerUrl && !ev.bannerCleaned ? ev.bannerUrl : (typeof ev.posterUrl === "string" && ev.posterUrl) || null;
+    const media = heroSrc
+      ? h("img", { class: "dk-etkinlik-hero-img dk-kb", src: heroSrc, alt: `${title}, ${venueName} sahnesi`, decoding: "async" })
       : null;
     const fam = genreFamily(g);
     const ph = () => h("span", { class: "dk-etkinlik-hero-ph", style: { background: `linear-gradient(135deg, ${fam.color}55, ${fam.dark}22), #0E1014` }, "aria-hidden": "true" });
@@ -267,7 +270,8 @@ export function etkinlikView(ctx) {
     const hero = h("section", { class: "dk-etkinlik-hero dk-rise", "aria-labelledby": "dk-etk-h1" },
       media || ph(),
       h("span", { class: "dk-etkinlik-hero-scrim", "aria-hidden": "true" }),
-      h("div", { class: "dk-etkinlik-hero-acts" }, canAct || st.variant === "guest" ? heroFav : null, heroShare),
+      // "Afişi gör" (posterUrl varsa) → tam ekran görüntüleyici (ESC / kapat) — uygulama PosterViewer
+      h("div", { class: "dk-etkinlik-hero-acts" }, posterSeeButton(ev, { cls: "is-lg" }), canAct || st.variant === "guest" ? heroFav : null, heroShare),
       h("div", { class: "dk-etkinlik-hero-body" }, chips, h1, meta));
 
     // ── KPI ──

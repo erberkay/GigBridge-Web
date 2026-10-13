@@ -19,6 +19,9 @@
 // Veri: discoverEvents(), listRealArtists(), listVenues(), listDirectoryGroups() (gruplar sanatçı listesinde "GRUP" etiketiyle) + girişliyse
 //   followingList(uid). Şehir: etkinlik city; sanatçı city | serviceCities; grup/mekan city (data.servesCity). Arama: ad (Türkçe katlamalı).
 // Yazma: yalnız takip (legacy ile aynı followArtist/unfollowArtist → following + followers + new_follower bildirimi).
+// BU HAFTA (uygulama feat/dikey-afis PosterSwipeRow paritesi): dikey 9:16 afiş kartları yatay kaydırmalı satır (scroll-snap + ok
+//   düğmeleri; shared/poster.js). posterUrl yoksa kartta bulanık banner zemini + kırpılmamış 16:9 banner. Öne çıkan (hero) karuselde
+//   zaten görünen BU GECEKİ etkinlikler satırdan çıkar — satırda 2'den az kalacaksa çıkarılmaz. En çok 10 kart (uygulama ile aynı).
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
 import { discoverEvents, listRealArtists, listVenues, listDirectoryGroups, servesCity, followingList, followArtist, unfollowArtist } from "../../data.js";
@@ -37,6 +40,7 @@ import {
   fmtPrice, isFree, initials, haversineKm, latLngOf, fmtKm, debounce, swapAnim, writeQuery, hashBase, clamp,
 } from "../shared/helpers.js";
 import { appStoreHref, playStoreHref } from "../shared/assets.js";
+import { posterRow, pickWeekPosters } from "../shared/poster.js";
 
 // ── Artboard SVG gövdeleri (birebir; kayıtta farklı sürümü olanlar) ──
 const P = {
@@ -88,6 +92,8 @@ const byFollowers = (a, b) => (Number(b.followerCount) || 0) - (Number(a.followe
 const byRating = (a, b) => (Number(b.avgRating) || 0) - (Number(a.avgRating) || 0) || sortTR(a.displayName, b.displayName);
 const msOf = (e) => eventStartMs(e);
 const byDate = (a, b) => (msOf(a) ?? 0) - (msOf(b) ?? 0);
+// Öne çıkan (hero karuseli): VIP önce, sonra tarih; ilk 5 — Bu Hafta afiş satırı da aynı listeyi kullanır (tekrar süzgeci)
+const featuredOf = (evs) => [...evs].sort((a, b) => ((b.vipStatus === "approved") - (a.vipStatus === "approved")) || byDate(a, b)).slice(0, 5);
 
 export function kesfetView(ctx) {
   const unsubs = [];
@@ -383,7 +389,7 @@ export function kesfetView(ctx) {
     if (data.error) { heroCard.replaceChildren(h("div", { class: "dk-kesfet-hc-empty", "aria-hidden": "true" }, svgRaw(P.compass, { size: 40, sw: "1.4" }))); return; }
     const { cityEvents } = derive();
     // VIP önce, sonra tarih; ilk 5
-    const list = [...cityEvents].sort((a, b) => ((b.vipStatus === "approved") - (a.vipStatus === "approved")) || byDate(a, b)).slice(0, 5);
+    const list = featuredOf(cityEvents);
     if (!list.length) { heroCard.replaceChildren(heroEmpty(emptyTitleFor(city), EMPTY_SUB)); return; }
     heroN = list.length; heroIdx = 0;
     const slides = list.map((e) => {
@@ -612,11 +618,17 @@ export function kesfetView(ctx) {
     const news = ev.filter((e) => e.isNew === true).slice(0, 4);
     if (news.length) wrap.append(section("dk-kesfet-h-new", sh("dk-kesfet-h-new", "03 · YENİ EKLENENLER", "GigBridge'de ", "En Yeniler!", tumuLink("#/etkinlikler")),
       h("div", { class: "dk-grid dk-grid-ev dk-kesfet-lim4" }, ...news.map(overlay))));
-    // 04 · Bu Hafta (başlangıç ≤ şimdi + 7 gün; tarihe göre; ilk 4)
+    // 04 · Bu Hafta — dikey afiş satırı (başlangıç ≤ şimdi + 7 gün; tarihe göre; hero'daki bu gecekiler hariç (≥2 kalırsa); en çok 10)
     const lim = Date.now() + WEEK_MS;
-    const week = ev.filter((e) => { const s = msOf(e); return s != null && s <= lim; }).sort(byDate).slice(0, 4);
-    if (week.length) wrap.append(section("dk-kesfet-h-week", sh("dk-kesfet-h-week", `04 · ${city === ALL_CITIES ? "ÖNÜMÜZDEKİ 7 GÜN" : trUpper(city)}`, "Bu ", "Hafta", tumuLink("#/etkinlikler?tarih=bu-hafta")),
-      h("div", { class: "dk-grid dk-grid-ev dk-kesfet-lim4" }, ...week.map(overlay))));
+    const week = pickWeekPosters(ev.filter((e) => { const s = msOf(e); return s != null && s <= lim; }).sort(byDate), featuredOf(ev));
+    if (week.length) {
+      const row = posterRow(week, { hrefOf: evHref, seeAllHref: "#/etkinlikler?tarih=bu-hafta", label: "Bu haftanın etkinlik afişleri" });
+      const arrows = dkCarouselArrows({ variant: "outline", labels: ["Bu Hafta geri kaydır", "Bu Hafta ileri kaydır"], onPrev: () => row.page(-1), onNext: () => row.page(1) });
+      arrows.querySelectorAll("button").forEach((b) => b.classList.add("dk-press-o"));
+      row.onState((atStart, atEnd) => arrows.dk.setDisabled(atStart, atEnd));
+      wrap.append(section("dk-kesfet-h-week", sh("dk-kesfet-h-week", `04 · ${city === ALL_CITIES ? "ÖNÜMÜZDEKİ 7 GÜN" : trUpper(city)}`, "Bu ", "Hafta",
+        h("div", { class: "dk-kesfet-t10-ctl" }, tumuLink("#/etkinlikler?tarih=bu-hafta"), arrows)), row.node, "dk-kesfet-week"));
+    }
     // 05 · Popüler Sanatçılar (followerCount'a göre; ilk 5; TÜMÜ → SANATÇILAR sekmesi)
     if (d.artists.length) {
       const all = h("button", { type: "button", class: "dk-sh-link dk-link" }, "TÜMÜ", svgIcon("chevronRight", { size: 13, sw: "2.2" }));

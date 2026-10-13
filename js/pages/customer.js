@@ -154,13 +154,14 @@ let _mkSeq = 0;
 // Keşfet'e özel ortak modüller (masaüstü paylaşımlı SAF yardımcılar, ikonlar, tür renkleri, canlı sayaç) — YALNIZ Keşfet
 // açılınca dinamik yüklenir: customer.js tüm mobil rotalarda statik yüklendiği için diğer rotalar bu ~49 KB'ı ödemesin.
 // Yükleme (ve m-kesfet.css) bitene dek sayfa legacy döner simgesini gösterir.
-let H = null, famColor = null, svgRaw = null, svgIcon = null, subscribeLive = null, _mkMods = null;
+let H = null, famColor = null, svgRaw = null, svgIcon = null, subscribeLive = null, PST = null, _mkMods = null;
 function mkLoadMods() {
   if (!_mkMods) {
     _mkMods = Promise.all([
       import("../desktop/shared/helpers.js"), import("../desktop/shared/genres.js"),
       import("../desktop/shared/icons.js"), import("../desktop/shared/live.js"),
-    ]).then(([hp, gn, ic, lv]) => { H = hp; famColor = gn.genreColor; svgRaw = ic.svgRaw; svgIcon = ic.svgIcon; subscribeLive = lv.subscribeLive; });
+      import("../desktop/shared/poster.js"),   // Bu Hafta dikey afiş satırı (uygulama PosterSwipeRow)
+    ]).then(([hp, gn, ic, lv, ps]) => { H = hp; famColor = gn.genreColor; svgRaw = ic.svgRaw; svgIcon = ic.svgIcon; subscribeLive = lv.subscribeLive; PST = ps; });
     _mkMods.catch(() => { _mkMods = null; }); // hata → sonraki açılışta yeniden dene
   }
   return _mkMods;
@@ -509,7 +510,7 @@ export function kesfetPage() {
   };
   function load() {
     clear(boot); boot.append(h("div", { class: "loading" }, spinner()));
-    Promise.all([ensureCss(MK_CSS), mkLoadMods()]).then(([cssOk]) => {
+    Promise.all([ensureCss(MK_CSS), mkLoadMods(), ensureCss("css/poster.css")]).then(([cssOk]) => {
       if (life.dead) return;
       if (cssOk === false) return fail(false);
       mkEnsureMonoBold();
@@ -892,12 +893,13 @@ async function renderKesfet(ui) {
   function allView(cityEvents, fArtists) {
     const wrap = h("div", { class: "mk-all" });
     const t10Id = ui.sid + "-top10";
+    // Öne Çıkanlar (hero): VIP önce, sonra tarih — ilk 5 (Bu Hafta afiş satırı tekrar süzgeci de bunu kullanır)
+    const featured = [...cityEvents].sort((a, b) => ((b.vipStatus === "approved") - (a.vipStatus === "approved")) || (msOf(a) ?? 0) - (msOf(b) ?? 0)).slice(0, 5);
     if (!cityEvents.length) {
       wrap.append(h("div", { class: "mk-pad0" }, mkEmpty(svgIcon("compass", { size: 30, sw: "1.5" }), noEventsTitle(), NO_EVENTS_SUB)));
     } else {
       // Hero: VIP önce, sonra tarih — ilk 5
-      const hero = [...cityEvents].sort((a, b) => ((b.vipStatus === "approved") - (a.vipStatus === "approved")) || (msOf(a) ?? 0) - (msOf(b) ?? 0)).slice(0, 5);
-      wrap.append(heroSection(hero));
+      wrap.append(heroSection(featured));
       // Top 10 — katılımcı sayısına göre (başlık TOP 10 çipinin hedefi → programla odaklanabilir)
       const topList = [...cityEvents].sort((a, b) => (b.attendeeCount ?? 0) - (a.attendeeCount ?? 0)).slice(0, 10);
       const t10 = mkSection({ title: "GigBridge Top 10", id: t10Id, right: toEvents() },
@@ -913,9 +915,12 @@ async function renderKesfet(ui) {
     // En Yeniler (yalnız varsa)
     const news = cityEvents.filter((e) => e.isNew === true);
     if (news.length) wrap.append(mkSection({ title: "GigBridge'de En Yeniler!", right: toEvents() }, mkRow("", news.map((e) => mkEventCard(e)))));
-    // Bu Hafta (TÜMÜNÜ GÖR → ETKİNLİKLER sekmesi, BU HAFTA süzgeci seçili)
-    const week = cityEvents.filter((e) => { const ms = msOf(e); return ms != null && ms <= Date.now() + 7 * 86400e3; });
-    if (week.length) wrap.append(mkSection({ title: "Bu Hafta", sub: activeCity !== "TÜMÜ" ? activeCity : null, right: toEvents("week") }, mkRow("", week.map((e) => mkEventCard(e)))));
+    // Bu Hafta — dikey afiş satırı (uygulama PosterSwipeRow; TÜMÜNÜ GÖR → ETKİNLİKLER sekmesi, BU HAFTA süzgeci seçili). Öne Çıkanlar'da
+    // zaten görünen bu gecekiler çıkar (satırda ≥2 kalırsa); posterUrl yoksa kart bulanık banner zemini + kırpılmamış 16:9 banner gösterir.
+    const weekAll = cityEvents.filter((e) => { const ms = msOf(e); return ms != null && ms <= Date.now() + 7 * 86400e3; }).sort((a, b) => (msOf(a) ?? 0) - (msOf(b) ?? 0));
+    const week = PST.pickWeekPosters(weekAll, featured);
+    if (week.length) wrap.append(mkSection({ title: "Bu Hafta", sub: activeCity !== "TÜMÜ" ? activeCity : null, right: toEvents("week") },
+      PST.posterRow(week, { hrefOf: mkHref, cls: "is-m", label: "Bu haftanın etkinlik afişleri", onSeeAll: () => { dateKey = "week"; setCategory("ETKİNLİKLER"); } }).node));
     // Popüler Sanatçılar + tasarımın altın TOP 10 çipi. Uygulamada dinleyici Top 10'a (DinleyiciTop10) gider; mobil webde o rota
     // yok (app.js ≤768: #/top10 → #/kesfet) → spec'in geçici yedeği: bu sayfadaki "GigBridge Top 10" bölümüne kaydırıp başlığa
     // odaklanır (farklı sıralama: katılımcı sayısı). Top 10 bölümü yoksa (şehirde etkinlik yok) çip gizli.
@@ -1148,7 +1153,9 @@ async function eventDetail(id, root) {
   const metaRow = (ic, text, dim) => h("div", { class: "ed-meta" },
     h("span", { class: "ed-meta-ic" }, icon(ic, { size: 14, color: "#fff" })),
     h("span", { class: "ed-meta-tx" + (dim ? " dim" : "") }, text));
-  const hero = h("div", { class: "ed-hero", style: ev.bannerUrl ? { backgroundImage: `url(${ev.bannerUrl})` } : null },
+  // banner yoksa dikey afiş hero zemini olur (uygulama EventDetail: banner ?? poster)
+  const heroBg = ev.bannerUrl || (typeof ev.posterUrl === "string" && ev.posterUrl) || null;
+  const hero = h("div", { class: "ed-hero", style: heroBg ? { backgroundImage: `url(${heroBg})` } : null },
     h("div", { class: "ed-tint" }), h("div", { class: "ed-scrim" }),
     h("div", { class: "ed-hero-top" },
       h("button", { class: "ed-iconbtn", "aria-label": "Geri", onclick: () => history.length > 1 ? history.back() : go("#/kesfet") }, icon("chevron-back", { size: 22, color: "rgba(255,255,255,0.8)" })),
@@ -1163,6 +1170,12 @@ async function eventDetail(id, root) {
         metaRow("location", ev.venueName || "—"),
         ev.organizerName ? metaRow("business", ev.organizerName) : null,
         metaRow("time", eventWhen(ev)))));
+  // "Afişi gör" (posterUrl varsa) → tam ekran görüntüleyici (uygulama PosterViewer); modül yalnız afişli etkinlikte yüklenir
+  if (ev.posterUrl) import("../desktop/shared/poster.js").then(async (m) => {
+    await m.ensurePosterCss();
+    const b = m.posterSeeButton(ev);
+    if (b) hero.querySelector(".ed-hero-body")?.append(h("div", { style: { marginTop: "16px" } }, b));
+  }).catch(() => {});
 
   // ── 3 istatistik kartı ──
   const hot = count >= 10;
