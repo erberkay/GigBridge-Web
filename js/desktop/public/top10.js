@@ -138,6 +138,10 @@ export function top10View(ctx) {
       .then((snap) => { myGroups = new Set(snap.docs.map((d) => d.id)); }).catch(() => {})
     : Promise.resolve();
   const isOwn = (it) => (it.isGroup ? myGroups.has(it.id) : it.id === myUid);
+  // Favori (kalp = sosyal takip) yalnız misafir (giriş kapısı) / dinleyici / sanatçı — kesfet.js canFollowRole ile aynı.
+  // Mekan sosyal takip yapmaz (gizli izleme Sanatçı Bul / sanatçı sayfasından), organizatör/yönetici de yazmaz → düğme yok.
+  const favRole = !real ? "guest" : s.isAdmin ? "admin" : (s.profile?.userType || "customer");
+  const canFav = ["guest", "customer", "artist"].includes(favRole);
   const overrides = new Map();
   const inflight = new Set();
 
@@ -217,7 +221,7 @@ export function top10View(ctx) {
     return it.id in map ? { followed: true, notify: map[it.id] } : { followed: false, notify: false };
   };
   const paintFav = () => {
-    if (!real || !followLoaded.a || !followLoaded.g) { favPill.hidden = true; return; }
+    if (!real || !canFav || !followLoaded.a || !followLoaded.g) { favPill.hidden = true; return; }
     const set = new Set([...Object.keys(artistFollows).map((k) => "a:" + k), ...Object.keys(groupFollows).map((k) => "g:" + k)]);
     overrides.forEach((o, k) => { if (o.followed) set.add(k); else set.delete(k); });
     favText.textContent = `${set.size} FAVORİ`;   // görünen metin okunur (rolsüz span'e aria-label konmaz)
@@ -227,7 +231,7 @@ export function top10View(ctx) {
 
   async function toggleFav(it) {
     if (dkLoginGate("Favoriye almak")) return;
-    if (!myUid || !followLoaded[kindKey(it)]) return;   // takip durumu bilinmeden yazma yok
+    if (!canFav || !myUid || !followLoaded[kindKey(it)]) return;   // takip durumu bilinmeden yazma yok
     const key = keyOf(it);
     if (inflight.has(key)) return;
     const next = !followOf(it).followed;
@@ -275,7 +279,7 @@ export function top10View(ctx) {
   // Düğmeler (DinleyiciTop10: 44×40, r6; kalp pembe · zil camgöbeği; zil yalnız favorideyken)
   const actRefs = new Set();
   function actions(it) {
-    if (isOwn(it)) return h("span", { class: "dk-top10-noact", "aria-hidden": "true" });   // kendini / kendi grubunu favoriye alamaz
+    if (!canFav || isOwn(it)) return h("span", { class: "dk-top10-noact", "aria-hidden": "true" });   // rol yetkisiz / kendini / kendi grubunu favoriye alamaz
     const heart = h("button", { type: "button", class: "dk-top10-heart dk-press" });
     const bell = h("button", { type: "button", class: "dk-top10-bell dk-press" });
     const spacer = h("span", { class: "dk-top10-spacer", "aria-hidden": "true" });
@@ -385,7 +389,7 @@ export function top10View(ctx) {
   load();
 
   // takip durumları (canlı; yalnız gerçek kullanıcı — misafirin alt koleksiyon okuma izni yok)
-  if (myUid && real) {
+  if (myUid && real && canFav) {
     const sub = (name, isGroup) => onSnapshot(collection(db, "users", myUid, name), (snap) => {
       const map = {};
       snap.docs.forEach((d) => {

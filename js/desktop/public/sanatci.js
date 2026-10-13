@@ -417,7 +417,7 @@ export function sanatciView(ctx) {
     const venueViewer = real && !!me && !session.isAdmin && session.profile?.userType === "venue";
     let a, watchedP = null;
     try {
-      // mekan: gizli takip durumu (uygulama ArtistDetail — mekanın "Takip Et"i watchedArtists); yalnız solo sanatçıda kullanılır
+      // mekan: gizli takip durumu (uygulama ArtistDetail — mekanın "Takip Et"i watchedArtists); solo sanatçı ve grupta
       if (venueViewer && me !== id) watchedP = watchedArtists(me).then((l) => l.some((w) => (w.artistId || w.id) === id)).catch(() => false);
       const [u, grp, revs, following, follCount, events] = await Promise.all([
         userById(id),
@@ -490,6 +490,8 @@ export function sanatciView(ctx) {
     const canReview = role === "guest" || role === "customer";
     // Mekan → solo sanatçı: "Davet Et" (Sanatçı Bul davet modalı) + "Gizli takip" (watchedArtists)
     const venueSolo = !G && !self && role === "venue";
+    // Mekanın gizli takibi GRUPTA da (uygulama ArtistDetail grup kipinde mekanın Takip Et'i = watchedArtists/{gid})
+    const venueWatch = !self && role === "venue";
 
     const name = a.displayName || a.name || (G ? "Grup" : "Sanatçı");
     const genres = artistGenres(a);
@@ -687,7 +689,7 @@ export function sanatciView(ctx) {
     const msgAria = G ? `Mesaj — grup yöneticisi ${contactName}` : null;
     const actions = [];
     if (canFollow) actions.push(followButton());
-    if (venueSolo && me) actions.push(watchButton());
+    if (venueWatch && me) actions.push(watchButton());
     if (canMsg) actions.push(h("button", { type: "button", class: "dk-sanatci-detay-act dk-press", onclick: onMsg, "aria-label": msgAria, title: msgAria }, ico("chat", 17, "1.9"), h("span", {}, "Mesaj")));
     if (canOffer) actions.push((() => { const b = h("button", { type: "button", class: "dk-sanatci-detay-act is-pink dk-press", onclick: onOffer }, ico("send", 16, "2.1"), h("span", {}, offerLabel)); offerBtns.push(b); return b; })());
     const identity = h("section", { class: "dk-container dk-sanatci-detay-id", "aria-labelledby": "dk-sanatci-detay-h-name" },

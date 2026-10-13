@@ -729,6 +729,9 @@ export function akisView(ctx) {
   }
   let artists = null, weekEvents = null;
   const followedHere = new Set();   // bu sayfada raydan takip edilenler ("Takipte" olarak yerinde kalır)
+  // Takip düğmesi yalnız misafir (giriş kapısı) / dinleyici / sanatçı — kesfet.js canFollowRole ile aynı. Mekan sosyal takip
+  // yapmaz (gizli izleme Sanatçı Bul'dan), organizatör/yönetici de yazmaz → rayda öneri satırı düğmesiz.
+  const canFollowRole = () => { const r = !isRealUser() ? "guest" : session.isAdmin ? "admin" : (session.profile?.userType || "customer"); return ["guest", "customer", "artist"].includes(r); };
   function drawSuggestions() {
     if (artists == null || !followsReady) return;
     const c = railCity();
@@ -755,6 +758,9 @@ export function akisView(ctx) {
         if (kbFocus && !destroyed && fb.isConnected && (!ae || ae === document.body)) { try { fb.focus({ preventScroll: true }); } catch (_) {} }
         kbFocus = false;
       }, 0);
+      const link = () => h("a", { href: "#/sanatci/" + encodeURIComponent(a.id), class: "dk-akis-sug-a" }, photo,
+        h("span", { class: "dk-akis-sug-c" }, h("span", { class: "dk-akis-sug-n" }, name), sub ? h("span", { class: "dk-akis-sug-s" }, sub) : null));
+      if (!canFollowRole()) return h("div", { class: "dk-akis-sug-r" }, link());
       const fb = dkFollowButton({ variant: "rail", name, followed: followIds.has(a.id), onToggle: async (next) => {
         if (dkLoginGate("Takip etmek")) { kbFocus = false; return false; }
         try {
@@ -766,10 +772,7 @@ export function akisView(ctx) {
         } catch (_) { dkToast("İşlem başarısız", { type: "err" }); return false; }
         finally { refocus(); }
       } });
-      const rowEl = h("div", { class: "dk-akis-sug-r" },
-        h("a", { href: "#/sanatci/" + encodeURIComponent(a.id), class: "dk-akis-sug-a" }, photo,
-          h("span", { class: "dk-akis-sug-c" }, h("span", { class: "dk-akis-sug-n" }, name), sub ? h("span", { class: "dk-akis-sug-s" }, sub) : null)),
-        fb);
+      const rowEl = h("div", { class: "dk-akis-sug-r" }, link(), fb);
       // yakalama evresi: düğmenin kendi tık işleyicisinden (disabled) ÖNCE — klavyeyle mi odaklıydı?
       rowEl.addEventListener("click", (e) => { if (fb.contains(e.target)) kbFocus = document.activeElement === fb && fb.matches(":focus-visible"); }, true);
       return rowEl;

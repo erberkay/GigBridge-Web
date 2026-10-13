@@ -129,7 +129,8 @@ export async function renderGroupDetail(g, root, { viewer = "customer" } = {}) {
   const isMember = !!me && g.memberIds.includes(me);
   const contactId = groupContactId(g);
   const contactName = members.find((m) => m.id === contactId)?.name || "Grup yöneticisi";
-  const canFollow = !isMember;
+  // Mekan sosyal takip yapmaz (gizli izleme; data.followGroup da reddeder) → düğme yok
+  const canFollow = !isMember && session.profile?.userType !== "venue";
   const canMsg = !isMember && !!contactId && contactId !== me;
   const canOffer = !isArtistView && canMsg;
   const canReview = !isArtistView && !isMember;

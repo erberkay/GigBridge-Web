@@ -985,7 +985,8 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     const href = hrefOf(cv);
     const light = (label) => h("a", { href, class: cx(c("light"), "dk-press") }, label, ico("arrow", 14, "2.2"));
     if (!P) {
-      const btns = [href ? light("Profile git") : null, type === "artist" ? followToggle(cv, seq) : null].filter(Boolean);
+      // mekan sosyal takip yapmaz (gizli izleme) → takip anahtarı yok
+      const btns = [href ? light("Profile git") : null, type === "artist" && myType !== "venue" ? followToggle(cv, seq) : null].filter(Boolean);
       if (btns.length) block.append(h("div", { class: c("pbtns"), style: { gridTemplateColumns: `repeat(${btns.length}, minmax(0, 1fr))` } }, ...btns));
     } else if (href) {
       block.append(light(type === "venue" ? "Mekan profiline git" : type === "artist" ? "Sanatçı profiline git" : "Profile git"));

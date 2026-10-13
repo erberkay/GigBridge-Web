@@ -1396,6 +1396,8 @@ async function artistDetail(id, root) {
   const fIc = () => icon(foll ? "checkmark-circle" : "person-add-outline", { size: 18, color: foll ? "#C084FC" : "#A78BFA" });
   const fTx = h("span", {}, foll ? "Takipte" : "Takip Et");
   const followBtn = h("button", { class: "pd-act" + (foll ? " on" : "") }, fIc(), fTx);
+  // Mekan sosyal takip yapmaz (gizli izleme; data.followArtist de reddeder) → düğme çizilmez
+  const canFollowHere = session.profile?.userType !== "venue";
   followBtn.onclick = async () => {
     if (loginGate("Takip etmek")) return;
     followBtn.disabled = true;
@@ -1427,7 +1429,7 @@ async function artistDetail(id, root) {
           pdStat(follCount ?? shortNum(a.followerCount ?? 0), "Takipçi"), pdDivider(),
           pdStat(revs.length, "Yorum")))),
     h("div", { class: "pd-acts" },
-      followBtn,
+      canFollowHere ? followBtn : null,
       h("button", { class: "pd-act", onclick: () => { if (loginGate("Mesaj göndermek")) return; requestChat({ otherId: id, otherName: name }); go("#/mesajlar"); } }, icon("chatbubble-ellipses-outline", { size: 18, color: "#A78BFA" }), h("span", {}, "Mesaj")),
       h("button", { class: "pd-act solid", onclick: () => {
         if (loginGate("Teklif göndermek")) return;

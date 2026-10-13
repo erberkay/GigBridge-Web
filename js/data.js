@@ -556,6 +556,7 @@ export async function submitGroupReview(uid, authorName, group, rating, comment,
 // (web Top 10 / Favoriler / Takip ile aynı şekil; users/{gid}/followers aynasına yazılmaz → sahte users dokümanı yok).
 export async function isFollowingGroup(uid, gid) { try { return (await getDoc(doc(db, "users", uid, "followingGroups", gid))).exists(); } catch { return false; } }
 export async function followGroup(uid, g) {
+  assertNotVenueFollow();
   const genre = (Array.isArray(g.genres) ? g.genres[0] : g.genre) ?? "";
   await setDoc(doc(db, "users", uid, "followingGroups", g.id), {
     groupId: g.id, groupName: g.name ?? g.displayName ?? "", targetType: "group", genre: genre || "", photoURL: g.photoURL ?? null, notifyEvents: true, followedAt: serverTimestamp(),
@@ -600,7 +601,13 @@ export async function attendedEvents(uid) {
 
 // ── Takip (following + ayna followers) ──
 export async function isFollowing(uid, artistId) { try { return (await getDoc(doc(db, "users", uid, "following", artistId))).exists(); } catch { return false; } }
+// MEKAN sosyal takip yapmaz: sanatçıyı / grubu yalnız gizli izleme listesine alır (watchArtist → users/{mekan}/watchedArtists;
+// sanatçı görmez, takipçi sayısı değişmez, bildirim gitmez). Kural da reddeder (firestore.rules isVenueAccount) — savunma.
+function assertNotVenueFollow() {
+  if (session.profile?.userType === "venue") throw new Error("venue-social-follow");
+}
 export async function followArtist(uid, artist) {
+  assertNotVenueFollow();
   const name = artist.displayName ?? artist.name ?? "";
   const genre = (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "";
   await setDoc(doc(db, "users", uid, "following", artist.id), { artistId: artist.id, artistName: name, genre, followedAt: serverTimestamp() });
@@ -806,11 +813,12 @@ export async function saveEventEdits(id, patch) {
 export async function deleteEvent(id) { await deleteDoc(doc(db, "events", id)); }
 
 // ── Mekanın gizli sanatçı takip listesi (users/{uid}/watchedArtists) — yalnız mekan görür ──
+// Alanlar uygulamayla BİREBİR (ArtistDetail / Sanatçı Bul: artistId, artistName, genre, watchedAt); grup kimliği de olur.
 export async function watchArtist(uid, artist) {
   const name = artist.displayName ?? artist.name ?? "";
   const genre = (Array.isArray(artist.genres) ? artist.genres[0] : artist.genre) ?? "";
   await setDoc(doc(db, "users", uid, "watchedArtists", artist.id), {
-    artistId: artist.id, artistName: name, genre, createdAt: serverTimestamp(),
+    artistId: artist.id, artistName: name, genre, watchedAt: serverTimestamp(),
   });
 }
 export async function unwatchArtist(uid, artistId) {
@@ -818,7 +826,8 @@ export async function unwatchArtist(uid, artistId) {
 }
 export async function watchedArtists(uid) {
   const snap = await getDocs(collection(db, "users", uid, "watchedArtists"));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  // Eski web kayıtları createdAt yazıyordu → watchedAt yoksa ona düşülür (geriye uyum)
+  return snap.docs.map((d) => { const x = d.data(); return { id: d.id, ...x, watchedAt: x.watchedAt ?? x.createdAt ?? null }; });
 }
 
 // ── Sanatçının etkinlikleri (ArtistPerformanceScreen: geçmiş performans + katılım) ──
