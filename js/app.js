@@ -1,13 +1,14 @@
 // Önyükleme + hash router + rol/onay guard'ları.
 // ≥769 px (viewport.isDesktop): desktop/registry.js'te kaydı olan rota yeni masaüstü görünümüyle çizilir;
-// kaydı olmayan ya da NOT_READY modül → legacy görünüm AYNEN. ≤768 px: legacy yol hiç değişmedi.
+// kaydı olmayan ya da NOT_READY modül → legacy görünüm AYNEN. ≤768 px: legacy yol hiç değişmedi —
+// TEK İSTİSNA yönetici paneli (#/admin…): her genişlikte yeni görünüm (duyarlı PanelShell; legacy pages/admin.js yalnız yükleme yedeği).
 import { initAuth, session, onSession, homeRouteFor } from "./store.js";
 import { landing, login, register, pending, adminLogin, unsupported, setup, verify, agencyMobile } from "./pages/auth.js";
 import { customerPage } from "./pages/customer.js";
 import { mount, h } from "./ui.js";
 import { isDesktop, viewMode, onViewModeChange } from "./viewport.js";
 import { desktopRouteFor, legacyPanelRoute, BASE_CSS, DEV_DEMO, loadRouteModule, moduleReady, knownReady, importFresh, reloadOnceForModuleError } from "./desktop/registry.js";
-import { ensureCssAll, ensureDesktopFonts } from "./desktop/css.js";
+import { ensureCssAll, ensureDesktopFonts, ensurePanelFontsAllWidths } from "./desktop/css.js";
 
 const bootSpinner = () => h("div", { class: "boot" }, h("div", { class: "spinner" }));
 
@@ -36,6 +37,10 @@ function base(hash) { return (hash || "#/").split("?")[0]; }
 function matches(b, prefix) { return b === prefix || b.startsWith(prefix + "/"); }
 const isPublicRead = (b) => PUBLIC_READ.includes(b) || matches(b, "#/etkinlik") || matches(b, "#/katilimcilar") || matches(b, "#/sanatci") || matches(b, "#/mekan");
 const queryOf = (hash) => new URLSearchParams((hash || "").split("?")[1] || "");
+// Yönetici paneli mobilde (≤768) de yeni (masaüstü kayıtlı) görünümle çizilir — kabuk ≤768'de duyarlı (dk-panel-shell.css).
+// Yalnız yönetici oturumu + #/admin… (resolve zaten yönetici dışındakileri #/admin'den uzak tutar; çifte güvence).
+const adminDesk = (b) => !!session.isAdmin && matches(b, "#/admin");
+const deskFor = (b, mode) => mode === "desktop" || adminDesk(b);
 
 // desk=false → legacy (mobil) politika birebir. desk=true → masaüstü ekleri:
 //   (1) misafir "#/" → yeni açılış sayfası (WebLanding) — mobilde yine #/kesfet
@@ -134,7 +139,7 @@ function sessionKey(s) {
 }
 // reason: "hash" | "session" | "mode" | "identity" → overlays.js "dk:teardown" olayını dinler:
 // mod geçişi / kimlik değişimi → açık dk modal/çekmece/popover/toast kapanır + kaydırma kilidi kalkar; diğerleri → popover'lar
-// (tetikleyicileri görünümle birlikte gidiyor). Mobilde dinleyici yok (desktop kodu yüklenmez).
+// (tetikleyicileri görünümle birlikte gidiyor). Mobilde dinleyici yok (desktop kodu yüklenmez) — yönetici paneli hariç.
 function destroyView(reason = "hash") {
   const v = _view; _view = null;
   if (v && typeof v.destroy === "function") { try { v.destroy(); } catch (e) { console.error(e); } }
@@ -166,6 +171,12 @@ function render(reason) {
   const modeSwitch = _lastMode !== null && mode !== _lastMode;
   const sameRoute = b0 === _lastRenderedHash;
   if (reason === "mode" && !modeSwitch) { _modeHeld = false; return; } // ertelenmişken eski moda geri dönüldü → yapacak iş yok
+  // Yönetici paneli iki modda da AYNI görünüm (duyarlı CSS) → ≤768↔≥769 geçişinde yeniden kurma: form, seçim, açık çekmece korunur.
+  if (reason === "mode" && modeSwitch && sameRoute && !identityChanged && _view && _view.key === b0 && adminDesk(b0)) {
+    _modeHeld = false; _lastMode = mode;
+    if (mode !== "desktop") ensurePanelFontsAllWidths();
+    return;
+  }
   // Mod geçişi + odakta metin alanı / kirli form → ertele (gezinti ya da odak bırakılınca yapılır). Giriş/çıkış bunu aşar.
   if (modeSwitch && sameRoute && reason !== "hash" && !identityChanged && formBusy()) { _modeHeld = true; return; }
   _modeHeld = false;
@@ -205,7 +216,7 @@ function render(reason) {
   _lastMode = mode;
   const seq = ++_seq;
   destroyView(modeSwitch ? "mode" : identityChanged ? "identity" : reason);
-  if (mode === "desktop") {
+  if (deskFor(b, mode)) {
     const r = desktopRouteFor(b);
     if (r) { mountDesktop(r, b, seq, { keepLegacy, hadFocus }); return; }
   }
@@ -237,7 +248,7 @@ function renderLegacy(b) {
 }
 
 // ── Masaüstü görünümleri ──
-const stale = (seq, b) => seq !== _seq || base(location.hash) !== b || viewMode() !== "desktop";
+const stale = (seq, b) => seq !== _seq || base(location.hash) !== b || !deskFor(b, viewMode());
 const decodeSeg = (s) => { try { return decodeURIComponent(s); } catch { return s; } };
 const ctxFor = (b, r) => ({ base: b, seg: b.split("/").map(decodeSeg), query: queryOf(location.hash), session, route: r });
 
@@ -282,6 +293,7 @@ async function tryMountDesktop(r, b, seq, hadFocus = false) {
 // (spinner da gösterme). hadFocus: render öncesi odak #app içindeydi (→ restoreFocus).
 async function mountDesktop(r, b, seq, { keepLegacy = false, hadFocus = false } = {}) {
   ensureDesktopFonts();
+  if (viewMode() !== "desktop") ensurePanelFontsAllWidths(); // mobil yönetici paneli: kurumsal font ≤768'de de
   if (!keepLegacy) mountNode(bootSpinner(), "spinner", b);
   let st = await tryMountDesktop(r, b, seq, hadFocus);
   if (st === "ok" || st === "stale") return;

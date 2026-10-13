@@ -254,3 +254,15 @@ export const AVATAR_GRADS = {
 };
 export const avatarGrad = (t) => AVATAR_GRADS[t] || AVATAR_GRADS.customer;
 export const avatarInk = (t) => (t === "artist" ? "#F2F1EE" : "#06070A");
+
+// Liste + detay yığılmış düzende (<1180 px: detay kartı listenin ALTINDA — yönetici Kullanıcılar/Etkinlikler, mobil web dahil)
+// satır seçilince detayı görünüme getir: telefonda dokunuşun sonucu ekran dışında kalmasın. Geniş düzende (yan yana) dokunmaz.
+export function revealDetail(el) {
+  if (!el?.isConnected || window.matchMedia("(min-width: 1180px)").matches) return;
+  requestAnimationFrame(() => {
+    const r = el.getBoundingClientRect();
+    if (r.top >= 0 && r.top < window.innerHeight * 0.5) return;   // başı zaten görünür
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    try { el.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" }); } catch (_) {}
+  });
+}

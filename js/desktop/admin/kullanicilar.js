@@ -8,7 +8,7 @@ import { db, collection, getDocs, functions, httpsCallable } from "../../firebas
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon } from "../shared/icons.js";
 import { dkKpi, dkSegmented, dkTable, dkPageHero, dkSkeleton, dkButton, dkAvatar, dkStatusBadge, dkInput, dkTextarea, dkToast, dkConfirm } from "../shared/ui.js";
-import { toMs, MONTHS_TR_SHORT, matchText, writeQuery, ROLE_LABELS } from "../shared/helpers.js";
+import { toMs, MONTHS_TR_SHORT, matchText, writeQuery, ROLE_LABELS, revealDetail } from "../shared/helpers.js";
 
 const VIOLET = "#A78BFA";
 const ROLE_COLOR = { customer: "#4ED8FF", artist: "#FF4FA3", venue: "#FF8A2A", organizer: "#FF4FA3", agency: "#FBBF24" };
@@ -95,7 +95,10 @@ export function adminKullanicilarView(ctx) {
     .filter((u) => (_seg === "all" || u.role === _seg) && (!_q || matchText(_q, u.name, u.email, u.city)))
     .sort((a, b) => (b.created || 0) - (a.created || 0));
   function setSeg(k) { if (k === _seg) return; _seg = k; seg.dk.set(k); renderList(); }
-  function select(u) { if (selId === u.id) return; selId = u.id; writeQuery({ sec: u.id }); table.dk.select(u.id); renderDetail(); }
+  function select(u) {
+    if (selId !== u.id) { selId = u.id; writeQuery({ sec: u.id }); table.dk.select(u.id); renderDetail(); }
+    revealDetail(detail);   // yığılmış düzende (<1180, telefon) detay listenin altında → görünüme getir
+  }
 
   function renderList() {
     if (!_cache.users) {

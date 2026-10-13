@@ -9,7 +9,7 @@ import { db, collection, getDocs } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon } from "../shared/icons.js";
 import { dkKpi, dkSegmented, dkTable, dkPageHero, dkSkeleton, dkButton, dkAvatar, dkStatusBadge } from "../shared/ui.js";
-import { toMs, MONTHS_TR_SHORT, matchText, writeQuery } from "../shared/helpers.js";
+import { toMs, MONTHS_TR_SHORT, matchText, writeQuery, revealDetail } from "../shared/helpers.js";
 
 const VIOLET = "#A78BFA";
 const GREEN = "#7CE0B0", YELLOW = "#FFD700", RED = "#FF5A6E", GREY = "#8A8E97";
@@ -147,6 +147,7 @@ export function adminEtkinliklerView(ctx) {
     renderList();
   }
   function select(ev) {
+    revealDetail(detail);   // yığılmış düzende (<1180, telefon) detay listenin altında → görünüme getir
     if (selId === ev.id) return;
     selId = ev.id; attQ = "";
     writeQuery({ sec: ev.id });

@@ -160,6 +160,25 @@
   .dk-ps.is-search-open .dk-ps-search { display: flex; width: auto; flex-grow: 1; }
 }
 
+/* ≤768 — TELEFON (mobil web). Bu genişlikte kabuğu yalnız YÖNETİCİ paneli kullanır (app.js adminDesk; diğer roller ≤768'de legacy).
+   Kenar çubuğu ≤1023'teki çekmece olarak kalır. Üst bar 64, yan dolgu 16, öğeler arası 8; avatar gizli (yönetici avatarı #/admin'e
+   gidiyor, kullanıcı kartı çekmecede); bildirim popover'ı ekrana sığar; çentikli cihazlarda güvenli alan. Taşan içerik sayfayı
+   yatay kaydırmasın diye kök overflow-x: clip (clip kaydırma kabı kurmaz → yapışkan üst bar çalışır). */
+@media (max-width: 768px) {
+  .dk-ps { --dk-ps-padx: 16px; --dk-ps-padt: 20px; --dk-ps-padb: max(32px, env(safe-area-inset-bottom)); overflow-x: clip; }
+  .dk-ps-top { height: 64px; gap: 8px; padding-left: max(var(--dk-ps-padx), env(safe-area-inset-left)); padding-right: max(var(--dk-ps-padx), env(safe-area-inset-right)); }
+  .dk-ps-right { gap: 8px; }
+  .dk-ps-av { display: none; }
+  .dk-ps-title { font-size: 17px; }
+  .dk-ps-crumb { font-size: 9.5px; letter-spacing: 0.14em; }
+  .dk-ps-head-crumb { gap: 2px; }
+  .dk-ps-aside { width: min(288px, 86vw); padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+  .dk-ps-sec { margin-top: 24px; }
+  .dk-ps-notifpop { width: auto !important; left: 8px !important; right: 8px !important; }
+  .dk-ps-nlist { max-height: min(420px, calc(100vh - 180px)); }
+  .dk-ps-nclose { width: 40px; height: 40px; margin-right: -8px; }
+}
+
 /* =====================================================================
    LEGACY-IN-SHELL — tasarımı olmayan panel sekmeleri (legacy-in-shell.js):
    .dk-ps-content > .dk-legacy > .page.has-nav > .content  (legacy renderTab çıktısı)

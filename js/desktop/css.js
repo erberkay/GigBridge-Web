@@ -1,7 +1,7 @@
 // Masaüstü alan CSS'lerini tembel yükler (FOUC'suz: görünüm, CSS'i yüklenmeden mount edilmez).
 // Her dosya bir kez eklenir; <link> head'in SONUNA gider → style.css + aether.css'ten sonra (kaskadda en son).
 // CSS_VER: index.html'deki ?v= deseniyle aynı mantık — dk-*.css değişince artır (GitHub Pages ~10 dk HTTP önbelleği).
-export const CSS_VER = "20261005a";
+export const CSS_VER = "20261013m";
 
 const _css = new Map();
 
@@ -41,5 +41,20 @@ export function ensureDesktopFonts() {
   l.dataset.dk = "font";
   document.head.append(l);
   _font = l;
+  return l;
+}
+
+// Mobil (≤768) yönetici paneli de masaüstü görünümlerini kullanır (app.js adminDesk) → kurumsal font o genişlikte de gerekir.
+// Ayrı, medya kısıtsız bağlantı (bir kez): gb-fonts.css yalnız "GB Sans/Display/Label" ailelerini tanımlar, legacy mobil arayüz bu
+// adları kullanmadığı için oraya etkisi yok.
+let _fontAll = null;
+export function ensurePanelFontsAllWidths() {
+  if (_fontAll) return _fontAll;
+  const l = document.createElement("link");
+  l.rel = "stylesheet";
+  l.href = DESKTOP_FONT_HREF;
+  l.dataset.dk = "font-all";
+  document.head.append(l);
+  _fontAll = l;
   return l;
 }

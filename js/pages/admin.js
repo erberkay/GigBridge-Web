@@ -1,4 +1,6 @@
 // Yönetici paneli — mekan/organizatör onayı, mekan adı istekleri, sorun bildirimleri.
+// ESKİ MOBİL GÖRÜNÜM: mobil web (≤768) artık yeni yönetici panelini kullanır (app.js adminDesk → js/desktop/admin/*).
+// Bu dosya yalnız yeni görünümün modülü indirilemezse yedek olarak çizilir (app.js mountDesktop → renderLegacy).
 import { session, logout } from "../store.js";
 import {
   listPendingByRole, approveUser, rejectUser,
