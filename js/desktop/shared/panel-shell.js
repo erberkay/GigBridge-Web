@@ -10,7 +10,7 @@
 //     role:   "artist" | "venue" | "organizer" | "agency" | "admin",
 //     active: artist: home|kesfet|top10|mekanlar|mesaj|odeme|profil · venue: home|olustur(CTA)|sanatci|analitik|mesaj|odeme|profil
 //             organizer: home|etkinlik|mekan|ajans|ekip|mesaj|odeme|profil · agency: home|katalog|mesaj|profil (CTA yeni)
-//             admin: onaylar|ad|sorun|kullanici|bildirim|etkinlik|odeme
+//             admin: onaylar|ad|sorun|kullanici|bildirim|etkinlik|odeme|mekanEkle (GEÇİCİ)
 //             (artist / venue nav'larında da "ajans" = Ajans Bul)
 //     title, subtitle (sanatçı: başlık üstte + alt satır), crumb (mekan: "Babylon Club / {crumb}" nav + h1; org/admin: mono eyebrow + başlık),
 //     search: { placeholder, onSubmit(q), onInput(q), value } | false  (mekan: "/" kısayolu + kbd çipi),
@@ -117,6 +117,8 @@ const ROLES = {
         ["bildirim", "Bildirimler", "#/admin/bildirim", "bell"],
         ["etkinlik", "Etkinlikler", "#/admin/etkinlikler", "calendar"],
         ["odeme", "Ödemeler", "#/admin/odemeler", "wallet"],
+        // GEÇİCİ — Berkay: gerek kalmayınca kaldırılacak (js/desktop/admin/mekan-ekle.js)
+        ["mekanEkle", "Mekan Ekle", "#/admin/mekan-ekle", "building"],
       ] },
       { label: "ÖNİZLEME", items: [["onizleme", "Keşfet ekranı", null, "compassAdmin"]] },
     ],

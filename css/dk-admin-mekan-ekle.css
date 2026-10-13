@@ -1,0 +1,93 @@
+/* GEÇİCİ — Berkay: gerek kalmayınca kaldırılacak
+   Admin › Mekan Ekle (js/desktop/admin/mekan-ekle.js). Taban: dk-admin-panel.css + dk-admin-etkinlik.css (görsel dil WebAdmin ile aynı).
+   Kapsam: yalnız .dk-ame / .dk-ame-* (kök: kabuğun içerik bölgesi). */
+.dk-ame { --dk-focus-border: #A78BFA; }
+/* bileşen sınıflarının display değeri hidden özniteliğini ezmesin (.dk-fld flex, .dk-btn inline-flex …) */
+.dk-ame [hidden] { display: none !important; }
+.dk-ame-grid { grid-template-columns: minmax(0, 1fr) 400px; }
+.dk-ame-form { overflow: visible; }
+
+/* bölümler */
+.dk-ame-sec { display: flex; flex-direction: column; gap: 16px; padding: 22px 24px 24px; border-bottom: 1px solid #14171D; }
+.dk-ame-sech { display: flex; align-items: baseline; gap: 10px; }
+.dk-ame-sech .dk-admin-panel-deb { color: #A78BFA; }
+.dk-ame-sect { font-size: 15px; font-weight: 600; color: #F2F1EE; }
+.dk-ame-g2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.dk-ame-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dk-ame-addr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+.dk-ame-addr .dk-btn { margin-bottom: 4px; }
+.dk-ame-sub { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dk-ame-cnt { font-family: var(--dk-font-mono); font-size: 11px; color: #5E636D; }
+.dk-ame-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.dk-ame-chips .dk-chip.is-on { border-color: #A78BFA; background: rgba(167,139,250,0.14); color: #F2F1EE; }
+
+/* düzenleme modu şeridi */
+.dk-ame-mode { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 24px; border-bottom: 1px solid #14171D; background: rgba(167,139,250,0.07); font-size: 14px; color: #C9CCD3; }
+.dk-ame-mode[hidden] { display: none; }
+.dk-ame-mode b { color: #F2F1EE; font-weight: 600; }
+.dk-ame-mode .dk-btn { margin-left: auto; }
+.dk-ame-ro { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 8px; border: 1px dashed #2C303A; }
+.dk-ame-ro[hidden] { display: none; }
+.dk-ame-rov { font-family: var(--dk-font-mono); font-size: 14px; color: #F2F1EE; overflow-wrap: anywhere; }
+
+/* e-posta durumu */
+.dk-ame-enote { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.45; color: #8A8E97; }
+.dk-ame-enote:empty { display: none; }
+.dk-ame-enote.is-ok { color: #7CE0B0; }
+.dk-ame-enote.is-err { color: #FF5A6E; }
+.dk-ame-sugg { max-width: 100%; }
+.dk-ame-sugg .dk-btn-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--dk-font-mono); font-size: 12px; }
+
+/* konum */
+.dk-ame-warn { padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.35); background: rgba(255,215,0,0.06); color: #FFD700; font-size: 13px; line-height: 1.45; }
+.dk-ame-warn[hidden] { display: none; }
+.dk-ame-mapbox { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #1F232B; }
+.dk-ame-map { height: 340px; background: #0E1014; outline: none; }
+.dk-ame-map:focus-visible { box-shadow: inset 0 0 0 2px #A78BFA; }
+.dk-ame-mapmsg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; font-size: 13px; color: #8A8E97; background: #0E1014; }
+.dk-ame-mapmsg[hidden] { display: none; }
+.dk-ame-pin { background: transparent; border: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); cursor: grab; }
+.dk-ame-pinrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dk-ame-pinic { display: inline-flex; }
+.dk-ame-pininfo { flex: 1; min-width: 0; font-size: 13px; color: #8A8E97; }
+.dk-ame-pininfo.is-on { font-family: var(--dk-font-mono); font-size: 12.5px; color: #F2F1EE; }
+
+/* fotoğraflar */
+.dk-ame-photos { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 24px; align-items: start; }
+.dk-ame-tile { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dk-ame-prev { border-radius: 10px; border: 1px dashed #2C303A; background: #0E1014; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.dk-ame-prev.is-sq { width: 160px; height: 160px; border-radius: 50%; }
+.dk-ame-prev.is-wide { width: 100%; max-width: 420px; aspect-ratio: 16 / 9; }
+.dk-ame-prev img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dk-ame-tbtns { display: flex; gap: 8px; }
+.dk-ame-tbtns .dk-btn[hidden] { display: none; }
+
+/* gönder */
+.dk-ame-actions { display: flex; align-items: center; gap: 16px; padding: 20px 24px; flex-wrap: wrap; }
+.dk-ame-ferr { flex: 1; min-width: 200px; font-size: 13.5px; color: #FF5A6E; }
+.dk-ame-btns { display: flex; gap: 10px; margin-left: auto; }
+
+/* sağ kolon */
+.dk-ame-aside { gap: 0; }
+.dk-ame-result { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-bottom: 1px solid #14171D; background: rgba(124,224,176,0.05); }
+.dk-ame-result[hidden] { display: none; }
+.dk-ame-rhead { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #7CE0B0; }
+.dk-ame-rname { font-size: 18px; font-weight: 600; color: #F2F1EE; overflow-wrap: anywhere; }
+.dk-ame-rrow { display: flex; flex-direction: column; gap: 6px; }
+.dk-ame-rval { display: flex; align-items: center; gap: 8px; }
+.dk-ame-code { flex: 1; min-width: 0; padding: 9px 12px; border-radius: 8px; border: 1px solid #1F232B; background: #06070A; font-family: var(--dk-font-mono); font-size: 13.5px; color: #F2F1EE; overflow-wrap: anywhere; user-select: all; }
+.dk-ame-copy { flex-shrink: 0; gap: 6px; }
+.dk-ame-rbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+.dk-ame-listcard { border-top: 0; }
+.dk-ame-list { max-height: 640px; }
+.dk-ame-vrow { width: 100%; box-sizing: border-box; background: transparent; border: 0; border-bottom: 1px solid #14171D; text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 10px 6px; border-radius: 6px; }
+.dk-ame-vrow:hover { background: #0E1014; }
+.dk-ame-vrow.is-sel { background: rgba(167,139,250,0.10); }
+.dk-ame-vtags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.dk-ame-tagadm { color: #A78BFA; border-color: rgba(167,139,250,0.45); }
+.dk-ame-tagwarn { color: #FFD700; border-color: rgba(255,215,0,0.35); }
+.dk-ame-tagself { color: #8A8E97; }
+
+@media (max-width: 1279px) { .dk-ame-grid { grid-template-columns: minmax(0, 1fr) 340px; } .dk-ame-photos { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1179px) { .dk-ame-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .dk-ame-g2 { grid-template-columns: minmax(0, 1fr); } .dk-ame-addr { grid-template-columns: minmax(0, 1fr); } }
