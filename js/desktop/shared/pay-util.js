@@ -110,6 +110,31 @@ export function earnedSummary(rows, uid) {
   return { held, sent };
 }
 
+/** Ödeyen özeti (mekan / organizatör — Berkay 13 Eki "ÖDENEN"): kullanıcının ÖDEYEN tarafta olduğu (alıcısı olmadığı), ödemesi
+ *  başarıyla alınmış kayıtlar. paid = brüt − iade (emanette + aktarılan + iade incelemesindekiler); refunded = iade edilen toplam;
+ *  held / sent = paid'in emanette bekleyen / alıcıya aktarılmış kısmı; count = net tutarı > 0 olan ödeme sayısı. (kuruş) */
+export function paidSummary(rows, uid) {
+  let paid = 0, refunded = 0, held = 0, sent = 0, count = 0;
+  (rows || []).filter((p) => p.payeeUid !== uid && p.status !== "pending" && isPaidStatus(p.status)).forEach((p) => {
+    const gross = Math.max(0, p.grossKurus || 0);
+    const ref = p.status === "refunded" ? gross : Math.min(gross, Math.max(0, p.refundedKurus || 0));
+    const net = gross - ref;
+    refunded += ref; paid += net;
+    if (net > 0) { count += 1; if (p.status === "transferred") sent += net; else held += net; }
+  });
+  return { paid, refunded, held, sent, count };
+}
+/** Ödeyen GEÇMİŞ satırı durumu: Emanette / Aktarıldı / İade / İptal (genel statusLabel'dan yalnız ödeyen geçmişi için ayrışır). */
+export function payerHistoryLabel(p) {
+  const c = p?.cancellation?.status;
+  switch (p?.status) {
+    case "transferred": return { text: "ALICIYA AKTARILDI", tone: "ok" };
+    case "refunded": return c === "accepted" || c === "payee_cancelled" ? { text: "İPTAL · İADE EDİLDİ", tone: "muted" } : { text: "İADE EDİLDİ", tone: "muted" };
+    case "partially_refunded": return { text: "KISMEN İADE · EMANETTE", tone: "muted" };
+    default: return statusLabel(p?.status, "payer");
+  }
+}
+
 /** Etkinlik öncesi / şikayet penceresi (istemci saati — sunucu yeniden denetler) */
 export function paymentWindow(p, now = Date.now()) {
   const beforeStart = p.eventStartMs != null && now < p.eventStartMs;

@@ -169,6 +169,7 @@ p.dk-pay-body, p.dk-pay-muted { margin: 0; }
 .dk-odeme-sec[hidden] { display: none; }
 .dk-odeme-h { margin: 0; font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #8A8E97; }
 .dk-odeme-sbody { display: flex; flex-direction: column; gap: 12px; }
+.dk-odeme-sec > .dk-seg { align-self: flex-start; }  /* mekan GEÇMİŞ süzgeci (Tümü / Ödediklerim / Gelenler) içerik genişliğinde */
 .dk-odeme-empty { margin: 0; font-size: 14px; color: #8A8E97; }
 .dk-odeme-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; align-items: start; }
 .dk-odeme-due { display: flex; flex-direction: column; gap: 8px; min-width: 0; }

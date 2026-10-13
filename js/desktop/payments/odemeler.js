@@ -6,15 +6,19 @@
 //   Mekan ayrıca: kabul ettiği ücretli kiralama istekleri (emanet notu + hizmet kapsamı girişi/düzenleme).
 // Adres: ?sikayet=<merchantOid> → şikayet çekmecesi · ?bolum=iban → Ödeme Bilgileri kartı (bildirim derin bağlantıları).
 // Kayıtlar: payments (partyUids array-contains uid) canlı; bekleyenler tek sefer (Yenile ile yeniden).
+// ÖDEYEN özeti (Berkay 13 Eki): "ÖDENEN" = ödeyen tarafta başarıyla ödenmiş tutar (emanette + aktarılan; iadeler düşülür, alt yazıda
+//   "İade ₺…"). GEÇMİŞ'te giden ödeme satırı: alıcı (sanatçı / grup / mekan) · etkinlik tarihi · ödeme tarihi + durum (Emanette /
+//   Aktarıldı / İade / İptal) + iade tutarı. Mekan hem ödeyen hem alıcı → GEÇMİŞ'te Tümü / Ödediklerim / Gelenler süzgeci.
+//   Alıcı (sanatçı) görünümü DEĞİŞMEDİ.
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon } from "../shared/icons.js";
-import { cx, dkKpi, dkPageHero, dkButton, dkSkeleton, dkEmpty, dkInlineMessage } from "../shared/ui.js";
+import { cx, dkKpi, dkPageHero, dkButton, dkSkeleton, dkEmpty, dkInlineMessage, dkSegmented } from "../shared/ui.js";
 import { writeQuery, ROLE_COLORS } from "../shared/helpers.js";
 import {
   listenMyPayments, loadDueItems, loadVenueRentals, paymentCard, escrowNote, paymentActions, payBadge, openDisputeDrawer,
-  payoutAccountCard, legalLinks, fmtKurus, earnedSummary, isOid, isDemoUser, fmtDay, HELD_STATES,
+  payoutAccountCard, legalLinks, fmtKurus, earnedSummary, paidSummary, payerHistoryLabel, isOid, isDemoUser, fmtDay,
 } from "../shared/payments.js";
 
 const C = "dk-odeme";
@@ -47,9 +51,14 @@ export function odemelerView(ctx) {
     actions: isPayer ? refresh : null,
   });
   const kDue = isPayer ? dkKpi({ label: "ÖDEME BEKLEYENLER", value: "—", sub: "Kabul edilmiş, ödenmemiş", icon: "clock", color: "#FFB347" }) : null;
-  const kHeld = dkKpi({ label: "EMANETTE", value: "—", sub: isPayee ? "Etkinlik sonrası hesabına" : "Etkinlik sonrası alıcıya", icon: "shieldCheck", color: "#4ED8FF" });
-  const kSent = isPayee ? dkKpi({ label: "AKTARILAN", value: "—", sub: "Banka hesabına geçen", icon: "wallet", color: "#7CE0B0", valueColor: "#7CE0B0" }) : null;
-  const kpis = [kDue, kHeld, kSent].filter(Boolean);
+  // ÖDENEN (ödeyen): emanette + aktarılan, iadeler hariç — iade varsa alt yazıda ayrıca
+  const PAID_SUB = role === "venue" ? "Sanatçılara ödediğin · emanet + aktarılan" : "Ödediğin · emanet + aktarılan";
+  const kPaid = isPayer ? dkKpi({ label: "ÖDENEN", value: "—", sub: PAID_SUB, icon: "checkCircle", color: "#A78BFA" }) : null;
+  // mekan hem ödeyen hem alıcı: EMANETTE / AKTARILAN gelen (kiralama) ödemeleri içindir → alt yazı bunu söyler
+  const both = isPayer && isPayee;
+  const kHeld = dkKpi({ label: "EMANETTE", value: "—", sub: both ? "Gelen ödemeler · etkinlik sonrası hesabına" : isPayee ? "Etkinlik sonrası hesabına" : "Etkinlik sonrası alıcıya", icon: "shieldCheck", color: "#4ED8FF" });
+  const kSent = isPayee ? dkKpi({ label: "AKTARILAN", value: "—", sub: both ? "Gelen ödemeler · banka hesabına geçen" : "Banka hesabına geçen", icon: "wallet", color: "#7CE0B0", valueColor: "#7CE0B0" }) : null;
+  const kpis = [kDue, kPaid, kHeld, kSent].filter(Boolean);
   const kpiRow = h("section", { class: `${C}-kpis`, style: { "--n": String(kpis.length) }, "aria-label": "Özet" }, ...kpis);
 
   // ═════════ SÜTUNLAR ═════════
@@ -68,6 +77,12 @@ export function odemelerView(ctx) {
   if (due) main.append(due.el);
   if (rentals) { rentals.el.hidden = true; main.append(rentals.el); }
   main.append(hist.el);
+  // Mekan: GEÇMİŞ süzgeci (giden = ödediklerim / gelen = kiralama ödemeleri) — yalnız iki yönde de kayıt varsa görünür
+  let histFilter = "all";
+  const histSeg = both ? dkSegmented({ size: 36, role: "radiogroup", label: "Geçmiş süzgeci", value: "all",
+    items: [{ key: "all", label: "Tümü", count: 0 }, { key: "out", label: "Ödediklerim", count: 0 }, { key: "in", label: "Gelenler", count: 0 }],
+    onChange: (k) => { histFilter = k; drawHist(); } }) : null;
+  if (histSeg) { histSeg.hidden = true; hist.el.insertBefore(histSeg, hist.body); }
 
   // ── kenar: Ödeme Bilgileri (alıcı) + nasıl çalışır + yasal ──
   let acct = null;
@@ -142,29 +157,43 @@ export function odemelerView(ctx) {
     const other = side === "payee" ? p.payerName : p.payeeName;
     const when = p.paidAt ?? p.createdAt;
     const acts = paymentActions(p, side, { onOpenDispute: openDispute });
+    // giden ödeme: alıcı · etkinlik tarihi · ödeme tarihi (+ iade tutarı); gelen (alıcı) satırı eskisi gibi
+    const sub = side === "payee" ? [other, when ? fmtDay(when) : ""]
+      : [other, p.eventStartMs ? "Etkinlik " + fmtDay(p.eventStartMs) : "", p.paidAt ? "Ödeme " + fmtDay(p.paidAt) : when ? fmtDay(when) : ""];
+    const refunded = side === "payer" ? (p.status === "refunded" ? p.grossKurus : Math.min(p.grossKurus, p.refundedKurus || 0)) : 0;
     return h("article", { class: `${C}-hrow` },
       h("span", { class: cx(`${C}-htile`, side === "payee" && "is-in") }, svgIcon("wallet", { size: 17, sw: "1.9" })),
       h("div", { class: `${C}-hbody` },
         h("span", { class: `${C}-ht` }, p.title || (p.kind === "venue_rental" ? "Mekan kiralama" : "Sahne ücreti")),
-        h("span", { class: `${C}-hs` }, [other, when ? fmtDay(when) : ""].filter(Boolean).join(" · ")),
-        h("span", { class: `${C}-hf` }, payBadge(p.status, side), p.testMode ? h("span", { class: `${C}-test` }, "TEST") : null),
+        h("span", { class: `${C}-hs` }, sub.filter(Boolean).join(" · ")),
+        h("span", { class: `${C}-hf` }, side === "payer" ? payBadge(p.status, side, payerHistoryLabel(p)) : payBadge(p.status, side), p.testMode ? h("span", { class: `${C}-test` }, "TEST") : null),
         side === "payee" ? h("span", { class: `${C}-hb` }, `Ücret ${fmtKurus(p.grossKurus)} · komisyon ${fmtKurus(p.commissionKurus)} · stopaj ${fmtKurus(p.stopajKurus)}`) : null,
+        refunded > 0 ? h("span", { class: `${C}-hb` }, refunded >= p.grossKurus ? `${fmtKurus(refunded)} iade edildi` : `İade ${fmtKurus(refunded)} · ödenen net ${fmtKurus(p.grossKurus - refunded)}`) : null,
         acts),
       h("span", { class: cx(`${C}-hamt`, side === "payee" && "is-in") }, fmtKurus(amount)));
   }
   function drawHist() {
     if (rows === null) { hist.body.replaceChildren(dkSkeleton({ w: "100%", h: 72, r: 8 }), dkSkeleton({ w: "100%", h: 72, r: 8 })); return; }
     if (rows === false) { hist.body.replaceChildren(dkInlineMessage("err", "Ödemeler yüklenemedi. Bağlantını kontrol et.")); return; }
-    const list = rows.filter((p) => p.status !== "pending");
-    if (!list.length) hist.body.replaceChildren(dkEmpty({ variant: "dashed", icon: "wallet", title: "Henüz ödeme yok.", height: 180, compact: false }));
+    const all = rows.filter((p) => p.status !== "pending");
+    const isIn = (p) => p.payeeUid === uid;
+    const nIn = all.filter(isIn).length, nOut = all.length - nIn;
+    if (histSeg) {
+      histSeg.hidden = !(nIn && nOut);
+      if (histSeg.hidden) histFilter = "all";
+      histSeg.dk.setCount("all", all.length); histSeg.dk.setCount("out", nOut); histSeg.dk.setCount("in", nIn);
+    }
+    const list = histFilter === "out" ? all.filter((p) => !isIn(p)) : histFilter === "in" ? all.filter(isIn) : all;
+    if (!list.length) hist.body.replaceChildren(dkEmpty({ variant: "dashed", icon: "wallet", title: histFilter === "out" ? "Henüz yaptığın ödeme yok." : histFilter === "in" ? "Henüz gelen ödeme yok." : "Henüz ödeme yok.", height: 180, compact: false }));
     else hist.body.replaceChildren(h("div", { class: `${C}-hlist` }, ...list.map(histRow)));
     const e = earnedSummary(rows, uid);
-    if (isPayee) { kHeld.dk.setValue(fmtKurus(e.held)); kSent?.dk.setValue(fmtKurus(e.sent)); }
-    else {
-      // organizatör: ödediği ve emanette bekleyen tutar
-      const held = rows.filter((p) => p.payeeUid !== uid && HELD_STATES.includes(p.status)).reduce((a, p) => a + p.grossKurus, 0);
-      kHeld.dk.setValue(fmtKurus(held));
+    const ps = isPayer ? paidSummary(rows, uid) : null;
+    if (kPaid) {
+      kPaid.dk.setValue(fmtKurus(ps.paid));
+      kPaid.dk.setSub(ps.refunded > 0 ? `${PAID_SUB} · İade ${fmtKurus(ps.refunded)}` : PAID_SUB);
     }
+    if (isPayee) { kHeld.dk.setValue(fmtKurus(e.held)); kSent?.dk.setValue(fmtKurus(e.sent)); }
+    else kHeld.dk.setValue(fmtKurus(ps.held));   // organizatör: ödediği ve emanette bekleyen tutar (iade düşülmüş)
   }
   if (uid && !demo) {
     try { unsubs.push(listenMyPayments(uid, (r) => { if (!alive) return; rows = r; drawHist(); }, (e) => { console.warn("[ödemeler]", e); if (alive) { rows = false; drawHist(); } })); }
