@@ -430,7 +430,9 @@ function mkFollowBtn(a, fx, cls) {
   paint();
   return b;
 }
-// Grup (data.listDirectoryGroups: isGroup + groupHref) → grubun kendi sayfası (#/sanatci/<grupId>); kartta takip düğmesi yok
+// Grup (data.listDirectoryGroups: isGroup + groupHref) → grubun kendi sayfası (#/sanatci/<grupId>); kartta takip düğmesi yok.
+// Kendi sanatçı kartında da takip düğmesi yok (kendini takip edemez — masaüstü kesfet.js canFollow ile aynı).
+const mkCanFollow = (a) => !a.isGroup && a.id !== uid();
 const mkAHref = (a) => (a.isGroup ? a.groupHref || "#/sanatci/" + encodeURIComponent(a.id) : "#/sanatci/" + a.id);
 const mkGroupMeta = (a) => "GRUP · " + (a.genres?.[0] ? mkGenreUp(a.genres[0]) + " · " : "") + (Number(a.memberCount) || 0) + " ÜYE";
 // Popüler Sanatçılar kartı (138px)
@@ -440,7 +442,7 @@ function mkArtistCard(a, fx) {
       mkAvatar(a, "mk-aphoto"),
       h("span", { class: "mk-acard-name" }, mkAName(a)),
       h("span", { class: "mk-acard-meta" }, a.isGroup ? mkGroupMeta(a) : mkGenreUp(mkAGenre(a)) + " · " + H.kFmt(a.followerCount ?? 0))),
-    a.isGroup ? null : mkFollowBtn(a, fx, "mk-follow mk-follow-card"));
+    mkCanFollow(a) ? mkFollowBtn(a, fx, "mk-follow mk-follow-card") : null);
 }
 // SANATÇILAR sekmesi / arama sonucu satırı
 function mkArtistRow(a, fx) {
@@ -450,7 +452,7 @@ function mkArtistRow(a, fx) {
       h("span", { class: "mk-arow-text" },
         h("span", { class: "mk-arow-name" }, mkAName(a)),
         h("span", { class: "mk-arow-meta" }, a.isGroup ? mkGroupMeta(a) : mkGenreUp(mkAGenre(a)) + " · " + H.kFmt(a.followerCount ?? 0) + " TAKİPÇİ"))),
-    a.isGroup ? null : mkFollowBtn(a, fx, "mk-follow mk-follow-row"));
+    mkCanFollow(a) ? mkFollowBtn(a, fx, "mk-follow mk-follow-row") : null);
 }
 
 // URL sorgusu — masaüstü WebKesfet ile aynı anahtarlar/slug'lar (kategori, sehir, tur, q): paylaşılan bağlantı telefonda da

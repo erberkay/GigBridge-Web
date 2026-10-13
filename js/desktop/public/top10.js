@@ -22,11 +22,13 @@
 //   Durum canlı: onSnapshot users/{uid}/following + followingGroups (app subscribeFollowStates ile aynı yorum). İlk anlık görüntü
 //   gelene dek o türün kalp/zil düğmeleri PASİF ve FAVORİ hapı gizli (bilinmeyen durumda followArtist'in setDoc'u mevcut takip
 //   dokümanını ezmesin: notifyEvents:false kaybı + mükerrer "Yeni takipçi"). Abonelik hata verirse pasif kalır + tost.
+//   Kendini favoriye alma YOK: kendi sanatçı satırında ve ÜYESİ olunan grubun satırında kalp/zil çizilmez (grup sayfası sanatci.js
+//   "self" ile aynı kural; app ArtistDetail isSelf). Üyelik: groups where memberIds array-contains uid (sıralamayla paralel okunur).
 // Şehir: gb_city (tek doğruluk kaynağı; header şehir düğmesiyle "dk:citychange" üzerinden senkron). Çipler/“Diğer ▾” gb_city'yi yazar.
 // URL: #/top10?tur=gruplar&donem=hafta|ay&sehir=…&ilce=… (history.replaceState; update(query) uygular).
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
-import { db, doc, getDoc, setDoc, updateDoc, collection, onSnapshot, serverTimestamp } from "../../firebase.js";
+import { db, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp } from "../../firebase.js";
 import { listRealArtists, listGroups, followArtist, unfollowArtist, followGroup, unfollowGroup, groupHref, testAccountIds } from "../../data.js";
 import { publicShell } from "../shared/public-shell.js";
 import { svgRaw } from "../shared/icons.js";
@@ -129,6 +131,13 @@ export function top10View(ctx) {
   const followLoaded = { a: !(myUid && real), g: !(myUid && real) };
   let followErr = false;
   const kindKey = (it) => (it.isGroup ? "g" : "a");
+  // Üyesi olduğum gruplar (kendi grubunu favoriye alamaz). Okunamazsa boş küme; yazımdan önce toggleFav ayrıca bekler.
+  let myGroups = new Set();
+  const myGroupsP = (myUid && real)
+    ? getDocs(query(collection(db, "groups"), where("memberIds", "array-contains", myUid)))
+      .then((snap) => { myGroups = new Set(snap.docs.map((d) => d.id)); }).catch(() => {})
+    : Promise.resolve();
+  const isOwn = (it) => (it.isGroup ? myGroups.has(it.id) : it.id === myUid);
   const overrides = new Map();
   const inflight = new Set();
 
@@ -222,6 +231,7 @@ export function top10View(ctx) {
     const key = keyOf(it);
     if (inflight.has(key)) return;
     const next = !followOf(it).followed;
+    if (next) { await myGroupsP; if (isOwn(it)) return; }   // kendi sanatçı hesabı / üyesi olunan grup (düğme zaten çizilmez)
     inflight.add(key);
     overrides.set(key, { followed: next, notify: next });
     repaintActs();
@@ -265,7 +275,7 @@ export function top10View(ctx) {
   // Düğmeler (DinleyiciTop10: 44×40, r6; kalp pembe · zil camgöbeği; zil yalnız favorideyken)
   const actRefs = new Set();
   function actions(it) {
-    if (!it.isGroup && it.id === myUid) return h("span", { class: "dk-top10-noact", "aria-hidden": "true" });   // kendini favoriye alamaz
+    if (isOwn(it)) return h("span", { class: "dk-top10-noact", "aria-hidden": "true" });   // kendini / kendi grubunu favoriye alamaz
     const heart = h("button", { type: "button", class: "dk-top10-heart dk-press" });
     const bell = h("button", { type: "button", class: "dk-top10-bell dk-press" });
     const spacer = h("span", { class: "dk-top10-spacer", "aria-hidden": "true" });
@@ -364,7 +374,7 @@ export function top10View(ctx) {
     failed = false; data = null;
     draw();
     try {
-      const server = await loadServerRankings();
+      const [server] = await Promise.all([loadServerRankings(), myGroupsP]);   // üyelik çizimden önce bilinsin
       if (!alive) return;
       data = server || await computeLocalRankings();
     } catch (_) {
