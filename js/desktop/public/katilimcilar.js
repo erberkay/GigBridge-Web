@@ -17,7 +17,8 @@
 //   · legacy geri düğmesi → breadcrumb + "Etkinliğe dön" özet kartı.
 // Yeni (tasarım): breadcrumb, etkinlik özet kartı, 3 kolon ızgara, sonuç sayacı, sayfalama (18'er), "SEN" vurgusu (kendi kartında mesaj düğmesi yok),
 //   anonim göz-kapalı avatarı, fotoğraflar + sanatçı tür etiketi (anonim OLMAYAN görünür katılımcılar için users/{uid} okuması — isteğe bağlı zenginleştirme;
-//   profili sonradan anonymousAttendance=true yapan kişinin fotoğrafı/türü de gösterilmez), sıralama: ben önce, sonra joinedAt azalan.
+//   profili sonradan anonymousAttendance=true yapan kişi profil okununca TAMAMEN anonime çevrilir — ad/tür/fotoğraf/mesaj; hideIfPrivate),
+//   sıralama: ben önce, sonra joinedAt azalan.
 // URL: #/katilimcilar/:id?ara=… (arama; replaceState, 250 ms) — update(query) geri/ileri'de uygular. Yazma YOK.
 // Profil zenginleştirme: yalnız ekrana yaklaşan (IntersectionObserver, 600 px pay), anonim OLMAYAN kartlar; users belgeleri 30'luk
 //   `where("__name__","in",…)` toplu okumalarıyla (spec §7; bileşik indeks gerekmez; kural: users okuma isSignedIn → misafir anonim oturum dahil).
@@ -293,10 +294,21 @@ export function katilimcilarView(ctx) {
         .catch((err) => { console.warn("[katilimcilar] users:", err?.code || err); });
     }
   }
+  // Ayar katıldıktan SONRA açılmışsa (kayıttaki `anonymous` katılma anının kopyası; sunucu eşitlemesi
+  // functions/attendancePrivacy.js) kişi burada da anonime çevrilir: ad, tür, fotoğraf, mesaj düğmesi kalkar.
+  function hideIfPrivate(u) {
+    if (profiles.get(u)?.privacySettings?.anonymousAttendance !== true) return false;
+    let changed = false;
+    list.forEach((p) => { if (p.uid === u && !p.anon) { p.anon = true; p.name = ANON; p.genre = ""; changed = true; } });
+    return changed;
+  }
   function applyProfile(u) {
     if (!profiles.has(u)) return;
+    const hid = hideIfPrivate(u);
+    if (hid) note.hidden = !list.some(canMessage);
     cards.forEach((c) => {
       if (c.p.uid !== u || !c.li.isConnected) return;
+      if (hid) { const li = personCard(c.p); c.li.replaceWith(li); return; }
       const nAv = avatarEl(c.p);
       c.av.replaceWith(nAv); c.av = nAv;
       const old = c.col.querySelector(".dk-katilimcilar-ps"); const ns = subEl(c.p);

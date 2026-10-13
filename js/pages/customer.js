@@ -1296,7 +1296,9 @@ function attendeesPage(id) {
         listBox.append(h("div", { class: "at-card" },
           h("div", { class: "at-av", style: { background: `linear-gradient(135deg, ${p1}, ${p2})` } }, name.charAt(0).toLocaleUpperCase("tr-TR")),
           h("div", { class: "grow" }, h("div", { class: "at-name" }, name), a.genre ? h("div", { class: "at-genre" }, a.genre) : null),
-          h("button", { class: "at-msg", onclick: () => { if (loginGate("Mesaj göndermek")) return; requestChat({ otherId: a.userId || a.id, otherName: name }); go("#/mesajlar"); } }, icon("chatbubble-outline", { size: 16, color: "var(--text-secondary)" }))));
+          // GİZLİLİK: anonim katılımcıya mesaj yok (app EventAttendeesScreen + masaüstü katilimcilar.js ile aynı) —
+          // sohbet karşı tarafın profilini çözüp gerçek adını gösterir → kimlik açığa çıkardı.
+          a.anonymous ? null : h("button", { class: "at-msg", onclick: () => { if (loginGate("Mesaj göndermek")) return; requestChat({ otherId: a.userId || a.id, otherName: name }); go("#/mesajlar"); } }, icon("chatbubble-outline", { size: 16, color: "var(--text-secondary)" }))));
       });
     };
     content.append(

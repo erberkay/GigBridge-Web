@@ -578,7 +578,15 @@ export async function groupFollowerCount(g) {
 // ── Katılım (events/{id}/attendees/{uid} + attendeeCount ±1) ──
 export async function isAttending(eventId, uid) { try { return (await getDoc(doc(db, "events", eventId, "attendees", uid))).exists(); } catch { return false; } }
 export async function attendEvent(ev, uid, displayName, anonymous) {
-  await setDoc(doc(db, "events", ev.id, "attendees", uid), { userId: uid, displayName: displayName || "", anonymous: anonymous === true, joinedAt: serverTimestamp() });
+  // "Katılımlarda Adımı Gizle" YAZIM ANINDA taze okunur: session.profile bayat olabilir (ayar uygulamada / başka
+  // sekmede değişti) → bayat false kişiyi listede açık gösterirdi. Okunamazsa çağıranın değeri; sunucu
+  // (functions onAttendeeCreatedPrivacy) yine canlı ayara eşitler.
+  let anon = anonymous === true;
+  try {
+    const me = await getDoc(doc(db, "users", uid));
+    if (me.exists()) anon = me.data()?.privacySettings?.anonymousAttendance === true;
+  } catch (_) {}
+  await setDoc(doc(db, "events", ev.id, "attendees", uid), { userId: uid, displayName: displayName || "", anonymous: anon, joinedAt: serverTimestamp() });
   await updateDoc(doc(db, "events", ev.id), { attendeeCount: increment(1) });
 }
 export async function unattendEvent(eventId, uid) {
