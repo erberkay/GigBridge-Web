@@ -13,10 +13,14 @@
 //   · Düzenlemede GİRİŞ BİLGİLERİ: giriş e-postasını sahibinin kendi adresine çevir (+ isteğe bağlı yeni şifre) — callable
 //     adminSetVenueLogin (emailVerified:true; eski adresle giriş kapanır). "Şifre belirleme bağlantısı gönder" mevcut markalı
 //     sendPasswordReset callable'ını kullanır (Resend, gigbridges.com/sifirla.html). Yeni şifre de yalnız sonuç kartında (bellekte).
+//   · "Mekan panelini aç" (düzenleme çubuğu): panelini kendisi kullanmak istemeyen mekanın gönderi/etkinlik/profil işlerini
+//     yönetici yürütür → yeni sekmede O MEKAN olarak oturum (callable adminVenueSession → özel jeton → postMessage ile yalnız
+//     açılan sekmeye; o sekme oturumu yalnız kendinde tutar — js/yonetim.js). Yöneticinin bu sekmedeki oturumu değişmez.
 // Yazımlar yalnız sunucuda: adminCreateVenue / adminUpdateVenue / adminSetVenueLogin (functions/adminVenues.js; fotoğraflar base64 → Storage).
 import { h, openImageCropper, loadLeaflet } from "../../ui.js";
 import { session } from "../../store.js";
 import { db, collection, getDocs, getDoc, doc, query, where, functions, httpsCallable, sendPasswordResetMail } from "../../firebase.js";
+import { MANAGE_READY, MANAGE_TOKEN, MANAGE_FAIL } from "../../yonetim.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import { dkPageHero, dkButton, dkInput, dkTextarea, dkField, dkPasswordInput, dkChip, dkSegmented, dkAvatar, dkToast, dkConfirm, dkSkeleton } from "../shared/ui.js";
@@ -34,6 +38,7 @@ const MAX_GENRES = 15;
 const createFn = httpsCallable(functions, "adminCreateVenue", { timeout: 120000 });
 const updateFn = httpsCallable(functions, "adminUpdateVenue", { timeout: 120000 });
 const loginFn = httpsCallable(functions, "adminSetVenueLogin", { timeout: 60000 });
+const sessionFn = httpsCallable(functions, "adminVenueSession", { timeout: 60000 });
 const PIN_SVG = '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"></path><circle cx="12" cy="10" r="2.3"></circle>';
 const COPY_SVG = '<rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path>';
 
@@ -41,6 +46,42 @@ const str = (v) => (typeof v === "string" ? v.trim() : "");
 const fmtDate = (v) => { const t = toMs(v); if (t == null) return "—"; const d = new Date(t); return `${d.getDate()} ${MONTHS_TR_SHORT[d.getMonth()]} ${d.getFullYear()}`; };
 const errText = (e) => (e?.code === "functions/permission-denied" ? "Bu işlem için yönetici yetkisi gerekli."
   : e?.code === "functions/unauthenticated" ? "Oturum süresi dolmuş. Çıkış yapıp tekrar giriş yap." : e?.message || "İşlem başarısız");
+/**
+ * Mekan panelini YENİ sekmede o mekan olarak aç (js/yonetim.js). Sekme tıklamanın içinde açılır (pop-up engeli yok); jeton
+ * sunucudan gelince yalnız o pencereye (aynı köken, kaynak = açılan pencere) postMessage ile verilir, hiçbir yere yazılmaz.
+ */
+function openVenuePanel(uid, name) {
+  const qs = new URLSearchParams(location.search);
+  qs.set("yonetim", "1");
+  const w = window.open(`${location.pathname}?${qs}#/venue`, "_blank");
+  if (!w) { dkToast("Tarayıcı yeni sekmeyi engelledi. Adres çubuğundan pop-up izni verip tekrar dene.", { type: "err" }); return; }
+  let token = null, fail = null, ready = false;
+  const send = () => {
+    if (!ready || (!token && !fail)) return;
+    try { w.postMessage(token ? { type: MANAGE_TOKEN, token } : { type: MANAGE_FAIL, message: fail }, location.origin); } catch (_) {}
+    token = null;
+    stop();
+  };
+  const onMsg = (ev) => {
+    if (ev.origin !== location.origin || ev.source !== w || ev.data?.type !== MANAGE_READY) return;
+    ready = true;
+    send();
+  };
+  const timer = setTimeout(() => stop(), 60000);
+  function stop() { clearTimeout(timer); window.removeEventListener("message", onMsg); }
+  window.addEventListener("message", onMsg);
+  sessionFn({ uid }).then((r) => {
+    token = r?.data?.token || null;
+    if (!token) fail = "Mekan oturumu açılamadı.";
+    else dkToast(`${name || "Mekan"} paneli yeni sekmede açıldı`);
+    send();
+  }).catch((e) => {
+    console.error(e);
+    fail = errText(e);
+    dkToast(fail, { type: "err" });
+    send();
+  });
+}
 const blobToB64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = rej; r.readAsDataURL(blob); });
 // Harita pini küçük kopyası (app uploadPinThumb ile aynı: 144×144 JPEG)
 async function makeThumb(blob, size = 144) {
@@ -435,6 +476,7 @@ export function adminMekanEkleView(ctx) {
     modeBar.replaceChildren(svgIcon("edit", { size: 16, color: VIOLET }),
       h("span", {}, "Düzenleniyor: ", h("b", {}, str(editDoc.displayName) || "Mekan")),
       editDoc.createdByAdmin ? h("span", { class: "dk-admin-etk-tag" }, "ADMİN İLE AÇILDI") : h("span", { class: "dk-admin-etk-tag dk-ame-tagself" }, "KENDİ KAYDOLDU"),
+      dkButton("Mekan panelini aç", { variant: "outline", size: 36, icon: "externalLink", onClick: () => openVenuePanel(uid, str(editDoc?.displayName)) }),
       dkButton("Yeni mekan ekle", { variant: "ghost", size: 36, icon: "plus", onClick: () => { writeQuery({ duzenle: null }); resetCreate(); } }));
     submitBtn.dk.setLabel("Değişiklikleri kaydet");
     resetBtn.dk.setLabel("Düzenlemeyi bırak");

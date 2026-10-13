@@ -4,7 +4,10 @@
 // "secret leak" uyarısı Firebase config için bilinen yanlış-pozitiftir. Sertleştirme:
 // Google Cloud Console'da anahtarı HTTP-referrer ile kendi alan adına kısıtla.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getAuth, connectAuthEmulator, signInWithEmailAndPassword as _emuSignIn, signOut as _emuSignOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import {
+  getAuth, initializeAuth, browserSessionPersistence, browserPopupRedirectResolver,
+  connectAuthEmulator, signInWithEmailAndPassword as _emuSignIn, signOut as _emuSignOut,
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getFirestore, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getStorage, connectStorageEmulator } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
@@ -37,8 +40,20 @@ const firebaseConfig = EMU ? {
   measurementId: "G-L3JMS6CWN5",
 };
 
+// MEKAN YÖNETİMİ sekmesi (Admin › Mekan Ekle › "Mekan panelini aç" → ?yonetim): yöneticinin açtığı MEKAN oturumu yalnız
+// bu sekmede (sessionStorage) yaşar; yöneticinin kendi oturumu (IndexedDB) bu sekmede ne okunur ne yazılır → diğer
+// sekmeler etkilenmez. Sekme yenilenince gb_yonetim bayrağıyla sürer. Akış: js/yonetim.js.
+export const MANAGE_MODE = (() => {
+  let on = false;
+  try { on = new URLSearchParams(location.search).has("yonetim") || sessionStorage.getItem("gb_yonetim") === "1"; } catch (_) { on = false; }
+  if (on) { try { sessionStorage.setItem("gb_yonetim", "1"); } catch (_) {} }
+  return on;
+})();
+
 export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+export const auth = MANAGE_MODE
+  ? initializeAuth(app, { persistence: browserSessionPersistence, popupRedirectResolver: browserPopupRedirectResolver })
+  : getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 // europe-west1: fonksiyonlar Avrupa'ya taşındı (eur3 Firestore collocation). Bölge EŞLEŞMELİ.
@@ -66,7 +81,7 @@ export {
 
 // Sayfaların tek yerden alması için Firebase fonksiyonlarını yeniden dışa aktar
 export {
-  signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, signInWithCustomToken,
   signOut, onAuthStateChanged, updateProfile, deleteUser,
   GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
   sendPasswordResetEmail, sendEmailVerification,

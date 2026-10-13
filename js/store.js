@@ -1,5 +1,6 @@
 // Oturum durumu — Auth kullanıcısı + Firestore profil dokümanı (users/{uid}).
-import { auth, db, doc, getDoc, updateDoc, serverTimestamp, onAuthStateChanged, signOut, signInAnonymously, getRedirectResult } from "./firebase.js";
+import { auth, db, doc, getDoc, updateDoc, serverTimestamp, onAuthStateChanged, signOut, signInAnonymously, getRedirectResult, MANAGE_MODE } from "./firebase.js";
+import { manageSignedOut } from "./yonetim.js";
 import { toast } from "./ui.js";
 
 export const OWNER_EMAIL = "berkayer032@gmail.com";
@@ -34,6 +35,13 @@ export function initAuth() {
   // zaten yakalar; bu çağrı redirect sonucunu işler. Hata (redirect yoksa/başarısızsa) yutulur.
   getRedirectResult(auth).catch(() => {});
   onAuthStateChanged(auth, async (user) => {
+    if (!user && MANAGE_MODE) {
+      // Yönetim sekmesi (js/yonetim.js): mekan oturumu kapandı → anonim/misafir oturum AÇMA, kapatma ekranı göster
+      session.user = null; session.profile = null; session.isAdmin = false; session.guest = false;
+      session.reauthing = false; session.ready = true; emit();
+      manageSignedOut();
+      return;
+    }
     if (!user) {
       session.user = null; session.profile = null; session.isAdmin = false; session.guest = false;
       session.reauthing = true; emit(); // misafir oturum geliyor → router landing yerine spinner göstersin
@@ -58,7 +66,8 @@ export function initAuth() {
       // Silme talebi varken giriş yapıldı → talebi İPTAL ET (3 ay içinde giriş = geri getir).
       // İptal yazımı BAŞARISIZ olursa yanlış "iptal edildi" deme (sunucuda pendingDeletion:true
       // kalır, CF yine siler) → çıkış yaptır, kullanıcı tekrar denesin.
-      if (session.profile && session.profile.pendingDeletion) {
+      // Yönetim sekmesinde (yönetici mekan adına) silme talebi İPTAL EDİLMEZ — bu, mekanın kendi girişi değil
+      if (!MANAGE_MODE && session.profile && session.profile.pendingDeletion) {
         try {
           await updateDoc(doc(db, "users", user.uid), { pendingDeletion: false, deletionRequestedAt: null });
           session.profile.pendingDeletion = false; session.profile.deletionRequestedAt = null;

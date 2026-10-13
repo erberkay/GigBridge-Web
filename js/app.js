@@ -3,6 +3,8 @@
 // kaydı olmayan ya da NOT_READY modül → legacy görünüm AYNEN. ≤768 px: legacy yol hiç değişmedi —
 // TEK İSTİSNA yönetici paneli (#/admin…): her genişlikte yeni görünüm (duyarlı PanelShell; legacy pages/admin.js yalnız yükleme yedeği).
 import { initAuth, session, onSession, homeRouteFor } from "./store.js";
+import { MANAGE_MODE } from "./firebase.js";
+import { manageBoot } from "./yonetim.js";
 import { landing, login, register, pending, adminLogin, unsupported, setup, verify, agencyMobile } from "./pages/auth.js";
 import { customerPage } from "./pages/customer.js";
 import { mount, h } from "./ui.js";
@@ -71,7 +73,7 @@ function resolve(desk = isDesktop(), panelPublic = desk) {
 
   // E-posta doğrulanmadıysa doğrulama ekranına kapıla (Google hesapları verified gelir,
   // buraya düşmez). Doğrulanınca aşağıdaki rol/onay mantığı devreye girer.
-  if (!s.user.emailVerified) return "#/verify";
+  if (!s.user.emailVerified && !MANAGE_MODE) return "#/verify";   // yönetim sekmesi (js/yonetim.js): mekan adına, doğrulama yönetici işi değil
 
   // Girişli (yönetici değil) → rol + onaya göre ev
   const home = homeRouteFor(s.profile); // #/kesfet | #/artist | #/venue | #/organizer | #/agency | #/pending | #/unsupported
@@ -319,4 +321,5 @@ window.addEventListener("hashchange", () => render("hash"));
 // ≤768 ↔ ≥769 geçişi: aynı rotayı diğer modda baştan çiz (masaüstü ekleri mobilde geçersizse yönlendirir).
 // İki modda da aynı legacy görünüm çiziliyorsa DOM korunur; metin alanı odakta / form kirliyse geçiş ertelenir (render).
 onViewModeChange(() => render("mode"));
-initAuth();
+// Yönetim sekmesi (?yonetim): önce mekan oturumu kurulur (js/yonetim.js); kurulamazsa initAuth çağrılmaz (misafir oturum açılmasın).
+if (await manageBoot()) initAuth();
