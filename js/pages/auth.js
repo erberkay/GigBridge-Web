@@ -139,7 +139,7 @@ function adminGoogleBtn(msg) {
   return b;
 }
 // Topluluk Kuralları (App Store 1.2): kayıt formunda açık onay metni; sürüm uygulamadaki TERMS_VERSION ile aynı tutulur.
-const TERMS_VERSION = "2026-10-06";
+const TERMS_VERSION = "2026-10-14";   // uygulama src/services/terms.ts ile AYNI
 const consentNote = () => h("p", { class: "foot-note" }, "Kayıt olarak ",
   h("a", { href: "kullanim-kosullari.html", target: "_blank", rel: "noopener" }, "Kullanım Koşulları ve Topluluk Kuralları"),
   "'nı kabul etmiş olursun: uygunsuz içeriğe ve taciz eden kullanıcılara sıfır tolerans vardır.");

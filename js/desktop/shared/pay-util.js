@@ -3,7 +3,7 @@
 // IBAN biçim/mod-97, hizmet kapsamı, şikayet etiketleri, bildirim → web rotası. Sunucu: functions/payments.js + paymentCases.js.
 
 /** Varsayılan oranlar (config/payments varsayılanı) — yalnız ÖDEME ÖNCESİ tahmini gösterim için. */
-export const DEFAULT_RATES = { artist_booking: 0.2, venue_rental: 0.1, stopajRate: 0.01, vatRate: 0.2 };
+export const DEFAULT_RATES = { artist_booking: 0.1, venue_rental: 0.1, stopajRate: 0.01, vatRate: 0.2 };
 
 const ms = (v) => (v && typeof v.toMillis === "function" ? v.toMillis() : typeof v === "number" ? v : null);
 const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
