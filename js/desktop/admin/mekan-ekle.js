@@ -68,7 +68,7 @@ function openVenuePanel(uid, name) {
     send();
   };
   const timer = setTimeout(() => stop(), 60000);
-  function stop() { clearTimeout(timer); window.removeEventListener("message", onMsg); }
+  function stop() { clearTimeout(timer); window.removeEventListener("message", onMsg); token = null; }   // jeton bellekte kalmasın
   window.addEventListener("message", onMsg);
   sessionFn({ uid }).then((r) => {
     token = r?.data?.token || null;

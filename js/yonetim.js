@@ -3,7 +3,8 @@
 // Oturum yalnız bu sekmede yaşar (js/firebase.js MANAGE_MODE → sessionStorage); yöneticinin kendi oturumu değişmez.
 // Jeton: açan sekme (js/desktop/admin/mekan-ekle.js) adminVenueSession callable'ından alır ve postMessage ile YALNIZ bu
 // pencereye (aynı köken, kaynak = opener) yollar; URL'ye / depolamaya yazılmaz. Bu sekme önce READY der, jetonu bekler
-// (20 sn), signInWithCustomToken. Sekme yenilenince oturum sessionStorage'dan sürer (jeton gerekmez).
+// (20 sn), signInWithCustomToken. Sekme yenilenince oturum sessionStorage'dan sürer (jeton gerekmez), en çok 8 saat.
+// Jeton alınınca window.opener koparılır (ters sekme ele geçirme).
 // Altta sabit şerit: kimin adına işlem yapıldığı + "Bitir" (oturumu kapatır, sekmeyi kapatır). Bağımlılık: yalnız firebase.js
 // (store.js de bunu içe aktarır → ui.js/store.js'e dönüş yok, DOM elle kurulur).
 import { auth, MANAGE_MODE, signInWithCustomToken, signOut, onAuthStateChanged } from "./firebase.js";
@@ -12,6 +13,11 @@ export const MANAGE_READY = "gb-yonetim-hazir";
 export const MANAGE_TOKEN = "gb-yonetim-jeton";
 export const MANAGE_FAIL = "gb-yonetim-hata";
 const VIOLET = "#A855F7";
+
+// Yönetim oturumunun ömrü: sekme kapatılmadan unutulsa da (ya da tarayıcı "kapatılan sekmeyi yeniden aç" ile sessionStorage'ı
+// geri getirse de) en çok bu kadar sürer → sonra oturum kapanır, yöneticiden yeniden açması istenir.
+const MAX_AGE_MS = 8 * 60 * 60 * 1000;
+const T_KEY = "gb_yonetim_t";
 
 let bar = null, overlay = null, ending = false;
 
@@ -49,8 +55,12 @@ function showOverlay(title, body, { closable = false } = {}) {
 }
 function hideOverlay() { overlay?.remove(); overlay = null; }
 
+function clearFlags() { try { sessionStorage.removeItem("gb_yonetim"); sessionStorage.removeItem(T_KEY); } catch (_) {} }
+// Ters sekme ele geçirme (reverse tabnabbing): bu sekme dış bir siteye giderse o site window.opener ile yöneticinin
+// sekmesini başka adrese yönlendirebilirdi → jeton alınınca bağ koparılır.
+function dropOpener() { try { window.opener = null; } catch (_) {} }
 function closeTab() {
-  try { sessionStorage.removeItem("gb_yonetim"); } catch (_) {}
+  clearFlags();
   window.close();
   // Tarayıcı kapatmaya izin vermezse normal siteye dön (bu sekme artık yöneticinin kendi oturumunu kullanır)
   setTimeout(() => location.replace(location.pathname), 400);
@@ -106,23 +116,37 @@ export async function manageBoot() {
   if (!MANAGE_MODE) return true;
   await auth.authStateReady();
   let u = auth.currentUser;
+  let t0 = 0;
+  try { t0 = Number(sessionStorage.getItem(T_KEY)) || 0; } catch (_) { t0 = 0; }
+  if (u && !u.isAnonymous && !(t0 && Date.now() - t0 < MAX_AGE_MS)) {
+    // süresi dolmuş (ya da başlangıcı bilinmeyen) yönetim oturumu → kapat
+    try { await signOut(auth); } catch (_) {}
+    dropOpener();
+    clearFlags();
+    showOverlay("Yönetim oturumunun süresi doldu", "Mekan paneline yeniden girmek için Yönetim › Mekan Ekle'den tekrar aç.", { closable: true });
+    return false;
+  }
   if (!u || u.isAnonymous) {
     showOverlay("Mekan paneli açılıyor…", "Yönetici oturumu hazırlanıyor.");
     try {
       const token = await waitToken();
+      dropOpener();
       u = (await signInWithCustomToken(auth, token)).user;
+      try { sessionStorage.setItem(T_KEY, String(Date.now())); } catch (_) {}
     } catch (e) {
+      dropOpener();
       const m = e?.message;
       showOverlay("Mekan paneli açılamadı",
         m === "no-opener" || m === "timeout" || m === "fail" || !m
           ? "Bu sekmeyi kapatıp Yönetim › Mekan Ekle'de mekanı seçerek “Mekan panelini aç”a tekrar bas."
           : m,
         { closable: true });
-      try { sessionStorage.removeItem("gb_yonetim"); } catch (_) {}
+      clearFlags();
       return false;
     }
     hideOverlay();
   }
+  dropOpener();
   showBar(u.displayName);
   window.addEventListener("resize", placeBar);
   onAuthStateChanged(auth, (x) => { if (x && !x.isAnonymous && bar) showBar(x.displayName); });
@@ -134,5 +158,5 @@ export function manageSignedOut() {
   bar?.remove(); bar = null;
   if (ending) return;
   showOverlay("Yönetim oturumu kapandı", "Mekan paneline yeniden girmek için Yönetim › Mekan Ekle'den tekrar aç.", { closable: true });
-  try { sessionStorage.removeItem("gb_yonetim"); } catch (_) {}
+  clearFlags();
 }
