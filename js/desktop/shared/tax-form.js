@@ -34,10 +34,12 @@ const BIZ_TYPES = [
   { value: "sahis", label: "Şahıs işletmesi" }, { value: "limited", label: "Limited şirket" }, { value: "anonim", label: "Anonim şirket" },
   { value: "kooperatif", label: "Kooperatif" }, { value: "dernek", label: "Dernek / vakıf" }, { value: "kamu", label: "Kamu kurumu" }, { value: "diger", label: "Diğer" },
 ];
-const STOPAJ_RESP = [
-  { value: "evet", label: "Evet · stopajı kendimiz kesip muhtasar beyannameyle bildiriyoruz" },
-  { value: "hayir", label: "Hayır · stopaj sorumlusu değiliz" },
-  { value: "bilmiyorum", label: "Bilmiyorum · mali müşavirimize soracağız" },
+// Stopaj sorumluluğu KANUNDAN (GVK md. 94; sunucu finance.js cleanBusiness): şirket / kooperatif / dernek / kamu → sorumlu;
+// şahıs işletmesinde vergilendirme usulü sorulur (gerçek usul → sorumlu, basit usul → değil).
+const TAX_REGIME = [
+  { value: "gercek", label: "Gerçek usul (bilanço / işletme defteri tutuyoruz)" },
+  { value: "basit", label: "Basit usul (esnaf muafiyeti değil, basit usul mükellefiyiz)" },
+  { value: "bilmiyorum", label: "Bilmiyorum" },
 ];
 const digits = (v) => String(v ?? "").replace(/\D/g, "");
 const masked = (v) => typeof v === "string" && v.includes("*");
@@ -112,9 +114,11 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const docSel = performer ? dkSelect({ size: 44, options: PERF_DOCS, value: "e_smm", attrs: { "aria-label": "Düzenleyeceğin belge" } }) : null;
   const respSel = performer ? dkSelect({ size: 44, options: DOC_RESP, value: "company", attrs: { "aria-label": "Belgeyi kim düzenler" } }) : null;
   // business
-  let stopajResp = "bilmiyorum";
+  let taxRegime = "gercek";
   const bizSel = !performer ? dkSelect({ size: 44, options: BIZ_TYPES, value: "limited", attrs: { "aria-label": "İşletme türü" }, onChange: () => paintBiz() }) : null;
-  const stopajGroup = !performer ? dkRadioGroup({ items: STOPAJ_RESP, value: stopajResp, label: "Stopaj sorumluluğu", onChange: (v) => { stopajResp = v; } }) : null;
+  const stopajGroup = !performer ? dkRadioGroup({ items: TAX_REGIME, value: taxRegime, label: "Vergilendirme usulü", onChange: (v) => { taxRegime = v; } }) : null;
+  const regimeBox = !performer ? h("div") : null;
+  const stopajInfo = !performer ? h("p", { class: "dk-pay-fine" }) : null;
   const addr = !performer ? dkTextarea({ rows: 3, maxlength: 300, placeholder: "Fatura adresi (mahalle, cadde, no, ilçe / il)" }) : null;
 
   inp("fullName", { maxlength: 80, placeholder: "Kimlikteki ad soyad", autocomplete: "name" });
@@ -161,6 +165,10 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     if (performer) return;
     const sahis = selOf(bizSel).value === "sahis";
     rows.tckn.hidden = !sahis;
+    regimeBox.hidden = !sahis;
+    stopajInfo.textContent = sahis
+      ? "Stopaj (GVK md. 94): gerçek usulde sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; basit usulde stopaj kesmezsiniz, sanatçı için gider pusulası düzenlersiniz."
+      : "Stopaj (GVK md. 94): şirket, kooperatif, dernek ve kamu kurumları kanunen stopaj sorumlusudur. Vergi kaydı olmayan ya da serbest meslek mükellefi sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; şirketi olan sanatçıdan stopaj kesilmez.";
     rows.vkn.querySelector(".dk-lbl").textContent = sahis ? "VERGİ KİMLİK NO (VARSA)" : "VERGİ KİMLİK NO";
   }
 
@@ -172,7 +180,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     : h("div", { class: "dk-pay-form" },
       box("İŞLETME TÜRÜ", bizSel), rows.title, h("div", { class: "dk-tax-grid" }, rows.vkn, rows.tckn), rows.taxOffice,
       fld("FATURA ADRESİ", addr),
-      box("STOPAJ SORUMLUSU MUSUNUZ?", stopajGroup, "Sanatçıya yapılan ödemelerde stopajı siz mi kesiyorsunuz? Emin değilseniz \"Bilmiyorum\" seçin; finans ekibi netleştirir."),
+      (regimeBox.append(box("VERGİLENDİRME USULÜ", stopajGroup)), regimeBox), stopajInfo,
       h("span", { class: "dk-pay-sub" }, "MALİ MÜŞAVİR (OPSİYONEL)"),
       F.accountantName, h("div", { class: "dk-tax-grid" }, F.accountantPhone, F.accountantEmail));
   paintCat(); paintBiz(); paintInfo();
@@ -192,7 +200,8 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     } else {
       if (pr.businessType) selOf(bizSel).value = pr.businessType;
       if (pr.billingAddress) addr.input.value = pr.billingAddress;
-      if (["evet", "hayir", "bilmiyorum"].includes(pr.stopajResponsible)) { stopajResp = pr.stopajResponsible; stopajGroup.dk.set(stopajResp); }
+      const reg = pr.taxRegime || ({ evet: "gercek", hayir: "basit" })[pr.stopajResponsible];
+      if (["gercek", "basit", "bilmiyorum"].includes(reg)) { taxRegime = reg; stopajGroup.dk.set(taxRegime); }
       paintBiz();
     }
     if (pr.kvkkAccepted === true) { kvkk = true; kvkkBox.dk.set(true); }
@@ -229,7 +238,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
       return { data: out };
     }
     const businessType = selOf(bizSel).value;
-    const out = { businessType, title: v("title"), taxOffice: v("taxOffice"), billingAddress: addr.input.value.trim(), stopajResponsible: stopajResp, kvkkAccepted: kvkk };
+    const out = { businessType, title: v("title"), taxOffice: v("taxOffice"), billingAddress: addr.input.value.trim(), ...(businessType === "sahis" ? { taxRegime } : {}), kvkkAccepted: kvkk };
     if (out.title.length < 2) return { error: "Unvanı ya da işletme adını gir." };
     if (businessType === "sahis") {
       if (v("vkn")) { if (v("vkn").length !== 10) return { error: "Vergi kimlik numarası 10 haneli olmalı." }; out.vkn = v("vkn"); }

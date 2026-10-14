@@ -944,6 +944,7 @@ export function listenArtistResidencies(uid, cb) {
 
 // Rezidans durum güncelle (sanatçı kabul/ret/iptal) — app setResidencyStatus birebir
 export async function setResidencyStatus(id, status, byUid) {
+  if (status === "active") await assertTaxProfile(byUid);
   await updateDoc(doc(db, "residencies", id), {
     status,
     cancelledBy: status === "cancelled" ? byUid : null,
@@ -1025,7 +1026,21 @@ export async function getInvitationStatus(id) {
 // ── Teklif kabul/ret — app HomeScreen/OfferDetail handleAction AKIŞI BİREBİR ──
 // Kabul: etkinliğe bağla/oluştur (NON-FATAL) → daveti güncelle → konuşmaya statik durum
 // mesajı (best-effort). me = { uid, name }.
+// VERGİ BİLGİSİ KAPISI: sanatçı profilini Vergi Bilgileri olmadan kullanabilir ama mekanla ANLAŞAMAZ (teklif / rezidans kabulü).
+// Kural tarafı: firestore.rules invArtistUpdateOk / invGroupAdminDecisionOk / residencies (taxProfiles/{uid} var olmalı).
+export const TAX_REQUIRED_CODE = "tax-profile-required";
+export async function assertTaxProfile(uid) {
+  if (!uid || String(uid).startsWith("demo_")) return;
+  const s = await getDoc(doc(db, "taxProfiles", uid));
+  if (!s.exists()) {
+    const e = new Error("Teklif kabul etmek için önce Vergi Bilgilerini doldurmalısın.");
+    e.code = TAX_REQUIRED_CODE;
+    throw e;
+  }
+}
+
 export async function respondToOffer(offer, action, me) {
+  if (action === "accept") await assertTaxProfile(me?.uid);
   if (action === "accept") {
     try {
       if (offer.eventId) {

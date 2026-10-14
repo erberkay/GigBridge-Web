@@ -24,7 +24,7 @@ import {
 } from "../../data.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { previewSplit, fmtKurus, fmtApproxKurus, ESTIMATE_NOTE } from "../shared/pay-util.js";
-import "../shared/payments.js";   // yan etki: oranlar (publicConfig/payments → loadPayRates) tahmin için önbelleğe alınır
+import { taxRequiredPrompt, taxBanner } from "../shared/payments.js";   // + yan etki: oranlar (publicConfig/payments → loadPayRates) önbelleğe alınır
 import { svgRaw, svgPath } from "../shared/icons.js";
 import { cx, dkModal, dkToast, dkSkeleton } from "../shared/ui.js";
 import { rgba, trUpper, initials } from "../shared/helpers.js";
@@ -362,8 +362,9 @@ export function artistPanelView(ctx) {
             rememberDecision(uid, o, acc ? "accepted" : "rejected");
             close();
             dkToast(acc ? `${o.venue} teklifini kabul ettin — performans takvime eklendi` : `${o.venue} teklifi reddedildi`, { type: acc ? "ok" : "err" });
-          } catch (_) {
-            dkToast("İşlem gerçekleştirilemedi. (ERR-AHOME-001)", { type: "err" });
+          } catch (e) {
+            if (e?.code === "tax-profile-required") { close(); taxRequiredPrompt(); }
+            else dkToast("İşlem gerçekleştirilemedi. (ERR-AHOME-001)", { type: "err" });
           } finally {
             st.busy.delete(o.id);
             if (alive) {

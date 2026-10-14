@@ -34,7 +34,7 @@ export const TAX_INFO = {
     points: [
       "Şirketin mekana e-Fatura ya da e-Arşiv fatura keser (%20 KDV).",
       "Şirkete yapılan ödemeden %20 serbest meslek stopajı kesilmez; şirket kazancı üzerinden kurumlar vergisi öder.",
-      "Platform üzerinden yapılan ödemelerde %1 e-ticaret vergi kesintisi uygulanabilir (GVK md. 94/19); kesin uygulama mali müşavir onayıyla belirlenir.",
+      "Platform üzerinden yapılan ödemelerde %1 e-ticaret vergi kesintisi uygulanabilir (GVK md. 94/19); uygulanırsa ödeme dökümünde gösterilir.",
     ],
     example: "10.000 TL + 2.000 TL KDV'li faturada: stopaj yok · GigBridge komisyonu %10 + KDV 1.200 TL.",
   },

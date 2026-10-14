@@ -14,7 +14,8 @@
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
 import { db, doc, onSnapshot } from "../../firebase.js";
-import { userById, getVenueReviews, listenArtistOffers, listenArtistAccepted, listenArtistResidencies, respondToOffer, convIdFor } from "../../data.js";
+import { userById, getVenueReviews, listenArtistOffers, listenArtistAccepted, listenArtistResidencies, respondToOffer, convIdFor, TAX_REQUIRED_CODE } from "../../data.js";
+import { taxRequiredPrompt } from "../shared/payments.js";
 import { isDesktop } from "../../viewport.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgRaw } from "../shared/icons.js";
@@ -348,8 +349,9 @@ export function artistTeklifView(ctx) {
       rememberDecision(uid, o, isAcc ? "accepted" : "rejected");
       st.status = isAcc ? "accepted" : "rejected";
       dkToast(isAcc ? `${o.venue} teklifini kabul ettin — performans takvime eklendi` : `${o.venue} teklifi reddedildi`, { type: isAcc ? "ok" : "err" });
-    } catch (_) {
-      dkToast("İşlem tamamlanamadı. İnternet bağlantını kontrol et. (ERR-OFFERDETAIL-001)", { type: "err" });
+    } catch (e) {
+      if (e?.code === TAX_REQUIRED_CODE) taxRequiredPrompt();
+      else dkToast("İşlem tamamlanamadı. İnternet bağlantını kontrol et. (ERR-OFFERDETAIL-001)", { type: "err" });
     } finally {
       st.busy = false; st.ask = null;
       if (alive) {

@@ -852,9 +852,10 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
         S.offerLocal.set(m.invitationId, st);
         if (alive) { setStatus(st); renderHeader(); renderList(); renderPane(false); }
         dkToast(action === "accept" ? `${x.venue || "Mekan"} teklifi kabul edildi ✓` : "Teklif reddedildi", { type: action === "accept" ? "ok" : "err" });
-      } catch (_) {
+      } catch (e) {
         yes.disabled = no.disabled = false; actions.classList.remove("is-busy");
-        dkToast("İşlem başarısız, tekrar dene", { type: "err" });
+        if (e?.code === "tax-profile-required") import("../shared/payments.js").then((m) => m.taxRequiredPrompt());
+        else dkToast("İşlem başarısız, tekrar dene", { type: "err" });
       }
     };
     yes.addEventListener("click", () => respond("accept"));

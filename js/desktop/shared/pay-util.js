@@ -78,6 +78,7 @@ export function toPayment(id, x) {
     platformTakeKurus: num(x?.platformTakeKurus),
     commissionBorneBy: x?.commissionBorneBy === "payer" ? "payer" : "payee",
     paytrFeeKurus: num(x?.paytrFeeKurus),
+    payerWithheldKurus: num(x?.payerWithheldKurus),
     paytrFeeBorneBy: x?.paytrFeeBorneBy === "platform" ? "platform" : "payee",
     withholdings: Array.isArray(x?.withholdings) ? x.withholdings.filter((w) => w && typeof w === "object").map((w) => ({
       type: s(w.type), title: s(w.title), rate: typeof w.rate === "number" ? w.rate : null, base: s(w.base),
@@ -135,7 +136,7 @@ export const commissionText = (kind = "artist_booking") =>
   `%${Math.round((kind === "venue_rental" ? RATES.venueCommissionRate : RATES.artistCommissionRate) * 1000) / 10} komisyon + KDV`
   + (RATES.paytrFeeRate > 0 && RATES.paytrFeeBorneBy !== "platform" ? ` + %${Math.round(RATES.paytrFeeRate * 10000) / 100} PayTR masrafı` : "");
 /** Tahmin altındaki kısa not (uygulamayla aynı metin). */
-export const ESTIMATE_NOTE = "Vergi kesintisi (stopaj) mali müşavir onaylı kurala göre kesinleşir.";
+export const ESTIMATE_NOTE = "Stopaj (GVK md. 94): mekan şirket ya da gerçek usul işletmeyse ücretin %20'sini mekan keser; basit usul mekanda ve şirketi olan sanatçıda kesilmez.";
 
 // ── Finans v2 ödeme kaydı yardımcıları ──
 export const WITHHOLDING_LABEL = { serbest_meslek_stopaj: "Serbest meslek stopajı", eticaret_tevkifat: "E-ticaret vergi tevkifatı", no_withholding: "Kesinti yok" };
@@ -186,7 +187,7 @@ export function payeeBreakdown(p) {
   const out = [{ label: "Ücret", kurus: gross, sign: 0 }];
   const payeeBears = p.commissionBorneBy !== "payer";
   out.push({ label: `Komisyon (%${Math.round((p.commissionRate || 0) * 1000) / 10})${payeeBears ? "" : " · ödeyen karşılar"}`, kurus: p.commissionKurus || 0, sign: payeeBears ? -1 : 0 });
-  out.push({ label: `Komisyon KDV (%${Math.round((p.commissionVatRate || 0) * 1000) / 10})${payeeBears ? "" : " · ödeyen karşılar"}`, kurus: p.commissionVatKurus || 0, sign: payeeBears ? -1 : 0 });
+  out.push({ label: `KDV (%${Math.round((p.commissionVatRate || 0) * 1000) / 10})${payeeBears ? "" : " · ödeyen karşılar"}`, kurus: p.commissionVatKurus || 0, sign: payeeBears ? -1 : 0 });
   (p.withholdings || []).filter((w) => (w.amountKurus || 0) > 0).forEach((w) => out.push({ label: withholdingLine(w), kurus: w.amountKurus, sign: -1 }));
   if ((p.paytrFeeKurus || 0) > 0 && p.paytrFeeBorneBy !== "platform") out.push({ label: "PayTR ödeme masrafı", kurus: p.paytrFeeKurus, sign: -1 });
   out.push({ label: "Size kalan", kurus: p.payeeKurus || 0, sign: 0, strong: true });
@@ -199,6 +200,14 @@ export function payeeBreakdownText(p) {
   if (p.commissionBorneBy !== "payer") parts.push(`komisyon ${fmtKurus(p.commissionKurus)}`, `KDV ${fmtKurus(p.commissionVatKurus)}`);
   if (p.stopajKurus > 0) parts.push(`vergi kesintisi ${fmtKurus(p.stopajKurus)}`);
   return parts.join(" · ");
+}
+
+/** Ödeyen (mekan) satırı: ödemeden kendi kestiği stopaj → vergi dairesine kendisi yatırır + gider pusulası (GVK 94, VUK 234) */
+export function payerWithholdingText(p) {
+  const w = num(p?.payerWithheldKurus);
+  if (p?.fv !== 2 || !(w > 0)) return "";
+  return `Ücret ${fmtKurus(p.grossKurus)} · stopaj ${fmtKurus(w)} sizde kaldı: muhtasar beyannameyle vergi dairesine siz yatırırsınız`
+    + ` · sanatçı vergi kaydı yoksa 7 gün içinde gider pusulası düzenleyin`;
 }
 
 // Ton renkleri (uygulama PaymentCards TONE): warn #FFB347 · ok #7CE0B0 · info #4ED8FF · bad #FF5A6E · muted vapor

@@ -100,12 +100,21 @@ export async function taxProfileNeedsAction() {
   if (isDemoUser() || !myUid()) return false;
   try { const r = await taxProfileCached(); return !r?.exists || r.status === "rejected"; } catch (_) { return false; }
 }
+/** Teklif/rezidans kabulünde vergi bilgisi yoksa (data.js assertTaxProfile → code 'tax-profile-required'): doldur ya da destek. */
+export async function taxRequiredPrompt() {
+  const ok = await dkConfirm({
+    title: "Vergi bilgileri gerekli",
+    body: "Profilini kullanmaya devam edebilirsin, ama mekanlarla anlaşmak (teklif kabul etmek) için önce Vergi Bilgilerini doldurmalısın. Ne seçeceğinden emin değilsen Destek'ten bize yaz.",
+    confirmLabel: "Vergi Bilgilerini doldur", cancelLabel: "Destek'ten bilgi al",
+  });
+  location.hash = ok ? "#/artist/profil?tab=vergi" : "#/artist/profil?tab=vergi&destek=vergi";
+}
 /** "Vergi bilgilerini tamamla" bandı (rol profilindeki Vergi Bilgileri'ne bağlantı). Gerekmiyorsa gizli kalır. */
-export function taxBanner({ href = null } = {}) {
+export function taxBanner({ href = null, text = null } = {}) {
   const role = session.profile?.userType;
   const to = href || (role === "artist" ? "#/artist/profil?tab=vergi" : role === "venue" ? "#/venue/profil?bolum=vergi" : role === "organizer" ? "#/organizer/profil?bolum=vergi" : null);
   const node = h(to ? "a" : "div", { href: to, class: "dk-pay-ibanwarn dk-pay-taxwarn", hidden: true },
-    ic("alertCircle", 14, "#FFB347", "2"), h("span", {}, "Vergi bilgilerini tamamla · ödemelerin finansal incelemede beklemesin"), to ? ic("chevronRight", 14, "#FFB347", "2") : null);
+    ic("alertCircle", 14, "#FFB347", "2"), h("span", {}, text || "Vergi bilgilerini tamamla · ödemelerin finansal incelemede beklemesin"), to ? ic("chevronRight", 14, "#FFB347", "2") : null);
   let alive = true;
   const check = () => taxProfileNeedsAction().then((need) => { if (alive) node.hidden = !need; });
   check();
@@ -396,7 +405,7 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
     return h("div", { class: "dk-pay-break" },
       row("Ücret", U.fmtKurus(est.grossKurus)),
       payeeBears ? row(`Komisyon (%${Math.round(est.commissionRate * 1000) / 10})`, `−${U.fmtKurus(est.commissionKurus)}`) : null,
-      payeeBears ? row(`Komisyon KDV (%${Math.round(est.commissionVatRate * 1000) / 10})`, `−${U.fmtKurus(est.commissionVatKurus)}`) : null,
+      payeeBears ? row(`KDV (%${Math.round(est.commissionVatRate * 1000) / 10})`, `−${U.fmtKurus(est.commissionVatKurus)}`) : null,
       row(`Tahmini stopaj (%${Math.round(est.estimateStopajRate * 1000) / 10})`, `−${U.fmtKurus(est.stopajKurus)}`),
       est.paytrFeeKurus > 0 ? row("PayTR ödeme masrafı", `−${U.fmtKurus(est.paytrFeeKurus)}`) : null,
       row("Sana kalacak (tahmini)", `≈ ${U.fmtApproxKurus(est.payeeKurus)}`, { strong: true, color: "#7CE0B0" }),

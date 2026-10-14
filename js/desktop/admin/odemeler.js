@@ -12,6 +12,7 @@ import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon } from "../shared/icons.js";
 import { cx, dkChip, dkPageHero, dkSkeleton, dkButton, dkInput, dkSelect, dkTextarea, dkSwitch, dkToast, dkConfirm, dkDrawer, dkStatusBadge, dkInlineMessage } from "../shared/ui.js";
 import { rateSummary } from "../shared/rate-summary.js";
+import { priceCalculator } from "../shared/price-calculator.js";
 import { writeQuery } from "../shared/helpers.js";
 import {
   payApi, payBadge, fmtKurus, fmtDTShort, paymentErrorText, serviceTermsView, evidenceGallery, openImageViewer,
@@ -160,6 +161,7 @@ export function adminOdemelerView(ctx) {
   let cfg = null, savingCfg = false, taxRules = [];
   // Oran özeti: her ayarın 10.000 TL örnekte neyi değiştirdiği + onaylı vergi kuralları + senaryolar (muhasebeci dili)
   const summary = rateSummary();
+  const calc = priceCalculator();
   const pct = (v) => String(Math.round((Number(v) || 0) * 1000) / 10);
   async function saveCfg(patch) {
     savingCfg = true; drawCfg();
@@ -219,11 +221,12 @@ export function adminOdemelerView(ctx) {
         paytrFeeRate: n(fee, cfg.paytrFeeRate), artistCommissionBorneBy: aBorne.querySelector("select").value, venueCommissionBorneBy: vBorne.querySelector("select").value,
         paytrFeeBorneBy: feeBorne.querySelector("select").value };
     };
-    const live = () => summary.update(draft(), taxRules);
+    const live = () => { summary.update(draft(), taxRules); calc.update(draft()); };
     [a, v, vat, est, fee].forEach((el) => el.addEventListener("input", live));
     [aBorne, vBorne, feeBorne].forEach((el) => el.addEventListener("change", live));
     vatSw.addEventListener("click", () => setTimeout(live, 0));
     summary.update(cfg, taxRules);
+    calc.update(cfg);
     const line = (label, subTxt, ctl) => h("div", { class: "dk-admin-etk-row" }, h("span", { class: "dk-admin-etk-who" }, h("span", { class: "dk-admin-etk-n" }, label), subTxt ? h("span", { class: "dk-admin-etk-e" }, subTxt) : null), ctl);
     cfgBox.replaceChildren(
       line("Sanatçı komisyonu (%)", null, a),
@@ -232,7 +235,7 @@ export function adminOdemelerView(ctx) {
       line("Komisyon KDV dahil", "Açıkken KDV komisyon tutarının içinden ayrılır; kapalıyken üstüne eklenir", vatSw),
       line("Komisyonu karşılayan · sanatçı kiralama", "Alıcı: payından düşer · Ödeyen: brütün üstüne eklenir", aBorne),
       line("Komisyonu karşılayan · mekan kiralama", null, vBorne),
-      line("Tahmini stopaj (%)", "Yalnız ödeme öncesi tahmin; kesin kesinti onaylı vergi kuralından", est),
+      line("Tahmini stopaj (%)", "Yalnız ödeme öncesi ekrandaki tahmin; gerçek kesinti kanuna göre (GVK md. 94)", est),
       line("PayTR masraf oranı (%)", "PayTR'nin tahsilattan aldığı oran (sözleşmedeki)", fee),
       line("PayTR masrafını karşılayan", "Alıcı: sanatçının payından düşer, \"cebine girecek\" fiyat girişinde fiyata eklenir · GigBridge: komisyondan karşılanır", feeBorne),
       h("div", { class: "dk-admin-etk-tools" }, saveRates),
@@ -260,7 +263,7 @@ export function adminOdemelerView(ctx) {
     h("div", { class: "dk-admin-etk-form" }, h("div", { class: `${P}-note` }, svgIcon("info", { size: 14, color: "#8A8E97" }),
       h("span", {}, "Aktarımlar her gün 08:00'de yapılır (PayTR: ödeme günü aktarım yok, 10:00 sonrası istekler ertesi gün işlenir). Belirsiz sonuçlu aktarımları PayTR mağaza panelinden kontrol etmeden yeniden serbest bırakma."))));
 
-  root.append(hero, h("div", { class: cx("dk-admin-panel-grid", "dk-admin-etk-g2") }, h("div", { class: "dk-admin-etk-col" }, listCard, summary.el), h("div", { class: "dk-admin-etk-col" }, cfgCard, noteCard)));
+  root.append(hero, h("div", { class: cx("dk-admin-panel-grid", "dk-admin-etk-g2") }, h("div", { class: "dk-admin-etk-col" }, listCard, calc.el, summary.el), h("div", { class: "dk-admin-etk-col" }, cfgCard, noteCard)));
 
   // ══════════ şikayet çekmecesi (AdminDisputeModal) ══════════
   let drawer = null, drawerOid = null;

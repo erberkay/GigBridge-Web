@@ -21,7 +21,7 @@ import { writeQuery, ROLE_COLORS } from "../shared/helpers.js";
 import {
   listenMyPayments, loadDueItems, loadVenueRentals, paymentCard, escrowNote, paymentActions, payBadge, openDisputeDrawer,
   payoutAccountCard, legalLinks, fmtKurus, earnedSummary, paidSummary, payerHistoryLabel, isOid, isDemoUser, fmtDay,
-  payeeBreakdownText, paymentDocBlock, taxBanner, isPaidStatus, commissionText,
+  payeeBreakdownText, payerWithholdingText, paymentDocBlock, taxBanner, isPaidStatus, commissionText,
 } from "../shared/payments.js";
 
 const C = "dk-odeme";
@@ -173,6 +173,7 @@ export function odemelerView(ctx) {
         h("span", { class: `${C}-hs` }, sub.filter(Boolean).join(" · ")),
         h("span", { class: `${C}-hf` }, side === "payer" ? payBadge(p.status, side, payerHistoryLabel(p)) : payBadge(p.status, side), p.testMode ? h("span", { class: `${C}-test` }, "TEST") : null),
         side === "payee" ? h("span", { class: `${C}-hb` }, payeeBreakdownText(p)) : null,
+        side === "payer" && payerWithholdingText(p) ? h("span", { class: `${C}-hb`, style: { color: "#FFB347" } }, payerWithholdingText(p)) : null,
         side === "payer" && p.payerRefundDueKurus > 0 ? h("span", { class: `${C}-hb`, style: { color: "#7CE0B0" } }, `Vergi farkı iadesi ${fmtKurus(p.payerRefundDueKurus)}`) : null,
         refunded > 0 ? h("span", { class: `${C}-hb` }, refunded >= p.grossKurus ? `${fmtKurus(refunded)} iade edildi` : `İade ${fmtKurus(refunded)} · ödenen net ${fmtKurus(p.grossKurus - refunded)}`) : null,
         acts,

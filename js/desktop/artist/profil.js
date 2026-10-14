@@ -861,9 +861,20 @@ export function artistProfilView(ctx) {
     // Sana kalacak ≈ (tahmini): brütten Finans v2 formülüyle (✓ ise tahmini stopaj düşülü)
     const net = (v) => { const n = Number(String(v || "").replace(/[^\d]/g, "")); return n > 0 ? fmtApproxKurus(previewSplit(n, "artist_booking", { includeTaxes: true }).payeeKurus) : null; };
     const na = net(D.priceMin), nb = net(D.priceMax);
-    priceNet.textContent = (a || b)
+    const summary = (a || b)
       ? `Mekanın göreceği fiyat: ${[a && `minimum ${a}`, b && `maksimum ${b}`].filter(Boolean).join(" · ")} (${commissionText()}${taxIncl ? " ve tahmini stopaj" : ""} eklenmiş). Sana kalacak ≈ ${[na, nb].filter(Boolean).join(" – ")} (tahmini).`
       : "";
+    // Kesinti dökümü (minimum fiyat; yoksa maksimum): brüt − komisyon − KDV − tahmini stopaj − PayTR = sana kalan
+    const gN = Number(String(D.priceMin || D.priceMax || "").replace(/[^\d]/g, ""));
+    const lines = [];
+    if (gN > 0) {
+      const sp = previewSplit(gN, "artist_booking", { includeTaxes: true });
+      const cut = (label, kurus) => (kurus > 0 ? ` − ${label} ${fmtKurus(kurus)}` : "");
+      lines.push(`Kesintiler (${fmtKurus(sp.grossKurus)} üzerinden):${sp.commissionBorneBy === "payee" ? cut("komisyon", sp.commissionKurus) + cut("KDV", sp.commissionVatKurus) : ""}`
+        + `${cut("tahmini stopaj", sp.stopajKurus)}${cut("PayTR masrafı", sp.paytrFeeKurus || 0)} = sana ${fmtApproxKurus(sp.payeeKurus)}`);
+    }
+    priceNet.replaceChildren(...(summary ? [h("span", { style: { display: "block" } }, summary)] : []),
+      ...lines.map((t) => h("span", { style: { display: "block", marginTop: "4px", fontWeight: "600" } }, t)));
     const e = priceError();
     priceAlert.hidden = !e;
     priceAlert.textContent = e ? e.msg : "";
