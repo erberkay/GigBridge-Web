@@ -23,6 +23,7 @@ import { rgba, trUpper, initials } from "../shared/helpers.js";
 import { genreColor } from "../shared/genres.js";
 import { routeReady } from "../registry.js";
 import { escrowNote } from "../shared/payments.js";
+import { previewSplit, fmtKurus } from "../shared/pay-util.js";
 import {
   STATUS, DOW_UP, DOW_LONG, isoToTR, toISOKey, toISODate, expandOccurrences, offerFromDoc, offerWhen, offerSortKey, meOf,
   rememberDecision, cachedOffer, cacheOffers,
@@ -290,7 +291,13 @@ export function artistTeklifView(ctx) {
       h("div", { class: cls("feerow") },
         h("span", { class: cx(cls("fee"), !feeNum && "is-none") }, o.fee),
         h("span", { class: cls("sbadge"), style: { color: sc.c, borderColor: rgba(sc.c, 0.4), background: rgba(sc.c, 0.08) } }, sc.label)),
-      h("span", { class: cls("line") }, `${offerWhen(o)} · ${o.venue}`));
+      h("span", { class: cls("line") }, `${offerWhen(o)} · ${o.venue}`),
+      // Kabulden önce: sanatçının hesabına kalacak TAHMİNİ tutar (%10 komisyon + KDV hariç matrahtan %1 stopaj — sunucu computeSplit)
+      ...(k !== "accepted" && feeNum ? (() => {
+        const n = Number(String(o.fee).replace(/[^\d]/g, ""));
+        return n > 0 ? [h("span", { class: cls("line"), style: { color: "#C9CBD0" }, title: "%10 GigBridge komisyonu ve %1 stopaj düşülmüş tahmini tutar. Mekanın keseceği yasal kesintiler ve kendi vergi yükümlülüklerin dahil değildir." },
+          `Sana kalacak ≈ ${fmtKurus(previewSplit(n, "artist_booking").payeeKurus)}`)] : [];
+      })() : []));
     const pending = k === "pending";
     bar.hidden = !(pending && !st.ask);
     barFee.textContent = o.fee;

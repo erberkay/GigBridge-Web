@@ -38,6 +38,7 @@ import {
   sendPasswordResetMail, sendPasswordResetEmail,
 } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
+import { previewSplit, fmtKurus } from "../shared/pay-util.js";
 import { cx, dkAvatar, dkModal, dkConfirm, dkToast, dkLoginGate, dkInput, dkLabel } from "../shared/ui.js";
 import { svgRaw, svgPath } from "../shared/icons.js";
 import { rgba, fold, matchText, kFmt, fmtTL, writeQuery, swapAnim, PROVINCES, initials } from "../shared/helpers.js";
@@ -565,6 +566,8 @@ export function artistProfilView(ctx) {
 
   // ── Ücret ──
   const priceAlert = h("span", { class: k("alert"), role: "alert", hidden: true });
+  // Girilen ücretten sanatçının hesabına kalacak TAHMİNİ tutar (%10 komisyon + KDV hariç matrahtan %1 stopaj — sunucu computeSplit)
+  const priceNet = h("p", { class: k("callout"), "aria-live": "polite", hidden: true });
   const minIn = input("priceMin", { ph: "En az 3.500", type: "number", mono: true });
   const maxIn = input("priceMax", { ph: "Örn. 10.000", type: "number", mono: true });
   panels.ucret = h("div", { class: k("panel") },
@@ -572,6 +575,7 @@ export function artistProfilView(ctx) {
       field("MİNİMUM ÜCRET (₺)", minIn), field("MAKSİMUM ÜCRET (₺)", maxIn),
       field("FİYAT TİPİ", select("priceType", PRICE_TYPE_OPTS, { fs14: true }))),
     priceAlert,
+    priceNet,
     h("p", { class: k("callout") }, "Sanatçılar en az ₺3.500 ücretle sahne alabilir. Fiyat tipi profilinde “Başlangıç ₺…” veya “Sabit ₺…” rozeti olarak gösterilir."),
     field("KAPORA NOTU (OPSİYONEL)", input("deposit", { ph: "örn. %30 kapora rezervasyonu kesinleştirir", maxlength: 160 }), { hintEl: hint("En çok 160 karakter.") }),
     field("İPTAL POLİTİKASI", select("cancel", CANCELLATION_OPTS, { fs14: true }), { max: 360 }));
@@ -806,6 +810,10 @@ export function artistProfilView(ctx) {
     return null;
   }
   function livePrice() {
+    const net = (v) => { const n = Number(String(v || "").replace(/[^\d]/g, "")); return n > 0 ? fmtKurus(previewSplit(n, "artist_booking").payeeKurus) : null; };
+    const a = net(D.priceMin), b = net(D.priceMax);
+    priceNet.hidden = !a && !b;
+    priceNet.textContent = (a || b) ? `Sana kalacak ≈ ${[a && `minimumda ${a}`, b && `maksimumda ${b}`].filter(Boolean).join(" · ")} (%10 GigBridge komisyonu ve %1 stopaj düşülmüş tahmini tutar; mekanın keseceği yasal kesintiler ve kendi vergi yükümlülüklerin dahil değildir.)` : "";
     const e = priceError();
     priceAlert.hidden = !e;
     priceAlert.textContent = e ? e.msg : "";
