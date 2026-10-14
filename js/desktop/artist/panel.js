@@ -23,6 +23,7 @@ import {
   respondToOffer, setResidencyStatus, syncResidentDenorm, pushAppNotification,
 } from "../../data.js";
 import { panelShell } from "../shared/panel-shell.js";
+import { previewSplit, fmtKurus } from "../shared/pay-util.js";
 import { svgRaw, svgPath } from "../shared/icons.js";
 import { cx, dkModal, dkToast, dkSkeleton } from "../shared/ui.js";
 import { rgba, trUpper, initials } from "../shared/helpers.js";
@@ -315,7 +316,11 @@ export function artistPanelView(ctx) {
         h("span", { class: cls("l1") }, h("a", { href, class: cls("vname"), title: o.venue }, o.venue), o.genre && o.genre !== "—" ? genreChip(o.genre) : null),
         h("span", { class: cls("when") }, offerWhen(o)),
         o.message ? h("span", { class: cls("msg") }, `“${o.message}”`) : null),
-      h("span", { role: "cell", class: cls("fee") }, o.fee),
+      h("span", { role: "cell", class: cls("fee") }, o.fee,
+        // Sanatçının hesabına kalacak TAHMİNİ tutar (%10 komisyon + %1 stopaj — sunucu computeSplit); karttan direkt kabulden önce görsün
+        (() => { const n = parseTL(o.feeRaw); return n > 0 && status !== "accepted"
+          ? h("span", { style: { display: "block", fontSize: "11px", fontWeight: "600", color: "#C9CBD0", marginTop: "2px" } }, `Sana kalacak ≈ ${fmtKurus(previewSplit(n, "artist_booking").payeeKurus)}`)
+          : null; })()),
       h("span", { role: "cell", class: cls("stcell") }, statusBadge(status)),
       h("div", { role: "cell", class: cls("acts") }, ...acts));
     row.addEventListener("click", (e) => { if (e.target.closest("a,button")) return; location.hash = href; });
