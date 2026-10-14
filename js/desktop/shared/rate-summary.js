@@ -1,7 +1,7 @@
 /**
  * ORAN ÖZETİ (admin Ödemeler / Finans) — "hangi ayar neyi değiştirir, kim neyi neden öder" — muhasebecinin okuyacağı dille.
- * 10.000 TL brüt sahne bedeli örneği GÜNCEL (ya da düzenlenmekte olan) ayarlarla hesaplanır; vergi kesintisi satırları
- * Finans › Vergi Kuralları'ndaki ONAYLI kurallarla eşleştirilir (functions/finance.js evaluateRules ile aynı koşul mantığı).
+ * 10.000 TL brüt sahne bedeli örneği GÜNCEL (ya da düzenlenmekte olan) ayarlarla hesaplanır. Vergi kesintisi: önce Finans ›
+ * Vergi Kuralları'nda onaylı kural, yoksa KANUNİ kural (functions/finance.js STATUTORY_RULES — GVK md. 94) — sunucuyla aynı mantık.
  *   const s = rateSummary(); s.update(cfg, rules)  → s.el
  */
 import { h } from "../../ui.js";
@@ -35,7 +35,13 @@ function matchRules(rules, sc) {
     if (c.groupPayee === true) return false;
     return true;
   });
-  if (!m.length) return { ok: false, text: "Onaylı kural yok → Finansal İnceleme" };
+  if (!m.length) {
+    // Kanuni kural (finance.js STATUTORY_RULES): A/B sanatçı + stopaj sorumlusu mekan → %20 mekan keser; aksi halde kesinti yok
+    if (!sc.statutory) return { ok: false, text: "Kural yok → Finansal İnceleme" };
+    if (sc.cat === "C" || sc.payer === "hayir") return { ok: true, rules: [], text: "Kanun: kesinti yok" };
+    if (sc.payer === "evet") return { ok: true, rules: [{ type: "serbest_meslek_stopaj", rate: 0.2 }], text: "Kanun: GVK 94 · %20 stopaj" };
+    return { ok: false, text: "Mekanın durumu belirsiz → Finansal İnceleme" };
+  }
   const w = m.filter((r) => r.type !== "no_withholding");
   const types = w.map((r) => r.type);
   const pairOk = w.every((a) => w.every((b) => a === b || ((a.combinableWith || []).includes(b.type) && (b.combinableWith || []).includes(a.type))));
@@ -43,18 +49,18 @@ function matchRules(rules, sc) {
   return { ok: true, rules: w, text: w.length ? `Onaylı: ${w.map((r) => `${WH[r.type]} ${pct(r.rate)}`).join(" + ")}` : "Onaylı: kesinti yok" };
 }
 
-// Araştırma önerisi (müşavir onayı bekler) — sanatçı kiralama, 10.000 TL
-const PROPOSAL = [
-  { cat: "A_arizi", artist: "Vergi mükellefi değil", payer: "evet", payerTxt: "Stopaj sorumlusu (şirket / işletme)",
+// Kanuni senaryolar (GVK md. 94/2-b; basit usul mekan stopaj sorumlusu değil — GVK 94 son fıkra, Ltd/AŞ'ye ödeme stopaja tabi değil)
+const SCENARIOS = [
+  { cat: "A_arizi", artist: "Vergi kaydı yok", payer: "evet", payerTxt: "Şirket / gerçek usul",
     w: [{ type: "serbest_meslek_stopaj", rate: 0.2, base: "gross", responsible: "payer" }], who: "Mekan keser, muhtasarla öder", doc: "Gider pusulası (mekan)", law: "GVK 94/2-b" },
-  { cat: "A_arizi", artist: "Vergi mükellefi değil", payer: "hayir", payerTxt: "Stopaj sorumlusu değil",
-    w: [], who: "—", doc: "Müşavir belirler", law: "—" },
-  { cat: "B", artist: "Serbest meslek mükellefi", payer: "evet", payerTxt: "Stopaj sorumlusu",
+  { cat: "A_arizi", artist: "Vergi kaydı yok", payer: "hayir", payerTxt: "Basit usul esnaf",
+    w: [], who: "—", doc: "Gider pusulası (mekan)", law: "GVK 94" },
+  { cat: "B", artist: "Şahıs şirketi (serbest meslek)", payer: "evet", payerTxt: "Şirket / gerçek usul",
     w: [{ type: "serbest_meslek_stopaj", rate: 0.2, base: "gross", responsible: "payer" }], who: "Mekan keser, muhtasarla öder", doc: "e-SMM (sanatçı)", law: "GVK 94/2-b" },
-  { cat: "B", artist: "Serbest meslek mükellefi", payer: "hayir", payerTxt: "Stopaj sorumlusu değil",
-    w: [{ type: "eticaret_tevkifat", rate: 0.01, base: "gross_excl_vat", responsible: "platform" }], who: "GigBridge keser, muhtasarla öder", doc: "e-SMM (sanatçı)", law: "GVK 94/19 · 330 Sıra No.lu GVGT" },
-  { cat: "C", artist: "Şirket / ajans", payer: "evet", payerTxt: "Fark etmez",
-    w: [{ type: "eticaret_tevkifat", rate: 0.01, base: "gross_excl_vat", responsible: "platform" }], who: "GigBridge keser, muhtasarla öder", doc: "e-Fatura (şirket)", law: "KVK 15 · 330 Sıra No.lu GVGT" },
+  { cat: "B", artist: "Şahıs şirketi (serbest meslek)", payer: "hayir", payerTxt: "Basit usul esnaf",
+    w: [], who: "—", doc: "e-SMM (sanatçı)", law: "GVK 94" },
+  { cat: "C", artist: "Ltd / AŞ şirketi", payer: "evet", payerTxt: "Fark etmez",
+    w: [], who: "—", doc: "e-Fatura (şirket)", law: "KVK — stopaj yok" },
 ];
 
 export function rateSummary() {
@@ -76,11 +82,11 @@ export function rateSummary() {
     const estPayee = G - (a.borne === "payee" ? a.take : 0) - Math.round(G * est) - feeOnPayee;
     const settings = [
       li(`Sanatçı komisyonu: ${pct(a.cr)}`, a.cr ? `Sanatçı kiralamada GigBridge'in aracılık bedeli. 10.000 TL'lik işte ${tl(a.c)} (KDV hariç). GigBridge'in geliri budur.` : "Sanatçı kiralamada komisyon alınmaz."),
-      li(`Komisyon KDV oranı: ${pct(a.v)}`, a.cr ? `Komisyona eklenen KDV: ${tl(a.vat)}. Bu GigBridge'in geliri değil; komisyon faturasıyla devlete beyan edilir. Toplam kesilen: ${tl(a.take)}.` : "Komisyon olmadığı için KDV de yok."),
+      li(`Komisyon KDV oranı: ${pct(a.v)} (yasal)`, a.cr ? `Komisyona eklenen KDV: ${tl(a.vat)}. Bu GigBridge'in geliri değil; komisyon faturasıyla devlete beyan edilir. Toplam kesilen: ${tl(a.take)}.` : "Komisyon olmadığı için KDV de yok."),
       li(`Komisyon KDV dahil: ${aIncl ? "Açık" : "Kapalı"}`, aIncl ? `KDV komisyonun İÇİNDEN ayrılır: toplam ${tl(a.take)} (${tl(a.c)} + ${tl(a.vat)} KDV). Kapatırsan KDV üstüne eklenir ve kesinti büyür.` : `KDV komisyonun ÜSTÜNE eklenir: ${tl(a.c)} + ${tl(a.vat)} = ${tl(a.take)}. Açarsan toplam kesinti ${tl(Math.round(G * a.cr))} olur (KDV içinde).`),
       li(`Komisyonu karşılayan (sanatçı): ${a.borne === "payer" ? "Ödeyen" : "Alıcı"}`, a.borne === "payer" ? `Mekan 10.000 TL + ${tl(a.take)} = ${tl(G + a.take)} öder; sanatçının payından komisyon düşmez.` : `Mekan 10.000 TL öder; ${tl(a.take)} sanatçının payından düşer.`),
       li(`Mekan komisyonu: ${pct(v.cr)}`, v.cr ? `Mekan kiralamada (organizatör mekanı kiralar) ${tl(v.c)} + ${tl(v.vat)} KDV; ${v.borne === "payer" ? "organizatör üstüne öder" : "mekanın payından düşer"}.` : "Mekan kiralamada GigBridge komisyon almaz."),
-      li(`Tahmini stopaj: ${pct(est)}`, `YALNIZ ekrandaki tahmin. Sanatçıya teklifte "Sana kalacak ≈ ${tl(estPayee)}" gösterilir (en kötü durum). Gerçek kesintiyi DEĞİŞTİRMEZ; gerçek kesinti aşağıdaki onaylı kurallardan gelir.`),
+      li(`Tahmini stopaj: ${pct(est)}`, `YALNIZ ekrandaki tahmin. Sanatçıya teklifte "Sana kalacak ≈ ${tl(estPayee)}" gösterilir (en kötü durum). Gerçek kesintiyi DEĞİŞTİRMEZ; gerçek kesinti kanuna göre (aşağıda) belirlenir.`),
       li(`PayTR masrafı: ${pct(cfg.paytrFeeRate ?? 0)} · ${cfg.paytrFeeBorneBy === "platform" ? "GigBridge karşılar" : "sanatçının payından"}`, !(cfg.paytrFeeRate > 0)
         ? "Oran girilmedi (%0): PayTR masrafı hesaba katılmıyor. PayTR sözleşmesindeki oranı gir."
         : cfg.paytrFeeBorneBy === "platform"
@@ -103,14 +109,17 @@ export function rateSummary() {
     };
     const ruleList = approved.length
       ? approved.map((r) => li(`Eğer ${cond(r)}`, `${WH[r.type]}${r.type === "no_withholding" ? "" : ` ${pct(r.rate)} (matrah: ${r.base === "gross_excl_vat" ? "KDV hariç brüt" : "brüt"}) → ${resp(r)}`}. Onay: ${r.approvedByName || "—"} · ${r.approvalRef || "—"} · v${r.version || 1}`))
-      : [dkInlineMessage("err", "Onaylı vergi kuralı yok: şu an HİÇBİR ödemede stopaj veya tevkifat kesilmiyor. Vergi durumu belirlenemeyen ödemeler sanatçıya aktarılmadan önce \"Finansal İnceleme\"ye düşer; kararı sen verirsin.")];
+      : [statutory
+        ? li("Kanuni kurallar (GVK md. 94)", "Vergi kaydı olmayan ya da şahıs şirketi olan sanatçıya, şirket ya da gerçek usul mekan ödeme yaparsa %20 stopajı MEKAN keser: mekan PayTR'den o kadar az öder, stopajı muhtasarla kendisi yatırır. Basit usul mekan ve Ltd / AŞ sanatçıda kesinti yok. Vergi bilgisi eksik ya da mekanın durumu belirsizse ödeme aktarılmadan önce Finansal İncelemeye düşer.")
+        : dkInlineMessage("err", "Kanuni kurallar kapalı ve kayıtlı kural yok: vergi durumu belirlenemeyen ödemeler Finansal İncelemeye düşer.")];
 
-    const rows = PROPOSAL.map((s) => {
+    const statutory = cfg.useStatutoryRules !== false;
+    const rows = SCENARIOS.map((s) => {
       const whK = s.w.reduce((t, w) => t + whAmount(w), 0);
       const payerW = s.w.filter((w) => w.responsible === "payer").reduce((t, w) => t + whAmount(w), 0);
       const charge = G - payerW + (a.borne === "payer" ? a.take : 0);
       const payee = G - (a.borne === "payee" ? a.take : 0) - whK - (cfg.paytrFeeBorneBy === "platform" ? 0 : Math.round(charge * (cfg.paytrFeeRate || 0)));
-      const sys = matchRules(rules, { kind: "artist_booking", cat: s.cat, payer: s.payer });
+      const sys = matchRules(rules, { kind: "artist_booking", cat: s.cat, payer: s.payer, statutory });
       return h("tr", { style: { cursor: "default" } },
         h("td", {}, s.artist), h("td", {}, s.payerTxt),
         h("td", {}, s.w.length ? s.w.map((w) => `${WH[w.type]} ${pct(w.rate)} = ${tl(whAmount(w))}`).join(" + ") : "Kesinti yok"),
@@ -128,10 +137,9 @@ export function rateSummary() {
       h("div", { class: "dk-admin-etk-form", style: { gap: "0" } },
         p("Muhasebeci / mali müşavir için özet. Örnek: 10.000 TL brüt sahne bedeli, sağdaki ayarlarla (değiştirdikçe burası anında güncellenir)."),
         head("1", "HER AYAR NEYİ DEĞİŞTİRİR"), ...settings,
-        head("2", "VERGİ KESİNTİLERİ — YALNIZ MÜŞAVİR ONAYLI KURALLA"), ...ruleList,
-        head("3", "SENARYOLAR — ARAŞTIRMA ÖNERİSİ (MÜŞAVİR TEYİDİ BEKLER)"), table,
-        p("\"Sistemde\" sütunu: o senaryo için onaylı kural varsa kesinti otomatik uygulanır; yoksa ödeme Finansal İncelemeye düşer. Kuralları Finans › Vergi Kuralları'ndan müşavirin onayıyla gir.", { marginTop: "10px", color: "#8A8E97" }),
-        p("Müşavire sorulacaklar: serbest meslek mükellefinde %20 stopaj ile %1 e-ticaret tevkifatı birlikte kesilir mi? Mükellef olmayan sanatçının arızi kazancında (yıllık 350.000 TL istisna) mekan yine %20 keser mi? PayTR dekontu gider pusulası yerine geçer mi? Komisyon faturası sanatçıya mı mekana mı kesilir?", { marginTop: "6px", color: "#8A8E97" })));
+        head("2", "VERGİ KESİNTİLERİ — KANUNA GÖRE"), ...ruleList,
+        head("3", "SENARYOLAR — 10.000 TL, GÜNCEL AYARLARLA"), table,
+        p("\"Sistemde\" sütunu: ödeme anında sistemin uygulayacağı kesinti. Finans › Vergi Kuralları'na kayıtlı bir kural varsa o kanuni kuralın önüne geçer.", { marginTop: "10px", color: "#8A8E97" })));
   }
   return { el, update };
 }

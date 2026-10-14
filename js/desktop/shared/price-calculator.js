@@ -71,7 +71,7 @@ export function priceCalculator() {
       !s.payerBears ? row(`KDV (${pct(s.v)})`, `−${tl(s.vat)}`) : null,
       s.fee ? row(`PayTR masrafı (${pct(cfg.paytrFeeRate)})${s.feeOnPayee ? "" : " · GigBridge karşılar"}`, s.feeOnPayee ? `−${tl(s.fee)}` : tl(s.fee)) : null,
       row("SANATÇIYA AKTARILACAK", tl(s.payee), { strong: true, big: true, color: "#7CE0B0" }),
-      row("GigBridge'de kalan (komisyon + KDV − PayTR)", tl(s.take - s.fee)),
+      row(s.feeOnPayee ? "GigBridge'de kalan (komisyon + KDV; PayTR sanatçıdan)" : "GigBridge'de kalan (komisyon + KDV − PayTR)", tl(s.take - (s.feeOnPayee ? 0 : s.fee))),
       note(a === "B" || a === "C"
         ? "Şahıs şirketi ya da şirketi olan sanatçı makbuz / faturasına her durumda %20 KDV ekler; bu KDV şu an ödemeye dahil edilmiyor."
         : "Vergi kaydı olmayan sanatçının ücretine KDV eklenmez; mekan gider pusulası düzenler."),

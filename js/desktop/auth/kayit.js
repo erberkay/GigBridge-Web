@@ -206,6 +206,7 @@ export function kayitView(ctx) {
           ...(role === "organizer" ? { orgName: nm } : {}),
           ...(ROLE_META[role].city && ct ? { city: ct } : {}), // sanatçı / mekan / ajans
           ...(role === "agency" ? { agencyServices: services } : {}),
+          ...(role === "customer" ? { privacySettings: { anonymousAttendance: true } } : {}), // YENİ dinleyici: katılımcı listelerinde başta anonim (Profil'den açar)
         });
         try { await sendEmailVerification(user); } catch (_) { disarm({ accountCreated: true }); } // doğrulama bağlantısı (gönderilemezse geri sayım yok)
         location.hash = "#/verify"; // önce e-posta doğrulama (router zaten oraya geçmiş olabilir)

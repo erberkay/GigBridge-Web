@@ -395,7 +395,7 @@ export function register() {
         const { user } = await createUserWithEmailAndPassword(auth, email, pass);
         try { await updateProfile(user, { displayName: name }); } catch (_) {}
         await setDoc(doc(db, "users", user.uid), {
-          displayName: name, email: user.email, userType: role, photoURL: null,
+          displayName: name, email: user.email, userType: role, photoURL: null, ...(role === "customer" ? { privacySettings: { anonymousAttendance: true } } : {}),
           createdAt: serverTimestamp(),
           termsVersion: TERMS_VERSION, termsAcceptedAt: serverTimestamp(), // kayıt formunda gösterilen Topluluk Kuralları onayı (uygulamayla aynı sürüm)
           ...roleFields(role, name, city, services),
@@ -470,7 +470,7 @@ export function registerModal() {
         const { user } = await createUserWithEmailAndPassword(auth, email, pass);
         try { await updateProfile(user, { displayName: name }); } catch (_) {}
         await setDoc(doc(db, "users", user.uid), {
-          displayName: name, email: user.email, userType: role, photoURL: null,
+          displayName: name, email: user.email, userType: role, photoURL: null, ...(role === "customer" ? { privacySettings: { anonymousAttendance: true } } : {}),
           createdAt: serverTimestamp(),
           termsVersion: TERMS_VERSION, termsAcceptedAt: serverTimestamp(), // kayıt formunda gösterilen Topluluk Kuralları onayı (uygulamayla aynı sürüm)
           ...roleFields(role, name, city, services),
@@ -681,7 +681,7 @@ export function setup() {
     const b = q("#sbtn"); b.disabled = true; b.querySelector("span").textContent = "Kaydediliyor…";
     try {
       await setDoc(doc(db, "users", u.uid), {
-        displayName: name, email: u.email, userType: role, photoURL: u.photoURL ?? null,
+        displayName: name, email: u.email, userType: role, photoURL: u.photoURL ?? null, ...(role === "customer" ? { privacySettings: { anonymousAttendance: true } } : {}),
         createdAt: serverTimestamp(),
         ...roleFields(role, name, city, services),
       });

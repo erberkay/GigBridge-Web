@@ -153,6 +153,7 @@ export function rolSecView(/* ctx */) {
         ...(role === "organizer" ? { orgName: name } : {}),
         ...(ROLE_META[role].city && city ? { city } : {}), // sanatçı / mekan / ajans
         ...(role === "agency" ? { agencyServices: services } : {}),
+        ...(role === "customer" ? { privacySettings: { anonymousAttendance: true } } : {}), // YENİ dinleyici: katılımcı listelerinde başta anonim (Profil'den açar)
       });
       clearPendingRole();
       await refreshProfile(); // emit → router: homeRouteFor(profile)

@@ -175,7 +175,8 @@ export function adminOdemelerView(ctx) {
     const v = dkInput({ size: 40, value: pct(cfg.venueCommissionRate), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Mekan komisyonu (%)" } });
     // Finans v2: komisyon KDV'si (oran + dahil/hariç), komisyonu karşılayan (tür başına), tahmini stopaj (yalnız ödeme öncesi tahmin)
     // ve tahmini PayTR masrafı (finans tablosu). Kesin stopaj oranı burada DEĞİL — Finans › Vergi Kuralları (müşavir onaylı).
-    const vat = dkInput({ size: 40, value: pct(cfg.commissionVatRate ?? 0.2), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Komisyon KDV oranı (%)" } });
+    // KDV oranı YASAL (KDV Kanunu; genel oran %20) — elle değiştirilmez, salt okunur gösterilir; değer sunucu config'inden gelir.
+    const vat = dkInput({ size: 40, value: pct(cfg.commissionVatRate ?? 0.2), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Komisyon KDV oranı (%) — yasal, değiştirilemez", readonly: "readonly", disabled: "disabled" } });
     const est = dkInput({ size: 40, value: pct(cfg.estimateStopajRate ?? 0.2), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Tahmini stopaj (%)" } });
     const fee = dkInput({ size: 40, value: pct(cfg.paytrFeeRate ?? 0), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "PayTR masraf oranı (%)" } });
     let vatIncl = cfg.commissionVatIncluded === true;
@@ -192,9 +193,8 @@ export function adminOdemelerView(ctx) {
     const vBorne = borneSel("venueCommissionBorneBy", "Mekan kiralamada komisyonu karşılayan");
     const num = (el) => parseFloat(el.value.replace(",", "."));
     const saveRates = dkButton("Oranları kaydet", { variant: "violet", size: 40, disabled: savingCfg, onClick: async () => {
-      const av = num(a), vv = num(v), kv = num(vat), ev = num(est), fv = num(fee);
+      const av = num(a), vv = num(v), kv = Math.round((cfg.commissionVatRate ?? 0.2) * 1000) / 10, ev = num(est), fv = num(fee);
       if (!(av >= 0 && av <= 50) || !(vv >= 0 && vv <= 50)) { toast("Komisyon oranları %0 ile %50 arasında olmalı", { type: "err" }); return; }
-      if (!(kv >= 0 && kv <= 50)) { toast("KDV oranı %0 ile %50 arasında olmalı", { type: "err" }); return; }
       if (!(ev >= 0 && ev <= 50)) { toast("Tahmini stopaj %0 ile %50 arasında olmalı", { type: "err" }); return; }
       if (!(fv >= 0 && fv <= 10)) { toast("PayTR masraf oranı %0 ile %10 arasında olmalı", { type: "err" }); return; }
       const ab = aBorne.querySelector("select").value, vb = vBorne.querySelector("select").value, fb = feeBorne.querySelector("select").value;
@@ -202,7 +202,7 @@ export function adminOdemelerView(ctx) {
       if (await dkConfirm({ title: "Ödeme oranları",
         body: `Sanatçı %${av} · Mekan %${vv} komisyon + %${kv} KDV (${vatIncl ? "dahil" : "hariç"}). Komisyonu karşılayan: sanatçı kiralamada ${who(ab)}, mekan kiralamada ${who(vb)}. Tahmini stopaj %${ev} · PayTR masrafı %${fv} (${fb === "platform" ? "GigBridge karşılar" : "alıcının payından, fiyata eklenir"}). Yalnız yeni ödemelere uygulanır.`,
         confirmLabel: "Kaydet" })) {
-        saveCfg({ artistCommissionRate: av / 100, venueCommissionRate: vv / 100, commissionVatRate: kv / 100, commissionVatIncluded: vatIncl,
+        saveCfg({ artistCommissionRate: av / 100, venueCommissionRate: vv / 100, commissionVatIncluded: vatIncl,
           artistCommissionBorneBy: ab, venueCommissionBorneBy: vb, estimateStopajRate: ev / 100, paytrFeeRate: fv / 100, paytrFeeBorneBy: fb });
       }
     } });
@@ -222,7 +222,7 @@ export function adminOdemelerView(ctx) {
         paytrFeeBorneBy: feeBorne.querySelector("select").value };
     };
     const live = () => { summary.update(draft(), taxRules); calc.update(draft()); };
-    [a, v, vat, est, fee].forEach((el) => el.addEventListener("input", live));
+    [a, v, est, fee].forEach((el) => el.addEventListener("input", live));
     [aBorne, vBorne, feeBorne].forEach((el) => el.addEventListener("change", live));
     vatSw.addEventListener("click", () => setTimeout(live, 0));
     summary.update(cfg, taxRules);
@@ -231,7 +231,7 @@ export function adminOdemelerView(ctx) {
     cfgBox.replaceChildren(
       line("Sanatçı komisyonu (%)", null, a),
       line("Mekan komisyonu (%)", null, v),
-      line("Komisyon KDV oranı (%)", "Komisyon faturasına eklenen KDV", vat),
+      line("Komisyon KDV oranı (%)", "Yasal oran (KDV Kanunu) · değiştirilemez", vat),
       line("Komisyon KDV dahil", "Açıkken KDV komisyon tutarının içinden ayrılır; kapalıyken üstüne eklenir", vatSw),
       line("Komisyonu karşılayan · sanatçı kiralama", "Alıcı: payından düşer · Ödeyen: brütün üstüne eklenir", aBorne),
       line("Komisyonu karşılayan · mekan kiralama", null, vBorne),
