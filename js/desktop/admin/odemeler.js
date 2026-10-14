@@ -183,6 +183,9 @@ export function adminOdemelerView(ctx) {
       wrap.style.width = "140px";
       return wrap;
     };
+    const feeBorne = dkSelect({ size: 40, value: cfg.paytrFeeBorneBy === "platform" ? "platform" : "payee",
+      options: [{ value: "payee", label: "Alıcı (fiyata eklenir)" }, { value: "platform", label: "GigBridge" }], attrs: { "aria-label": "PayTR masrafını karşılayan" } });
+    feeBorne.style.width = "190px";
     const aBorne = borneSel("artistCommissionBorneBy", "Sanatçı kiralamada komisyonu karşılayan");
     const vBorne = borneSel("venueCommissionBorneBy", "Mekan kiralamada komisyonu karşılayan");
     const num = (el) => parseFloat(el.value.replace(",", "."));
@@ -192,13 +195,13 @@ export function adminOdemelerView(ctx) {
       if (!(kv >= 0 && kv <= 50)) { toast("KDV oranı %0 ile %50 arasında olmalı", { type: "err" }); return; }
       if (!(ev >= 0 && ev <= 50)) { toast("Tahmini stopaj %0 ile %50 arasında olmalı", { type: "err" }); return; }
       if (!(fv >= 0 && fv <= 10)) { toast("PayTR masraf oranı %0 ile %10 arasında olmalı", { type: "err" }); return; }
-      const ab = aBorne.querySelector("select").value, vb = vBorne.querySelector("select").value;
+      const ab = aBorne.querySelector("select").value, vb = vBorne.querySelector("select").value, fb = feeBorne.querySelector("select").value;
       const who = (x) => (x === "payer" ? "ödeyen" : "alıcı");
       if (await dkConfirm({ title: "Ödeme oranları",
-        body: `Sanatçı %${av} · Mekan %${vv} komisyon + %${kv} KDV (${vatIncl ? "dahil" : "hariç"}). Komisyonu karşılayan: sanatçı kiralamada ${who(ab)}, mekan kiralamada ${who(vb)}. Tahmini stopaj %${ev} · PayTR masrafı %${fv}. Yalnız yeni ödemelere uygulanır.`,
+        body: `Sanatçı %${av} · Mekan %${vv} komisyon + %${kv} KDV (${vatIncl ? "dahil" : "hariç"}). Komisyonu karşılayan: sanatçı kiralamada ${who(ab)}, mekan kiralamada ${who(vb)}. Tahmini stopaj %${ev} · PayTR masrafı %${fv} (${fb === "platform" ? "GigBridge karşılar" : "alıcının payından, fiyata eklenir"}). Yalnız yeni ödemelere uygulanır.`,
         confirmLabel: "Kaydet" })) {
         saveCfg({ artistCommissionRate: av / 100, venueCommissionRate: vv / 100, commissionVatRate: kv / 100, commissionVatIncluded: vatIncl,
-          artistCommissionBorneBy: ab, venueCommissionBorneBy: vb, estimateStopajRate: ev / 100, paytrFeeRate: fv / 100 });
+          artistCommissionBorneBy: ab, venueCommissionBorneBy: vb, estimateStopajRate: ev / 100, paytrFeeRate: fv / 100, paytrFeeBorneBy: fb });
       }
     } });
     const test = dkSwitch({ checked: !!cfg.testMode, disabled: savingCfg, variant: "cyan", label: "Test modu", onChange: async (on, { revert }) => {
@@ -213,11 +216,12 @@ export function adminOdemelerView(ctx) {
       const n = (el, def) => { const x = num(el); return x >= 0 && x <= 50 ? x / 100 : def; };
       return { ...cfg, artistCommissionRate: n(a, cfg.artistCommissionRate), venueCommissionRate: n(v, cfg.venueCommissionRate),
         commissionVatRate: n(vat, cfg.commissionVatRate), commissionVatIncluded: vatIncl, estimateStopajRate: n(est, cfg.estimateStopajRate),
-        paytrFeeRate: n(fee, cfg.paytrFeeRate), artistCommissionBorneBy: aBorne.querySelector("select").value, venueCommissionBorneBy: vBorne.querySelector("select").value };
+        paytrFeeRate: n(fee, cfg.paytrFeeRate), artistCommissionBorneBy: aBorne.querySelector("select").value, venueCommissionBorneBy: vBorne.querySelector("select").value,
+        paytrFeeBorneBy: feeBorne.querySelector("select").value };
     };
     const live = () => summary.update(draft(), taxRules);
     [a, v, vat, est, fee].forEach((el) => el.addEventListener("input", live));
-    [aBorne, vBorne].forEach((el) => el.addEventListener("change", live));
+    [aBorne, vBorne, feeBorne].forEach((el) => el.addEventListener("change", live));
     vatSw.addEventListener("click", () => setTimeout(live, 0));
     summary.update(cfg, taxRules);
     const line = (label, subTxt, ctl) => h("div", { class: "dk-admin-etk-row" }, h("span", { class: "dk-admin-etk-who" }, h("span", { class: "dk-admin-etk-n" }, label), subTxt ? h("span", { class: "dk-admin-etk-e" }, subTxt) : null), ctl);
@@ -229,7 +233,8 @@ export function adminOdemelerView(ctx) {
       line("Komisyonu karşılayan · sanatçı kiralama", "Alıcı: payından düşer · Ödeyen: brütün üstüne eklenir", aBorne),
       line("Komisyonu karşılayan · mekan kiralama", null, vBorne),
       line("Tahmini stopaj (%)", "Yalnız ödeme öncesi tahmin; kesin kesinti onaylı vergi kuralından", est),
-      line("PayTR masraf oranı (%)", "Finans tablosunda tahmini masraf için", fee),
+      line("PayTR masraf oranı (%)", "PayTR'nin tahsilattan aldığı oran (sözleşmedeki)", fee),
+      line("PayTR masrafını karşılayan", "Alıcı: sanatçının payından düşer, \"cebine girecek\" fiyat girişinde fiyata eklenir · GigBridge: komisyondan karşılanır", feeBorne),
       h("div", { class: "dk-admin-etk-tools" }, saveRates),
       line("Test modu", "Açıkken PayTR gerçek para çekmez (test_mode=1)", test),
       line("Otomatik aktarım", "Kapalıyken uygun ödemeler \"serbest bırakılacak\" listesinde bekler", auto),

@@ -7,6 +7,7 @@
 export const DEFAULT_RATES = Object.freeze({
   artistCommissionRate: 0.1, venueCommissionRate: 0.1, commissionVatRate: 0.2, commissionVatIncluded: false,
   artistCommissionBorneBy: "payee", venueCommissionBorneBy: "payee", estimateStopajRate: 0.2,
+  paytrFeeRate: 0, paytrFeeBorneBy: "payee",
 });
 let RATES = { ...DEFAULT_RATES };
 const rate01 = (v, max, d) => (typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= max ? v : d);
@@ -22,6 +23,8 @@ export function setPayRates(r) {
     artistCommissionBorneBy: borne(x.artistCommissionBorneBy, DEFAULT_RATES.artistCommissionBorneBy),
     venueCommissionBorneBy: borne(x.venueCommissionBorneBy, DEFAULT_RATES.venueCommissionBorneBy),
     estimateStopajRate: rate01(x.estimateStopajRate, 0.5, DEFAULT_RATES.estimateStopajRate),
+    paytrFeeRate: rate01(x.paytrFeeRate, 0.1, DEFAULT_RATES.paytrFeeRate),
+    paytrFeeBorneBy: x.paytrFeeBorneBy === "platform" ? "platform" : "payee",
   };
   return RATES;
 }
@@ -74,6 +77,8 @@ export function toPayment(id, x) {
     commissionVatIncluded: x?.commissionVatIncluded === true,
     platformTakeKurus: num(x?.platformTakeKurus),
     commissionBorneBy: x?.commissionBorneBy === "payer" ? "payer" : "payee",
+    paytrFeeKurus: num(x?.paytrFeeKurus),
+    paytrFeeBorneBy: x?.paytrFeeBorneBy === "platform" ? "platform" : "payee",
     withholdings: Array.isArray(x?.withholdings) ? x.withholdings.filter((w) => w && typeof w === "object").map((w) => ({
       type: s(w.type), title: s(w.title), rate: typeof w.rate === "number" ? w.rate : null, base: s(w.base),
       baseKurus: num(w.baseKurus), amountKurus: num(w.amountKurus), responsible: s(w.responsible),
@@ -115,15 +120,20 @@ export function previewSplit(grossTL, kind, { includeTaxes = true } = {}) {
   const take = commission + vat;
   const borneBy = kind === "venue_rental" ? R.venueCommissionBorneBy : R.artistCommissionBorneBy;
   const stopajEst = includeTaxes ? Math.round(g * R.estimateStopajRate) : 0;
+  // PayTR masrafı tahsilat üzerinden; 'payee' → alıcının payından düşer (sunucu finance.js computeSplitV2 ile aynı)
+  const charge = g + (borneBy === "payer" ? take : 0);
+  const fee = R.paytrFeeBorneBy !== "platform" ? Math.round(charge * (R.paytrFeeRate || 0)) : 0;
   return {
     grossKurus: g, commissionRate: cr, commissionKurus: commission, commissionVatRate: v, commissionVatKurus: vat,
     platformTakeKurus: take, commissionBorneBy: borneBy, stopajKurus: stopajEst, estimateStopajRate: R.estimateStopajRate,
-    payeeKurus: Math.max(0, g - (borneBy === "payee" ? take : 0) - stopajEst),
+    chargeKurus: charge, paytrFeeKurus: fee,
+    payeeKurus: Math.max(0, g - (borneBy === "payee" ? take : 0) - stopajEst - fee),
   };
 }
 /** "%10 komisyon + KDV" — oran metni (güncel publicConfig'e göre). */
 export const commissionText = (kind = "artist_booking") =>
-  `%${Math.round((kind === "venue_rental" ? RATES.venueCommissionRate : RATES.artistCommissionRate) * 1000) / 10} komisyon + KDV`;
+  `%${Math.round((kind === "venue_rental" ? RATES.venueCommissionRate : RATES.artistCommissionRate) * 1000) / 10} komisyon + KDV`
+  + (RATES.paytrFeeRate > 0 && RATES.paytrFeeBorneBy !== "platform" ? ` + %${Math.round(RATES.paytrFeeRate * 10000) / 100} PayTR masrafı` : "");
 /** Tahmin altındaki kısa not (uygulamayla aynı metin). */
 export const ESTIMATE_NOTE = "Vergi kesintisi (stopaj) mali müşavir onaylı kurala göre kesinleşir.";
 
@@ -177,6 +187,7 @@ export function payeeBreakdown(p) {
   out.push({ label: `Komisyon (%${Math.round((p.commissionRate || 0) * 1000) / 10})${payeeBears ? "" : " · ödeyen karşılar"}`, kurus: p.commissionKurus || 0, sign: payeeBears ? -1 : 0 });
   out.push({ label: `Komisyon KDV (%${Math.round((p.commissionVatRate || 0) * 1000) / 10})${payeeBears ? "" : " · ödeyen karşılar"}`, kurus: p.commissionVatKurus || 0, sign: payeeBears ? -1 : 0 });
   (p.withholdings || []).filter((w) => (w.amountKurus || 0) > 0).forEach((w) => out.push({ label: withholdingLine(w), kurus: w.amountKurus, sign: -1 }));
+  if ((p.paytrFeeKurus || 0) > 0 && p.paytrFeeBorneBy !== "platform") out.push({ label: "PayTR ödeme masrafı", kurus: p.paytrFeeKurus, sign: -1 });
   out.push({ label: "Size kalan", kurus: p.payeeKurus || 0, sign: 0, strong: true });
   return out;
 }
@@ -471,7 +482,8 @@ export function grossForNet(netTL, includeTaxes = true) {
   const R = RATES;
   const vatF = R.commissionVatIncluded ? 1 : 1 + R.commissionVatRate;
   const takeF = R.artistCommissionBorneBy === "payee" ? R.artistCommissionRate * vatF : 0;
-  const factor = Math.max(0.05, 1 - takeF - (includeTaxes ? R.estimateStopajRate : 0));
+  const feeF = R.paytrFeeBorneBy !== "platform" ? (R.paytrFeeRate || 0) * (1 + (R.artistCommissionBorneBy === "payer" ? R.artistCommissionRate * vatF : 0)) : 0;
+  const factor = Math.max(0.05, 1 - takeF - feeF - (includeTaxes ? R.estimateStopajRate : 0));
   let g = Math.ceil(net / factor);
   for (let i = 0; i < 1000 && got(g) < target; i++) g += 1;
   for (let i = 0; i < 1000 && g > 1 && got(g - 1) >= target; i++) g -= 1;

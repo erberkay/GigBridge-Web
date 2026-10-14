@@ -398,6 +398,7 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
       payeeBears ? row(`Komisyon (%${Math.round(est.commissionRate * 1000) / 10})`, `−${U.fmtKurus(est.commissionKurus)}`) : null,
       payeeBears ? row(`Komisyon KDV (%${Math.round(est.commissionVatRate * 1000) / 10})`, `−${U.fmtKurus(est.commissionVatKurus)}`) : null,
       row(`Tahmini stopaj (%${Math.round(est.estimateStopajRate * 1000) / 10})`, `−${U.fmtKurus(est.stopajKurus)}`),
+      est.paytrFeeKurus > 0 ? row("PayTR ödeme masrafı", `−${U.fmtKurus(est.paytrFeeKurus)}`) : null,
       row("Sana kalacak (tahmini)", `≈ ${U.fmtApproxKurus(est.payeeKurus)}`, { strong: true, color: "#7CE0B0" }),
       h("span", { class: "dk-pay-fine" }, U.ESTIMATE_NOTE));
   }

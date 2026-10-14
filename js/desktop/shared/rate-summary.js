@@ -70,7 +70,10 @@ export function rateSummary() {
     const v = commission(cfg, "venue_rental");
     const aIncl = cfg.commissionVatIncluded;
     const est = cfg.estimateStopajRate ?? 0.2;
-    const estPayee = G - (a.borne === "payee" ? a.take : 0) - Math.round(G * est);
+    const charge0 = G + (a.borne === "payer" ? a.take : 0);
+    const fee = Math.round(charge0 * (cfg.paytrFeeRate || 0));
+    const feeOnPayee = cfg.paytrFeeBorneBy === "platform" ? 0 : fee;
+    const estPayee = G - (a.borne === "payee" ? a.take : 0) - Math.round(G * est) - feeOnPayee;
     const settings = [
       li(`Sanatçı komisyonu: ${pct(a.cr)}`, a.cr ? `Sanatçı kiralamada GigBridge'in aracılık bedeli. 10.000 TL'lik işte ${tl(a.c)} (KDV hariç). GigBridge'in geliri budur.` : "Sanatçı kiralamada komisyon alınmaz."),
       li(`Komisyon KDV oranı: ${pct(a.v)}`, a.cr ? `Komisyona eklenen KDV: ${tl(a.vat)}. Bu GigBridge'in geliri değil; komisyon faturasıyla devlete beyan edilir. Toplam kesilen: ${tl(a.take)}.` : "Komisyon olmadığı için KDV de yok."),
@@ -78,7 +81,11 @@ export function rateSummary() {
       li(`Komisyonu karşılayan (sanatçı): ${a.borne === "payer" ? "Ödeyen" : "Alıcı"}`, a.borne === "payer" ? `Mekan 10.000 TL + ${tl(a.take)} = ${tl(G + a.take)} öder; sanatçının payından komisyon düşmez.` : `Mekan 10.000 TL öder; ${tl(a.take)} sanatçının payından düşer.`),
       li(`Mekan komisyonu: ${pct(v.cr)}`, v.cr ? `Mekan kiralamada (organizatör mekanı kiralar) ${tl(v.c)} + ${tl(v.vat)} KDV; ${v.borne === "payer" ? "organizatör üstüne öder" : "mekanın payından düşer"}.` : "Mekan kiralamada GigBridge komisyon almaz."),
       li(`Tahmini stopaj: ${pct(est)}`, `YALNIZ ekrandaki tahmin. Sanatçıya teklifte "Sana kalacak ≈ ${tl(estPayee)}" gösterilir (en kötü durum). Gerçek kesintiyi DEĞİŞTİRMEZ; gerçek kesinti aşağıdaki onaylı kurallardan gelir.`),
-      li(`PayTR masraf oranı: ${pct(cfg.paytrFeeRate ?? 0)}`, `Yalnız finans raporundaki tahmini kart/PayTR masrafı (10.000 TL'de ${tl(Math.round(G * (cfg.paytrFeeRate || 0)))}). Kimsenin ödediği tutarı değiştirmez.`),
+      li(`PayTR masrafı: ${pct(cfg.paytrFeeRate ?? 0)} · ${cfg.paytrFeeBorneBy === "platform" ? "GigBridge karşılar" : "sanatçının payından"}`, !(cfg.paytrFeeRate > 0)
+        ? "Oran girilmedi (%0): PayTR masrafı hesaba katılmıyor. PayTR sözleşmesindeki oranı gir."
+        : cfg.paytrFeeBorneBy === "platform"
+          ? `PayTR tahsilattan ${tl(fee)} keser; GigBridge'in ${tl(a.take)} payından ödenir, sanatçıya etkisi yok.`
+          : `PayTR tahsilattan ${tl(fee)} keser; sanatçının payından düşülür. Sanatçı fiyatı "cebime girecek" diye girerse bu masraf fiyata eklenir, sanatçının istediği tutar değişmez.`),
       li(`Test modu: ${cfg.testMode ? "Açık" : "Kapalı"}`, cfg.testMode ? "Kartlardan para ÇEKİLMEZ (deneme)." : "Kartlardan GERÇEK para çekilir."),
       li(`Otomatik aktarım: ${cfg.autoPayout ? "Açık" : "Kapalı"}`, cfg.autoPayout ? "Etkinlik bitişinden 24 saat sonra, şikayet ve vergi kontrolü geçerse para her sabah 08:00'de sanatçının IBAN'ına kendiliğinden gider." : "Para kendiliğinden gitmez; \"Serbest bırakılacak\" listesinde senin onayını bekler."),
     ];
@@ -101,8 +108,8 @@ export function rateSummary() {
     const rows = PROPOSAL.map((s) => {
       const whK = s.w.reduce((t, w) => t + whAmount(w), 0);
       const payerW = s.w.filter((w) => w.responsible === "payer").reduce((t, w) => t + whAmount(w), 0);
-      const payee = G - (a.borne === "payee" ? a.take : 0) - whK;
       const charge = G - payerW + (a.borne === "payer" ? a.take : 0);
+      const payee = G - (a.borne === "payee" ? a.take : 0) - whK - (cfg.paytrFeeBorneBy === "platform" ? 0 : Math.round(charge * (cfg.paytrFeeRate || 0)));
       const sys = matchRules(rules, { kind: "artist_booking", cat: s.cat, payer: s.payer });
       return h("tr", { style: { cursor: "default" } },
         h("td", {}, s.artist), h("td", {}, s.payerTxt),
