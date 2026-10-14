@@ -22,7 +22,7 @@ export const TAX_INFO = {
   B: {
     title: "Şahıs şirketin varsa (serbest meslek mükellefi)",
     points: [
-      "Her iş için e-Serbest Meslek Makbuzu (e-SMM) düzenlersin (VUK md. 236). KDV mükellefiysen makbuza %20 KDV eklenir; KDV'yi sen beyan edip ödersin.",
+      "Her iş için e-Serbest Meslek Makbuzu (e-SMM) düzenlersin (VUK md. 236). Serbest meslek mükellefi her durumda KDV mükellefidir: makbuza %20 KDV eklenir; KDV'yi sen beyan edip ödersin.",
       "Mekan şirket ya da gerçek usul işletmeyse ücretinden %20 stopaj keser (GVK md. 94). Kesilen bu tutar yıllık beyannamende ödeyeceğin vergiden düşülür.",
       "Her yıl gelir vergisi beyannamesi verirsin; vergi kazancına göre artan oranlıdır (%15–%40, GVK md. 103). Giderlerini düşebilirsin.",
       "Bağ-Kur (SGK 4/b) primi ödersin. 350.000 TL sınırı ve \"arızi\" kuralı sana uygulanmaz.",

@@ -73,7 +73,7 @@ export function priceCalculator() {
       row("SANATÇIYA AKTARILACAK", tl(s.payee), { strong: true, big: true, color: "#7CE0B0" }),
       row("GigBridge'de kalan (komisyon + KDV − PayTR)", tl(s.take - s.fee)),
       note(a === "B" || a === "C"
-        ? "Sanatçı KDV mükellefiyse makbuz / faturasına ayrıca %20 KDV ekler; bu KDV şu an ödemeye dahil edilmiyor."
+        ? "Şahıs şirketi ya da şirketi olan sanatçı makbuz / faturasına her durumda %20 KDV ekler; bu KDV şu an ödemeye dahil edilmiyor."
         : "Vergi kaydı olmayan sanatçının ücretine KDV eklenmez; mekan gider pusulası düzenler."),
     ].filter(Boolean));
   }
