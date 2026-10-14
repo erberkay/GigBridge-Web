@@ -326,3 +326,28 @@ export function checkoutPhase(prev, { status, durum } = {}) {
   if (durum === "ok" || durum === "") return prev === "success" ? prev : "confirming";
   return prev;
 }
+
+/**
+ * NET → BRÜT (uygulama services/payments.ts grossForNet ile AYNI): sanatçının cebine girmesini istediği tutardan mekanın
+ * göreceği fiyat (tam TL'ye yukarı). includeTaxes true → komisyon + stopaj üstüne; false → yalnız komisyon.
+ */
+export function grossForNet(netTL, includeTaxes = true) {
+  const net = Math.max(0, Number(netTL) || 0);
+  if (!net) return 0;
+  const c = DEFAULT_RATES.artist_booking;
+  const factor = includeTaxes ? 1 - c - DEFAULT_RATES.stopajRate / (1 + DEFAULT_RATES.vatRate) : 1 - c;
+  let g = Math.ceil(net / factor);
+  const target = Math.round(net * 100);
+  const got = (x) => (includeTaxes ? previewSplit(x, "artist_booking").payeeKurus : Math.round(x * 100) - Math.round(x * 100 * c));
+  while (got(g) < target) g += 1;
+  while (g > 1 && got(g - 1) >= target) g -= 1;
+  return g;
+}
+/** BRÜT → NET (tam TL'ye aşağı). */
+export function netFromGross(grossTL, includeTaxes = true) {
+  const g = Math.max(0, Number(grossTL) || 0);
+  if (!g) return 0;
+  return includeTaxes
+    ? Math.floor(previewSplit(g, "artist_booking").payeeKurus / 100)
+    : Math.floor((Math.round(g * 100) - Math.round(g * 100 * DEFAULT_RATES.artist_booking)) / 100);
+}

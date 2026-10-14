@@ -38,7 +38,7 @@ import {
   sendPasswordResetMail, sendPasswordResetEmail,
 } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
-import { previewSplit, fmtKurus } from "../shared/pay-util.js";
+import { grossForNet, netFromGross } from "../shared/pay-util.js";
 import { cx, dkAvatar, dkModal, dkConfirm, dkToast, dkLoginGate, dkInput, dkLabel } from "../shared/ui.js";
 import { svgRaw, svgPath } from "../shared/icons.js";
 import { rgba, fold, matchText, kFmt, fmtTL, writeQuery, swapAnim, PROVINCES, initials } from "../shared/helpers.js";
@@ -568,12 +568,30 @@ export function artistProfilView(ctx) {
   const priceAlert = h("span", { class: k("alert"), role: "alert", hidden: true });
   // Girilen ücretten sanatçının hesabına kalacak TAHMİNİ tutar (%10 komisyon + KDV hariç matrahtan %1 stopaj — sunucu computeSplit)
   const priceNet = h("p", { class: k("callout"), "aria-live": "polite", hidden: true });
-  const minIn = input("priceMin", { ph: "En az 3.500", type: "number", mono: true });
-  const maxIn = input("priceMax", { ph: "Örn. 10.000", type: "number", mono: true });
+  // Fiyat alanına CEBE GİRECEK tutar yazılır; komisyon (✓ ise vergi de) üstüne eklenip D.priceMin/priceMax BRÜT saklanır
+  let taxIncl = true;
+  try { const v = localStorage.getItem("gb.priceTaxIncl.v1"); if (v === "0" || v === "1") taxIncl = v === "1"; } catch (_) {}
+  const netOfGross = (g) => { const n = Number(String(g || "").replace(/[^\d]/g, "")); return n > 0 ? String(netFromGross(n, taxIncl)) : ""; };
+  const grossOfNet = (v) => { const n = Number(String(v || "").replace(/[^\d]/g, "")); return n > 0 ? String(grossForNet(n, taxIncl)) : ""; };
+  const minIn = input("priceMin", { ph: "Örn. 15.000", type: "number", mono: true, get: () => netOfGross(D.priceMin), set: (v) => { D.priceMin = grossOfNet(v); } });
+  const maxIn = input("priceMax", { ph: "Örn. 25.000", type: "number", mono: true, get: () => netOfGross(D.priceMax), set: (v) => { D.priceMax = grossOfNet(v); } });
+  const taxBox = h("input", { type: "checkbox", checked: taxIncl, style: { width: "18px", height: "18px", accentColor: "#FF4FA3", flex: "none" } });
+  const taxSub = h("span", { style: { display: "block", fontSize: "12px", color: "#8A8E97", marginTop: "2px" } });
+  const paintTax = () => { taxSub.textContent = taxIncl ? "Komisyon ve %1 stopaj fiyata eklenir; yazdığın tutarın tamamı cebine girer." : "Yalnız komisyon fiyata eklenir; %1 stopaj yazdığın tutardan düşer."; };
+  paintTax();
+  taxBox.addEventListener("change", () => {
+    taxIncl = taxBox.checked;
+    try { localStorage.setItem("gb.priceTaxIncl.v1", taxIncl ? "1" : "0"); } catch (_) {}
+    D.priceMin = grossOfNet(minIn.value); D.priceMax = grossOfNet(maxIn.value);
+    paintTax(); changed("priceMin");
+  });
+  const taxRow = h("label", { style: { display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", margin: "4px 0 2px" } },
+    taxBox, h("span", {}, h("span", { style: { fontSize: "14px", fontWeight: "600" } }, "Vergileri de üstüne ekle"), taxSub));
   panels.ucret = h("div", { class: k("panel") },
     h("div", { class: k("row3") },
-      field("MİNİMUM ÜCRET (₺)", minIn), field("MAKSİMUM ÜCRET (₺)", maxIn),
+      field("MİNİMUM · CEBİNE GİRECEK (₺)", minIn), field("MAKSİMUM · CEBİNE GİRECEK (₺)", maxIn),
       field("FİYAT TİPİ", select("priceType", PRICE_TYPE_OPTS, { fs14: true }))),
+    taxRow,
     priceAlert,
     priceNet,
     h("p", { class: k("callout") }, "Sanatçılar en az ₺3.500 ücretle sahne alabilir. Fiyat tipi profilinde “Başlangıç ₺…” veya “Sabit ₺…” rozeti olarak gösterilir."),
@@ -810,10 +828,10 @@ export function artistProfilView(ctx) {
     return null;
   }
   function livePrice() {
-    const net = (v) => { const n = Number(String(v || "").replace(/[^\d]/g, "")); return n > 0 ? fmtKurus(previewSplit(n, "artist_booking").payeeKurus) : null; };
-    const a = net(D.priceMin), b = net(D.priceMax);
+    const g = (v) => { const n = Number(String(v || "").replace(/[^\d]/g, "")); return n > 0 ? fmtTL(n) : null; };
+    const a = g(D.priceMin), b = g(D.priceMax);
     priceNet.hidden = !a && !b;
-    priceNet.textContent = (a || b) ? `Sana kalacak ≈ ${[a && `minimumda ${a}`, b && `maksimumda ${b}`].filter(Boolean).join(" · ")} (%10 GigBridge komisyonu ve %1 stopaj düşülmüş tahmini tutar; mekanın keseceği yasal kesintiler ve kendi vergi yükümlülüklerin dahil değildir.)` : "";
+    priceNet.textContent = (a || b) ? `Mekanın göreceği fiyat: ${[a && `minimum ${a}`, b && `maksimum ${b}`].filter(Boolean).join(" · ")} (%10 GigBridge komisyonu${taxIncl ? " ve %1 stopaj" : ""} eklenmiş; mekanın keseceği yasal kesintiler ve kendi vergi yükümlülüklerin dahil değildir.)` : "";
     const e = priceError();
     priceAlert.hidden = !e;
     priceAlert.textContent = e ? e.msg : "";
