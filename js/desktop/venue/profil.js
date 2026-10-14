@@ -22,6 +22,7 @@
 // Yazımlar (legacy ile aynı biçim): saveProfile(uid, {city, district|null, address, phone, website, capacity:Number|null,
 //   amenities[], location:{lat,lng,city}|null, photoURL?}) + YALNIZ değiştiyse {genres[], workingHours{}, gallery[]}.
 //   displayName YAZILMAZ (yalnız yönetici onayıyla). avgRating/reviewCount/followerCount/approved/userType yazılmaz.
+// Finans v2: yan sütunda "Vergi Bilgileri" kartı (shared/tax-form.js; ?bolum=vergi).
 // Takma ad rotaları (#/venue/takip, #/venue/degerlendir) registry'de legacy-in-shell'e gidiyor (registry foundation'ın);
 //   bu görünüm ?bolum=takip|degerlendir ile ilgili karta kaydırır (SHARED-CANDIDATE: registry'de bu rotaları
 //   #/venue/profil?bolum=… 'ya yönlendir).
@@ -38,6 +39,7 @@ import { panelShell } from "../shared/panel-shell.js";
 import { svgRaw, svgIcon } from "../shared/icons.js";
 import { cx, dkAvatar, dkModal, dkToast, dkConfirm, dkLoginGate } from "../shared/ui.js";
 import { PROVINCES, MONTHS_TR, fmtInt, toMs, trUpper, swapAnim, replayAnim, hashBase } from "../shared/helpers.js";
+import { taxProfileCard } from "../shared/tax-form.js";
 
 // ── sabitler (legacy venue.js ile aynı listeler) ──
 const AMENITY_OPTIONS = ["Profesyonel Ses Sistemi", "Işık Sistemi", "DJ Booth", "Soyunma Odası", "Parking", "VIP Alan", "Sahne", "Bar", "Klima", "Wi-Fi", "Engelli Erişimi", "Sigara Alanı"];
@@ -837,7 +839,10 @@ export function venueProfilView(ctx) {
     menuRow(P.flag, "Sorun Bildir", () => openReport()),
     h("p", { class: "dk-mekan-profil-accnote" }, "Mekan hesabını yalnızca GigBridge uygulamasından silebilirsin."));
 
-  root.append(h("div", { class: "dk-mekan-profil-main" }, form, h("div", { class: "dk-mekan-profil-side" }, folSec, revSec, rateSec, accSec)));
+  // Vergi Bilgileri (Finans v2 · business formu; kendi kaydet düğmesi → setTaxProfile). ?bolum=vergi → bu karta kaydırır.
+  const taxCard = taxProfileCard({ role: "venue" });
+  cleanups.push(() => taxCard.destroy());
+  root.append(h("div", { class: "dk-mekan-profil-main" }, form, h("div", { class: "dk-mekan-profil-side" }, folSec, revSec, rateSec, taxCard.node, accSec)));
 
   // ═════════ modallar (portal; mekan §0.7 panel varyantı) ═════════
   const alertEl = () => h("div", { class: "dk-mekan-profil-alert", role: "alert", hidden: true });
@@ -1168,7 +1173,7 @@ export function venueProfilView(ctx) {
   let wantSection = ctx.query?.get?.("bolum") || null;
   function scrollToSection() {
     if (!wantSection) return;
-    const el = wantSection === "takip" ? folSec : wantSection === "degerlendir" ? rateSec : null;
+    const el = wantSection === "takip" ? folSec : wantSection === "degerlendir" ? rateSec : wantSection === "vergi" ? taxCard.node : null;
     if (!el) { wantSection = null; return; }
     requestAnimationFrame(() => { if (!alive) return; el.scrollIntoView({ block: "start", behavior: "smooth" }); });
   }

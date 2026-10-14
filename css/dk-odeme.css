@@ -220,6 +220,52 @@ p.dk-pay-body, p.dk-pay-muted { margin: 0; }
 .dk-adm-pay-note > svg { flex-shrink: 0; margin-top: 2px; }
 .dk-pay-drw .dk-pay-btns .dk-inp { width: 160px; }
 
+/* ---------- Finans v2: vergi bandı, hizmet belgesi, vergi formu, hak ediş payları, admin finans ---------- */
+.dk-pay-taxwarn[hidden] { display: none; }
+.dk-pay-doc { padding-top: 10px; border-top: 1px solid #14171D; }
+.dk-pay-file { font-size: 13px; color: #C9CACD; max-width: 100%; }
+.dk-pay-file::file-selector-button { margin-right: 10px; height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid #2C303A; background: #0E1014; color: #F2F1EE; font: inherit; cursor: pointer; }
+.dk-tax-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dk-tax-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.dk-tax [hidden], .dk-fin [hidden], .dk-pay-tbox[hidden] { display: none !important; }
+.dk-tax-kv { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.dk-tax-kvkk { font-size: 12.5px; }
+.dk-tax.is-embedded { padding: 0; border: 0; background: none; }
+.dk-shares-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.dk-shares-row > a { flex: 1 1 auto; min-width: 0; }
+.dk-btn.dk-shares-btn { flex-shrink: 0; }
+.dk-shares-list { display: flex; flex-direction: column; gap: 8px; }
+.dk-shares-row2 { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #14171D; }
+.dk-shares-name { min-width: 0; font-size: 14px; color: #F2F1EE; overflow-wrap: anywhere; }
+.dk-shares-pct { display: inline-flex; align-items: center; gap: 6px; font-family: var(--dk-font-mono); color: #8A8E97; }
+.dk-inp.dk-shares-in { width: 72px; text-align: right; font-family: var(--dk-font-mono); }
+.dk-shares-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dk-shares-total { font-family: var(--dk-font-mono); font-size: 13px; font-weight: 700; }
+.dk-shares-total.is-ok { color: #7CE0B0; }
+.dk-shares-total.is-bad { color: #FFB347; }
+.dk-fin-body > .dk-admin-etk-chips { padding: 0 20px 14px; }
+.dk-fin-tblwrap { overflow-x: auto; margin: 0 20px 20px; border: 1px solid #1F232B; border-radius: 8px; }
+.dk-fin-tbl { border-collapse: collapse; font-size: 12.5px; color: #C9CACD; white-space: nowrap; }
+.dk-fin-tbl th { position: sticky; top: 0; padding: 10px 12px; background: #0E1014; text-align: left; font-family: var(--dk-font-mono); font-size: 10px; letter-spacing: 0.1em; color: #8A8E97; border-bottom: 1px solid #1F232B; }
+.dk-fin-tbl td { padding: 9px 12px; border-bottom: 1px solid #14171D; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.dk-fin-tbl tr { cursor: pointer; }
+.dk-fin-tbl tbody tr:hover td { background: rgba(167,139,250,0.06); }
+.dk-fin-tbl tr.is-review td:first-child { box-shadow: inset 3px 0 0 #FFB347; }
+.dk-fin-tbl .is-num { text-align: right; font-family: var(--dk-font-mono); }
+.dk-fin-tbl .is-mono { font-family: var(--dk-font-mono); font-size: 11px; }
+.dk-fin-rules, .dk-fin-wlist, .dk-fin-cbs { display: flex; flex-direction: column; gap: 6px; }
+.dk-fin-cbs { flex-direction: row; flex-wrap: wrap; gap: 4px 14px; }
+.dk-fin-wrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #14171D; }
+.dk-fin-wrow .dk-sel-wrap { width: 180px; }
+.dk-fin-wrow .dk-inp:not(.dk-adm-pay-pct) { width: 180px; }
+.dk-fin-hist { margin-top: 6px; font-size: 12.5px; color: #8A8E97; }
+.dk-fin-hist > summary { cursor: pointer; color: #A3A7AF; }
+.dk-fin-hrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #14171D; }
+.dk-fin-check { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 1.5; color: #C9CACD; }
+.dk-fin-check li { display: flex; gap: 8px; align-items: flex-start; }
+.dk-fin-check li > svg { flex-shrink: 0; margin-top: 3px; }
+.dk-fin-audit { white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
+
 /* ---------- ≤768 TELEFON (mobil web yönetici paneli › Ödemeler; diğer roller ≤768'de bu dosyayı kullanmaz) ---------- */
 @media (max-width: 768px) {
   .dk-adm-pay-chips { padding: 0 16px 14px; }
@@ -227,4 +273,7 @@ p.dk-pay-body, p.dk-pay-muted { margin: 0; }
   .dk-adm-pay-acts > .dk-btn { flex: 1 1 auto; }
   .dk-adm-pay-partial { flex-wrap: wrap; }
   .dk-adm-pay-pin { flex: 1 1 140px; width: auto; min-width: 0; }
+  .dk-fin-body > .dk-admin-etk-chips { padding: 0 16px 14px; }
+  .dk-fin-tblwrap { margin: 0 16px 16px; }
+  .dk-fin-wrow .dk-sel-wrap, .dk-fin-wrow .dk-inp:not(.dk-adm-pay-pct) { width: 100%; }
 }

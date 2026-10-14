@@ -38,7 +38,10 @@ import {
   sendPasswordResetMail, sendPasswordResetEmail,
 } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
-import { grossForNet, netFromGross } from "../shared/pay-util.js";
+import { grossForNet, netFromGross, previewSplit, fmtKurus, fmtApproxKurus, commissionText, ESTIMATE_NOTE, getPayRates } from "../shared/pay-util.js";
+import { loadPayRates } from "../shared/payments.js";
+import { taxProfileCard } from "../shared/tax-form.js";
+import { groupSharesButton } from "../shared/payout-shares.js";
 import { cx, dkAvatar, dkModal, dkConfirm, dkToast, dkLoginGate, dkInput, dkLabel } from "../shared/ui.js";
 import { svgRaw, svgPath } from "../shared/icons.js";
 import { rgba, fold, matchText, kFmt, fmtTL, writeQuery, swapAnim, PROVINCES, initials } from "../shared/helpers.js";
@@ -64,6 +67,7 @@ const TABS = [
   ["turler", "Türler", "Müzik Türleri", "Çaldığın türleri seç; istersen kendi türünü ekle."],
   ["ucret", "Ücret", "Performans Ücreti", "Ücret aralığın, fiyat tipi ve şartların."],
   ["sosyal", "Sosyal", "Sosyal Medya", "Profilinde bağlantı olarak görünür."],
+  ["vergi", "Vergi", "Vergi Bilgileri", "Ödemelerinde doğru vergi kesintisi ve belge için; profilinde görünmez."],
 ];
 const TAB_KEYS = TABS.map((t) => t[0]);
 // Önizleme rozetleri (artboard AV) + legacy üyelik kıdemi (memberBadgeFor)
@@ -566,7 +570,8 @@ export function artistProfilView(ctx) {
 
   // ── Ücret ──
   const priceAlert = h("span", { class: k("alert"), role: "alert", hidden: true });
-  // Girilen ücretten sanatçının hesabına kalacak TAHMİNİ tutar (%10 komisyon + KDV hariç matrahtan %1 stopaj — sunucu computeSplit)
+  // Girilen ücretten sanatçının hesabına kalacak TAHMİNİ tutar (Finans v2: %10 komisyon + KDV + tahmini stopaj — pay-util previewSplit;
+  // oranlar publicConfig/payments → loadPayRates; kesin kesinti sunucuda mali müşavir onaylı kurala göre)
   const priceNet = h("p", { class: k("callout"), "aria-live": "polite", hidden: true });
   // Fiyat alanına CEBE GİRECEK tutar yazılır; komisyon (✓ ise vergi de) üstüne eklenip D.priceMin/priceMax BRÜT saklanır
   let taxIncl = true;
@@ -577,7 +582,12 @@ export function artistProfilView(ctx) {
   const maxIn = input("priceMax", { ph: "Örn. 25.000", type: "number", mono: true, get: () => netOfGross(D.priceMax), set: (v) => { D.priceMax = grossOfNet(v); } });
   const taxBox = h("input", { type: "checkbox", checked: taxIncl, style: { width: "18px", height: "18px", accentColor: "#FF4FA3", flex: "none" } });
   const taxSub = h("span", { style: { display: "block", fontSize: "12px", color: "#8A8E97", marginTop: "2px" } });
-  const paintTax = () => { taxSub.textContent = taxIncl ? "Komisyon ve %1 stopaj fiyata eklenir; yazdığın tutarın tamamı cebine girer." : "Yalnız komisyon fiyata eklenir; %1 stopaj yazdığın tutardan düşer."; };
+  const stopajPct = () => `%${Math.round(getPayRates().estimateStopajRate * 1000) / 10}`;
+  const paintTax = () => {
+    taxSub.textContent = taxIncl
+      ? `${commissionText()} ve tahmini vergi kesintisi (${stopajPct()} stopaj) fiyata eklenir; yazdığın tutar yaklaşık olarak cebine girer.`
+      : `Yalnız ${commissionText()} fiyata eklenir; vergi kesintisi (stopaj) yazdığın tutardan düşer.`;
+  };
   paintTax();
   taxBox.addEventListener("change", () => {
     taxIncl = taxBox.checked;
@@ -594,6 +604,7 @@ export function artistProfilView(ctx) {
     taxRow,
     priceAlert,
     priceNet,
+    h("p", { class: k("callout"), style: { fontSize: "12px", color: "#8A8E97" } }, ESTIMATE_NOTE),
     h("p", { class: k("callout") }, "Sanatçılar en az ₺3.500 ücretle sahne alabilir. Fiyat tipi profilinde “Başlangıç ₺…” veya “Sabit ₺…” rozeti olarak gösterilir."),
     field("KAPORA NOTU (OPSİYONEL)", input("deposit", { ph: "örn. %30 kapora rezervasyonu kesinleştirir", maxlength: 160 }), { hintEl: hint("En çok 160 karakter.") }),
     field("İPTAL POLİTİKASI", select("cancel", CANCELLATION_OPTS, { fs14: true }), { max: 360 }));
@@ -604,6 +615,22 @@ export function artistProfilView(ctx) {
       h("span", { class: k("soctile"), "aria-hidden": "true" }, svgPath(m.icon, { size: 20, sw: "1.8" })),
       h("span", { class: k("soclbl") }, m.label),
       input("soc_" + m.key, { ph: m.ph, get: () => D.social[m.key], set: (v) => { D.social[m.key] = v; } }))));
+
+  // ── Vergi (Finans v2) — kendi kaydet düğmesi var (setTaxProfile); profil "Kaydet"i bu sekmeyi etkilemez ──
+  const taxCard = taxProfileCard({ role: "artist", embedded: true });
+  cleanups.push(() => taxCard.destroy());
+  panels.vergi = h("div", { class: k("panel"), dataset: { q: "Vergi bilgileri stopaj TC kimlik vergi dairesi fatura makbuz" } }, taxCard.node);
+
+  // Oranlar (publicConfig/payments) gelince ücret alanlarını yeni tahminle yeniden çiz (yazılan BRÜT değişmez)
+  const onRates = () => {
+    if (!alive) return;
+    if (document.activeElement !== minIn) minIn.value = netOfGross(D.priceMin);
+    if (document.activeElement !== maxIn) maxIn.value = netOfGross(D.priceMax);
+    paintTax(); livePrice();
+  };
+  loadPayRates().then(onRates).catch(() => {});
+  window.addEventListener("gb:pay-rates", onRates);
+  cleanups.push(() => window.removeEventListener("gb:pay-rates", onRates));
 
   // ══════════ SEKMELER + BÖLÜM KARTI ══════════
   const tabBtns = new Map();
@@ -831,7 +858,12 @@ export function artistProfilView(ctx) {
     const g = (v) => { const n = Number(String(v || "").replace(/[^\d]/g, "")); return n > 0 ? fmtTL(n) : null; };
     const a = g(D.priceMin), b = g(D.priceMax);
     priceNet.hidden = !a && !b;
-    priceNet.textContent = (a || b) ? `Mekanın göreceği fiyat: ${[a && `minimum ${a}`, b && `maksimum ${b}`].filter(Boolean).join(" · ")} (%10 GigBridge komisyonu${taxIncl ? " ve %1 stopaj" : ""} eklenmiş; mekanın keseceği yasal kesintiler ve kendi vergi yükümlülüklerin dahil değildir.)` : "";
+    // Sana kalacak ≈ (tahmini): brütten Finans v2 formülüyle (✓ ise tahmini stopaj düşülü)
+    const net = (v) => { const n = Number(String(v || "").replace(/[^\d]/g, "")); return n > 0 ? fmtApproxKurus(previewSplit(n, "artist_booking", { includeTaxes: true }).payeeKurus) : null; };
+    const na = net(D.priceMin), nb = net(D.priceMax);
+    priceNet.textContent = (a || b)
+      ? `Mekanın göreceği fiyat: ${[a && `minimum ${a}`, b && `maksimum ${b}`].filter(Boolean).join(" · ")} (${commissionText()}${taxIncl ? " ve tahmini stopaj" : ""} eklenmiş). Sana kalacak ≈ ${[na, nb].filter(Boolean).join(" – ")} (tahmini).`
+      : "";
     const e = priceError();
     priceAlert.hidden = !e;
     priceAlert.textContent = e ? e.msg : "";
@@ -962,8 +994,11 @@ export function artistProfilView(ctx) {
       const tile = h("span", { class: k("grtile"), "aria-hidden": "true" }, g.photoURL ? h("img", { src: g.photoURL, alt: "", loading: "lazy" }) : initials(g.name || "G"));
       const img = tile.querySelector("img");
       if (img) img.addEventListener("error", () => { tile.replaceChildren(initials(g.name || "G")); }, { once: true });
-      return h("a", { href: "#/artist/sanatci/" + encodeURIComponent(g.id), class: cx(k("gr"), "dk-row") }, tile,
+      const link = h("a", { href: "#/artist/sanatci/" + encodeURIComponent(g.id), class: cx(k("gr"), "dk-row") }, tile,
         h("span", { class: k("grcol") }, h("span", { class: k("grname") }, g.name || "Grup"), h("span", { class: k("grmeta") }, meta)));
+      // Grup yöneticisi: "Hak ediş payları" (Finans v2 setGroupPayoutShares) — satır bağlantısının yanında
+      const isAdmin = (Array.isArray(g.adminIds) && g.adminIds.includes(uid)) || g.createdBy === uid;
+      return isAdmin ? h("div", { class: "dk-shares-row" }, link, groupSharesButton(g)) : link;
     }));
   })();
   // Rezidans denormu (legacy renderProfile açılışı): aktif anlaşma → users/{uid}.residentVenue/residentDays (yalnız farklıysa yazar)

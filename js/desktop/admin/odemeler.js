@@ -1,5 +1,6 @@
 // WebAdminOdemeler — Yönetici: ÖDEMELER (emanet / serbest bırakılacak / IBAN bekleyen / iade-şikayet / aktarılan / iade edilen)
-// + ŞİKAYETLER (kanıtlı ödeme şikayetleri) + Ödeme Ayarları (komisyon, test modu, otomatik aktarım). ≥769 px.
+// + ŞİKAYETLER (kanıtlı ödeme şikayetleri) + Ödeme Ayarları (komisyon, komisyon KDV'si, komisyonu karşılayan, tahmini stopaj,
+// PayTR masrafı, test modu, otomatik aktarım). ≥769 px. Finans v2 inceleme / vergi kuralları / dışa aktarım: admin/finans.js.
 // Registry: adminOdeme (#/admin/odemeler). Uygulama karşılığı: components/payments/AdminPaymentsTab.tsx + AdminDisputeModal.tsx.
 // Sunucu: functions/payments.js adminPayments { action: list | listDisputes | get | refund | release | resolveDispute |
 //   approveCheckinPhotos | getConfig | setConfig } (yalnız admin; her işlem adminAudit'e yazılır) + paymentCases getPaymentDispute.
@@ -9,12 +10,12 @@ import { h } from "../../ui.js";
 import { session } from "../../store.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon } from "../shared/icons.js";
-import { cx, dkChip, dkPageHero, dkSkeleton, dkButton, dkInput, dkTextarea, dkSwitch, dkToast, dkConfirm, dkDrawer, dkStatusBadge, dkInlineMessage } from "../shared/ui.js";
+import { cx, dkChip, dkPageHero, dkSkeleton, dkButton, dkInput, dkSelect, dkTextarea, dkSwitch, dkToast, dkConfirm, dkDrawer, dkStatusBadge, dkInlineMessage } from "../shared/ui.js";
 import { writeQuery } from "../shared/helpers.js";
 import {
   payApi, payBadge, fmtKurus, fmtDTShort, paymentErrorText, serviceTermsView, evidenceGallery, openImageViewer,
   ADMIN_GROUPS, ADMIN_REASON, ADMIN_DISPUTE_STATUS, ADMIN_CANCEL_STATUS, REFUNDABLE, RELEASABLE, releaseResultError, parseTLToKurus,
-  DISPUTE_STATUS_LABEL, TONE_COLOR, decisionText, isOid,
+  DISPUTE_STATUS_LABEL, TONE_COLOR, decisionText, isOid, financeReasonText,
 } from "../shared/payments.js";
 
 const VIOLET = "#A78BFA";
@@ -35,7 +36,7 @@ export function adminOdemelerView(ctx) {
   const root = shell.content;
   root.classList.add("dk-admin-panel", "dk-admin-etk", P);
   const hero = dkPageHero({ eyebrow: "YÖNETİCİ · ÖDEMELER", title: "Emanet, iade ve şikayetler ", em: "tek yerde", tail: ".", color: VIOLET, cls: "dk-admin-panel-hero",
-    lead: "Emanetteki ödemeleri izle; iade et, elle serbest bırak, kanıtlı şikayetlere karar ver. Komisyon, test modu ve otomatik aktarım ayarları sağda." });
+    lead: "Emanetteki ödemeleri izle; iade et, elle serbest bırak, kanıtlı şikayetlere karar ver. Komisyon, KDV, test modu ve otomatik aktarım ayarları sağda. Vergi incelemesi ve dışa aktarım Finans'ta." });
 
   // ══════════ liste ══════════
   const chipsBox = h("div", { class: "dk-admin-etk-chips", role: "group", "aria-label": "Ödeme grupları" });
@@ -112,7 +113,13 @@ export function adminOdemelerView(ctx) {
     return h("article", { class: cx(`${P}-row`, isBusy && "is-busy") },
       h("div", { class: `${P}-top` }, h("span", { class: `${P}-t` }, r.title || r.merchantOid), payBadge(r.status, "payee")),
       meta(`${r.payerName || r.payerUid} → ${r.payeeName || r.payeeUid}${r.testMode ? " · TEST" : ""}`),
-      meta(`Brüt ${fmtKurus(r.grossKurus)} · komisyon ${fmtKurus(r.commissionKurus)} (%${Math.round((r.commissionRate || 0) * 100)}) · stopaj ${fmtKurus(r.stopajKurus)} · alıcıya ${fmtKurus(r.payoutKurus ?? r.payeeKurus)}`),
+      meta(r.fv === 2 || r.commissionVatKurus != null
+        ? `Brüt ${fmtKurus(r.grossKurus)} · komisyon ${fmtKurus(r.commissionKurus)} (%${Math.round((r.commissionRate || 0) * 1000) / 10}) + KDV ${fmtKurus(r.commissionVatKurus || 0)}${r.commissionBorneBy === "payer" ? " (ödeyen)" : ""} · vergi kesintisi ${fmtKurus(r.stopajKurus)} · alıcıya ${fmtKurus(r.payoutKurus ?? r.payeeKurus)}`
+        : `Brüt ${fmtKurus(r.grossKurus)} · komisyon ${fmtKurus(r.commissionKurus)} (%${Math.round((r.commissionRate || 0) * 100)}) · stopaj ${fmtKurus(r.stopajKurus)} · alıcıya ${fmtKurus(r.payoutKurus ?? r.payeeKurus)}`),
+      r.status === "finance_review" || r.financeStatus === "review"
+        ? h("a", { href: `#/admin/finans?sec=${encodeURIComponent(r.merchantOid)}`, class: `${P}-meta dk-link`, style: { color: "#FFB347" } },
+          `Finansal inceleme: ${(r.financeReasons || []).map(financeReasonText).join(" · ") || "karar bekliyor"} →`)
+        : null,
       meta(`Ödeme ${fmtDTShort(r.paidAt)} · etkinlik ${fmtDTShort(r.eventStartMs)} · serbest ${fmtDTShort(r.releaseAfterMs)}`),
       r.refundedKurus > 0 ? meta(`İade edilen ${fmtKurus(r.refundedKurus)}`) : null,
       reasons.length ? meta(reasons.join(" · "), "#FFB347") : null,
@@ -137,11 +144,14 @@ export function adminOdemelerView(ctx) {
   }
   async function onRelease(r) {
     if (!(await dkConfirm({ title: "Elle serbest bırak", body: `${fmtKurus(r.payeeKurus)} ${r.payeeName} hesabına aktarılacak (ödeme gününde aktarım yapılmaz; ertesi gün otomatik).`, confirmLabel: "Serbest bırak" }))) return;
+    let review = false;
     run(r, async () => {
       const res = await payApi.admin({ action: "release", merchantOid: r.merchantOid });
+      // Finans v2: vergi/belge koşulu karşılanmadıysa sonuç 'finance_review' (hata değil) → bilgi
+      if (res?.result === "finance_review") { review = true; return; }
       const m = releaseResultError(res?.result);
       if (m) throw new Error(m);
-    }, "Aktarım istendi");
+    }, "Aktarım istendi").then(() => { if (review) toast(releaseResultError("finance_review"), { type: "info" }); });
   }
 
   // ══════════ ayarlar ══════════
@@ -158,10 +168,35 @@ export function adminOdemelerView(ctx) {
     if (!cfg) return;
     const a = dkInput({ size: 40, value: pct(cfg.artistCommissionRate), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Sanatçı komisyonu (%)" } });
     const v = dkInput({ size: 40, value: pct(cfg.venueCommissionRate), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Mekan komisyonu (%)" } });
+    // Finans v2: komisyon KDV'si (oran + dahil/hariç), komisyonu karşılayan (tür başına), tahmini stopaj (yalnız ödeme öncesi tahmin)
+    // ve tahmini PayTR masrafı (finans tablosu). Kesin stopaj oranı burada DEĞİL — Finans › Vergi Kuralları (müşavir onaylı).
+    const vat = dkInput({ size: 40, value: pct(cfg.commissionVatRate ?? 0.2), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Komisyon KDV oranı (%)" } });
+    const est = dkInput({ size: 40, value: pct(cfg.estimateStopajRate ?? 0.2), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Tahmini stopaj (%)" } });
+    const fee = dkInput({ size: 40, value: pct(cfg.paytrFeeRate ?? 0), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "PayTR masraf oranı (%)" } });
+    let vatIncl = cfg.commissionVatIncluded === true;
+    const vatSw = dkSwitch({ checked: vatIncl, disabled: savingCfg, variant: "cyan", label: "Komisyon KDV dahil", onChange: (on) => { vatIncl = on; } });
+    const borneSel = (key, label) => {
+      const wrap = dkSelect({ size: 40, value: cfg[key] === "payer" ? "payer" : "payee", options: [{ value: "payee", label: "Alıcı" }, { value: "payer", label: "Ödeyen" }], attrs: { "aria-label": label } });
+      wrap.style.width = "140px";
+      return wrap;
+    };
+    const aBorne = borneSel("artistCommissionBorneBy", "Sanatçı kiralamada komisyonu karşılayan");
+    const vBorne = borneSel("venueCommissionBorneBy", "Mekan kiralamada komisyonu karşılayan");
+    const num = (el) => parseFloat(el.value.replace(",", "."));
     const saveRates = dkButton("Oranları kaydet", { variant: "violet", size: 40, disabled: savingCfg, onClick: async () => {
-      const av = parseFloat(a.value.replace(",", ".")), vv = parseFloat(v.value.replace(",", "."));
-      if (!(av >= 0 && av <= 50) || !(vv >= 0 && vv <= 50)) { toast("Oranlar %0 ile %50 arasında olmalı", { type: "err" }); return; }
-      if (await dkConfirm({ title: "Komisyon oranları", body: `Sanatçı %${av} · Mekan %${vv}. Yalnız yeni ödemelere uygulanır.`, confirmLabel: "Kaydet" })) saveCfg({ artistCommissionRate: av / 100, venueCommissionRate: vv / 100 });
+      const av = num(a), vv = num(v), kv = num(vat), ev = num(est), fv = num(fee);
+      if (!(av >= 0 && av <= 50) || !(vv >= 0 && vv <= 50)) { toast("Komisyon oranları %0 ile %50 arasında olmalı", { type: "err" }); return; }
+      if (!(kv >= 0 && kv <= 50)) { toast("KDV oranı %0 ile %50 arasında olmalı", { type: "err" }); return; }
+      if (!(ev >= 0 && ev <= 50)) { toast("Tahmini stopaj %0 ile %50 arasında olmalı", { type: "err" }); return; }
+      if (!(fv >= 0 && fv <= 10)) { toast("PayTR masraf oranı %0 ile %10 arasında olmalı", { type: "err" }); return; }
+      const ab = aBorne.querySelector("select").value, vb = vBorne.querySelector("select").value;
+      const who = (x) => (x === "payer" ? "ödeyen" : "alıcı");
+      if (await dkConfirm({ title: "Ödeme oranları",
+        body: `Sanatçı %${av} · Mekan %${vv} komisyon + %${kv} KDV (${vatIncl ? "dahil" : "hariç"}). Komisyonu karşılayan: sanatçı kiralamada ${who(ab)}, mekan kiralamada ${who(vb)}. Tahmini stopaj %${ev} · PayTR masrafı %${fv}. Yalnız yeni ödemelere uygulanır.`,
+        confirmLabel: "Kaydet" })) {
+        saveCfg({ artistCommissionRate: av / 100, venueCommissionRate: vv / 100, commissionVatRate: kv / 100, commissionVatIncluded: vatIncl,
+          artistCommissionBorneBy: ab, venueCommissionBorneBy: vb, estimateStopajRate: ev / 100, paytrFeeRate: fv / 100 });
+      }
     } });
     const test = dkSwitch({ checked: !!cfg.testMode, disabled: savingCfg, variant: "cyan", label: "Test modu", onChange: async (on, { revert }) => {
       const ok = await dkConfirm(on ? { title: "Test moduna geç", body: "Yeni ödemeler test modunda alınır.", confirmLabel: "Onayla" }
@@ -174,10 +209,16 @@ export function adminOdemelerView(ctx) {
     cfgBox.replaceChildren(
       line("Sanatçı komisyonu (%)", null, a),
       line("Mekan komisyonu (%)", null, v),
+      line("Komisyon KDV oranı (%)", "Komisyon faturasına eklenen KDV", vat),
+      line("Komisyon KDV dahil", "Açıkken KDV komisyon tutarının içinden ayrılır; kapalıyken üstüne eklenir", vatSw),
+      line("Komisyonu karşılayan · sanatçı kiralama", "Alıcı: payından düşer · Ödeyen: brütün üstüne eklenir", aBorne),
+      line("Komisyonu karşılayan · mekan kiralama", null, vBorne),
+      line("Tahmini stopaj (%)", "Yalnız ödeme öncesi tahmin; kesin kesinti onaylı vergi kuralından", est),
+      line("PayTR masraf oranı (%)", "Finans tablosunda tahmini masraf için", fee),
       h("div", { class: "dk-admin-etk-tools" }, saveRates),
       line("Test modu", "Açıkken PayTR gerçek para çekmez (test_mode=1)", test),
       line("Otomatik aktarım", "Kapalıyken uygun ödemeler \"serbest bırakılacak\" listesinde bekler", auto),
-      h("span", { class: "dk-admin-etk-sum" }, `Stopaj %${pct(cfg.stopajRate)} · KDV %${Math.round((cfg.vatRate || 0) * 100)} (matrah: ${cfg.stopajBase === "paytr_example" ? "brüt − KDV" : "brüt / (1 + KDV)"})`),
+      h("a", { href: "#/admin/finans", class: "dk-admin-etk-sum dk-link" }, "Vergi kuralları, finansal inceleme ve dışa aktarım → Finans"),
       cfg.testMode ? dkInlineMessage("info", "Test modu açık: yeni ödemelerde kartlardan para çekilmez.") : dkInlineMessage("err", "Canlı mod: yeni ödemelerde kartlardan gerçek para çekilir."));
   }
   async function loadCfg() {

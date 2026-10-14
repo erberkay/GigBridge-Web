@@ -10,6 +10,7 @@ import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon } from "../shared/icons.js";
 import { dkKpi, dkSegmented, dkTable, dkPageHero, dkSkeleton, dkButton, dkAvatar, dkStatusBadge } from "../shared/ui.js";
 import { toMs, MONTHS_TR_SHORT, matchText, writeQuery, revealDetail } from "../shared/helpers.js";
+import { downloadCsv, safeFileName } from "../shared/export.js";
 
 const VIOLET = "#A78BFA";
 const GREEN = "#7CE0B0", YELLOW = "#FFD700", RED = "#FF5A6E", GREY = "#8A8E97";
@@ -82,15 +83,10 @@ async function loadAttendees(evId) {
   }).sort((x, y) => (Number(y.used) - Number(x.used)) || ((x.joined || 0) - (y.joined || 0)));
 }
 
-// CSV (Excel Türkçe için ; ayraç + BOM). Alanlar tırnaklı, içteki tırnak ikilenir.
-function downloadCsv(ev, rows) {
-  const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const lines = [["Ad", "E-posta", "Bilet", "Giriş", "Katılma", "Anonim"].map(q).join(";"),
-    ...rows.map((r) => [r.name, r.email, r.used ? "Kullanıldı" : "Geçerli", r.checkedIn ? fmtDateTime(r.checkedIn) : "", r.joined ? fmtDateTime(r.joined) : "", r.anonymous ? "Evet" : ""].map(q).join(";"))];
-  const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
-  const a = h("a", { href: URL.createObjectURL(blob), download: `${ev.title.replace(/[^\p{L}\p{N}]+/gu, "-").slice(0, 60) || "etkinlik"}-katilimcilar.csv` });
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+// CSV (Excel Türkçe için ; ayraç + BOM) — ortak yardımcı shared/export.js
+function downloadAttendeesCsv(ev, rows) {
+  downloadCsv(`${safeFileName(ev.title, "etkinlik")}-katilimcilar.csv`, ["Ad", "E-posta", "Bilet", "Giriş", "Katılma", "Anonim"],
+    rows.map((r) => [r.name, r.email, r.used ? "Kullanıldı" : "Geçerli", r.checkedIn ? fmtDateTime(r.checkedIn) : "", r.joined ? fmtDateTime(r.joined) : "", r.anonymous ? "Evet" : ""]));
 }
 
 export function adminEtkinliklerView(ctx) {
@@ -223,7 +219,7 @@ export function adminEtkinliklerView(ctx) {
             h("span", { class: "dk-admin-etk-time" }, r.used && r.checkedIn ? fmtDateTime(r.checkedIn) : r.joined ? "Katıldı " + fmtDate(r.joined) : "")))));
       };
       search.addEventListener("input", () => { attQ = search.value; drawRows(); });
-      const csv = dkButton("CSV indir", { variant: "outline", size: 36, icon: "fileText", onClick: () => downloadCsv(ev, rows) });
+      const csv = dkButton("CSV indir", { variant: "outline", size: 36, icon: "fileText", onClick: () => downloadAttendeesCsv(ev, rows) });
       body.replaceChildren(
         h("div", { class: "dk-admin-etk-ahead" },
           h("span", { class: "dk-admin-panel-deb" }, `KATILIMCILAR · ${rows.length}`),

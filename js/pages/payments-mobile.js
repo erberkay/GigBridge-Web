@@ -4,7 +4,7 @@
 import { h, clear, empty, spinner } from "../ui.js";
 import { session } from "../store.js";
 import { db, collection, query, where, getDocs } from "../firebase.js";
-import { toPayment, filterMyPayments, statusLabel, TONE_COLOR, fmtKurus, earnedSummary, paidSummary, payerHistoryLabel } from "../desktop/shared/pay-util.js";
+import { toPayment, filterMyPayments, statusLabel, TONE_COLOR, fmtKurus, earnedSummary, paidSummary, payerHistoryLabel, payeeBreakdownText } from "../desktop/shared/pay-util.js";
 
 const MONTHS = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 const day = (ms) => { if (!ms) return ""; const d = new Date(ms); return `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
@@ -56,7 +56,8 @@ export async function renderPaymentsMobile(root, role) {
         h("div", { class: "muted", style: { fontSize: "12.5px", marginTop: "3px" } }, (side === "payee" ? [p.payerName, day(p.paidAt ?? p.createdAt)]
           : [p.payeeName, p.eventStartMs ? "Etkinlik " + day(p.eventStartMs) : "", p.paidAt ? "Ödeme " + day(p.paidAt) : day(p.createdAt)]).filter(Boolean).join(" · ")),
         h("div", { style: { marginTop: "6px", fontSize: "10.5px", fontWeight: "700", letterSpacing: "0.1em", color: c } }, l.text + (p.testMode ? " · TEST" : "")),
-        side === "payee" ? h("div", { class: "muted", style: { fontSize: "11.5px", marginTop: "4px" } }, `Ücret ${fmtKurus(p.grossKurus)} · komisyon ${fmtKurus(p.commissionKurus)} · stopaj ${fmtKurus(p.stopajKurus)}`) : null),
-      h("div", { style: { fontWeight: "600", fontSize: "14px", color: side === "payee" ? "#7CE0B0" : "inherit", whiteSpace: "nowrap" } }, fmtKurus(side === "payee" ? p.payeeKurus : p.grossKurus))));
+        side === "payee" ? h("div", { class: "muted", style: { fontSize: "11.5px", marginTop: "4px" } }, payeeBreakdownText(p)) : null,
+        side === "payee" && p.status === "finance_review" ? h("div", { class: "muted", style: { fontSize: "11.5px", marginTop: "4px" } }, "Vergi durumu netleşince aktarılır. Vergi bilgilerini ve hizmet belgesini uygulamadan ya da bilgisayardan gigbridges.com'dan tamamlayabilirsin.") : null),
+      h("div", { style: { fontWeight: "600", fontSize: "14px", color: side === "payee" ? "#7CE0B0" : "inherit", whiteSpace: "nowrap" } }, fmtKurus(side === "payee" ? p.payeeKurus : p.chargeKurus || p.grossKurus))));
   });
 }

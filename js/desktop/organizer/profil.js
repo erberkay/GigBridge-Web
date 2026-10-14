@@ -27,6 +27,7 @@ import {
   sendPasswordResetMail, sendPasswordResetEmail,
 } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
+import { taxProfileCard } from "../shared/tax-form.js";
 import { svgRaw } from "../shared/icons.js";
 import { cx, dkButton, dkInput, dkTextarea, dkField, dkLabel, dkPageHero, dkStatusBadge, dkModal, dkToast, dkSkeleton, dkAvatar, dkLoginGate, dkInlineMessage } from "../shared/ui.js";
 import { eventStartMs, eventEndMs, toMs, MONTHS_TR_SHORT } from "../shared/helpers.js";
@@ -283,7 +284,11 @@ export function orgProfilView(ctx) {
     menuRow({ icon: "logout", label: "Çıkış Yap", danger: true, onClick: () => askLogout() }));
   const aside = h("aside", { class: k("aside") }, identity, menu);
 
-  root.append(hero, h("div", { class: k("cols") }, h("div", { class: k("left") }, infoCard, socialCard, pastSec), aside));
+  // Vergi Bilgileri (Finans v2 · business formu; organizasyon sahibi doldurur, personel salt bilgi görür) — ?bolum=vergi
+  const taxCard = isOwner ? taxProfileCard({ role: "organizer" }) : null;
+  root.append(hero, h("div", { class: k("cols") }, h("div", { class: k("left") }, infoCard, socialCard, taxCard?.node, pastSec), aside));
+  const scrollTax = (q) => { if (taxCard && q?.get?.("bolum") === "vergi") requestAnimationFrame(() => taxCard.focus()); };
+  setTimeout(() => scrollTax(ctx.query), 60);
 
   // ══════════ ÇİZİM ══════════
   const photoNow = () => (pendingUrl || (removePhoto ? null : p.photoURL) || null);
@@ -542,8 +547,10 @@ export function orgProfilView(ctx) {
 
   return {
     node: shell.node,
+    update(q) { scrollTax(q); },
     destroy() {
       alive = false;
+      taxCard?.destroy();
       if (pendingUrl) { try { URL.revokeObjectURL(pendingUrl); } catch (_) {} }
       shell.destroy();
     },

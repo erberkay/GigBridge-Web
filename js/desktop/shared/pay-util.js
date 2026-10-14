@@ -2,8 +2,30 @@
 // Uygulamadaki src/services/payments.ts + paymentCases.ts ile birebir: tutar biçimi, ön hesap (tahmini net), durum etiketleri,
 // IBAN biçim/mod-97, hizmet kapsamı, şikayet etiketleri, bildirim → web rotası. Sunucu: functions/payments.js + paymentCases.js.
 
-/** Varsayılan oranlar (config/payments varsayılanı) — yalnız ÖDEME ÖNCESİ tahmini gösterim için. */
-export const DEFAULT_RATES = { artist_booking: 0.1, venue_rental: 0.1, stopajRate: 0.01, vatRate: 0.2 };
+/** Varsayılan oranlar (publicConfig/payments yoksa — sunucu varsayılanıyla aynı) — yalnız ÖDEME ÖNCESİ tahmini gösterim için.
+ *  Finans v2: komisyon KDV hariç (+ %20 KDV), tahmini stopaj %20 (kesin oran mali müşavir onaylı kurala göre sunucuda). */
+export const DEFAULT_RATES = Object.freeze({
+  artistCommissionRate: 0.1, venueCommissionRate: 0.1, commissionVatRate: 0.2, commissionVatIncluded: false,
+  artistCommissionBorneBy: "payee", venueCommissionBorneBy: "payee", estimateStopajRate: 0.2,
+});
+let RATES = { ...DEFAULT_RATES };
+const rate01 = (v, max, d) => (typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= max ? v : d);
+const borne = (v, d) => (v === "payer" || v === "payee" ? v : d);
+/** publicConfig/payments → önbellek (payments.js loadPayRates çağırır; bozuk alan varsayılana düşer). */
+export function setPayRates(r) {
+  const x = r && typeof r === "object" ? r : {};
+  RATES = {
+    artistCommissionRate: rate01(x.artistCommissionRate, 0.5, DEFAULT_RATES.artistCommissionRate),
+    venueCommissionRate: rate01(x.venueCommissionRate, 0.5, DEFAULT_RATES.venueCommissionRate),
+    commissionVatRate: rate01(x.commissionVatRate, 0.5, DEFAULT_RATES.commissionVatRate),
+    commissionVatIncluded: x.commissionVatIncluded === true,
+    artistCommissionBorneBy: borne(x.artistCommissionBorneBy, DEFAULT_RATES.artistCommissionBorneBy),
+    venueCommissionBorneBy: borne(x.venueCommissionBorneBy, DEFAULT_RATES.venueCommissionBorneBy),
+    estimateStopajRate: rate01(x.estimateStopajRate, 0.5, DEFAULT_RATES.estimateStopajRate),
+  };
+  return RATES;
+}
+export const getPayRates = () => RATES;
 
 const ms = (v) => (v && typeof v.toMillis === "function" ? v.toMillis() : typeof v === "number" ? v : null);
 const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
@@ -44,6 +66,27 @@ export function toPayment(id, x) {
       : null,
     payerType: s(x?.payerType),
     payeeType: s(x?.payeeType),
+    // ── Finans v2 (fv:2; eski kayıtta yok → güvenli varsayılan) ──
+    fv: x?.fv === 2 ? 2 : 1,
+    chargeKurus: num(x?.chargeKurus) || num(x?.grossKurus),
+    commissionVatRate: num(x?.commissionVatRate),
+    commissionVatKurus: num(x?.commissionVatKurus),
+    commissionVatIncluded: x?.commissionVatIncluded === true,
+    platformTakeKurus: num(x?.platformTakeKurus),
+    commissionBorneBy: x?.commissionBorneBy === "payer" ? "payer" : "payee",
+    withholdings: Array.isArray(x?.withholdings) ? x.withholdings.filter((w) => w && typeof w === "object").map((w) => ({
+      type: s(w.type), title: s(w.title), rate: typeof w.rate === "number" ? w.rate : null, base: s(w.base),
+      baseKurus: num(w.baseKurus), amountKurus: num(w.amountKurus), responsible: s(w.responsible),
+    })) : [],
+    financeStatus: typeof x?.financeStatus === "string" ? x.financeStatus : null,
+    financeReasons: Array.isArray(x?.financeReasons) ? x.financeReasons.filter((r) => typeof r === "string") : [],
+    payerRefundDueKurus: num(x?.payerRefundDueKurus),
+    documents: x?.documents && typeof x.documents === "object" ? {
+      commissionInvoice: x.documents.commissionInvoice && typeof x.documents.commissionInvoice === "object" ? { ...x.documents.commissionInvoice } : null,
+      service: x.documents.service && typeof x.documents.service === "object" ? { ...x.documents.service } : null,
+    } : { commissionInvoice: null, service: null },
+    payoutParts: Array.isArray(x?.payoutParts) ? x.payoutParts.filter((v) => v && typeof v === "object").map((v) => ({
+      uid: s(v.uid), name: s(v.name), percent: num(v.percent), amountKurus: num(v.amountKurus), status: s(v.status) })) : [],
   };
 }
 
@@ -53,14 +96,97 @@ export function fmtKurus(k) {
   const tl = n / 100;
   return `₺${tl.toLocaleString("tr-TR", { minimumFractionDigits: n % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
 }
+/** Tahmini tutar: tam liraya yuvarlanmış "≈" gösterimi (kuruş hassasiyeti yanıltıcı). */
+export const fmtApproxKurus = (k) => fmtKurus(Math.round((Number(k) || 0) / 100) * 100);
 
-/** Sunucudaki computeSplit ile aynı formül (varsayılan matrah: brüt / (1 + KDV)) — ödeme öncesi tahmini net için. */
-export function previewSplit(grossTL, kind) {
-  const gross = Math.round((Number(grossTL) || 0) * 100);
-  const rate = DEFAULT_RATES[kind] ?? DEFAULT_RATES.artist_booking;
-  const commissionKurus = Math.round(gross * rate);
-  const stopajKurus = Math.round(Math.round(gross / (1 + DEFAULT_RATES.vatRate)) * DEFAULT_RATES.stopajRate);
-  return { grossKurus: gross, commissionRate: rate, commissionKurus, stopajKurus, payeeKurus: Math.max(0, gross - commissionKurus - stopajKurus) };
+/**
+ * Ödeme öncesi TAHMİN (Finans v2 sözleşmesi; kuruş tamsayı, her adım Math.round — uygulama previewSplit ile aynı):
+ *   komisyon (KDV hariç) + komisyon KDV'si (KDV dahil ayarında içinden ayrılır) + includeTaxes ise tahmini stopaj (brüt × oran).
+ *   Komisyonu alıcı karşılıyorsa (varsayılan) alıcının payından düşer. Kesin kesinti sunucuda onaylı kurala göre hesaplanır.
+ */
+export function previewSplit(grossTL, kind, { includeTaxes = true } = {}) {
+  const g = Math.max(0, Math.round((Number(grossTL) || 0) * 100));
+  const R = RATES;
+  const cr = kind === "venue_rental" ? R.venueCommissionRate : R.artistCommissionRate;
+  const v = R.commissionVatRate;
+  let commission, vat;
+  if (!R.commissionVatIncluded) { commission = Math.round(g * cr); vat = Math.round(commission * v); }
+  else { const take0 = Math.round(g * cr); vat = Math.round((take0 * v) / (1 + v)); commission = take0 - vat; }
+  const take = commission + vat;
+  const borneBy = kind === "venue_rental" ? R.venueCommissionBorneBy : R.artistCommissionBorneBy;
+  const stopajEst = includeTaxes ? Math.round(g * R.estimateStopajRate) : 0;
+  return {
+    grossKurus: g, commissionRate: cr, commissionKurus: commission, commissionVatRate: v, commissionVatKurus: vat,
+    platformTakeKurus: take, commissionBorneBy: borneBy, stopajKurus: stopajEst, estimateStopajRate: R.estimateStopajRate,
+    payeeKurus: Math.max(0, g - (borneBy === "payee" ? take : 0) - stopajEst),
+  };
+}
+/** "%10 komisyon + KDV" — oran metni (güncel publicConfig'e göre). */
+export const commissionText = (kind = "artist_booking") =>
+  `%${Math.round((kind === "venue_rental" ? RATES.venueCommissionRate : RATES.artistCommissionRate) * 1000) / 10} komisyon + KDV`;
+/** Tahmin altındaki kısa not (uygulamayla aynı metin). */
+export const ESTIMATE_NOTE = "Vergi kesintisi (stopaj) mali müşavir onaylı kurala göre kesinleşir.";
+
+// ── Finans v2 ödeme kaydı yardımcıları ──
+export const WITHHOLDING_LABEL = { serbest_meslek_stopaj: "Serbest meslek stopajı", eticaret_tevkifat: "E-ticaret vergi tevkifatı", no_withholding: "Kesinti yok" };
+export const withholdingTitle = (w) => (w?.title && String(w.title)) || WITHHOLDING_LABEL[w?.type] || "Vergi kesintisi";
+/** Kesinti satırı etiketi: "Serbest meslek stopajı (%20)" */
+export const withholdingLine = (w) => `${withholdingTitle(w)}${typeof w?.rate === "number" ? ` (%${Math.round(w.rate * 1000) / 10})` : ""}`;
+/** Hizmet belgesi türleri (submitPaymentDocument docType) */
+export const DOC_TYPES = [
+  { key: "e_fatura", label: "e-Fatura" },
+  { key: "e_arsiv", label: "e-Arşiv Fatura" },
+  { key: "e_smm", label: "e-Serbest Meslek Makbuzu" },
+  { key: "gider_pusulasi", label: "Gider Pusulası" },
+  { key: "banka_belgesi", label: "Banka/Ödeme Kuruluşu Belgesi" },
+  { key: "paytr_kaydi", label: "PayTR İşlem Kaydı" },
+];
+export const docTypeLabel = (k) => DOC_TYPES.find((d) => d.key === k)?.label ?? (k || "—");
+export const DOC_STATUS_LABEL = { submitted: "İNCELEMEDE", verified: "ONAYLANDI", rejected: "REDDEDİLDİ", issued: "DÜZENLENDİ", cancelled: "İPTAL" };
+export const DOC_STATUS_TONE = { submitted: "warn", verified: "ok", rejected: "bad", issued: "ok", cancelled: "muted" };
+export const DOC_MAX_BYTES = 10 * 1024 * 1024;
+export const DOC_MIME = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
+/** Storage hizmet belgesi yolu (storage.rules: payment_docs/{uid}/{dosya}) */
+export const paymentDocPath = (uid, oid, ts, ext) => `payment_docs/${uid}/${oid}_${ts}.${ext}`;
+export const FINANCE_STATUS_LABEL = { auto: "Otomatik", review: "İnceleme", cleared: "Onaylandı" };
+export const FINANCE_REASON_LABEL = {
+  payee_tax_missing: "Alıcının vergi bilgisi yok", payee_tax_unverified: "Alıcının vergi bilgisi doğrulanmadı",
+  payer_tax_missing: "Ödeyenin vergi bilgisi yok", payer_tax_unverified: "Ödeyenin vergi bilgisi doğrulanmadı",
+  no_approved_rule: "Onaylı vergi kuralı yok", rules_conflict: "Kurallar çakışıyor", rules_changed: "Kurallar değişti",
+  group_single_iban: "Grup tek IBAN'a (pay dağılımı yok)", group_member_tax: "Grup üyesinin vergi bilgisi eksik",
+  group_member_iban: "Grup üyesinin IBAN'ı eksik", document_missing: "Hizmet belgesi eksik", payer_refund_due: "Ödeyene vergi iadesi gerekli",
+};
+export const financeReasonText = (r) => FINANCE_REASON_LABEL[r] ?? r;
+/**
+ * Ödeme kaydı → alıcı dökümü satırları [{ label, kurus, sign: -1|0|1, strong? }]. fv:2 → komisyon, komisyon KDV'si, her kesinti,
+ * "Size kalan"; eski kayıt (fv yok) → eski üç satır (komisyon + stopaj) aynen.
+ */
+export function payeeBreakdown(p) {
+  if (!p) return [];
+  const gross = p.grossKurus || 0;
+  if (p.fv !== 2) {
+    return [
+      { label: "Ücret", kurus: gross, sign: 0 },
+      { label: `GigBridge komisyonu (%${Math.round((p.commissionRate || 0) * 100)})`, kurus: p.commissionKurus || 0, sign: -1 },
+      { label: "Stopaj", kurus: p.stopajKurus || 0, sign: -1 },
+      { label: "Size kalan", kurus: p.payeeKurus || 0, sign: 0, strong: true },
+    ];
+  }
+  const out = [{ label: "Ücret", kurus: gross, sign: 0 }];
+  const payeeBears = p.commissionBorneBy !== "payer";
+  out.push({ label: `Komisyon (%${Math.round((p.commissionRate || 0) * 1000) / 10})${payeeBears ? "" : " · ödeyen karşılar"}`, kurus: p.commissionKurus || 0, sign: payeeBears ? -1 : 0 });
+  out.push({ label: `Komisyon KDV (%${Math.round((p.commissionVatRate || 0) * 1000) / 10})${payeeBears ? "" : " · ödeyen karşılar"}`, kurus: p.commissionVatKurus || 0, sign: payeeBears ? -1 : 0 });
+  (p.withholdings || []).filter((w) => (w.amountKurus || 0) > 0).forEach((w) => out.push({ label: withholdingLine(w), kurus: w.amountKurus, sign: -1 }));
+  out.push({ label: "Size kalan", kurus: p.payeeKurus || 0, sign: 0, strong: true });
+  return out;
+}
+/** Tek satırlık özet (geçmiş listesi): "Ücret ₺X · komisyon ₺Y · KDV ₺Z · vergi kesintisi ₺W" (eski kayıt: "… · stopaj ₺W") */
+export function payeeBreakdownText(p) {
+  if (p?.fv !== 2) return `Ücret ${fmtKurus(p.grossKurus)} · komisyon ${fmtKurus(p.commissionKurus)} · stopaj ${fmtKurus(p.stopajKurus)}`;
+  const parts = [`Ücret ${fmtKurus(p.grossKurus)}`];
+  if (p.commissionBorneBy !== "payer") parts.push(`komisyon ${fmtKurus(p.commissionKurus)}`, `KDV ${fmtKurus(p.commissionVatKurus)}`);
+  if (p.stopajKurus > 0) parts.push(`vergi kesintisi ${fmtKurus(p.stopajKurus)}`);
+  return parts.join(" · ");
 }
 
 // Ton renkleri (uygulama PaymentCards TONE): warn #FFB347 · ok #7CE0B0 · info #4ED8FF · bad #FF5A6E · muted vapor
@@ -74,6 +200,7 @@ export function statusLabel(st, side) {
     case "failed": return { text: "ÖDEME TAMAMLANAMADI", tone: "bad" };
     case "held":
     case "release_ready": return { text: "ÖDENDİ · EMANETTE", tone: "ok" };
+    case "finance_review": return { text: side === "payee" ? "FİNANSAL İNCELEME BEKLİYOR" : "ÖDENDİ · EMANETTE", tone: side === "payee" ? "warn" : "ok" };
     case "disputed": return { text: "ŞİKAYET İNCELENİYOR", tone: "warn" };
     case "awaiting_iban": return { text: side === "payee" ? "IBAN BEKLENİYOR" : "ÖDENDİ · EMANETTE", tone: side === "payee" ? "warn" : "ok" };
     case "transfer_requested": return { text: "AKTARILIYOR", tone: "info" };
@@ -92,7 +219,9 @@ export const isPaidStatus = (st) => !["pending", "init_failed", "failed"].includ
 /** Ödeyen şikayeti hâlâ karar bekliyor mu (aktarım durur). */
 export const disputeOpen = (p) => !!p?.dispute && !["resolved", "upheld", "rejected"].includes(p.dispute.status);
 /** Alıcı özetinde "EMANETTE" sayılan durumlar */
-export const HELD_STATES = ["held", "disputed", "awaiting_iban", "release_ready", "transfer_requested", "transfer_failed"];
+export const HELD_STATES = ["held", "disputed", "awaiting_iban", "release_ready", "transfer_requested", "transfer_failed", "finance_review"];
+/** Durum metni (tam cümle; uygulama STATUS_TEXT) */
+export const FINANCE_REVIEW_LABEL = "Finansal İnceleme Bekliyor";
 
 /** Kullanıcının payments listesi (uygulama listenMyPayments filtresi + sıralaması) */
 export function filterMyPayments(rows, uid) {
@@ -116,7 +245,7 @@ export function earnedSummary(rows, uid) {
 export function paidSummary(rows, uid) {
   let paid = 0, refunded = 0, held = 0, sent = 0, count = 0;
   (rows || []).filter((p) => p.payeeUid !== uid && p.status !== "pending" && isPaidStatus(p.status)).forEach((p) => {
-    const gross = Math.max(0, p.grossKurus || 0);
+    const gross = Math.max(0, p.chargeKurus || p.grossKurus || 0);   // fv:2: ödeyenden çekilen (komisyonu ödeyen karşılıyorsa brüt + komisyon)
     const ref = p.status === "refunded" ? gross : Math.min(gross, Math.max(0, p.refundedKurus || 0));
     const net = gross - ref;
     refunded += ref; paid += net;
@@ -251,7 +380,7 @@ export const isOid = (v) => typeof v === "string" && /^[A-Za-z0-9]{1,64}$/.test(
 // ── Admin ──
 export const ADMIN_GROUPS = [
   { key: "sikayetler", label: "ŞİKAYETLER", statuses: [] },
-  { key: "emanette", label: "EMANETTE", statuses: ["held", "partially_refunded"] },
+  { key: "emanette", label: "EMANETTE", statuses: ["held", "partially_refunded", "finance_review"] },
   { key: "serbest", label: "SERBEST BIRAKILACAK", statuses: ["release_ready", "transfer_failed"] },
   { key: "iban", label: "IBAN BEKLEYEN", statuses: ["awaiting_iban"] },
   { key: "iade", label: "İADE · ŞİKAYET", statuses: ["refund_pending", "disputed", "refund_in_progress"] },
@@ -270,13 +399,14 @@ export const ADMIN_DISPUTE_STATUS = {
 export const ADMIN_CANCEL_STATUS = {
   requested: "İptal talebi bekliyor", accepted: "İptal kabul edildi", rejected: "İptal talebi reddedildi", payee_cancelled: "Alıcı iptal etti",
 };
-export const REFUNDABLE = ["held", "disputed", "release_ready", "awaiting_iban", "transfer_failed", "refund_pending", "partially_refunded"];
-export const RELEASABLE = ["held", "release_ready", "awaiting_iban", "transfer_failed", "partially_refunded", "disputed", "refund_pending"];
+export const REFUNDABLE = ["held", "disputed", "release_ready", "awaiting_iban", "transfer_failed", "refund_pending", "partially_refunded", "finance_review"];
+export const RELEASABLE = ["held", "release_ready", "awaiting_iban", "transfer_failed", "partially_refunded", "disputed", "refund_pending", "finance_review"];
 /** elle serbest bırakma sonucu → hata metni (null = başarılı "Aktarım istendi") */
 export function releaseResultError(result) {
   if (result === "awaiting_iban") return "Alıcının IBAN bilgisi yok; bildirim gönderildi.";
   if (result === "same_day") return "Ödeme bugün alındı; aktarım yarın sabah otomatik yapılacak.";
   if (result === "failed" || result === "uncertain") return "PayTR transfer isteği başarısız. Ayrıntı satırda.";
+  if (result === "finance_review") return "Ödeme finansal incelemeye alındı (vergi/belge koşulu karşılanmadı). Admin › Finans'tan karar ver.";
   return null;
 }
 /** "12,5" → 1250 kuruş (geçersiz → NaN) */
@@ -329,25 +459,27 @@ export function checkoutPhase(prev, { status, durum } = {}) {
 
 /**
  * NET → BRÜT (uygulama services/payments.ts grossForNet ile AYNI): sanatçının cebine girmesini istediği tutardan mekanın
- * göreceği fiyat (tam TL'ye yukarı). includeTaxes true → komisyon + stopaj üstüne; false → yalnız komisyon.
+ * göreceği fiyat (tam TL'ye yukarı). includeTaxes true → komisyon + KDV + tahmini stopaj üstüne; false → yalnız komisyon + KDV.
+ * Başlangıç: net / faktör (ör. 1 − 0,10 − 0,02 − 0,20 = 0,68) yukarı yuvarlanır; sonra kuruş yuvarlamasına karşı düzeltme döngüsü
+ * (tahmini net hedefi tam karşılayan EN KÜÇÜK tam TL). 15.000 → ✓ 22.059 · ☐ 17.046.
  */
 export function grossForNet(netTL, includeTaxes = true) {
   const net = Math.max(0, Number(netTL) || 0);
   if (!net) return 0;
-  const c = DEFAULT_RATES.artist_booking;
-  const factor = includeTaxes ? 1 - c - DEFAULT_RATES.stopajRate / (1 + DEFAULT_RATES.vatRate) : 1 - c;
-  let g = Math.ceil(net / factor);
   const target = Math.round(net * 100);
-  const got = (x) => (includeTaxes ? previewSplit(x, "artist_booking").payeeKurus : Math.round(x * 100) - Math.round(x * 100 * c));
-  while (got(g) < target) g += 1;
-  while (g > 1 && got(g - 1) >= target) g -= 1;
+  const got = (x) => previewSplit(x, "artist_booking", { includeTaxes }).payeeKurus;
+  const R = RATES;
+  const vatF = R.commissionVatIncluded ? 1 : 1 + R.commissionVatRate;
+  const takeF = R.artistCommissionBorneBy === "payee" ? R.artistCommissionRate * vatF : 0;
+  const factor = Math.max(0.05, 1 - takeF - (includeTaxes ? R.estimateStopajRate : 0));
+  let g = Math.ceil(net / factor);
+  for (let i = 0; i < 1000 && got(g) < target; i++) g += 1;
+  for (let i = 0; i < 1000 && g > 1 && got(g - 1) >= target; i++) g -= 1;
   return g;
 }
-/** BRÜT → NET (tam TL'ye aşağı). */
+/** BRÜT → NET (tam TL'ye aşağı; tahmini). 10.000 ✓ → 6.800. */
 export function netFromGross(grossTL, includeTaxes = true) {
   const g = Math.max(0, Number(grossTL) || 0);
   if (!g) return 0;
-  return includeTaxes
-    ? Math.floor(previewSplit(g, "artist_booking").payeeKurus / 100)
-    : Math.floor((Math.round(g * 100) - Math.round(g * 100 * DEFAULT_RATES.artist_booking)) / 100);
+  return Math.floor(previewSplit(g, "artist_booking", { includeTaxes }).payeeKurus / 100);
 }

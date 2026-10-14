@@ -107,11 +107,13 @@ export const DESKTOP_ROUTES = [
   R("agencyMesaj", "WebPanelMesajlar", is("#/agency/mesajlar"), "messages/panel-mesajlar.js", "panelMesajlarView", "panel", [...SH.panel, "css/dk-panel-mesajlar.css"], { role: "agency", panel: "agency", nav: "mesaj", spec: "sanatci.md WebPanelMesajlar" }),
   R("agencyPanel", "— (AJANS Ana Sayfa; ortak kit)", pre("#/agency"), "agency/panel.js", "agencyPanelView", "panel", [...SH.panel, "css/dk-ajans.css"], { role: "agency", panel: "agency", nav: "home", spec: "ajans-spec" }),
 
-  // ════ Yönetici (#/admin + sekme alt rotaları #/admin/ad|sorun; YÖNETİM: kullanicilar|bildirim|etkinlikler|odemeler|mekan-ekle (GEÇİCİ)) ════
+  // ════ Yönetici (#/admin + sekme alt rotaları #/admin/ad|sorun; YÖNETİM: kullanicilar|bildirim|etkinlikler|odemeler|finans|mekan-ekle (GEÇİCİ)) ════
   R("adminKullanici", "WebAdminKullanicilar", is("#/admin/kullanicilar"), "admin/kullanicilar.js", "adminKullanicilarView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css"], { role: "admin", spec: "WebAdmin + kullanıcı yönetimi" }),
   R("adminBildirim", "WebAdminBildirim", is("#/admin/bildirim"), "admin/bildirim.js", "adminBildirimView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css"], { role: "admin", spec: "WebAdmin + bildirim yönetimi" }),
   R("adminEtkinlik", "WebAdminEtkinlikler", is("#/admin/etkinlikler"), "admin/etkinlikler.js", "adminEtkinliklerView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css"], { role: "admin", spec: "WebAdmin + katılımcı listesi" }),
   R("adminOdeme", "— (WebAdmin ÖDEMELER + ŞİKAYETLER; ortak kit)", is("#/admin/odemeler"), "admin/odemeler.js", "adminOdemelerView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css", "css/dk-odeme.css"], { role: "admin", spec: "odeme-spec AdminPaymentsTab + AdminDisputeModal" }),
+  // Finans v2: inceleme kuyruğu, finans tablosu + CSV/Excel, vergi kuralları, vergi profilleri, belgeler, denetim kaydı
+  R("adminFinans", "— (WebAdmin FİNANS; ortak kit)", is("#/admin/finans"), "admin/finans.js", "adminFinansView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css", "css/dk-odeme.css"], { role: "admin", spec: "finance-contract AdminFinanceTab" }),
   // GEÇİCİ — Berkay: gerek kalmayınca kaldırılacak. Admin › Mekan Ekle (callable adminCreateVenue / adminUpdateVenue).
   R("adminMekanEkle", "— (GEÇİCİ Mekan Ekle; ortak kit)", is("#/admin/mekan-ekle"), "admin/mekan-ekle.js", "adminMekanEkleView", "panel", [...SH.panel, "css/dk-admin-panel.css", "css/dk-admin-etkinlik.css", "css/dk-admin-mekan-ekle.css"], { role: "admin", spec: "GEÇİCİ — mekan hesabı açma" }),
   R("admin", "WebAdmin", pre("#/admin"), "admin/admin.js", "adminView", "panel", [...SH.panel, "css/dk-admin-panel.css"], { role: "admin", spec: "org-admin.md WebAdmin" }),

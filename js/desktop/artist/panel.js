@@ -23,7 +23,8 @@ import {
   respondToOffer, setResidencyStatus, syncResidentDenorm, pushAppNotification,
 } from "../../data.js";
 import { panelShell } from "../shared/panel-shell.js";
-import { previewSplit, fmtKurus } from "../shared/pay-util.js";
+import { previewSplit, fmtKurus, fmtApproxKurus, ESTIMATE_NOTE } from "../shared/pay-util.js";
+import "../shared/payments.js";   // yan etki: oranlar (publicConfig/payments → loadPayRates) tahmin için önbelleğe alınır
 import { svgRaw, svgPath } from "../shared/icons.js";
 import { cx, dkModal, dkToast, dkSkeleton } from "../shared/ui.js";
 import { rgba, trUpper, initials } from "../shared/helpers.js";
@@ -317,9 +318,9 @@ export function artistPanelView(ctx) {
         h("span", { class: cls("when") }, offerWhen(o)),
         o.message ? h("span", { class: cls("msg") }, `“${o.message}”`) : null),
       h("span", { role: "cell", class: cls("fee") }, o.fee,
-        // Sanatçının hesabına kalacak TAHMİNİ tutar (%10 komisyon + %1 stopaj — sunucu computeSplit); karttan direkt kabulden önce görsün
+        // Sanatçının hesabına kalacak TAHMİNİ tutar (Finans v2: komisyon + KDV + tahmini stopaj — pay-util previewSplit); karttan direkt kabulden önce görsün
         (() => { const n = parseTL(o.feeRaw); return n > 0 && status !== "accepted"
-          ? h("span", { style: { display: "block", fontSize: "11px", fontWeight: "600", color: "#C9CBD0", marginTop: "2px" } }, `Sana kalacak ≈ ${fmtKurus(previewSplit(n, "artist_booking").payeeKurus)}`)
+          ? h("span", { title: ESTIMATE_NOTE, style: { display: "block", fontSize: "11px", fontWeight: "600", color: "#C9CBD0", marginTop: "2px" } }, `Sana kalacak ≈ ${fmtApproxKurus(previewSplit(n, "artist_booking").payeeKurus)} (tahmini)`)
           : null; })()),
       h("span", { role: "cell", class: cls("stcell") }, statusBadge(status)),
       h("div", { role: "cell", class: cls("acts") }, ...acts));

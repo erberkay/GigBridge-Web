@@ -2,7 +2,9 @@
 // venueOdeme (#/venue/odemeler), orgOdeme (#/organizer/odemeler). Tasarım tuvalinde ekran YOK → ortak kit + panel kabuğu.
 // Uygulama karşılığı: screens/common/PaymentsScreen.tsx + PayoutAccountScreen.tsx (+ PaymentDisputeScreen çekmecede).
 //   ÖDEYEN (mekan / organizatör): "ÖDEME BEKLEYENLER" (kabul edilmiş, ödenmemiş teklif / mekan isteği → PayTR) + geçmiş.
-//   ALICI (sanatçı / mekan): emanette / aktarılan özeti, kazanç satırları (komisyon + stopaj ayrıntılı), Ödeme Bilgileri (IBAN).
+//   ALICI (sanatçı / mekan): emanette / aktarılan özeti, kazanç satırları (komisyon + KDV + vergi kesintisi ayrıntılı), Ödeme Bilgileri (IBAN).
+//   Finans v2: fv:2 kazanç satırında hizmet belgesi (Belge yükle → submitPaymentDocument + durum); vergi bilgisi eksik/reddedilmişse
+//   "Vergi bilgilerini tamamla" bandı (alıcıda Ödeme Bilgileri kartında, organizatörde kenarda).
 //   Mekan ayrıca: kabul ettiği ücretli kiralama istekleri (emanet notu + hizmet kapsamı girişi/düzenleme).
 // Adres: ?sikayet=<merchantOid> → şikayet çekmecesi · ?bolum=iban → Ödeme Bilgileri kartı (bildirim derin bağlantıları).
 // Kayıtlar: payments (partyUids array-contains uid) canlı; bekleyenler tek sefer (Yenile ile yeniden).
@@ -19,6 +21,7 @@ import { writeQuery, ROLE_COLORS } from "../shared/helpers.js";
 import {
   listenMyPayments, loadDueItems, loadVenueRentals, paymentCard, escrowNote, paymentActions, payBadge, openDisputeDrawer,
   payoutAccountCard, legalLinks, fmtKurus, earnedSummary, paidSummary, payerHistoryLabel, isOid, isDemoUser, fmtDay,
+  payeeBreakdownText, paymentDocBlock, taxBanner, isPaidStatus, commissionText,
 } from "../shared/payments.js";
 
 const C = "dk-odeme";
@@ -47,7 +50,7 @@ export function odemelerView(ctx) {
     eyebrow: "EMANETLİ ÖDEME · PAYTR", title, cls: `${C}-hero`, color: ROLE_COLORS[role],
     lead: isPayer
       ? "Kabul edilen tekliflerin ödemesini buradan yaparsın. Para etkinlikten 24 saat sonrasına kadar emanette tutulur. Etkinlikten önce iptal talep edebilir, sonra kanıtlı şikayet açabilirsin."
-      : "Etkinlik ücretlerin emanette tutulur, etkinlikten sonra banka hesabına aktarılır. Komisyon ve stopaj her satırda ayrıntılı.",
+      : "Etkinlik ücretlerin emanette tutulur, etkinlikten sonra banka hesabına aktarılır. Komisyon, KDV ve vergi kesintisi her satırda ayrıntılı.",
     actions: isPayer ? refresh : null,
   });
   const kDue = isPayer ? dkKpi({ label: "ÖDEME BEKLEYENLER", value: "—", sub: "Kabul edilmiş, ödenmemiş", icon: "clock", color: "#FFB347" }) : null;
@@ -87,12 +90,14 @@ export function odemelerView(ctx) {
   // ── kenar: Ödeme Bilgileri (alıcı) + nasıl çalışır + yasal ──
   let acct = null;
   if (isPayee) { acct = payoutAccountCard({ openForm: ctx.query?.get?.("bolum") === "iban" }); aside.append(acct.node); unsubs.push(() => acct.destroy()); }
+  else if (!demo) { const tb = taxBanner(); aside.append(tb.node); unsubs.push(() => tb.destroy()); }   // organizatör: vergi bilgisi bandı
   aside.append(h("section", { class: `${C}-info` },
     h("span", { class: `${C}-h` }, "NASIL ÇALIŞIR"),
     h("ol", { class: `${C}-steps` },
       h("li", {}, "Teklif ya da mekan isteği kabul edilince ödeyen PayTR ile öder."),
       h("li", {}, "Para etkinlik bitişinden 24 saat sonrasına kadar emanette bekler."),
-      h("li", {}, "Sorun bildirilmezse alıcının IBAN'ına aktarılır (komisyon ve %1 stopaj düşülür).")),
+      h("li", {}, `Sorun bildirilmezse alıcının IBAN'ına aktarılır (${commissionText()} ve varsa mevzuata göre vergi kesintisi düşülür).`),
+      h("li", {}, "Vergi durumu belirsiz ödemeler finansal incelemeden sonra aktarılır.")),
     legalLinks()));
 
   // ═════════ ÖDEME BEKLEYENLER ═════════
@@ -153,7 +158,7 @@ export function odemelerView(ctx) {
   let rows = null;
   function histRow(p) {
     const side = p.payeeUid === uid ? "payee" : "payer";
-    const amount = side === "payee" ? p.payeeKurus : p.grossKurus;
+    const amount = side === "payee" ? p.payeeKurus : p.chargeKurus || p.grossKurus;
     const other = side === "payee" ? p.payerName : p.payeeName;
     const when = p.paidAt ?? p.createdAt;
     const acts = paymentActions(p, side, { onOpenDispute: openDispute });
@@ -167,9 +172,12 @@ export function odemelerView(ctx) {
         h("span", { class: `${C}-ht` }, p.title || (p.kind === "venue_rental" ? "Mekan kiralama" : "Sahne ücreti")),
         h("span", { class: `${C}-hs` }, sub.filter(Boolean).join(" · ")),
         h("span", { class: `${C}-hf` }, side === "payer" ? payBadge(p.status, side, payerHistoryLabel(p)) : payBadge(p.status, side), p.testMode ? h("span", { class: `${C}-test` }, "TEST") : null),
-        side === "payee" ? h("span", { class: `${C}-hb` }, `Ücret ${fmtKurus(p.grossKurus)} · komisyon ${fmtKurus(p.commissionKurus)} · stopaj ${fmtKurus(p.stopajKurus)}`) : null,
+        side === "payee" ? h("span", { class: `${C}-hb` }, payeeBreakdownText(p)) : null,
+        side === "payer" && p.payerRefundDueKurus > 0 ? h("span", { class: `${C}-hb`, style: { color: "#7CE0B0" } }, `Vergi farkı iadesi ${fmtKurus(p.payerRefundDueKurus)}`) : null,
         refunded > 0 ? h("span", { class: `${C}-hb` }, refunded >= p.grossKurus ? `${fmtKurus(refunded)} iade edildi` : `İade ${fmtKurus(refunded)} · ödenen net ${fmtKurus(p.grossKurus - refunded)}`) : null,
-        acts),
+        acts,
+        // Finans v2: alıcı hizmet belgesi (yalnız ödenmiş, iade edilmemiş fv:2 kayıtlar)
+        side === "payee" && p.fv === 2 && isPaidStatus(p.status) && p.status !== "refunded" && !demo ? paymentDocBlock(p) : null),
       h("span", { class: cx(`${C}-hamt`, side === "payee" && "is-in") }, fmtKurus(amount)));
   }
   function drawHist() {

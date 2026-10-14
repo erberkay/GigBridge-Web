@@ -14,7 +14,7 @@ import {
   doc, getDoc, getDocs, onSnapshot, collection, query, where, updateDoc, serverTimestamp,
 } from "../../firebase.js";
 import { svgIcon, svgRaw } from "./icons.js";
-import { cx, dkButton, dkCheckbox, dkInput, dkTextarea, dkChip, dkModal, dkDrawer, dkToast, dkConfirm, dkStatusBadge, dkSkeleton, dkInlineMessage } from "./ui.js";
+import { cx, dkButton, dkCheckbox, dkInput, dkTextarea, dkSelect, dkChip, dkModal, dkDrawer, dkToast, dkConfirm, dkStatusBadge, dkSkeleton, dkInlineMessage } from "./ui.js";
 import { ensureCss } from "../css.js";
 import { BASE_CSS } from "../registry.js";
 import { LEGAL } from "./assets.js";
@@ -65,7 +65,53 @@ export const payApi = {
   respondCancellation: call("respondPaymentCancellation", 60000),
   payeeCancel: call("payeeCancelPayment", 60000),
   admin: call("adminPayments", 120000),
+  // Finans v2 (sözleşme: finance-contract.md)
+  getTaxProfile: () => call("getTaxProfile", 20000)({}),
+  setTaxProfile: call("setTaxProfile", 30000),
+  setGroupPayoutShares: call("setGroupPayoutShares", 30000),
+  submitPaymentDocument: call("submitPaymentDocument", 30000),
 };
+
+// ── Oranlar: publicConfig/payments (herkes okur; yoksa pay-util varsayılanları). Oturum başına bir kez, 10 dk önbellek. ──
+let _rates = { at: 0, p: null };
+export function loadPayRates(force = false) {
+  if (!force && _rates.p && Date.now() - _rates.at < 600e3) return _rates.p;
+  const p = getDoc(doc(db, "publicConfig", "payments"))
+    .then((d) => { const r = U.setPayRates(d.exists() ? d.data() : null); try { window.dispatchEvent(new CustomEvent("gb:pay-rates")); } catch (_) {} return r; })
+    .catch(() => U.getPayRates());
+  _rates = { at: Date.now(), p };
+  return p;
+}
+loadPayRates();
+
+// ── Vergi profili durumu (banner'lar için kısa önbellek; kaydedince gb:tax-profile olayı) ──
+let _tax = { uid: null, at: 0, p: null };
+export function taxProfileCached(force = false) {
+  const uid = myUid();
+  if (!force && _tax.uid === uid && _tax.p && Date.now() - _tax.at < 60e3) return _tax.p;
+  const p = payApi.getTaxProfile();
+  _tax = { uid, at: Date.now(), p };
+  p.catch(() => { if (_tax.p === p) _tax.p = null; });
+  return p;
+}
+export const invalidateTaxProfile = () => { _tax = { uid: null, at: 0, p: null }; };
+/** Vergi bilgisi eksik ya da reddedilmiş mi (banner) — hata/demoda false (gürültü yapma). */
+export async function taxProfileNeedsAction() {
+  if (isDemoUser() || !myUid()) return false;
+  try { const r = await taxProfileCached(); return !r?.exists || r.status === "rejected"; } catch (_) { return false; }
+}
+/** "Vergi bilgilerini tamamla" bandı (rol profilindeki Vergi Bilgileri'ne bağlantı). Gerekmiyorsa gizli kalır. */
+export function taxBanner({ href = null } = {}) {
+  const role = session.profile?.userType;
+  const to = href || (role === "artist" ? "#/artist/profil?tab=vergi" : role === "venue" ? "#/venue/profil?bolum=vergi" : role === "organizer" ? "#/organizer/profil?bolum=vergi" : null);
+  const node = h(to ? "a" : "div", { href: to, class: "dk-pay-ibanwarn dk-pay-taxwarn", hidden: true },
+    ic("alertCircle", 14, "#FFB347", "2"), h("span", {}, "Vergi bilgilerini tamamla · ödemelerin finansal incelemede beklemesin"), to ? ic("chevronRight", 14, "#FFB347", "2") : null);
+  let alive = true;
+  const check = () => taxProfileNeedsAction().then((need) => { if (alive) node.hidden = !need; });
+  check();
+  window.addEventListener("gb:tax-profile", check);
+  return { node, destroy() { alive = false; window.removeEventListener("gb:tax-profile", check); } };
+}
 
 export function listenPayment(oid, cb, onError) {
   return onSnapshot(doc(db, "payments", oid), (d) => cb(d.exists() ? U.toPayment(d.id, d.data()) : null), (e) => onError?.(e));
@@ -194,7 +240,7 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
   }
 
   const termsReady = () => !isRental || (!!st.vr?.terms && (st.vr.confirmed || st.agree));
-  let payBtn = null;
+  let payBtn = null, payerTaxB = null;
   async function pay() {
     if (st.busy) return;
     if (isDemoUser()) { alertModal("Demo Mod", "Demo hesapta ödeme yapılamaz."); return; }
@@ -250,14 +296,21 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
         }
         kids.push(tb);
       }
-      // ödeyen yalnız brütü öder (komisyon ve stopaj alıcının payından düşülür)
+      // varsayılan: ödeyen yalnız brütü öder (komisyon + KDV alıcının payından düşer). Admin "komisyonu ödeyen karşılar"
+      // seçtiyse komisyon + KDV brütün üstüne eklenir (tahmin; kesin tutarı createPayment döndürür).
+      const est = U.previewSplit(amountKurus / 100, kind, { includeTaxes: false });
+      const payerBears = est.commissionBorneBy === "payer";
+      const charge = amountKurus + (payerBears ? est.platformTakeKurus : 0);
       kids.push(h("div", { class: "dk-pay-break" },
         row(isRental ? "Mekan ücreti" : "Sahne ücreti", U.fmtKurus(amountKurus)),
-        row("Ödenecek tutar", U.fmtKurus(amountKurus), { strong: true }),
-        h("span", { class: "dk-pay-fine" }, "GigBridge komisyonu ve stopaj alıcının payından düşülür; sana ek ücret yansımaz.")));
-      payBtn = dkButton(`${isRental ? "Mekan ücretini öde" : "Ödeme yap"} · ${U.fmtKurus(amountKurus)}`, {
+        payerBears ? row(`GigBridge ${U.commissionText(kind)}`, `+${U.fmtKurus(est.platformTakeKurus)}`) : null,
+        row(payerBears ? "Ödenecek tutar (tahmini)" : "Ödenecek tutar", U.fmtKurus(charge), { strong: true }),
+        h("span", { class: "dk-pay-fine" }, payerBears
+          ? "Komisyon ve KDV'si ücretin üstüne eklenir. Varsa vergi kesintisi (stopaj) alıcının payından düşülür; senin yasal stopaj sorumluluğun ödeme sonrası finans incelemesinde netleşir."
+          : "GigBridge komisyonu (+ KDV) ve varsa vergi kesintisi alıcının payından düşülür; sana ek ücret yansımaz.")));
+      payBtn = dkButton(`${isRental ? "Mekan ücretini öde" : "Ödeme yap"} · ${U.fmtKurus(charge)}`, {
         variant: "success", size: 44, icon: "lock", full: true, disabled: !termsReady() || st.busy, busy: st.busy, busyLabel: "Ödeme başlatılıyor…",
-        ariaLabel: `Ödeme yap ${U.fmtKurus(amountKurus)}`, onClick: pay,
+        ariaLabel: `Ödeme yap ${U.fmtKurus(charge)}`, onClick: pay,
       });
       kids.push(payBtn);
       if (isRental && st.vr?.status === "accepted") {
@@ -266,12 +319,18 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
     } else {
       payBtn = null;
       kids.push(h("div", { class: "dk-pay-break" },
-        row("Ödenen", U.fmtKurus(amountKurus), { strong: true }),
-        p?.refundedKurus ? row("İade edilen", U.fmtKurus(p.refundedKurus)) : null));
+        row("Ödenen", U.fmtKurus(p?.fv === 2 ? p.chargeKurus : amountKurus), { strong: true }),
+        p?.refundedKurus ? row("İade edilen", U.fmtKurus(p.refundedKurus)) : null,
+        p?.payerRefundDueKurus > 0 ? row("Sana iade edilecek vergi farkı", U.fmtKurus(p.payerRefundDueKurus), { color: "#7CE0B0" }) : null));
       kids.push(textP(p?.status === "transferred" ? "Etkinlik tamamlandı, ödeme alıcıya aktarıldı."
         : p?.status === "refunded" || (!p && refunded) ? "Ödemenin tamamı iade edildi."
         : U.disputeOpen(p) ? "Şikayetin inceleniyor. Karar verilene kadar ödeme emanette bekler."
         : "Para emanette. Etkinlikten 24 saat sonra, sorun bildirilmezse alıcıya aktarılır."));
+      // ödeyenin vergi profili eksikse (mekan / organizatör) finansal inceleme gerekebilir
+      if (p && (p.financeReasons || []).some((r) => r === "payer_tax_missing" || r === "payer_tax_unverified")) {
+        if (!payerTaxB) { payerTaxB = taxBanner(); unsubs.push(() => payerTaxB.destroy()); }
+        kids.push(payerTaxB.node);
+      }
       if (p) { const a = paymentActions(p, "payer", { onOpenDispute }); if (a) kids.push(a); }
     }
     // odak korunur: yeniden çizimde odaktaki öğe gidiyorsa kartın kendisine
@@ -316,29 +375,51 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
   window.addEventListener("gb:payout-account", loadIban);
   unsubs.push(() => window.removeEventListener("gb:payout-account", loadIban));
 
+  const onRates = () => draw();
+  window.addEventListener("gb:pay-rates", onRates);
+  unsubs.push(() => window.removeEventListener("gb:pay-rates", onRates));
+  const taxB = isDemoUser() ? null : taxBanner();
+  if (taxB) unsubs.push(() => taxB.destroy());
+
+  // Döküm: ödeme kaydı yoksa TAHMİN (Finans v2 formülü), fv:2 kaydında komisyon + KDV + her kesinti, eski kayıtta eski satırlar.
+  function breakdown(p) {
+    const fmtL = (l) => (l.sign < 0 ? `−${U.fmtKurus(l.kurus)}` : U.fmtKurus(l.kurus));
+    if (p) {
+      const lines = U.payeeBreakdown(p);
+      return h("div", { class: "dk-pay-break" }, ...lines.map((l) => (l.strong
+        ? row("Size kalan", U.fmtKurus(l.kurus), { strong: true, color: "#7CE0B0" })
+        : row(l.label, fmtL(l)))),
+      p.fv === 2 && !p.withholdings.length && p.status === "finance_review" ? h("span", { class: "dk-pay-fine" }, "Vergi kesintisi finansal inceleme sonunda kesinleşir.") : null);
+    }
+    const est = U.previewSplit(amountTL, kind);
+    const payeeBears = est.commissionBorneBy === "payee";
+    return h("div", { class: "dk-pay-break" },
+      row("Ücret", U.fmtKurus(est.grossKurus)),
+      payeeBears ? row(`Komisyon (%${Math.round(est.commissionRate * 1000) / 10})`, `−${U.fmtKurus(est.commissionKurus)}`) : null,
+      payeeBears ? row(`Komisyon KDV (%${Math.round(est.commissionVatRate * 1000) / 10})`, `−${U.fmtKurus(est.commissionVatKurus)}`) : null,
+      row(`Tahmini stopaj (%${Math.round(est.estimateStopajRate * 1000) / 10})`, `−${U.fmtKurus(est.stopajKurus)}`),
+      row("Sana kalacak (tahmini)", `≈ ${U.fmtApproxKurus(est.payeeKurus)}`, { strong: true, color: "#7CE0B0" }),
+      h("span", { class: "dk-pay-fine" }, U.ESTIMATE_NOTE));
+  }
+
   function draw() {
     if (!alive) return;
     const p = st.p;
     const paid = p ? U.isPaidStatus(p.status) : st.pstat === "paid";
-    const est = U.previewSplit(amountTL, kind);
-    const gross = p?.grossKurus || est.grossKurus;
-    const commission = p ? p.commissionKurus : est.commissionKurus;
-    const rate = p ? p.commissionRate : est.commissionRate;
-    const stopaj = p ? p.stopajKurus : est.stopajKurus;
-    const net = p ? p.payeeKurus : est.payeeKurus;
     const label = p ? U.statusLabel(p.status, "payee") : paid ? U.statusLabel("held", "payee") : { text: "ÖDEME BEKLENİYOR", tone: "warn" };
     const kids = [
       h("div", { class: "dk-pay-head" }, ic(paid ? "shieldCheck" : "clock", 16, paid ? "#7CE0B0" : "#FFB347", "1.9"), h("span", { class: "dk-pay-title" }, paid ? "Ödeme güvencede" : "Ödeme"), payBadge(null, null, label)),
       textP(p?.status === "transferred" ? "Ödemen hesabına aktarıldı."
+        : p?.status === "finance_review" ? "Ödeme güvencede. Vergi durumu netleşene kadar finansal incelemede bekler; inceleme bitince hesabına aktarılır."
         : paid ? "Ödeme güvencede (emanette), etkinlikten sonra hesabına aktarılır."
         : kind === "venue_rental" ? "Organizatör ödemeyi yaptığında burada göreceksin. Para etkinlik sonrasına kadar emanette tutulur."
         : "Ödeyen taraf ödemeyi yaptığında burada göreceksin. Para etkinlik sonrasına kadar emanette tutulur."),
-      h("div", { class: "dk-pay-break" },
-        row("Ücret", U.fmtKurus(gross)),
-        row(`GigBridge komisyonu (%${Math.round(rate * 100)})`, `−${U.fmtKurus(commission)}`),
-        row("Stopaj (%1, KDV hariç tutar üzerinden)", `−${U.fmtKurus(stopaj)}`),
-        row(p ? "Hesabına geçecek" : "Hesabına geçecek (tahmini)", U.fmtKurus(net), { strong: true, color: "#7CE0B0" })),
+      breakdown(p),
     ];
+    if (p?.payoutParts?.length) {
+      kids.push(h("div", { class: "dk-pay-break" }, sub("HAK EDİŞ PAYLARI"),
+        ...p.payoutParts.map((x) => row(`${x.name || "Üye"} · %${x.percent}`, U.fmtKurus(x.amountKurus)))));
+    }
     if (isRental && st.vr && !paid) {
       const tb = h("div", { class: "dk-pay-tbox" }, sub(st.vr.confirmed ? "HİZMET KAPSAMI · ORGANİZATÖR ONAYLADI" : "HİZMET KAPSAMI"));
       tb.append(st.vr.terms ? serviceTermsView(st.vr.terms) : textP("Organizatör, kapsamı okuyup onaylamadan ödeme yapamaz. Kullanım saatini, kapasiteyi ve dahil hizmetleri gir."));
@@ -346,6 +427,8 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
       kids.push(tb);
     }
     if (p && paid) { const a = paymentActions(p, "payee", { onOpenDispute }); if (a) kids.push(a); }
+    if (p && paid && p.fv === 2 && p.status !== "refunded") kids.push(paymentDocBlock(p));
+    if (taxB) kids.push(taxB.node);
     if (st.hasIban === false) {
       kids.push(h(ibanHref ? "a" : "div", { href: ibanHref, class: "dk-pay-ibanwarn" }, ic("alertCircle", 14, "#FFB347", "2"), h("span", {}, "Ödemeyi alabilmen için IBAN ekle"), ibanHref ? ic("chevronRight", 14, "#FFB347", "2") : null));
     }
@@ -913,6 +996,82 @@ export function openDisputeDrawer(oid, { onChanged, onClose } = {}) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
+// HİZMET BELGESİ (Finans v2 · alıcı) — fv:2 ödemede "Belge yükle": tür (6) + belge no + tarih + dosya (PDF/JPG/PNG < 10 MB)
+// → Storage payment_docs/{uid}/{oid}_{ts}.{ext} (yalnız sahibi yazar/okur) → submitPaymentDocument. Durum documents.service'ten.
+// ══════════════════════════════════════════════════════════════════════
+export function paymentDocBlock(p) {
+  const svc = p.documents?.service || null;
+  const st = svc?.status || null;
+  const tone = U.TONE_COLOR[U.DOC_STATUS_TONE[st] || "muted"];
+  const needed = (p.financeReasons || []).includes("document_missing");
+  const kids = [h("div", { class: "dk-pay-head" }, ic("fileText", 15, "#A3A7AF", "1.9"), h("span", { class: "dk-pay-title" }, "Hizmet belgesi"),
+    st ? dkStatusBadge({ label: U.DOC_STATUS_LABEL[st] || st, color: tone }, { variant: "box" }) : null)];
+  if (svc) {
+    kids.push(h("span", { class: "dk-pay-body" }, `${U.docTypeLabel(svc.docType)} · No ${svc.docNo || "—"} · ${isoToTR(svc.docDate) || "—"}`));
+    if (st === "rejected" && svc.note) kids.push(note(`Red gerekçesi: ${svc.note}`, "#FF5A6E", "alertCircle"));
+  } else {
+    kids.push(textP(needed
+      ? "Aktarım için bu ödemeye ait faturanı / serbest meslek makbuzunu yüklemen gerekiyor."
+      : "Bu ödeme için düzenlediğin fatura ya da makbuzu yükleyebilirsin (mali kayıt için)."));
+  }
+  if (!svc || st === "rejected") {
+    kids.push(dkButton(svc ? "Yeni belge yükle" : "Belge yükle", { variant: needed || st === "rejected" ? "role" : "outline", size: 36, icon: "upload", onClick: () => openPaymentDocModal(p) }));
+  }
+  return h("div", { class: cx("dk-pay-tbox", "dk-pay-doc") }, ...kids);
+}
+
+export function openPaymentDocModal(p, { onDone } = {}) {
+  const uid = myUid();
+  if (isDemoUser() || !uid) { alertModal("Demo Mod", "Demo hesapta belge yüklenemez."); return; }
+  const typeSel = dkSelect({ size: 44, options: U.DOC_TYPES.map((d) => ({ value: d.key, label: d.label })), placeholder: "Belge türünü seç", attrs: { "aria-label": "Belge türü" } });
+  const sel = typeSel.querySelector("select");
+  const noIn = dkInput({ size: 44, maxlength: 40, placeholder: "örn. GIB2026000000123", autocomplete: "off", attrs: { "aria-label": "Belge numarası", spellcheck: "false" } });
+  const dateIn = dkInput({ size: 44, type: "date", attrs: { "aria-label": "Belge tarihi", max: new Date().toISOString().slice(0, 10) } });
+  const fileIn = h("input", { type: "file", accept: "application/pdf,image/jpeg,image/png", class: "dk-pay-file", "aria-label": "Belge dosyası" });
+  const fileInfo = h("span", { class: "dk-pay-fine" }, "PDF, JPG ya da PNG · en çok 10 MB");
+  const err = h("span", { class: "dk-pay-err", role: "alert" });
+  let file = null, busy = false;
+  fileIn.addEventListener("change", () => {
+    file = fileIn.files?.[0] || null;
+    err.textContent = "";
+    if (file && !U.DOC_MIME[file.type]) { err.textContent = "Yalnız PDF, JPG ya da PNG yükleyebilirsin."; file = null; }
+    else if (file && file.size >= U.DOC_MAX_BYTES) { err.textContent = "Dosya 10 MB'tan küçük olmalı."; file = null; }
+    fileInfo.textContent = file ? `${file.name} · ${(file.size / 1048576).toFixed(1).replace(".", ",")} MB` : "PDF, JPG ya da PNG · en çok 10 MB";
+  });
+  const fld = (label, ctl) => h("label", { class: "dk-pay-fld" }, h("span", { class: "dk-lbl" }, label), ctl);
+  const body = h("div", { class: "dk-pay-form" },
+    h("p", { class: "dk-pay-text" }, `${p.title || "Ödeme"} · ${U.fmtKurus(p.grossKurus)}`),
+    fld("BELGE TÜRÜ", typeSel), fld("BELGE NO", noIn), fld("BELGE TARİHİ", dateIn),
+    h("div", { class: "dk-pay-fld" }, h("span", { class: "dk-lbl" }, "DOSYA"), fileIn, fileInfo),
+    err,
+    h("p", { class: "dk-pay-fine" }, "Belgen yalnız sana ve GigBridge finans ekibine görünür; mali kayıt ve vergi kesintisi doğrulaması için kullanılır."));
+  const m = dkModal({ title: "Hizmet belgesi yükle", body, size: 500, variant: "panel", actions: [
+    { label: "Vazgeç", variant: "outline" },
+    { label: "Yükle", variant: "role", icon: "upload", busyLabel: "Yükleniyor…", onClick: async () => {
+      if (busy) return false;
+      const docType = sel.value, docNo = noIn.value.trim(), docDate = dateIn.value;
+      if (!docType) { err.textContent = "Belge türünü seç."; return false; }
+      if (docNo.length < 3) { err.textContent = "Belge numarasını gir."; return false; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(docDate)) { err.textContent = "Belge tarihini seç."; return false; }
+      if (!file) { err.textContent = "Belge dosyasını seç (PDF, JPG ya da PNG, en çok 10 MB)."; return false; }
+      busy = true; err.textContent = "";
+      try {
+        const path = U.paymentDocPath(uid, p.id, Date.now(), U.DOC_MIME[file.type]);
+        await uploadBytes(storageRef(storage, path), file, { contentType: file.type });
+        await payApi.submitPaymentDocument({ merchantOid: p.id, docType, docNo, docDate, storagePath: path });
+        dkToast("Belge gönderildi · finans ekibi inceleyecek");
+        try { onDone?.(); } catch (_) {}
+        return true;
+      } catch (e) {
+        err.textContent = U.paymentErrorText(e);
+        return false;
+      } finally { busy = false; }
+    } },
+  ] });
+  return m;
+}
+
+// ══════════════════════════════════════════════════════════════════════
 // ÖDEME BİLGİLERİ (IBAN) — setPayoutAccount / getPayoutAccount (yalnız sanatçı ve mekan; sunucu maskeyle döner)
 // ══════════════════════════════════════════════════════════════════════
 export function payoutAccountCard({ openForm = false } = {}) {
@@ -960,7 +1119,8 @@ export function payoutAccountCard({ openForm = false } = {}) {
     h("span", { class: "dk-pay-kick" }, "ÖDEME ALMA"),
     h("h2", { id: "dk-pay-acct-h", class: "dk-pay-acct-t" }, "Ödeme Bilgileri"),
     h("p", { class: "dk-pay-text" }, "Etkinlik ücretleri PayTR güvencesiyle emanette tutulur; etkinlikten sonra bu hesaba aktarılır. Hesap sahibinin adı IBAN'daki adla aynı olmalı (şirket hesabında ticari ünvan)."));
-  const foot = h("p", { class: "dk-pay-fine" }, "IBAN'ın yalnız ödeme aktarımı için PayTR'a iletilir; kimseyle paylaşılmaz. Aktarılan tutardan GigBridge komisyonu ve yasal %1 stopaj düşülür.");
+  const foot = h("p", { class: "dk-pay-fine" }, "IBAN'ın yalnız ödeme aktarımı için PayTR'a iletilir; kimseyle paylaşılmaz. Aktarılan tutardan GigBridge komisyonu (+ KDV) ve varsa mevzuata göre vergi kesintisi düşülür.");
+  const taxB = taxBanner();
   const bodyBox = h("div", { class: "dk-pay-acct-body" });
   function draw() {
     if (!alive) return;
@@ -987,12 +1147,12 @@ export function payoutAccountCard({ openForm = false } = {}) {
     catch (_) { err = true; }
     draw();
   }
-  node.append(head, bodyBox, foot);
+  node.append(head, taxB.node, bodyBox, foot);
   if (isDemoUser()) { acct = { exists: false }; editing = true; draw(); } else load();
   return {
     node,
     focus() { try { node.scrollIntoView({ block: "start", behavior: "smooth" }); node.focus({ preventScroll: true }); } catch (_) {} if (acct && !acct.exists) requestAnimationFrame(() => nameIn.focus()); },
-    destroy() { alive = false; },
+    destroy() { alive = false; taxB.destroy(); },
   };
 }
 
