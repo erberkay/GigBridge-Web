@@ -161,6 +161,7 @@ export const paymentDocPath = (uid, oid, ts, ext) => `payment_docs/${uid}/${oid}
 export const FINANCE_STATUS_LABEL = { auto: "Otomatik", review: "İnceleme", cleared: "Onaylandı" };
 export const FINANCE_REASON_LABEL = {
   payee_tax_missing: "Alıcının vergi bilgisi yok", payee_tax_unverified: "Alıcının vergi bilgisi doğrulanmadı",
+  arizi_limit_exceeded: "Vergi kaydı olmayan sanatçı yıllık 350.000 TL arızi kazanç sınırını aştı",
   payer_tax_missing: "Ödeyenin vergi bilgisi yok", payer_tax_unverified: "Ödeyenin vergi bilgisi doğrulanmadı",
   no_approved_rule: "Onaylı vergi kuralı yok", rules_conflict: "Kurallar çakışıyor", rules_changed: "Kurallar değişti",
   group_single_iban: "Grup tek IBAN'a (pay dağılımı yok)", group_member_tax: "Grup üyesinin vergi bilgisi eksik",

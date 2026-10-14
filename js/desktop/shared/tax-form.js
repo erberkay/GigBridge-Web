@@ -6,6 +6,7 @@
 import { h } from "../../ui.js";
 import { cx, dkButton, dkInput, dkTextarea, dkSelect, dkCheckbox, dkRadioGroup, dkStatusBadge, dkSkeleton, dkInlineMessage, dkConfirm } from "./ui.js";
 import { LEGAL } from "./assets.js";
+import { TAX_INFO, ARIZI_DECLARATION, ARIZI_LIMIT_TL, TAX_INFO_NOTE } from "./tax-info.js";
 import { payApi, alertModal, paymentErrorText, isDemoUser, invalidateTaxProfile, fmtDT, TONE_COLOR } from "./payments.js";
 
 export const TAX_STATUS = {
@@ -78,8 +79,34 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const kvkkLink = LEGAL?.privacy ? h("a", { href: LEGAL.privacy, target: "_blank", rel: "noopener", class: "dk-link dk-tax-kvkk" }, "KVKK Aydınlatma Metni") : null;
 
   // performer
-  let cat = "A", activity = "arizi", vatReg = false;
-  const catGroup = performer ? dkRadioGroup({ items: PERF_CATS, value: cat, label: "Vergi durumu", onChange: (v) => { cat = v; paintCat(); } }) : null;
+  let cat = "A", activity = "arizi", vatReg = false, ariziOk = false;
+  // Seçilen vergi durumunun sade anlatımı (tax-info.js) + A için zorunlu beyan + bu yılki toplam (350.000 TL sınırı)
+  const infoBox = performer ? h("div", { class: "dk-pay-tbox", style: { display: "grid", gap: "6px" } }) : null;
+  const yearBox = performer ? h("div") : null;
+  const ariziBox = performer ? dkCheckbox({ label: ARIZI_DECLARATION, checked: false, cls: "dk-pay-agree", onChange: (v) => { ariziOk = v; } }) : null;
+  function paintInfo() {
+    if (!performer) return;
+    const t = TAX_INFO[cat];
+    infoBox.replaceChildren(
+      h("strong", { style: { fontSize: "13.5px" } }, t.title),
+      h("ul", { style: { margin: "0", paddingLeft: "18px", display: "grid", gap: "4px", fontSize: "13px", lineHeight: "1.5" } }, ...t.points.map((x) => h("li", {}, x))),
+      h("span", { class: "dk-pay-fine" }, `Örnek: ${t.example}`),
+      h("span", { class: "dk-pay-fine" }, TAX_INFO_NOTE));
+    ariziBox.hidden = cat !== "A";
+    yearBox.hidden = cat !== "A";
+  }
+  function paintYear() {
+    if (!performer || !data) return;
+    const used = Math.round((data.yearGrossKurus || 0) / 100);
+    const lim = Math.round((data.ariziLimitKurus || ARIZI_LIMIT_TL * 100) / 100);
+    const fmt = (n) => `${n.toLocaleString("tr-TR")} TL`;
+    const kind = used > lim ? "err" : used >= lim * 0.8 ? "warn" : "info";
+    const msg = used > lim
+      ? `${data.year || ""} yılında GigBridge üzerinden aldığın ödemeler ${fmt(used)} ile ${fmt(lim)} sınırını aştı. Yıllık beyanname vermen ve vergi kaydı (şahıs şirketi) açman gerekebilir; ödemelerin finans incelemesinden geçer.`
+      : `${data.year || ""} yılında GigBridge üzerinden aldığın ödemeler: ${fmt(used)} / ${fmt(lim)} (GigBridge dışındaki işlerin bu sayıya dahil değil).`;
+    yearBox.replaceChildren(dkInlineMessage(kind === "warn" ? "info" : kind, msg));
+  }
+  const catGroup = performer ? dkRadioGroup({ items: PERF_CATS, value: cat, label: "Vergi durumu", onChange: (v) => { cat = v; paintCat(); paintInfo(); } }) : null;
   const actGroup = performer ? dkRadioGroup({ items: ACTIVITY, value: activity, label: "Faaliyet sıklığı", onChange: (v) => { activity = v; } }) : null;
   const vatBox = performer ? dkCheckbox({ label: "KDV mükellefiyim", checked: false, onChange: (v) => { vatReg = v; } }) : null;
   const docSel = performer ? dkSelect({ size: 44, options: PERF_DOCS, value: "e_smm", attrs: { "aria-label": "Düzenleyeceğin belge" } }) : null;
@@ -139,16 +166,16 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
 
   const form = performer
     ? h("div", { class: "dk-pay-form" },
-      box("VERGİ DURUMUN", catGroup),
+      box("VERGİ DURUMUN", catGroup), infoBox,
       rows.fullName, rows.activity, h("div", { class: "dk-tax-grid" }, rows.tckn, rows.vkn), h("div", { class: "dk-tax-grid" }, rows.taxOffice, rows.title),
-      rows.vat, rows.doc, rows.rep, rows.resp)
+      rows.vat, rows.doc, rows.rep, rows.resp, yearBox, ariziBox)
     : h("div", { class: "dk-pay-form" },
       box("İŞLETME TÜRÜ", bizSel), rows.title, h("div", { class: "dk-tax-grid" }, rows.vkn, rows.tckn), rows.taxOffice,
       fld("FATURA ADRESİ", addr),
       box("STOPAJ SORUMLUSU MUSUNUZ?", stopajGroup, "Sanatçıya yapılan ödemelerde stopajı siz mi kesiyorsunuz? Emin değilseniz \"Bilmiyorum\" seçin; finans ekibi netleştirir."),
       h("span", { class: "dk-pay-sub" }, "MALİ MÜŞAVİR (OPSİYONEL)"),
       F.accountantName, h("div", { class: "dk-tax-grid" }, F.accountantPhone, F.accountantEmail));
-  paintCat(); paintBiz();
+  paintCat(); paintBiz(); paintInfo();
 
   const setVal = (k, v) => { const el = F[k]; if (!el) return; if (masked(v)) { el.value = ""; el.placeholder = `${v} · değiştirmek için yeniden gir`; el.dataset.masked = "1"; } else { el.value = v ?? ""; delete el.dataset.masked; } };
   function fill(pr) {
@@ -157,10 +184,11 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     if (performer) {
       if (["A", "B", "C"].includes(pr.category)) { cat = pr.category; catGroup.dk.set(cat); }
       if (["arizi", "duzenli"].includes(pr.activity)) { activity = pr.activity; actGroup.dk.set(activity); }
+      if (pr.category === "A" && data?.ariziAccepted) { ariziOk = true; ariziBox.dk.set(true); }
       vatReg = pr.vatRegistered === true; vatBox.dk.set(vatReg);
       if (pr.docType) selOf(docSel).value = pr.docType;
       if (pr.docResponsible) selOf(respSel).value = pr.docResponsible;
-      paintCat();
+      paintCat(); paintInfo();
     } else {
       if (pr.businessType) selOf(bizSel).value = pr.businessType;
       if (pr.billingAddress) addr.input.value = pr.billingAddress;
@@ -180,6 +208,8 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
       if (cat === "A") {
         out.activity = activity;
         if (!keepMasked("tckn")) { if (digits(v("tckn")).length !== 11) return { error: "T.C. kimlik numarası 11 haneli olmalı." }; out.tckn = v("tckn"); }
+        if (!ariziOk) return { error: "Vergi kaydı olmayan sanatçı beyanını okuyup onay kutusunu işaretle." };
+        out.ariziAccepted = true;
       } else if (cat === "B") {
         if (v("vkn")) { if (v("vkn").length !== 10) return { error: "Vergi kimlik numarası 10 haneli olmalı." }; out.vkn = v("vkn"); }
         if (v("tckn")) { if (v("tckn").length !== 11) return { error: "T.C. kimlik numarası 11 haneli olmalı." }; out.tckn = v("tckn"); }
@@ -256,8 +286,10 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     try {
       const r = await payApi.getTaxProfile();
       if (!alive) return;
-      data = { exists: !!r?.exists, status: r?.status || null, adminNote: r?.adminNote || "", updatedAt: typeof r?.updatedAt === "number" ? r.updatedAt : r?.updatedAt?._seconds ? r.updatedAt._seconds * 1000 : null, profile: r?.profile || null };
+      data = { exists: !!r?.exists, status: r?.status || null, adminNote: r?.adminNote || "", updatedAt: typeof r?.updatedAt === "number" ? r.updatedAt : r?.updatedAt?._seconds ? r.updatedAt._seconds * 1000 : null, profile: r?.profile || null,
+        ariziAccepted: !!r?.ariziAcceptedAt, year: r?.year || null, yearGrossKurus: r?.yearGrossKurus || 0, ariziLimitKurus: r?.ariziLimitKurus || ARIZI_LIMIT_TL * 100 };
       fill(data.profile);
+      paintYear();
     } catch (e) { console.warn("[vergi]", e); err = true; }
     draw();
   }
