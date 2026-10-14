@@ -11,6 +11,7 @@ import { session } from "../../store.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon } from "../shared/icons.js";
 import { cx, dkChip, dkPageHero, dkSkeleton, dkButton, dkInput, dkSelect, dkTextarea, dkSwitch, dkToast, dkConfirm, dkDrawer, dkStatusBadge, dkInlineMessage } from "../shared/ui.js";
+import { rateSummary } from "../shared/rate-summary.js";
 import { writeQuery } from "../shared/helpers.js";
 import {
   payApi, payBadge, fmtKurus, fmtDTShort, paymentErrorText, serviceTermsView, evidenceGallery, openImageViewer,
@@ -156,7 +157,9 @@ export function adminOdemelerView(ctx) {
 
   // ══════════ ayarlar ══════════
   const cfgBox = h("div", { class: "dk-admin-etk-form" });
-  let cfg = null, savingCfg = false;
+  let cfg = null, savingCfg = false, taxRules = [];
+  // Oran özeti: her ayarın 10.000 TL örnekte neyi değiştirdiği + onaylı vergi kuralları + senaryolar (muhasebeci dili)
+  const summary = rateSummary();
   const pct = (v) => String(Math.round((Number(v) || 0) * 1000) / 10);
   async function saveCfg(patch) {
     savingCfg = true; drawCfg();
@@ -205,6 +208,18 @@ export function adminOdemelerView(ctx) {
       saveCfg({ testMode: on });
     } });
     const auto = dkSwitch({ checked: !!cfg.autoPayout, disabled: savingCfg, variant: "cyan", label: "Otomatik aktarım", onChange: (on) => saveCfg({ autoPayout: on }) });
+    // Kaydetmeden önce de: alanlar değiştikçe özet taslak değerlerle yeniden hesaplanır
+    const draft = () => {
+      const n = (el, def) => { const x = num(el); return x >= 0 && x <= 50 ? x / 100 : def; };
+      return { ...cfg, artistCommissionRate: n(a, cfg.artistCommissionRate), venueCommissionRate: n(v, cfg.venueCommissionRate),
+        commissionVatRate: n(vat, cfg.commissionVatRate), commissionVatIncluded: vatIncl, estimateStopajRate: n(est, cfg.estimateStopajRate),
+        paytrFeeRate: n(fee, cfg.paytrFeeRate), artistCommissionBorneBy: aBorne.querySelector("select").value, venueCommissionBorneBy: vBorne.querySelector("select").value };
+    };
+    const live = () => summary.update(draft(), taxRules);
+    [a, v, vat, est, fee].forEach((el) => el.addEventListener("input", live));
+    [aBorne, vBorne].forEach((el) => el.addEventListener("change", live));
+    vatSw.addEventListener("click", () => setTimeout(live, 0));
+    summary.update(cfg, taxRules);
     const line = (label, subTxt, ctl) => h("div", { class: "dk-admin-etk-row" }, h("span", { class: "dk-admin-etk-who" }, h("span", { class: "dk-admin-etk-n" }, label), subTxt ? h("span", { class: "dk-admin-etk-e" }, subTxt) : null), ctl);
     cfgBox.replaceChildren(
       line("Sanatçı komisyonu (%)", null, a),
@@ -223,7 +238,11 @@ export function adminOdemelerView(ctx) {
   }
   async function loadCfg() {
     cfgBox.replaceChildren(dkSkeleton({ w: 240, h: 14 }), dkSkeleton({ w: 200, h: 14 }));
-    try { cfg = (await payApi.admin({ action: "getConfig" })).config; if (alive) drawCfg(); }
+    try {
+      const [c, r] = await Promise.all([payApi.admin({ action: "getConfig" }), payApi.admin({ action: "listRules" }).catch(() => ({ rules: [] }))]);
+      cfg = c.config; taxRules = r.rules || [];
+      if (alive) drawCfg();
+    }
     catch (e) {
       console.error(e);
       if (!alive) return;
@@ -236,7 +255,7 @@ export function adminOdemelerView(ctx) {
     h("div", { class: "dk-admin-etk-form" }, h("div", { class: `${P}-note` }, svgIcon("info", { size: 14, color: "#8A8E97" }),
       h("span", {}, "Aktarımlar her gün 08:00'de yapılır (PayTR: ödeme günü aktarım yok, 10:00 sonrası istekler ertesi gün işlenir). Belirsiz sonuçlu aktarımları PayTR mağaza panelinden kontrol etmeden yeniden serbest bırakma."))));
 
-  root.append(hero, h("div", { class: cx("dk-admin-panel-grid", "dk-admin-etk-g2") }, listCard, h("div", { class: "dk-admin-etk-col" }, cfgCard, noteCard)));
+  root.append(hero, h("div", { class: cx("dk-admin-panel-grid", "dk-admin-etk-g2") }, h("div", { class: "dk-admin-etk-col" }, listCard, summary.el), h("div", { class: "dk-admin-etk-col" }, cfgCard, noteCard)));
 
   // ══════════ şikayet çekmecesi (AdminDisputeModal) ══════════
   let drawer = null, drawerOid = null;
