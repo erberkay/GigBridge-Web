@@ -7,6 +7,7 @@
 // belgesi / komisyon faturası durumu) · denetim (audit log). Kenarda: dışa aktarım + uyum kontrol listesi (salt bilgi).
 // ?sec=<merchantOid> → karar çekmecesi (Admin › Ödemeler'deki "Finansal inceleme" bağlantısı).
 // Görsel dil WebAdmin (dk-admin-panel.css + dk-admin-etkinlik.css) + css/dk-odeme.css (.dk-adm-pay-* satırlar, .dk-fin-*).
+import { auditView } from "../shared/audit-view.js";
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
 import { panelShell } from "../shared/panel-shell.js";
@@ -647,13 +648,14 @@ export function adminFinansView(ctx) {
     if (!guard()) return;
     const rows = r.rows || [];
     if (!rows.length) { body.replaceChildren(empty("Kayıt yok")); return; }
+    // Okunur Türkçe satırlar (audit-view.js): "Sanatçı kiralama komisyonu: %20 → %10" — ham JSON gösterilmez
     body.replaceChildren(...rows.map((x) => {
-      const { action, by, byEmail, at, ...rest } = x;
-      const detail = Object.entries(rest).filter(([, v]) => v != null && v !== "").map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`).join(" · ");
+      const v = auditView(x);
       return h("article", { class: `${P}-row` },
-        h("div", { class: `${P}-top` }, h("span", { class: `${P}-t` }, String(action || "—")), h("span", { class: `${P}-meta` }, fmtDTShort(anyMs(at)))),
-        meta(byEmail || by || "—"),
-        detail ? h("span", { class: `${P}-oid dk-fin-audit` }, detail.length > 600 ? detail.slice(0, 600) + "…" : detail) : null);
+        h("div", { class: `${P}-top` }, h("span", { class: `${P}-t` }, v.title), h("span", { class: `${P}-meta` }, fmtDTShort(anyMs(x.at)))),
+        meta(x.byEmail || x.by || "—"),
+        ...(v.warn ? [dkInlineMessage("err", v.warn)] : []),
+        ...v.lines.map((l) => h("span", { class: `${P}-meta` }, l)));
     }));
   }
 
