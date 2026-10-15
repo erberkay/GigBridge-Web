@@ -70,7 +70,7 @@ export const payApi = {
   setTaxProfile: call("setTaxProfile", 30000),
   setGroupPayoutShares: call("setGroupPayoutShares", 30000),
   submitPaymentDocument: call("submitPaymentDocument", 30000),
-  getGiderPusulasi: call("getGiderPusulasi", 30000),
+  resendPusulaInfo: call("getGiderPusulasi", 30000),   // admin: gider pusulası bilgilerini mekana yeniden gönder
   adminEInvoice: call("adminEInvoice", 120000),   // komisyon e-faturası (Trendyol E-Faturam — functions/efatura.js)
 };
 
@@ -501,13 +501,9 @@ export function paymentActions(p, side, { onOpenDispute } = {}) {
       btn(open ? "Şikayeti gör ve yanıtla" : "Şikayeti gör", "outline", "flag", openDispute);
     }
   }
-  // Gider pusulası (mekan adına hazırlanır; mekan ve sanatçı indirir — 15 dk'lık imzalı bağlantı)
-  if (p.giderPusulasi?.no) {
-    btn(`Gider pusulası · ${p.giderPusulasi.no}`, "outline", "fileText", async () => {
-      const w = window.open("about:blank", "_blank");
-      try { const r = await payApi.getGiderPusulasi({ merchantOid: p.id }); if (w) w.location.href = r.url; else location.href = r.url; }
-      catch (e) { if (w) w.close(); alertModal("Belge açılamadı", U.paymentErrorText(e)); }
-    });
+  // Gider pusulası bilgileri (kaydı olmayan sanatçı) mekana e-postayla gider — belgeyi mekan düzenler (functions/giderPusulasi.js)
+  if (side === "payer" && p.giderPusulasi?.status === "info_sent") {
+    items.push(note("Gider pusulası için gereken bilgiler e-postanıza gönderildi. Pusulayı müşaviriniz düzenler, sanatçıya imzalatırsınız.", "#8A8E97"));
   }
   if (!items.length && !btns.length) return null;
   return h("div", { class: "dk-pay-acts" }, ...items, btns.length ? h("div", { class: "dk-pay-btns" }, ...btns) : null);
