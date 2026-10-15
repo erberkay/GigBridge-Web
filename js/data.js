@@ -923,6 +923,7 @@ export function listenArtistOffers(uid, cb) {
         message: x.message,
         eventId: x.eventId ?? null,
         photoUrl: x.photoUrl ?? null,
+        rateSnapshot: x.rateSnapshot ?? null,   // teklif anındaki oran kilidi (sunucu yazar) — "Sana kalacak" bununla
       };
     })),
     () => cb([]),

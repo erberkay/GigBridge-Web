@@ -23,7 +23,7 @@ import {
   respondToOffer, setResidencyStatus, syncResidentDenorm, pushAppNotification,
 } from "../../data.js";
 import { panelShell } from "../shared/panel-shell.js";
-import { previewSplit, fmtKurus, fmtApproxKurus, estimateNote } from "../shared/pay-util.js";
+import { previewSplit, fmtKurus, fmtApproxKurus, estimateNote, ratesFromSnapshot, rateSnapshotOf, RATE_LOCK_NOTE } from "../shared/pay-util.js";
 import { taxRequiredPrompt, taxBanner } from "../shared/payments.js";   // + yan etki: oranlar (publicConfig/payments → loadPayRates) önbelleğe alınır
 import { svgRaw, svgPath } from "../shared/icons.js";
 import { cx, dkModal, dkToast, dkSkeleton } from "../shared/ui.js";
@@ -121,6 +121,7 @@ export function offerFromDoc(id, x = {}) {
     eventId: x.eventId ?? null,
     photoUrl: x.photoUrl ?? null,
     status: x.status ?? "pending",
+    rateSnapshot: x.rateSnapshot ?? null,   // teklif anındaki oran kilidi (sunucu yazar; pay-util ratesFromSnapshot)
   };
 }
 export const offerDate = (o) => (o?.dateISO ? isoToTR(o.dateISO) : "") || o?.date || "—";
@@ -319,9 +320,13 @@ export function artistPanelView(ctx) {
         o.message ? h("span", { class: cls("msg") }, `“${o.message}”`) : null),
       h("span", { role: "cell", class: cls("fee") }, o.fee,
         // Sanatçının hesabına kalacak TAHMİNİ tutar (Finans v2: komisyon + KDV + tahmini stopaj — pay-util previewSplit); karttan direkt kabulden önce görsün
-        (() => { const n = parseTL(o.feeRaw); return n > 0 && status !== "accepted"
-          ? h("span", { title: estimateNote(), style: { display: "block", fontSize: "11px", fontWeight: "600", color: "#C9CBD0", marginTop: "2px" } }, `Sana kalacak ≈ ${fmtApproxKurus(previewSplit(n, "artist_booking").payeeKurus)} (tahmini)`)
-          : null; })()),
+        // Teklif anındaki oran kilidi (rateSnapshot) varsa o oranlarla — admin oranları sonradan değiştirse de bu teklifin neti değişmez
+        (() => { const n = parseTL(o.feeRaw); if (!(n > 0) || status === "accepted") return null;
+          const locked = !!rateSnapshotOf(o.rateSnapshot);
+          return [
+            h("span", { title: estimateNote(), style: { display: "block", fontSize: "11px", fontWeight: "600", color: "#C9CBD0", marginTop: "2px" } }, `Sana kalacak ≈ ${fmtApproxKurus(previewSplit(n, "artist_booking", { R: ratesFromSnapshot(o.rateSnapshot) }).payeeKurus)} (tahmini)`),
+            locked ? h("span", { style: { display: "block", fontSize: "10.5px", fontWeight: "400", color: "#7D818B", marginTop: "1px" } }, RATE_LOCK_NOTE) : null,
+          ]; })()),
       h("span", { role: "cell", class: cls("stcell") }, statusBadge(status)),
       h("div", { role: "cell", class: cls("acts") }, ...acts));
     row.addEventListener("click", (e) => { if (e.target.closest("a,button")) return; location.hash = href; });

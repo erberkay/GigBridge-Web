@@ -256,7 +256,7 @@ export function serviceTermsView(t) {
 export function paymentCard({ kind, refId, amountTL, paymentStatus = null, paymentId = null, title = "", onPaid, onOpenDispute, compact = false } = {}) {
   const node = h("div", { class: cx("dk-pay-card", compact && "is-compact") });
   const isRental = kind === "venue_rental";
-  const st = { p: null, oid: null, pstat: paymentStatus, vr: isRental ? undefined : null, agree: false, busy: false };
+  const st = { p: null, oid: null, pstat: paymentStatus, vr: isRental ? undefined : null, agree: false, busy: false, snap: null };
   const unsubs = [];
   let unPay = null;
   let alive = true;
@@ -278,6 +278,7 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
         if (x.paymentStatus != null) st.pstat = x.paymentStatus;
         if (typeof x.paymentId === "string" && x.paymentId) subPay(x.paymentId);
         if (isRental) st.vr = { terms: U.toServiceTerms(x.serviceTerms), confirmed: !!x.serviceTermsConfirmedAt, status: String(x.status ?? ""), eventId: typeof x.eventId === "string" && x.eventId ? x.eventId : null };
+        else st.snap = U.rateSnapshotOf(x.rateSnapshot);   // teklif anındaki oran kilidi (sunucu yazar) — ödeme öncesi tutar bu oranlarla
         draw();
       }, () => { if (isRental) { st.vr = null; draw(); } }));
     } catch (_) { if (isRental) st.vr = null; }
@@ -345,8 +346,10 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
       // seçtiyse komisyon + KDV brütün üstüne eklenir (tahmin; kesin tutarı createPayment döndürür).
       // Yol A (sanatçı kiralama): GigBridge sahneyi satar → sanatçıyı tutan (mekan / organizatör) sahne ücreti + hizmet bedeli + %20 KDV
       // öder; stopaj kesmez, faturası GigBridge'den. Kayıt varsa (bekleyen ödeme) kayıttaki tutarlar, yoksa oturum türüne göre tahmin.
-      const resale = U.isResale(kind) || (p && U.isResalePayment(p));
-      const est0 = U.previewSplit(amountKurus / 100, kind, { includeTaxes: false, payer: U.payerOfType(session.profile?.userType) });
+      // Sanatçı kiralama: teklif anındaki oranlar (rateSnapshot) — createPayment aynı kilidi kullanır; admin oranı sonradan değiştirse de tutar aynı
+      const R = isRental ? U.getPayRates() : U.ratesFromSnapshot(st.snap);
+      const resale = U.isResale(kind, R) || (p && U.isResalePayment(p));
+      const est0 = U.previewSplit(amountKurus / 100, kind, { includeTaxes: false, payer: U.payerOfType(session.profile?.userType), R });
       const est = p && U.isResalePayment(p) && p.chargeKurus > 0 ? p : est0;
       const payerBears = !resale && est.commissionBorneBy === "payer";
       const charge = resale ? est.chargeKurus : amountKurus + (payerBears ? est.platformTakeKurus : 0);
@@ -356,7 +359,8 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
           est.buyerFeeKurus > 0 ? row(`Hizmet bedeli${est.buyerFeeRate > 0 ? ` (%${String(Math.round(est.buyerFeeRate * 1000) / 10).replace(".", ",")})` : ""}`, `+${U.fmtKurus(est.buyerFeeKurus)}`) : null,
           row(`KDV (%${Math.round((est.saleVatRate || 0.2) * 1000) / 10})`, `+${U.fmtKurus(est.saleVatKurus)}`),
           row("Ödenecek tutar", U.fmtKurus(charge), { strong: true }),
-          h("span", { class: "dk-pay-fine" }, `${U.resalePayerNote(est)} Etkinlikten sonra sahne ücreti + hizmet bedeli + KDV tutarında tek fatura (ajans ve organizasyon hizmeti, e-Fatura / e-Arşiv — gider belgeniz) e-postanıza gelir. Stopaj kesmezsiniz, gider pusulası düzenlemezsiniz.`)));
+          h("span", { class: "dk-pay-fine" }, `${U.resalePayerNote(est)} Etkinlikten sonra sahne ücreti + hizmet bedeli + KDV tutarında tek fatura (ajans ve organizasyon hizmeti, e-Fatura / e-Arşiv — gider belgeniz) e-postanıza gelir. Stopaj kesmezsiniz, gider pusulası düzenlemezsiniz.`),
+          st.snap && !p ? h("span", { class: "dk-pay-fine" }, U.RATE_LOCK_NOTE) : null));
         if (!isDemoUser() && !payerTaxB) { payerTaxB = taxBanner({ href: payerTaxHref(), text: "Ödemeden önce Vergi Bilgileri'ni doldur · faturan bu bilgilerle kesilir" }); unsubs.push(() => payerTaxB.destroy()); }
         if (payerTaxB) kids.push(payerTaxB.node);
       } else kids.push(h("div", { class: "dk-pay-break" },
@@ -410,7 +414,7 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
   const node = h("div", { class: "dk-pay-card" });
   if (!accepted || !(Number(amountTL) > 0)) return { node, destroy() {} };
   const isRental = kind === "venue_rental" && !!refId;
-  const st = { p: null, oid: null, pstat: paymentStatus, vr: isRental ? undefined : null, hasIban: null };
+  const st = { p: null, oid: null, pstat: paymentStatus, vr: isRental ? undefined : null, hasIban: null, snap: null };
   const unsubs = [];
   let unPay = null, alive = true;
   const subPay = (oid) => {
@@ -426,6 +430,7 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
         if (x.paymentStatus != null) st.pstat = x.paymentStatus;
         if (typeof x.paymentId === "string" && x.paymentId) subPay(x.paymentId);
         if (isRental) st.vr = { terms: U.toServiceTerms(x.serviceTerms), confirmed: !!x.serviceTermsConfirmedAt };
+        else if (kind !== "venue_rental") st.snap = U.rateSnapshotOf(x.rateSnapshot);   // teklif anındaki oran kilidi — tahmin bu oranlarla
         draw();
       }, () => { if (isRental) { st.vr = null; draw(); } }));
     } catch (_) { st.vr = null; }
@@ -452,12 +457,15 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
         : row(l.label, fmtL(l)))),
       h("span", { class: "dk-pay-fine" }, U.resaleCategoryNote(p.sellerCategory || U.getSellerCategory())));
     }
-    if (!p && U.isResale(kind)) {
-      const est = U.previewSplit(amountTL, kind);
+    // Ödeme öncesi tahmin: sanatçı kiralamada teklif anındaki oranlarla (rateSnapshot; yoksa canlı oranlar)
+    const R = kind === "venue_rental" ? U.getPayRates() : U.ratesFromSnapshot(st.snap);
+    const lockNote = !p && st.snap ? h("span", { class: "dk-pay-fine" }, U.RATE_LOCK_NOTE) : null;
+    if (!p && U.isResale(kind, R)) {
+      const est = U.previewSplit(amountTL, kind, { R });
       return h("div", { class: "dk-pay-break" }, ...U.resaleBreakdown(est, { finalLabel: "Sana kalacak (tahmini)" }).map((l) => (l.strong
         ? row(l.label, `≈ ${U.fmtApproxKurus(l.kurus)}`, { strong: true, color: "#7CE0B0" })
         : row(l.label, fmtL(l)))),
-      h("span", { class: "dk-pay-fine" }, U.estimateNote(kind)));
+      h("span", { class: "dk-pay-fine" }, U.estimateNote(kind)), lockNote);
     }
     if (p) {
       const lines = U.payeeBreakdown(p);
@@ -466,7 +474,7 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
         : row(l.label, fmtL(l)))),
       p.fv === 2 && !p.withholdings.length && p.status === "finance_review" ? h("span", { class: "dk-pay-fine" }, "Vergi kesintisi finansal inceleme sonunda kesinleşir.") : null);
     }
-    const est = U.previewSplit(amountTL, kind);
+    const est = U.previewSplit(amountTL, kind, { R });
     const payeeBears = est.commissionBorneBy === "payee";
     return h("div", { class: "dk-pay-break" },
       row("Ücret", U.fmtKurus(est.grossKurus)),
@@ -475,7 +483,7 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
       row(`Tahmini stopaj (%${Math.round(est.estimateStopajRate * 1000) / 10})`, `−${U.fmtKurus(est.stopajKurus)}`),
       est.paytrFeeKurus > 0 ? row("PayTR ödeme masrafı", `−${U.fmtKurus(est.paytrFeeKurus)}`) : null,
       row("Sana kalacak (tahmini)", `≈ ${U.fmtApproxKurus(est.payeeKurus)}`, { strong: true, color: "#7CE0B0" }),
-      h("span", { class: "dk-pay-fine" }, U.ESTIMATE_NOTE));
+      h("span", { class: "dk-pay-fine" }, U.ESTIMATE_NOTE), lockNote);
   }
 
   function draw() {

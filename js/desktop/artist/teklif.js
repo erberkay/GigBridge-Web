@@ -24,7 +24,7 @@ import { rgba, trUpper, initials } from "../shared/helpers.js";
 import { genreColor } from "../shared/genres.js";
 import { routeReady } from "../registry.js";
 import { escrowNote } from "../shared/payments.js";
-import { previewSplit, fmtKurus, fmtApproxKurus, commissionText, estimateNote, isResale, getPayRates, getSellerCategory } from "../shared/pay-util.js";
+import { previewSplit, fmtKurus, fmtApproxKurus, commissionText, estimateNote, isResale, getPayRates, getSellerCategory, ratesFromSnapshot, rateSnapshotOf, RATE_LOCK_NOTE } from "../shared/pay-util.js";
 import {
   STATUS, DOW_UP, DOW_LONG, isoToTR, toISOKey, toISODate, expandOccurrences, offerFromDoc, offerWhen, offerSortKey, meOf,
   rememberDecision, cachedOffer, cacheOffers,
@@ -288,7 +288,7 @@ export function artistTeklifView(ctx) {
     const o = st.offer; const k = statusOf(); const sc = S();
     // aynı durum yeniden çizilmez (anlık görüntü güncellemesi odağı/onay kutusunu sıfırlamasın)
     // ask/busy yalnız bekleyen durumda anlamlı (karar anlık görüntüsü yanıt bitmeden gelirse sonuç kutusu iki kez açılmasın)
-    const key = [k, k === "pending" ? st.ask : "", k === "pending" ? st.busy : "", o.fee, o.venue, offerWhen(o), getPayRates().bookingModel, getSellerCategory()].join("|");
+    const key = [k, k === "pending" ? st.ask : "", k === "pending" ? st.busy : "", o.fee, o.venue, offerWhen(o), getPayRates().bookingModel, getSellerCategory(), JSON.stringify(rateSnapshotOf(o.rateSnapshot))].join("|");
     if (key === respKey) return;
     respKey = key;
     const feeNum = /\d/.test(o.fee || "");
@@ -302,14 +302,18 @@ export function artistTeklifView(ctx) {
       ...(k !== "accepted" && feeNum ? (() => {
         const n = Number(String(o.fee).replace(/[^\d]/g, ""));
         if (!(n > 0)) return [];
-        const sp = previewSplit(n, "artist_booking");
-        const resale = isResale("artist_booking");
+        // Teklif anındaki oran kilidi (rateSnapshot) varsa o oranlarla — admin oranları sonradan değiştirse de bu teklifin neti değişmez
+        const R = ratesFromSnapshot(o.rateSnapshot);
+        const locked = !!rateSnapshotOf(o.rateSnapshot);
+        const sp = previewSplit(n, "artist_booking", { R });
+        const resale = isResale("artist_booking", R);
         const cut = (label, kurus, sign = "−") => (kurus > 0 ? ` ${sign} ${label} ${fmtKurus(kurus)}` : "");
         return [h("span", { class: cls("line"), style: { color: "#C9CBD0" }, title: resale ? `GigBridge sahneni satın alır: ${commissionText()} ve varsa stopaj düşülmüş tutar. ${estimateNote()}` : `GigBridge ${commissionText()} ve tahmini vergi kesintisi düşülmüş tutar. ${estimateNote()}` },
           `Sana kalacak ≈ ${fmtApproxKurus(sp.payeeKurus)} (tahmini)`),
         resale ? h("span", { class: cls("line"), style: { fontSize: "11.5px", color: "#A3A7AF" } },
           `${fmtKurus(sp.saleKurus)}${cut("GigBridge payı", sp.marginKurus)} = hizmet bedelin ${fmtKurus(sp.purchaseKurus)}${cut("KDV", sp.purchaseVatKurus, "+")}${cut("stopaj (GigBridge yatırır)", sp.stopajKurus)}${cut("PayTR", sp.paytrFeeKurus)} = sana ≈ ${fmtApproxKurus(sp.payeeKurus)}`) : null,
-        h("span", { class: cls("line"), style: { fontSize: "11.5px", color: "#8A8E97" } }, estimateNote())].filter(Boolean);
+        h("span", { class: cls("line"), style: { fontSize: "11.5px", color: "#8A8E97" } }, estimateNote()),
+        locked ? h("span", { class: cls("line"), style: { fontSize: "11.5px", color: "#7D818B" } }, RATE_LOCK_NOTE) : null].filter(Boolean);
       })() : []));
     const pending = k === "pending";
     bar.hidden = !(pending && !st.ask);

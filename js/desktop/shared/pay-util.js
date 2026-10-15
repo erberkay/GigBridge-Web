@@ -38,6 +38,33 @@ export function setPayRates(r) {
 }
 export const getPayRates = () => RATES;
 
+// ── Teklif oran kilidi (invitations/{id}.rateSnapshot — YALNIZ sunucu yazar: functions/finance.js ensureRateSnapshot) ──
+// Teklif oluşturulduğu andaki oranlar: sanatçının "sana kalacak"ı ve ödeyenin tutarı admin oranları sonradan değiştirse de değişmez
+// (createPayment aynı kilidi kullanır). Karşı teklifte ücret değişir, kilit aynı kalır. Profil fiyatı canlı oranla. Uygulama: services/payments.ts.
+export const RATE_LOCK_NOTE = "Teklif anındaki oranlarla sabit";
+const rateIn = (v, max) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= max;
+/** Kayıttaki kilit → doğrulanmış şekil (sunucu validRateSnapshot ile aynı); bozuk / yoksa null → canlı oranlar */
+export function rateSnapshotOf(x) {
+  if (!x || typeof x !== "object" || x.v !== 1) return null;
+  if (!["agent", "resale"].includes(x.bookingModel) || !["payee", "platform"].includes(x.paytrFeeBorneBy) || !["venue", "organizer"].includes(x.payer)) return null;
+  if (!rateIn(x.artistCommissionRate, 0.5) || !rateIn(x.commissionVatRate, 0.5) || !rateIn(x.paytrFeeRate, 0.1)
+    || !rateIn(x.resaleStopajRate, 0.5) || !rateIn(x.buyerFeeRate, 0.5)) return null;
+  return {
+    v: 1, bookingModel: x.bookingModel, artistCommissionRate: x.artistCommissionRate, commissionVatRate: x.commissionVatRate,
+    paytrFeeRate: x.paytrFeeRate, paytrFeeBorneBy: x.paytrFeeBorneBy, resaleStopajRate: x.resaleStopajRate, buyerFeeRate: x.buyerFeeRate, payer: x.payer,
+  };
+}
+/** Teklifin oranları: kilit varsa kilitli alanlar teklifinkiyle (sunucu cfgWithRateSnapshot), yoksa canlı oranlar aynen */
+export function ratesFromSnapshot(snapshot, live = RATES) {
+  const sn = rateSnapshotOf(snapshot);
+  if (!sn) return live;
+  return {
+    ...live, bookingModel: sn.bookingModel, artistCommissionRate: sn.artistCommissionRate, commissionVatRate: sn.commissionVatRate,
+    paytrFeeRate: sn.paytrFeeRate, paytrFeeBorneBy: sn.paytrFeeBorneBy, resaleStopajRate: sn.resaleStopajRate,
+    venueBuyerFeeRate: sn.buyerFeeRate, organizerBuyerFeeRate: sn.buyerFeeRate,
+  };
+}
+
 // ── Metin belirteçleri: oranlar + örnek tutarlar CANLI ayardan (uygulama src/utils/rateText.ts ile birebir) ──
 //  {AR} sanatçı kiralama GigBridge payı · {VR} mekan kiralama komisyonu · {PR} PayTR masrafı
 //  {VB} / {OB} mekan / organizatör sanatçı tutarken hizmet bedeli · {EX_BF} / {EX_CH} 10.000 TL'de mekanın hizmet bedeli / ödeyeceği toplam
@@ -238,9 +265,8 @@ export const fmtApproxKurus = (k) => fmtKurus(Math.round((Number(k) || 0) / 100)
  *   komisyon (KDV hariç) + komisyon KDV'si (KDV dahil ayarında içinden ayrılır) + includeTaxes ise tahmini stopaj (brüt × oran).
  *   Komisyonu alıcı karşılıyorsa (varsayılan) alıcının payından düşer. Kesin kesinti sunucuda onaylı kurala göre hesaplanır.
  */
-export function previewSplit(grossTL, kind, { includeTaxes = true, sellerCategory, payer = "venue" } = {}) {
+export function previewSplit(grossTL, kind, { includeTaxes = true, sellerCategory, payer = "venue", R = RATES } = {}) {
   const g = Math.max(0, Math.round((Number(grossTL) || 0) * 100));
-  const R = RATES;
   // Yol A: teklif ücreti = GigBridge'in satış fiyatı (KDV hariç). Kategori bilinmiyorsa tahmin A'ya göre (sunucu estimatePayee ile aynı).
   // includeTaxes false → stopaj tahmine katılmaz (aracı modeldeki anlamıyla aynı: "vergi kesintisi yazdığın tutardan düşer").
   if (isResale(kind, R)) {
@@ -675,12 +701,11 @@ export function checkoutPhase(prev, { status, durum } = {}) {
  * Başlangıç: net / faktör (ör. 1 − 0,10 − 0,02 − 0,20 = 0,68) yukarı yuvarlanır; sonra kuruş yuvarlamasına karşı düzeltme döngüsü
  * (tahmini net hedefi tam karşılayan EN KÜÇÜK tam TL). 15.000 → ✓ 22.059 · ☐ 17.046.
  */
-export function grossForNet(netTL, includeTaxes = true) {
+export function grossForNet(netTL, includeTaxes = true, R = RATES) {
   const net = Math.max(0, Number(netTL) || 0);
   if (!net) return 0;
   const target = Math.round(net * 100);
-  const got = (x) => previewSplit(x, "artist_booking", { includeTaxes }).payeeKurus;
-  const R = RATES;
+  const got = (x) => previewSplit(x, "artist_booking", { includeTaxes, R }).payeeKurus;
   if (isResale("artist_booking", R)) {
     // Yol A: oran kategoriye göre değişir → 100.000 TL'lik örnekten yaklaşık oran, sonra aynı düzeltme döngüsü
     const r = got(100000) / 10000000 || 0.5;
@@ -699,8 +724,8 @@ export function grossForNet(netTL, includeTaxes = true) {
   return g;
 }
 /** BRÜT → NET (tam TL'ye aşağı; tahmini). 10.000 ✓ → 6.800. */
-export function netFromGross(grossTL, includeTaxes = true) {
+export function netFromGross(grossTL, includeTaxes = true, R = RATES) {
   const g = Math.max(0, Number(grossTL) || 0);
   if (!g) return 0;
-  return Math.floor(previewSplit(g, "artist_booking", { includeTaxes }).payeeKurus / 100);
+  return Math.floor(previewSplit(g, "artist_booking", { includeTaxes, R }).payeeKurus / 100);
 }
