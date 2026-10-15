@@ -21,7 +21,7 @@ import { writeQuery, ROLE_COLORS } from "../shared/helpers.js";
 import {
   listenMyPayments, loadDueItems, loadVenueRentals, paymentCard, escrowNote, paymentActions, payBadge, openDisputeDrawer,
   payoutAccountCard, legalLinks, fmtKurus, earnedSummary, paidSummary, payerHistoryLabel, isOid, isDemoUser, fmtDay,
-  payeeBreakdownText, payerWithholdingText, payerInvoiceText, paymentDocBlock, taxBanner, isPaidStatus, commissionText, isResale, isResalePayment,
+  payeeBreakdownText, payerWithholdingText, payerInvoiceText, paymentDocBlock, taxBanner, isPaidStatus, commissionText, isResale, isResalePayment, fillRates,
 } from "../shared/payments.js";
 
 const C = "dk-odeme";
@@ -100,7 +100,7 @@ export function odemelerView(ctx) {
       ? `Sorun bildirilmezse IBAN'ına aktarılır: GigBridge sahneni satın alır; ${commissionText()} ve varsa stopaj (GigBridge yatırır) düşülür.`
       : `Sorun bildirilmezse alıcının IBAN'ına aktarılır (${commissionText(resale ? "venue_rental" : "artist_booking")} ve varsa mevzuata göre vergi kesintisi düşülür).`;
     stepResale.hidden = !(resale && isPayer);
-    stepResale.textContent = "Sanatçı kiralamada sahneyi GigBridge'den satın alırsınız: sahne bedeli + %20 KDV ödersiniz, ajans ve organizasyon hizmeti faturanız (e-Fatura / e-Arşiv) GigBridge'den gelir. Stopaj kesmez, gider pusulası düzenlemezsiniz.";
+    stepResale.textContent = `Sanatçı kiralamada sahneyi GigBridge'den satın alırsınız: sahne ücreti + ${fillRates(role === "organizer" ? "{OB}" : "{VB}")} hizmet bedeli + %20 KDV (ikisinin toplamı üzerinden) ödersiniz, ajans ve organizasyon hizmeti faturanız (e-Fatura / e-Arşiv) GigBridge'den gelir. Stopaj kesmez, gider pusulası düzenlemezsiniz.`;
   };
   paintSteps();
   window.addEventListener("gb:pay-rates", paintSteps);
@@ -179,7 +179,7 @@ export function odemelerView(ctx) {
     // giden ödeme: alıcı · etkinlik tarihi · ödeme tarihi (+ iade tutarı); gelen (alıcı) satırı eskisi gibi
     const sub = side === "payee" ? [other, when ? fmtDay(when) : ""]
       : [other, p.eventStartMs ? "Etkinlik " + fmtDay(p.eventStartMs) : "", p.paidAt ? "Ödeme " + fmtDay(p.paidAt) : when ? fmtDay(when) : ""];
-    // Yol A: ödeyenden çekilen = sahne bedeli + KDV (iade de bu tutar üzerinden)
+    // Yol A: ödeyenden çekilen = sahne ücreti + hizmet bedeli + KDV (iade de bu tutar üzerinden)
     const paidK = isResalePayment(p) ? p.chargeKurus : p.grossKurus;
     const refunded = side === "payer" ? (p.status === "refunded" ? paidK : Math.min(paidK, p.refundedKurus || 0)) : 0;
     return h("article", { class: `${C}-hrow` },

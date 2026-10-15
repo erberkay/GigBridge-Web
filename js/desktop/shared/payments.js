@@ -343,17 +343,20 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
       }
       // varsayılan: ödeyen yalnız brütü öder (komisyon + KDV alıcının payından düşer). Admin "komisyonu ödeyen karşılar"
       // seçtiyse komisyon + KDV brütün üstüne eklenir (tahmin; kesin tutarı createPayment döndürür).
-      // Yol A (sanatçı kiralama): GigBridge sahneyi satar → mekan sahne bedeli + %20 KDV öder; stopaj kesmez, faturası GigBridge'den.
-      const resale = U.isResale(kind);
-      const est = U.previewSplit(amountKurus / 100, kind, { includeTaxes: false });
+      // Yol A (sanatçı kiralama): GigBridge sahneyi satar → sanatçıyı tutan (mekan / organizatör) sahne ücreti + hizmet bedeli + %20 KDV
+      // öder; stopaj kesmez, faturası GigBridge'den. Kayıt varsa (bekleyen ödeme) kayıttaki tutarlar, yoksa oturum türüne göre tahmin.
+      const resale = U.isResale(kind) || (p && U.isResalePayment(p));
+      const est0 = U.previewSplit(amountKurus / 100, kind, { includeTaxes: false, payer: U.payerOfType(session.profile?.userType) });
+      const est = p && U.isResalePayment(p) && p.chargeKurus > 0 ? p : est0;
       const payerBears = !resale && est.commissionBorneBy === "payer";
       const charge = resale ? est.chargeKurus : amountKurus + (payerBears ? est.platformTakeKurus : 0);
       if (resale) {
         kids.push(h("div", { class: "dk-pay-break" },
-          row("Sahne bedeli (KDV hariç)", U.fmtKurus(est.saleKurus)),
-          row(`KDV (%${Math.round(est.saleVatRate * 1000) / 10})`, `+${U.fmtKurus(est.saleVatKurus)}`),
+          row("Sahne ücreti (KDV hariç)", U.fmtKurus(est.grossKurus)),
+          est.buyerFeeKurus > 0 ? row(`Hizmet bedeli${est.buyerFeeRate > 0 ? ` (%${String(Math.round(est.buyerFeeRate * 1000) / 10).replace(".", ",")})` : ""}`, `+${U.fmtKurus(est.buyerFeeKurus)}`) : null,
+          row(`KDV (%${Math.round((est.saleVatRate || 0.2) * 1000) / 10})`, `+${U.fmtKurus(est.saleVatKurus)}`),
           row("Ödenecek tutar", U.fmtKurus(charge), { strong: true }),
-          h("span", { class: "dk-pay-fine" }, `${U.resalePayerNote(est)} Etkinlikten sonra sahne bedeli + KDV tutarında tek fatura (ajans ve organizasyon hizmeti, e-Fatura / e-Arşiv — gider belgeniz) e-postanıza gelir. Stopaj kesmezsiniz, gider pusulası düzenlemezsiniz.`)));
+          h("span", { class: "dk-pay-fine" }, `${U.resalePayerNote(est)} Etkinlikten sonra sahne ücreti + hizmet bedeli + KDV tutarında tek fatura (ajans ve organizasyon hizmeti, e-Fatura / e-Arşiv — gider belgeniz) e-postanıza gelir. Stopaj kesmezsiniz, gider pusulası düzenlemezsiniz.`)));
         if (!isDemoUser() && !payerTaxB) { payerTaxB = taxBanner({ href: payerTaxHref(), text: "Ödemeden önce Vergi Bilgileri'ni doldur · faturan bu bilgilerle kesilir" }); unsubs.push(() => payerTaxB.destroy()); }
         if (payerTaxB) kids.push(payerTaxB.node);
       } else kids.push(h("div", { class: "dk-pay-break" },
@@ -374,7 +377,8 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
     } else {
       payBtn = null;
       kids.push(h("div", { class: "dk-pay-break" },
-        p && U.isResalePayment(p) ? row("Sahne bedeli + KDV", `${U.fmtKurus(p.saleKurus)} + ${U.fmtKurus(p.saleVatKurus)}`) : null,
+        p && U.isResalePayment(p) ? row(p.buyerFeeKurus > 0 ? "Sahne ücreti + Hizmet bedeli + KDV" : "Sahne ücreti + KDV",
+          `${U.fmtKurus(p.grossKurus)}${p.buyerFeeKurus > 0 ? ` + ${U.fmtKurus(p.buyerFeeKurus)}` : ""} + ${U.fmtKurus(p.saleVatKurus)}`) : null,
         row("Ödenen", U.fmtKurus(p?.fv === 2 ? p.chargeKurus : amountKurus), { strong: true }),
         p?.refundedKurus ? row("İade edilen", U.fmtKurus(p.refundedKurus)) : null,
         p?.payerRefundDueKurus > 0 ? row("Sana iade edilecek vergi farkı", U.fmtKurus(p.payerRefundDueKurus), { color: "#7CE0B0" }) : null));
@@ -382,7 +386,7 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
         : p?.status === "refunded" || (!p && refunded) ? "Ödemenin tamamı iade edildi."
         : U.disputeOpen(p) ? "Şikayetin inceleniyor. Karar verilene kadar ödeme emanette bekler."
         : "Para emanette. Etkinlik bitişinden 16 gün sonra, sorun bildirilmezse alıcıya aktarılır (şikayet süresi: bitişten 24 saat sonra kapanır)."));
-      if (p && U.isResalePayment(p) && p.status !== "refunded") kids.push(note("Sahne bedeli + KDV tutarında ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv) GigBridge'den gelir (etkinlik sonrası). Stopaj kesmez, gider pusulası düzenlemezsiniz."));
+      if (p && U.isResalePayment(p) && p.status !== "refunded") kids.push(note("Sahne ücreti + hizmet bedeli + KDV tutarında ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv) GigBridge'den gelir (etkinlik sonrası). Stopaj kesmez, gider pusulası düzenlemezsiniz."));
       // ödeyenin vergi profili eksikse (mekan / organizatör) finansal inceleme gerekebilir
       if (p && (p.financeReasons || []).some((r) => r === "payer_tax_missing" || r === "payer_tax_unverified")) {
         if (!payerTaxB) { payerTaxB = taxBanner(); unsubs.push(() => payerTaxB.destroy()); }
@@ -720,8 +724,8 @@ export function payRowControl({ kind, refId, amountTL, paymentStatus = null, pay
       onclick: (e) => { e.stopPropagation(); openPayModal(item); } }, payBadge(null, null, lbl));
   };
   if (paymentStatus === "paid" || paymentStatus === "refunded") return badgeBtn(paymentStatus);
-  // Yol A: mekan sahne bedeli + KDV öder (düğmede tahsil edilecek tutar)
-  const amt = U.fmtKurus(U.isResale(kind) ? U.resaleSplit(Math.round(Number(amountTL) * 100), null).chargeKurus : Math.round(Number(amountTL) * 100));
+  // Yol A: sanatçıyı tutan sahne ücreti + hizmet bedeli + KDV öder (düğmede tahsil edilecek tutar)
+  const amt = U.fmtKurus(U.isResale(kind) ? U.resaleSplit(Math.round(Number(amountTL) * 100), null, U.getPayRates(), U.payerOfType(session.profile?.userType)).chargeKurus : Math.round(Number(amountTL) * 100));
   const b = dkButton(`Öde · ${amt}`, { variant: "success", size: 36, icon: "lock", cls: "dk-pay-rowbtn", ariaLabel: `${title} ödemesini yap (${amt})` });
   b.addEventListener("click", (e) => {
     e.stopPropagation();

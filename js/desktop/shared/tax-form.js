@@ -63,7 +63,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const leadText = () => (isResale()
     ? (performer
       ? "GigBridge sahneni senden satın alıp mekana satar. Vergi kaydın yoksa ödemen etkinlikten 16 gün sonra PayTR üzerinden hesabına geçer; stopajı GigBridge keser ve yatırır, ayrıca imzalaman gereken bir belge yok. Şahıs şirketin ya da şirketin varsa GigBridge'e makbuz / fatura (+ KDV) kesersin. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
-      : "Sanatçı kiralamada sahneyi GigBridge'den satın alırsın: GigBridge sana sahne bedeli + %20 KDV tutarında tek fatura (ajans ve organizasyon hizmeti, e-Fatura / e-Arşiv) keser (bu bilgilerle). Stopaj kesmez, gider pusulası düzenlemezsin. Bilgiler eksikse sanatçı ödemesi başlatılamaz.")
+      : "Sanatçı kiralamada sahneyi GigBridge'den satın alırsın: GigBridge sana sahne ücreti + hizmet bedeli + %20 KDV tutarında tek fatura (ajans ve organizasyon hizmeti, e-Fatura / e-Arşiv) keser (bu bilgilerle). Stopaj kesmez, gider pusulası düzenlemezsin. Bilgiler eksikse sanatçı ödemesi başlatılamaz.")
     : performer
       ? "Ödemelerinde doğru vergi kesintisinin (stopaj) uygulanması ve belgelerin düzenlenmesi için gerekli. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
       : "Sanatçı ve mekan ödemelerinde stopaj sorumluluğunun ve faturanın doğru belirlenmesi için gerekli. Bilgiler eksikse ödemeler finansal incelemede bekleyebilir.");
@@ -199,8 +199,8 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     rows.billing.querySelector(".dk-lbl").textContent = bireysel ? "ADRES" : "FATURA ADRESİ";
     stopajInfo.textContent = isResale()
       ? (sahis
-        ? "Sanatçı kiralamada stopaj kesmezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne bedeli + %20 KDV tutarında ajans ve organizasyon hizmeti faturası keser (gider belgeniz budur). Gider pusulası düzenlemezsiniz."
-        : "Sanatçı kiralamada stopaj kesmezsiniz, gider pusulası düzenlemezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne bedeli + %20 KDV tutarında ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv) keser.")
+        ? "Sanatçı kiralamada stopaj kesmezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne ücreti + hizmet bedeli + %20 KDV tutarında ajans ve organizasyon hizmeti faturası keser (gider belgeniz budur). Gider pusulası düzenlemezsiniz."
+        : "Sanatçı kiralamada stopaj kesmezsiniz, gider pusulası düzenlemezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne ücreti + hizmet bedeli + %20 KDV tutarında ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv) keser.")
       : sahis
       ? "Stopaj (GVK md. 94): gerçek usulde sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; basit usulde stopaj kesmezsiniz, sanatçı için gider pusulası düzenlersiniz."
       : "Stopaj (GVK md. 94): şirket, kooperatif, dernek ve kamu kurumları kanunen stopaj sorumlusudur. Vergi kaydı olmayan ya da serbest meslek mükellefi sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; şirketi olan sanatçıdan stopaj kesilmez.";

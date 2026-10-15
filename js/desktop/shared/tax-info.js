@@ -2,7 +2,7 @@
 // Uygulama eşi: src/data/taxInfo.ts — metinler birlikte güncellenir. Arızi beyan sürümü sunucuda: functions/finance.js
 // ARIZI_NOTICE_VERSION (metin değişirse sürüm de artırılır → kullanıcı yeniden onaylar).
 // MODEL "Yol A" (2026-10-16): sanatçı kiralamada GigBridge sahne hizmetini sanatçıdan SATIN ALIR, mekana SATAR.
-//   Mekan: teklif bedeli + %20 KDV öder, GigBridge'den ajans ve organizasyon hizmeti faturası (e-Fatura/e-Arşiv) alır; stopaj kesmez,
+//   Mekan: teklif bedeli + hizmet bedeli + %20 KDV öder, GigBridge'den ajans ve organizasyon hizmeti faturası (e-Fatura/e-Arşiv) alır; stopaj kesmez,
 //   gider pusulası düzenlemez. A sanatçıda gider pusulası ve imzalanacak belge YOK: ödeme etkinlikten 16 gün sonra PayTR'den
 //   yapılır (sunucu config payoutDelayDays), PayTR dekontu ödeme kaydıdır.
 //   Sanatçıya ödenen bedel = teklif bedeli − GigBridge payı (varsayılan %10). Stopajı (GVK 94/2-b) GigBridge keser, muhtasarla yatırır.
@@ -25,7 +25,7 @@ export const TAX_INFO = {
       "Yıl içinde 350.000 TL'yi aşarsan yıllık gelir vergisi beyannamesi vermen gerekir. Sahneyi sürekli ve düzenli iş olarak yapıyorsan artık \"arızi\" sayılmazsın: vergi dairesine kayıt olup şahıs şirketi (serbest meslek mükellefiyeti) açman gerekir. Kendi vergi kaydın ve beyanların senin sorumluluğundadır; GigBridge bunlardan sorumlu değildir.",
       "GigBridge işverenin değildir: bağımsız çalışırsın, teklifleri serbestçe seçer ya da reddedersin, fiyatını kendin belirlersin, başka yerlerde de çalışabilirsin. Aranızda iş ilişkisi ve SGK sigortalılığı doğmaz.",
     ],
-    example: "Mekan 10.000 TL + 2.000 TL KDV öder. Senin bedelin 9.000 TL (GigBridge payı %10) · %20 stopaj 1.800 TL (GigBridge yatırır) · PayTR masrafı %1,99 = 238,80 TL → sana 6.961,20 TL ödenir.",
+    example: "Teklif ücreti 10.000 TL (mekan üstüne hizmet bedeli + KDV öder). Senin bedelin 9.000 TL (GigBridge payı %10) · %20 stopaj 1.800 TL (GigBridge yatırır) · PayTR masrafı %1,99 = 238,80 TL → sana 6.961,20 TL ödenir.",
   },
   B: {
     title: "Şahıs şirketin varsa (serbest meslek mükellefi)",
@@ -36,7 +36,7 @@ export const TAX_INFO = {
       "Her yıl gelir vergisi beyannamesi verirsin; vergi kazancına göre artan oranlıdır (%15–%40, GVK md. 103). Giderlerini düşebilirsin.",
       "Bağ-Kur (SGK 4/b) primini kendin ödersin. 350.000 TL sınırı ve \"arızi\" kuralı sana uygulanmaz. GigBridge işverenin değildir; bağımsız çalışırsın.",
     ],
-    example: "Mekan 10.000 TL + 2.000 TL KDV öder. GigBridge'e 9.000 TL + 1.800 TL KDV'li e-SMM düzenlersin · GigBridge 1.800 TL stopaj keser · PayTR masrafı 238,80 TL → sana 8.761,20 TL ödenir (1.800 TL'si KDV, devlete ödersin).",
+    example: "Teklif ücreti 10.000 TL (mekan üstüne hizmet bedeli + KDV öder). GigBridge'e 9.000 TL + 1.800 TL KDV'li e-SMM düzenlersin · GigBridge 1.800 TL stopaj keser · PayTR masrafı 238,80 TL → sana 8.761,20 TL ödenir (1.800 TL'si KDV, devlete ödersin).",
   },
   C: {
     title: "Limited / anonim şirketin ya da ajansın varsa",
@@ -45,7 +45,7 @@ export const TAX_INFO = {
       "Şirketin GigBridge adına e-Fatura ya da e-Arşiv fatura keser (%20 KDV). KDV'yi şirketin beyan edip öder.",
       "Şirkete yapılan ödemeden stopaj kesilmez; şirket kazancı üzerinden kurumlar vergisi öder.",
     ],
-    example: "Mekan 10.000 TL + 2.000 TL KDV öder. Şirketin GigBridge'e 9.000 TL + 1.800 TL KDV'li fatura keser · stopaj yok · PayTR masrafı 238,80 TL → şirketine 10.561,20 TL ödenir (1.800 TL'si KDV).",
+    example: "Teklif ücreti 10.000 TL (mekan üstüne hizmet bedeli + KDV öder). Şirketin GigBridge'e 9.000 TL + 1.800 TL KDV'li fatura keser · stopaj yok · PayTR masrafı 238,80 TL → şirketine 10.561,20 TL ödenir (1.800 TL'si KDV).",
   },
 };
 

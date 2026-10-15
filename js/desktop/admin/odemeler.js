@@ -1,6 +1,6 @@
 // WebAdminOdemeler — Yönetici: ÖDEMELER (emanet / serbest bırakılacak / IBAN bekleyen / iade-şikayet / aktarılan / iade edilen)
 // + ŞİKAYETLER (kanıtlı ödeme şikayetleri) + Ödeme Ayarları (komisyon, komisyon KDV'si, komisyonu karşılayan, tahmini stopaj,
-// PayTR masrafı, test modu, otomatik aktarım, iş modeli: Aracı / Yol A) + GigBridge vergi bilgileri (getCompany / setCompany). ≥769 px. Finans v2 inceleme / vergi kuralları / dışa aktarım: admin/finans.js.
+// PayTR masrafı, test modu, otomatik aktarım, mekan / organizatör hizmet bedeli; sanatçı kiralama Yol A) + GigBridge vergi bilgileri (getCompany / setCompany). ≥769 px. Finans v2 inceleme / vergi kuralları / dışa aktarım: admin/finans.js.
 // Registry: adminOdeme (#/admin/odemeler). Uygulama karşılığı: components/payments/AdminPaymentsTab.tsx + AdminDisputeModal.tsx.
 // Sunucu: functions/payments.js adminPayments { action: list | listDisputes | get | refund | release | resolveDispute |
 //   approveCheckinPhotos | getConfig | setConfig } (yalnız admin; her işlem adminAudit'e yazılır) + paymentCases getPaymentDispute.
@@ -93,7 +93,7 @@ export function adminOdemelerView(ctx) {
   function payRow(r) {
     const refundable = REFUNDABLE.includes(r.status);
     const releasable = RELEASABLE.includes(r.status);
-    // iade ödeyenden çekilen tutar üzerinden (sunucu chargeOf; Yol A: sahne bedeli + KDV)
+    // iade ödeyenden çekilen tutar üzerinden (sunucu chargeOf; Yol A: sahne ücreti + hizmet bedeli + KDV)
     const remaining = (r.chargeKurus || r.grossKurus) - (r.refundedKurus || 0);
     const isBusy = busy === r.merchantOid;
     const btns = [];
@@ -117,7 +117,7 @@ export function adminOdemelerView(ctx) {
       h("div", { class: `${P}-top` }, h("span", { class: `${P}-t` }, r.title || r.merchantOid), payBadge(r.status, "payee")),
       meta(`${r.payerName || r.payerUid} → ${r.payeeName || r.payeeUid}${r.testMode ? " · TEST" : ""}`),
       meta(r.model === "resale"
-        ? `Yol A · satış ${fmtKurus(r.grossKurus)} + KDV → tahsil ${fmtKurus(r.chargeKurus)} · GigBridge payı ${fmtKurus(r.commissionKurus)} · stopaj (GigBridge) ${fmtKurus(r.stopajKurus)} · sanatçıya ${fmtKurus(r.payoutKurus ?? r.payeeKurus)}`
+        ? `Yol A · sahne ücreti ${fmtKurus(r.grossKurus)}${r.buyerFeeKurus > 0 ? ` + hizmet bedeli ${fmtKurus(r.buyerFeeKurus)}` : ""} + KDV → tahsil ${fmtKurus(r.chargeKurus)} · GigBridge geliri ${fmtKurus(r.commissionKurus)} · stopaj (GigBridge) ${fmtKurus(r.stopajKurus)} · sanatçıya ${fmtKurus(r.payoutKurus ?? r.payeeKurus)}`
         : r.fv === 2 || r.commissionVatKurus != null
         ? `Brüt ${fmtKurus(r.grossKurus)} · komisyon ${fmtKurus(r.commissionKurus)} (%${Math.round((r.commissionRate || 0) * 1000) / 10}) + KDV ${fmtKurus(r.commissionVatKurus || 0)}${r.commissionBorneBy === "payer" ? " (ödeyen)" : ""} · vergi kesintisi ${fmtKurus(r.stopajKurus)} · alıcıya ${fmtKurus(r.payoutKurus ?? r.payeeKurus)}`
         : `Brüt ${fmtKurus(r.grossKurus)} · komisyon ${fmtKurus(r.commissionKurus)} (%${Math.round((r.commissionRate || 0) * 100)}) · stopaj ${fmtKurus(r.stopajKurus)} · alıcıya ${fmtKurus(r.payoutKurus ?? r.payeeKurus)}`),
@@ -175,7 +175,10 @@ export function adminOdemelerView(ctx) {
   function drawCfg() {
     if (!cfg) return;
     const a = dkInput({ size: 40, value: pct(cfg.artistCommissionRate), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Sanatçı komisyonu (%)" } });
-    const v = dkInput({ size: 40, value: pct(cfg.venueCommissionRate), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Mekan komisyonu (%)" } });
+    const v = dkInput({ size: 40, value: pct(cfg.venueCommissionRate), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Mekan kiralama komisyonu (%)" } });
+    // Hizmet bedeli (Yol A): sanatçıyı tutan taraf teklif ücretinin üstüne öder (GigBridge geliri; KDV bu toplam üzerinden)
+    const vb = dkInput({ size: 40, value: pct(cfg.venueBuyerFeeRate ?? 0.125), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Mekan · sanatçı tutarken hizmet bedeli (%)" } });
+    const ob = dkInput({ size: 40, value: pct(cfg.organizerBuyerFeeRate ?? 0.125), inputmode: "decimal", maxlength: 5, cls: `${P}-pct`, attrs: { "aria-label": "Organizatör · sanatçı tutarken hizmet bedeli (%)" } });
     // Finans v2: komisyon KDV'si (oran + dahil/hariç), komisyonu karşılayan (tür başına), tahmini stopaj (yalnız ödeme öncesi tahmin)
     // ve tahmini PayTR masrafı (finans tablosu). Kesin stopaj oranı burada DEĞİL — Finans › Vergi Kuralları (müşavir onaylı).
     // KDV oranı YASAL (KDV Kanunu; genel oran %20) — elle değiştirilmez, salt okunur gösterilir; değer sunucu config'inden gelir.
@@ -196,17 +199,19 @@ export function adminOdemelerView(ctx) {
     const vBorne = borneSel("venueCommissionBorneBy", "Mekan kiralamada komisyonu karşılayan");
     const num = (el) => parseFloat(el.value.replace(",", "."));
     const saveRates = dkButton("Oranları kaydet", { variant: "violet", size: 40, disabled: savingCfg, onClick: async () => {
-      const av = num(a), vv = num(v), kv = Math.round((cfg.commissionVatRate ?? 0.2) * 1000) / 10, ev = num(est), fv = num(fee);
+      const av = num(a), vv = num(v), kv = Math.round((cfg.commissionVatRate ?? 0.2) * 1000) / 10, ev = num(est), fv = num(fee), vbv = num(vb), obv = num(ob);
       if (!(av >= 0 && av <= 50) || !(vv >= 0 && vv <= 50)) { toast("Komisyon oranları %0 ile %50 arasında olmalı", { type: "err" }); return; }
+      if (!(vbv >= 0 && vbv <= 50) || !(obv >= 0 && obv <= 50)) { toast("Hizmet bedeli oranları %0 ile %50 arasında olmalı", { type: "err" }); return; }
       if (!(ev >= 0 && ev <= 50)) { toast("Tahmini stopaj %0 ile %50 arasında olmalı", { type: "err" }); return; }
       if (!(fv >= 0 && fv <= 10)) { toast("PayTR masraf oranı %0 ile %10 arasında olmalı", { type: "err" }); return; }
-      const ab = aBorne.querySelector("select").value, vb = vBorne.querySelector("select").value, fb = feeBorne.querySelector("select").value;
+      const ab = aBorne.querySelector("select").value, vbo = vBorne.querySelector("select").value, fb = feeBorne.querySelector("select").value;
       const who = (x) => (x === "payer" ? "ödeyen" : "alıcı");
       if (await dkConfirm({ title: "Ödeme oranları",
-        body: `Sanatçı %${av} · Mekan %${vv} komisyon + %${kv} KDV (${vatIncl ? "dahil" : "hariç"}). Komisyonu karşılayan: sanatçı kiralamada ${who(ab)}, mekan kiralamada ${who(vb)}. Tahmini stopaj %${ev} · PayTR masrafı %${fv} (${fb === "platform" ? "GigBridge karşılar" : "alıcının payından, fiyata eklenir"}). Yalnız yeni ödemelere uygulanır.`,
+        body: `Sanatçı kiralama GigBridge payı %${av} · hizmet bedeli: mekan %${vbv}, organizatör %${obv} (teklif ücretinin üstüne, + %${kv} KDV). Mekan kiralama komisyonu %${vv} + KDV (${vatIncl ? "dahil" : "hariç"}). Komisyonu karşılayan: sanatçı kiralamada ${who(ab)}, mekan kiralamada ${who(vbo)}. Tahmini stopaj %${ev} · PayTR masrafı %${fv} (${fb === "platform" ? "GigBridge karşılar" : "alıcının payından, fiyata eklenir"}). Yalnız yeni ödemelere uygulanır.`,
         confirmLabel: "Kaydet" })) {
         saveCfg({ artistCommissionRate: av / 100, venueCommissionRate: vv / 100, commissionVatIncluded: vatIncl,
-          artistCommissionBorneBy: ab, venueCommissionBorneBy: vb, estimateStopajRate: ev / 100, paytrFeeRate: fv / 100, paytrFeeBorneBy: fb });
+          artistCommissionBorneBy: ab, venueCommissionBorneBy: vbo, estimateStopajRate: ev / 100, paytrFeeRate: fv / 100, paytrFeeBorneBy: fb,
+          venueBuyerFeeRate: vbv / 100, organizerBuyerFeeRate: obv / 100 });
       }
     } });
     const test = dkSwitch({ checked: !!cfg.testMode, disabled: savingCfg, variant: "cyan", label: "Test modu", onChange: async (on, { revert }) => {
@@ -216,43 +221,28 @@ export function adminOdemelerView(ctx) {
       saveCfg({ testMode: on });
     } });
     const auto = dkSwitch({ checked: !!cfg.autoPayout, disabled: savingCfg, variant: "cyan", label: "Otomatik aktarım", onChange: (on) => saveCfg({ autoPayout: on }) });
-    // İş modeli (yalnız sanatçı kiralama; mekan kiralama her iki modelde de aracı): Aracı → komisyon · Yol A → GigBridge alır, satar
-    const curModel = cfg.bookingModel === "resale" ? "resale" : "agent";
-    const modelSel = dkSelect({ size: 40, value: curModel, options: [{ value: "agent", label: "Aracı (komisyon)" }, { value: "resale", label: "Yol A — GigBridge alır, satar" }],
-      attrs: { "aria-label": "İş modeli", ...(savingCfg ? { disabled: "disabled" } : {}) } });
-    modelSel.style.width = "260px";
-    const modelOf = () => modelSel.querySelector("select").value;
-    modelSel.querySelector("select").addEventListener("change", async () => {
-      const m = modelOf();
-      if (m === curModel) return;
-      live();   // önizleme: hesaplayıcı + özet seçilen modelle
-      const ok = await dkConfirm(m === "resale"
-        ? { title: "Yol A'ya geç", body: "Yeni sanatçı ödemelerinde GigBridge sahneyi sanatçıdan ALIR, mekana SATAR: mekan sahne bedeli + %20 KDV öder ve GigBridge'den tek fatura alır; stopajı (vergi kaydı yok / şahıs şirketi) GigBridge keser. Ödeme öncesi mekanın vergi bilgisi zorunlu olur. GigBridge vergi bilgilerinin dolu olduğundan emin ol. Mevcut ödemeler değişmez.", confirmLabel: "Yol A'ya geç", danger: true }
-        : { title: "Aracı modele dön", body: "Yeni sanatçı ödemelerinde GigBridge yeniden aracıdır: komisyon + KDV sanatçının payından düşer, stopajı mekan keser. Mevcut ödemeler değişmez.", confirmLabel: "Aracı modele dön", danger: true });
-      if (!ok) { modelSel.querySelector("select").value = curModel; live(); return; }
-      saveCfg({ bookingModel: m });
-    });
     // Kaydetmeden önce de: alanlar değiştikçe özet taslak değerlerle yeniden hesaplanır
     const draft = () => {
       const n = (el, def) => { const x = num(el); return x >= 0 && x <= 50 ? x / 100 : def; };
       return { ...cfg, artistCommissionRate: n(a, cfg.artistCommissionRate), venueCommissionRate: n(v, cfg.venueCommissionRate),
         commissionVatRate: n(vat, cfg.commissionVatRate), commissionVatIncluded: vatIncl, estimateStopajRate: n(est, cfg.estimateStopajRate),
         paytrFeeRate: n(fee, cfg.paytrFeeRate), artistCommissionBorneBy: aBorne.querySelector("select").value, venueCommissionBorneBy: vBorne.querySelector("select").value,
-        paytrFeeBorneBy: feeBorne.querySelector("select").value, bookingModel: modelOf() };
+        paytrFeeBorneBy: feeBorne.querySelector("select").value,
+        venueBuyerFeeRate: n(vb, cfg.venueBuyerFeeRate ?? 0.125), organizerBuyerFeeRate: n(ob, cfg.organizerBuyerFeeRate ?? 0.125),
+        bookingModel: "resale" };   // sanatçı kiralama Yol A (sabit)
     };
     const live = () => { summary.update(draft(), taxRules); calc.update(draft()); };
-    [a, v, est, fee].forEach((el) => el.addEventListener("input", live));
+    [a, v, vb, ob, est, fee].forEach((el) => el.addEventListener("input", live));
     [aBorne, vBorne, feeBorne].forEach((el) => el.addEventListener("change", live));
     vatSw.addEventListener("click", () => setTimeout(live, 0));
-    summary.update(cfg, taxRules);
-    calc.update(cfg);
+    summary.update(draft(), taxRules);
+    calc.update(draft());
     const line = (label, subTxt, ctl) => h("div", { class: "dk-admin-etk-row" }, h("span", { class: "dk-admin-etk-who" }, h("span", { class: "dk-admin-etk-n" }, label), subTxt ? h("span", { class: "dk-admin-etk-e" }, subTxt) : null), ctl);
     cfgBox.replaceChildren(
-      line("İş modeli · sanatçı kiralama", curModel === "resale"
-        ? "Yol A: GigBridge sahneyi alır, mekana satar (mekan F + KDV öder; stopajı GigBridge keser). Komisyon oranı = GigBridge payı (marj)."
-        : "Aracı: GigBridge komisyon alır; stopajı mekan keser. Mekan kiralama her iki modelde de aracı.", modelSel),
-      line(curModel === "resale" ? "Sanatçı komisyonu · GigBridge payı (%)" : "Sanatçı komisyonu (%)", null, a),
-      line("Mekan komisyonu (%)", null, v),
+      line("Sanatçı komisyonu · GigBridge payı (%)", "Sanatçının teklif ücretinden düşülen marj", a),
+      line("Mekan · sanatçı tutarken hizmet bedeli (%)", "Teklif ücretinin üstüne eklenir; KDV toplam üzerinden", vb),
+      line("Organizatör · sanatçı tutarken hizmet bedeli (%)", "Teklif ücretinin üstüne eklenir; KDV toplam üzerinden", ob),
+      line("Mekan kiralama komisyonu (%)", "Organizatör mekan kiraladığında mekanın payından", v),
       line("Komisyon KDV oranı (%)", "Yasal oran (KDV Kanunu) · değiştirilemez", vat),
       line("Komisyon KDV dahil", "Açıkken KDV komisyon tutarının içinden ayrılır; kapalıyken üstüne eklenir", vatSw),
       line("Komisyonu karşılayan · sanatçı kiralama", "Alıcı: payından düşer · Ödeyen: brütün üstüne eklenir", aBorne),

@@ -4,9 +4,10 @@
  *   komisyon (KDV hariç) + komisyon KDV'si · stopaj (GVK md. 94: sanatçı kayıtsız / serbest meslek VE mekan şirket ya da gerçek
  *   usul ise %20, mekan keser → mekan PayTR'den o kadar az öder) · PayTR masrafı = tahsilat × oran.
  *   const c = priceCalculator(); c.update(cfg) → c.el
- * Yol A (cfg.bookingModel 'resale'): finance.js computeResaleSplit ile aynı (pay-util resaleSplit) — tutar = mekanın teklif ücreti
- *   (GigBridge'in satış fiyatı, KDV hariç); mekan F + KDV öder, stopaj kesmez; GigBridge payı = sanatçı komisyon oranı; stopajı
- *   (A/B) GigBridge keser. Mekan türü seçimi bu modelde gerekmez.
+ * Yol A (cfg.bookingModel 'resale'): finance.js computeResaleSplit ile aynı (pay-util resaleSplit) — tutar = teklif ücreti F (KDV hariç);
+ *   sanatçıyı tutan (mekan / organizatör seçimi) F + hizmet bedeli (F × venueBuyerFeeRate | organizerBuyerFeeRate) + KDV (toplam üzerinden)
+ *   öder, stopaj kesmez; GigBridge payı (marj) = sanatçı komisyon oranı; stopajı (A/B) GigBridge keser; sanatçının PayTR masrafı yalnız
+ *   F + KDV üzerinden. GigBridge geliri = marj + hizmet bedeli. Mekan türü seçimi bu modelde gerekmez.
  */
 import { h } from "../../ui.js";
 import { dkInput, dkSelect } from "./ui.js";
@@ -43,8 +44,8 @@ function grossForNet(cfg, netK, artist, venue) {
 }
 
 /** Yol A: sanatçının cebine girecek net → gereken satış fiyatı F (tam TL, en küçük) */
-function resaleGrossForNet(cfg, netK, artist) {
-  const f = (x) => resaleSplit(x * 100, artist, cfg).payeeKurus;
+function resaleGrossForNet(cfg, netK, artist, payer) {
+  const f = (x) => resaleSplit(x * 100, artist, cfg, payer).payeeKurus;
   const r = f(1000000) / 100000000 || 0.5;
   let g = Math.max(1, Math.ceil(netK / 100 / Math.max(0.05, r)));
   for (let i = 0; i < 5000 && f(g) < netK; i++) g += 1;
@@ -60,6 +61,7 @@ export function priceCalculator() {
   const mode = dkSelect({ size: 40, value: "gross", options: [{ value: "gross", label: "Mekanın teklif ettiği ücret" }, { value: "net", label: "Sanatçının cebine girecek" }], attrs: { "aria-label": "Tutar türü" } });
   const artist = dkSelect({ size: 40, value: "A", options: [{ value: "A", label: "Sanatçı: vergi kaydı yok" }, { value: "B", label: "Sanatçı: şahıs şirketi / serbest meslek" }, { value: "C", label: "Sanatçı: Ltd / AŞ şirketi" }], attrs: { "aria-label": "Sanatçı vergi durumu" } });
   const venue = dkSelect({ size: 40, value: "sorumlu", options: [{ value: "sorumlu", label: "Mekan: şirket / gerçek usul" }, { value: "basit", label: "Mekan: basit usul esnaf" }], attrs: { "aria-label": "Mekan türü" } });
+  const payer = dkSelect({ size: 40, value: "venue", options: [{ value: "venue", label: "Sanatçıyı tutan: Mekan" }, { value: "organizer", label: "Sanatçıyı tutan: Organizatör" }], attrs: { "aria-label": "Sanatçıyı tutan" } });
   const out = h("div", { style: { display: "grid", gap: "2px", marginTop: "12px" } });
   const sel = (w) => w.querySelector("select").value;
   const row = (label, value, o = {}) => h("div", { style: { display: "flex", justifyContent: "space-between", gap: "12px", padding: "6px 0", borderBottom: "1px solid #14171D", fontSize: o.big ? "14px" : "12.5px" } },
@@ -73,23 +75,37 @@ export function priceCalculator() {
     B: "Şahıs şirketi: sanatçı GigBridge'e hizmet bedeli + %20 KDV e-SMM keser (KDV'yi kendisi beyan eder); %20 stopajı GigBridge keser ve yatırır.",
     C: "Ltd / AŞ: şirket GigBridge'e hizmet bedeli + %20 KDV e-Fatura keser; stopaj yok.",
   };
+  // Vurgulu sonuç kutusu (ödeyen / sanatçı): başlık + büyük tutar + kalem satırları
+  const box = (title, total, color, lines) => h("div", { style: { border: `1px solid ${color}55`, background: `${color}0F`, borderRadius: "10px", padding: "12px 14px", display: "grid", gap: "2px" } },
+    h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "12px", marginBottom: "4px" } },
+      h("span", { style: { fontFamily: "var(--dk-font-mono)", fontSize: "11px", letterSpacing: "0.1em", color } }, title),
+      h("span", { style: { fontSize: "20px", fontWeight: "800", color, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, tl(total))),
+    ...lines.filter(Boolean));
   function drawResale(n, a) {
-    const g = sel(mode) === "net" ? resaleGrossForNet(cfg, n, a) : n;
-    const s = resaleSplit(g, a, cfg);
+    const who = sel(payer) === "organizer" ? "organizer" : "venue";
+    const g = sel(mode) === "net" ? resaleGrossForNet(cfg, n, a, who) : n;
+    const s = resaleSplit(g, a, cfg, who);
     const feeOnPayee = s.paytrFeeBorneBy !== "platform";
+    const whoTxt = who === "organizer" ? "ORGANİZATÖRÜN" : "MEKANIN";
     out.replaceChildren(...[
-      row("Sahne bedeli · GigBridge'in mekana satış fiyatı (KDV hariç)", tl(s.saleKurus), { strong: true }),
-      row(`KDV ${pct(s.saleVatRate)} · satış faturasında`, `+${tl(s.saleVatKurus)}`),
-      row("MEKANIN PAYTR İLE ÖDEYECEĞİ", tl(s.chargeKurus), { strong: true, big: true, color: "#FFB347" }),
-      row("Mekan stopaj kesmez · faturası GigBridge'den (F + KDV)", "—"),
+      box(`${whoTxt} ÖDEYECEĞİ`, s.chargeKurus, "#FFB347", [
+        row("Sahne ücreti (teklif, KDV hariç)", tl(s.grossKurus)),
+        row(`Hizmet bedeli ${pct(s.buyerFeeRate)}`, `+${tl(s.buyerFeeKurus)}`),
+        row(`KDV ${pct(s.saleVatRate)} · (sahne ücreti + hizmet bedeli) ${tl(s.saleKurus)} üzerinden`, `+${tl(s.saleVatKurus)}`),
+        row(`${who === "organizer" ? "Organizatör" : "Mekan"} stopaj kesmez · tek fatura GigBridge'den`, "—"),
+      ]),
+      h("div", { style: { height: "10px" } }),
+      box("SANATÇIYA AKTARILACAK", s.payeeKurus, "#7CE0B0", [
+        row("Sahne ücreti (teklif, KDV hariç)", tl(s.grossKurus)),
+        row(`GigBridge payı (marj ${pct(s.marginRate)})`, `−${tl(s.marginKurus)}`),
+        row("Hizmet bedeli · GigBridge'in alış bedeli", tl(s.purchaseKurus)),
+        s.purchaseVatKurus ? row(`Alış KDV'si ${pct(s.purchaseVatRate)} · ${a === "B" ? "e-SMM" : "e-Fatura"}`, `+${tl(s.purchaseVatKurus)}`) : null,
+        s.stopajKurus ? row(`Stopaj ${pct(s.resaleStopajRate)} · GigBridge keser, muhtasarla yatırır`, `−${tl(s.stopajKurus)}`) : row("Stopaj", "Yok (şirkete ödeme)"),
+        s.paytrFeeKurus ? row(`PayTR masrafı (${pct(s.paytrFeeRate)} · sahne ücreti + KDV üzerinden)${feeOnPayee ? "" : " · GigBridge karşılar"}`, feeOnPayee ? `−${tl(s.paytrFeeKurus)}` : tl(s.paytrFeeKurus)) : null,
+      ]),
       h("div", { style: { height: "8px" } }),
-      row(`GigBridge payı (marj ${pct(s.marginRate)})`, `−${tl(s.marginKurus)}`),
-      row("Hizmet bedeli · GigBridge'in alış bedeli", tl(s.purchaseKurus)),
-      s.purchaseVatKurus ? row(`Alış KDV'si ${pct(s.purchaseVatRate)} · ${a === "B" ? "e-SMM" : "e-Fatura"}`, `+${tl(s.purchaseVatKurus)}`) : null,
-      s.stopajKurus ? row(`Stopaj ${pct(s.resaleStopajRate)} · GigBridge keser, muhtasarla yatırır`, `−${tl(s.stopajKurus)}`) : row("Stopaj", "Yok (şirkete ödeme)"),
-      s.paytrFeeKurus ? row(`PayTR masrafı (${pct(s.paytrFeeRate)})${feeOnPayee ? "" : " · GigBridge karşılar"}`, feeOnPayee ? `−${tl(s.paytrFeeKurus)}` : tl(s.paytrFeeKurus)) : null,
-      row("SANATÇIYA AKTARILACAK", tl(s.payeeKurus), { strong: true, big: true, color: "#7CE0B0" }),
-      row("GigBridge geliri (marj)", tl(s.marginKurus - (feeOnPayee ? 0 : s.paytrFeeKurus))),
+      row("GigBridge geliri (marj + hizmet bedeli)", tl(s.marginKurus + s.buyerFeeKurus - (feeOnPayee ? 0 : s.paytrFeeKurus)), { strong: true, color: "#A78BFA" }),
+      s.paytrFeeTotalKurus > s.paytrFeeKurus ? row("Hizmet bedelinin PayTR masrafı · GigBridge karşılar", `−${tl(s.paytrFeeTotalKurus - s.paytrFeeKurus)}`) : null,
       row(`Devlete · net KDV (satış − alış)${s.stopajKurus ? " + stopaj" : ""}`, tl(s.saleVatKurus - s.purchaseVatKurus + s.stopajKurus)),
       note(RESALE_NOTE[a] || RESALE_NOTE.A),
     ].filter(Boolean));
@@ -99,7 +115,8 @@ export function priceCalculator() {
     const n = Math.round((parseFloat(String(amount.value).replace(/\./g, "").replace(",", ".")) || 0) * 100);
     const resale = cfg.bookingModel === "resale";
     venue.style.display = resale ? "none" : "";   // Yol A: mekan stopaj kesmez → mekan türü önemsiz
-    modeLbl.textContent = resale ? "Mekanın teklif ücreti (KDV hariç)" : "Mekanın teklif ettiği ücret";
+    payer.style.display = resale ? "" : "none";
+    modeLbl.textContent = resale ? "Teklif ücreti (KDV hariç)" : "Mekanın teklif ettiği ücret";
     if (!(n > 0)) { out.replaceChildren(note("Bir tutar gir.")); return; }
     if (resale) { drawResale(n, sel(artist)); return; }
     const a = sel(artist), ve = sel(venue);
@@ -123,12 +140,12 @@ export function priceCalculator() {
     ].filter(Boolean));
   }
   [amount].forEach((x) => x.addEventListener("input", draw));
-  [mode, artist, venue].forEach((x) => x.addEventListener("change", draw));
+  [mode, artist, venue, payer].forEach((x) => x.addEventListener("change", draw));
   el.append(
-    h("div", { class: "dk-admin-etk-ch" }, h("span", { class: "dk-admin-panel-deb" }, "FİYAT HESAPLAYICI · MEKANA ÇIKACAK TUTAR")),
+    h("div", { class: "dk-admin-etk-ch" }, h("span", { class: "dk-admin-panel-deb" }, "FİYAT HESAPLAYICI · ÖDEYENE ÇIKACAK TUTAR")),
     h("div", { class: "dk-admin-etk-form", style: { gap: "8px" } },
       h("p", { style: { margin: "0", fontSize: "12.5px", color: "#9AA0A8" } }, "Sağdaki ayarlarla (kaydetmeden önce de) hesaplanır."),
-      h("div", { style: { display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" } }, amount, mode),
+      h("div", { style: { display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" } }, amount, mode, payer),
       h("div", { style: { display: "flex", flexWrap: "wrap", gap: "8px" } }, artist, venue),
       out));
   return { el, update(c) { cfg = c; draw(); } };

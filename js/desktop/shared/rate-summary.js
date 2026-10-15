@@ -4,7 +4,8 @@
  * Vergi Kuralları'nda onaylı kural, yoksa KANUNİ kural (functions/finance.js STATUTORY_RULES — GVK md. 94) — sunucuyla aynı mantık.
  *   const s = rateSummary(); s.update(cfg, rules)  → s.el
  * Yol A (cfg.bookingModel 'resale'): sanatçı kiralamada GigBridge sahneyi alır, satar — vergi kuralı tablosu kullanılmaz,
- *   kesinti sanatçının kategorisinden (finance.js computeResaleSplit = pay-util resaleSplit). Mekan kiralama aracı modelde kalır.
+ *   kesinti sanatçının kategorisinden (finance.js computeResaleSplit = pay-util resaleSplit). Sanatçıyı tutan (mekan / organizatör)
+ *   teklif ücretinin üstüne hizmet bedeli (venueBuyerFeeRate / organizerBuyerFeeRate) + KDV öder. Mekan kiralama aracı modelde kalır.
  */
 import { h } from "../../ui.js";
 import { dkInlineMessage } from "./ui.js";
@@ -77,16 +78,18 @@ export function rateSummary() {
   function updateResale(cfg) {
     const v = commission(cfg, "venue_rental");
     const sA = resaleSplit(G, "A", cfg), sB = resaleSplit(G, "B", cfg), sC = resaleSplit(G, "C", cfg);
+    const oA = resaleSplit(G, "A", cfg, "organizer");
     const feeOnPayee = cfg.paytrFeeBorneBy !== "platform";
     const settings = [
-      li("İş modeli: Yol A — GigBridge alır, satar", `Sanatçı kiralamada GigBridge sahne performansını sanatçıdan SATIN ALIR ve mekana SATAR. Teklif ücreti (10.000 TL) GigBridge'in satış fiyatıdır (KDV hariç); mekan ${tl(sA.chargeKurus)} (+ ${pct(sA.saleVatRate)} KDV) öder, stopaj kesmez, gider pusulası düzenlemez. Etkinlik sonrası GigBridge mekana tek satış faturası keser: ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv).`),
-      li(`GigBridge payı (marj): ${pct(sA.marginRate)}`, `Sanatçı komisyon oranı marj olarak kullanılır: ${tl(sA.marginKurus)}. GigBridge'in alış bedeli (sanatçının hizmet bedeli) ${tl(sA.purchaseKurus)}. GigBridge'in geliri marjdır.`),
-      li(`Satış KDV'si: ${pct(sA.saleVatRate)} (yasal)`, `Mekana kesilen faturada ${tl(sA.saleVatKurus)} KDV. Şahıs şirketi / şirket sanatçıdan alışta ${tl(sB.purchaseVatKurus)} alış KDV'si indirilir; devlete net KDV ödenir.`),
+      li("İş modeli: Yol A — GigBridge alır, satar", `Sanatçı kiralamada GigBridge sahne performansını sanatçıdan SATIN ALIR ve sanatçıyı tutana (mekan ya da organizatör) SATAR. Teklif ücreti 10.000 TL (KDV hariç); tutan taraf bunun üstüne hizmet bedeli ve toplam üzerinden ${pct(sA.saleVatRate)} KDV öder: mekan ${tl(G)} + ${tl(sA.buyerFeeKurus)} + ${tl(sA.saleVatKurus)} KDV = ${tl(sA.chargeKurus)}. Stopaj kesmez, gider pusulası düzenlemez. Etkinlik sonrası GigBridge tek satış faturası keser: ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv).`),
+      li(`Hizmet bedeli: mekan ${pct(sA.buyerFeeRate)} · organizatör ${pct(oA.buyerFeeRate)}`, `Sanatçıyı tutan taraf teklif ücretinin üstüne öder (sanatçının payından düşmez). 10.000 TL'de mekan ${tl(sA.buyerFeeKurus)} → toplam ${tl(sA.chargeKurus)}; organizatör ${tl(oA.buyerFeeKurus)} → toplam ${tl(oA.chargeKurus)} (KDV dahil). Hizmet bedelinin PayTR masrafını GigBridge karşılar.`),
+      li(`GigBridge payı (marj): ${pct(sA.marginRate)}`, `Sanatçı komisyon oranı marj olarak sanatçının teklif ücretinden düşülür: ${tl(sA.marginKurus)}. GigBridge'in alış bedeli (sanatçının hizmet bedeli) ${tl(sA.purchaseKurus)}. GigBridge'in geliri marj + hizmet bedelidir: mekanda ${tl(sA.marginKurus + sA.buyerFeeKurus)}, organizatörde ${tl(oA.marginKurus + oA.buyerFeeKurus)}.`),
+      li(`Satış KDV'si: ${pct(sA.saleVatRate)} (yasal)`, `Satış faturasında (sahne ücreti + hizmet bedeli) ${tl(sA.saleKurus)} üzerinden ${tl(sA.saleVatKurus)} KDV. Şahıs şirketi / şirket sanatçıdan alışta ${tl(sB.purchaseVatKurus)} alış KDV'si indirilir; devlete net KDV ödenir.`),
       li(`Stopaj: ${pct(sA.resaleStopajRate)} · GigBridge keser`, `Vergi kaydı olmayan ve şahıs şirketi sanatçıda hizmet bedelinden ${tl(sA.stopajKurus)} stopajı GigBridge keser, muhtasarla yatırır (GVK 94/2-b). Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme etkinlikten 16 gün sonra PayTR üzerinden yapılır, PayTR dekontu ödeme kaydıdır. Ltd / AŞ sanatçıda stopaj yok. Vergi kuralları tablosu sanatçı kiralamada kullanılmaz.`),
       li(`PayTR masrafı: ${pct(cfg.paytrFeeRate ?? 0)} · ${feeOnPayee ? "sanatçının payından" : "GigBridge karşılar"}`, !(cfg.paytrFeeRate > 0)
         ? "Oran girilmedi (%0): PayTR masrafı hesaba katılmıyor."
-        : `PayTR tahsilattan (${tl(sA.chargeKurus)}) ${tl(sA.paytrFeeKurus)} keser; ${feeOnPayee ? "sanatçının payından düşülür" : "GigBridge'in marjından ödenir"}.`),
-      li(`Mekan kiralama: aracı · ${pct(v.cr)} komisyon`, v.cr ? `Mekan kiralamada (organizatör mekanı kiralar) model değişmez: ${tl(v.c)} + ${tl(v.vat)} KDV; ${v.borne === "payer" ? "organizatör üstüne öder" : "mekanın payından düşer"}.` : "Mekan kiralamada GigBridge komisyon almaz."),
+        : `Sanatçının payına düşen masraf yalnız sahne ücreti + KDV (${tl(G + Math.round(G * sA.saleVatRate))}) üzerinden: ${tl(sA.paytrFeeKurus)}; ${feeOnPayee ? "sanatçının payından düşülür" : "GigBridge'in marjından ödenir"}. Hizmet bedelinin masrafını (${tl(sA.paytrFeeTotalKurus - sA.paytrFeeKurus)}) GigBridge karşılar.`),
+      li(`Mekan kiralama: ${pct(v.cr)} komisyon`, v.cr ? `Mekan kiralamada (organizatör mekanı kiralar) model değişmez: ${tl(v.c)} + ${tl(v.vat)} KDV; ${v.borne === "payer" ? "organizatör üstüne öder" : "mekanın payından düşer"}.` : "Mekan kiralamada GigBridge komisyon almaz."),
       li(`Test modu: ${cfg.testMode ? "Açık" : "Kapalı"}`, cfg.testMode ? "Kartlardan para ÇEKİLMEZ (deneme)." : "Kartlardan GERÇEK para çekilir."),
       li(`Otomatik aktarım: ${cfg.autoPayout ? "Açık" : "Kapalı"}`, cfg.autoPayout ? "Etkinlik bitişinden 16 gün sonra (şikayet süresi bitişten 24 saat sonra kapanır), şikayet ve vergi kontrolü geçerse para o sabah 08:00'deki aktarımla sanatçının IBAN'ına kendiliğinden gider." : "Para kendiliğinden gitmez; \"Serbest bırakılacak\" listesinde senin onayını bekler."),
     ];
@@ -102,15 +105,16 @@ export function rateSummary() {
       h("td", { class: "is-num", style: { color: "#7CE0B0", fontWeight: "700" } }, tl(s.payeeKurus)), h("td", {}, doc), h("td", {}, law)));
     const table = h("div", { class: "dk-fin-tblwrap", style: { margin: "0" }, tabindex: "0", role: "region", "aria-label": "Senaryo tablosu (yatay kaydırılır)" },
       h("table", { class: "dk-fin-tbl" },
-        h("thead", {}, h("tr", {}, ...["SANATÇI", "MEKAN ÖDER (F + KDV)", "GIGBRIDGE PAYI", "ALIŞ KDV'Sİ", "STOPAJ (GIGBRIDGE)", "PAYTR", "SANATÇIYA", "SANATÇININ BELGESİ", "DAYANAK"].map((t) => h("th", { scope: "col" }, t)))),
+        h("thead", {}, h("tr", {}, ...["SANATÇI", "MEKAN ÖDER (F + HİZMET B. + KDV)", "GIGBRIDGE PAYI", "ALIŞ KDV'Sİ", "STOPAJ (GIGBRIDGE)", "PAYTR", "SANATÇIYA", "SANATÇININ BELGESİ", "DAYANAK"].map((t) => h("th", { scope: "col" }, t)))),
         h("tbody", {}, ...rows)));
     el.replaceChildren(
       h("div", { class: "dk-admin-etk-ch" }, h("span", { class: "dk-admin-panel-deb" }, "ORAN ÖZETİ · KİM, NEYİ, NEDEN ÖDER · YOL A")),
       h("div", { class: "dk-admin-etk-form", style: { gap: "0" } },
-        p("Muhasebeci / mali müşavir için özet. Örnek: 10.000 TL sahne bedeli (GigBridge'in mekana satış fiyatı, KDV hariç), sağdaki ayarlarla."),
+        p("Muhasebeci / mali müşavir için özet. Örnek: 10.000 TL teklif ücreti (KDV hariç), sağdaki ayarlarla; tutan taraf üstüne hizmet bedeli + KDV öder."),
         head("1", "HER AYAR NEYİ DEĞİŞTİRİR"), ...settings,
         head("2", "SENARYOLAR — 10.000 TL, GÜNCEL AYARLARLA"), table,
-        p("Mekan her senaryoda aynı tutarı öder ve GigBridge'den tek fatura alır. Sanatçının vergi bilgisi doğrulanmadan ya da kategorisi ödemeden sonra değiştiyse ödeme aktarım öncesi Finansal İncelemeye düşer.", { marginTop: "10px", color: "#8A8E97" })));
+        p(`Mekan her senaryoda aynı tutarı (${tl(sA.chargeKurus)}), organizatör ${tl(oA.chargeKurus)} öder ve GigBridge'den tek fatura alır.`
+          + " Sanatçının vergi bilgisi doğrulanmadan ya da kategorisi ödemeden sonra değiştiyse ödeme aktarım öncesi Finansal İncelemeye düşer.", { marginTop: "10px", color: "#8A8E97" })));
   }
 
   function update(cfg, rules) {
@@ -130,7 +134,7 @@ export function rateSummary() {
       li(`Komisyon KDV oranı: ${pct(a.v)} (yasal)`, a.cr ? `Komisyona eklenen KDV: ${tl(a.vat)}. Bu GigBridge'in geliri değil; komisyon faturasıyla devlete beyan edilir. Toplam kesilen: ${tl(a.take)}.` : "Komisyon olmadığı için KDV de yok."),
       li(`Komisyon KDV dahil: ${aIncl ? "Açık" : "Kapalı"}`, aIncl ? `KDV komisyonun İÇİNDEN ayrılır: toplam ${tl(a.take)} (${tl(a.c)} + ${tl(a.vat)} KDV). Kapatırsan KDV üstüne eklenir ve kesinti büyür.` : `KDV komisyonun ÜSTÜNE eklenir: ${tl(a.c)} + ${tl(a.vat)} = ${tl(a.take)}. Açarsan toplam kesinti ${tl(Math.round(G * a.cr))} olur (KDV içinde).`),
       li(`Komisyonu karşılayan (sanatçı): ${a.borne === "payer" ? "Ödeyen" : "Alıcı"}`, a.borne === "payer" ? `Mekan 10.000 TL + ${tl(a.take)} = ${tl(G + a.take)} öder; sanatçının payından komisyon düşmez.` : `Mekan 10.000 TL öder; ${tl(a.take)} sanatçının payından düşer.`),
-      li(`Mekan komisyonu: ${pct(v.cr)}`, v.cr ? `Mekan kiralamada (organizatör mekanı kiralar) ${tl(v.c)} + ${tl(v.vat)} KDV; ${v.borne === "payer" ? "organizatör üstüne öder" : "mekanın payından düşer"}.` : "Mekan kiralamada GigBridge komisyon almaz."),
+      li(`Mekan kiralama: ${pct(v.cr)} komisyon`, v.cr ? `Mekan kiralamada (organizatör mekanı kiralar) ${tl(v.c)} + ${tl(v.vat)} KDV; ${v.borne === "payer" ? "organizatör üstüne öder" : "mekanın payından düşer"}.` : "Mekan kiralamada GigBridge komisyon almaz."),
       li(`Tahmini stopaj: ${pct(est)}`, `YALNIZ ekrandaki tahmin. Sanatçıya teklifte "Sana kalacak ≈ ${tl(estPayee)}" gösterilir (en kötü durum). Gerçek kesintiyi DEĞİŞTİRMEZ; gerçek kesinti kanuna göre (aşağıda) belirlenir.`),
       li(`PayTR masrafı: ${pct(cfg.paytrFeeRate ?? 0)} · ${cfg.paytrFeeBorneBy === "platform" ? "GigBridge karşılar" : "sanatçının payından"}`, !(cfg.paytrFeeRate > 0)
         ? "Oran girilmedi (%0): PayTR masrafı hesaba katılmıyor. PayTR sözleşmesindeki oranı gir."
