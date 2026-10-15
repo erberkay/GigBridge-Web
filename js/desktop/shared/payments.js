@@ -70,6 +70,7 @@ export const payApi = {
   setTaxProfile: call("setTaxProfile", 30000),
   setGroupPayoutShares: call("setGroupPayoutShares", 30000),
   submitPaymentDocument: call("submitPaymentDocument", 30000),
+  getGiderPusulasi: call("getGiderPusulasi", 30000),
 };
 
 // ── Oranlar: publicConfig/payments (herkes okur; yoksa pay-util varsayılanları). Oturum başına bir kez, 10 dk önbellek. ──
@@ -498,6 +499,14 @@ export function paymentActions(p, side, { onOpenDispute } = {}) {
       items.push(note(open ? "Bu ödeme için şikayet açıldı. Aktarım karar verilene kadar bekler." : "Bu ödemeye ait şikayet sonuçlandı.", open ? "#FFB347" : "#8A8E97"));
       btn(open ? "Şikayeti gör ve yanıtla" : "Şikayeti gör", "outline", "flag", openDispute);
     }
+  }
+  // Gider pusulası (mekan adına hazırlanır; mekan ve sanatçı indirir — 15 dk'lık imzalı bağlantı)
+  if (p.giderPusulasi?.no) {
+    btn(`Gider pusulası · ${p.giderPusulasi.no}`, "outline", "fileText", async () => {
+      const w = window.open("about:blank", "_blank");
+      try { const r = await payApi.getGiderPusulasi({ merchantOid: p.id }); if (w) w.location.href = r.url; else location.href = r.url; }
+      catch (e) { if (w) w.close(); alertModal("Belge açılamadı", U.paymentErrorText(e)); }
+    });
   }
   if (!items.length && !btns.length) return null;
   return h("div", { class: "dk-pay-acts" }, ...items, btns.length ? h("div", { class: "dk-pay-btns" }, ...btns) : null);

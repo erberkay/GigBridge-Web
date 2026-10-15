@@ -103,6 +103,8 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const regimeBox = !performer ? h("div") : null;
   const stopajInfo = !performer ? h("p", { class: "dk-pay-fine" }) : null;
   const addr = !performer ? dkTextarea({ rows: 3, maxlength: 300, placeholder: "Fatura adresi (mahalle, cadde, no, ilçe / il)" }) : null;
+  // A (kaydı olmayan sanatçı): adres gider pusulasında "işi yapanın adresi" olarak yer alır (VUK 234)
+  const perfAddr = performer ? dkTextarea({ rows: 2, maxlength: 300, placeholder: "Mahalle, sokak, no, ilçe / il" }) : null;
 
   inp("fullName", { maxlength: 80, placeholder: "Kimlikteki ad soyad", autocomplete: "name" });
   inp("tckn", { maxlength: 11, inputmode: "numeric", placeholder: "11 haneli T.C. kimlik no", cls: "dk-pay-mono" });
@@ -127,6 +129,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     doc: performer ? box("DÜZENLEYECEĞİN BELGE", docSel) : null,
     rep: h("div", { class: "dk-tax-grid" }, fld("TEMSİLCİ AD SOYAD", F.repName), fld("TEMSİLCİ T.C. KİMLİK NO", F.repTckn)),
     resp: performer ? box("BELGEYİ KİM DÜZENLER", respSel) : null,
+    address: performer ? box("ADRES", perfAddr, "Gider pusulasında yer alır.") : null,
   };
   function paintCat() {
     if (!performer) return;
@@ -139,6 +142,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     show(rows.doc, cat === "B");
     show(rows.rep, cat === "C");
     show(rows.resp, cat === "C");
+    show(rows.address, cat === "A");
     rows.tckn.querySelector(".dk-lbl").textContent = cat === "B" ? "T.C. KİMLİK NO (VKN YOKSA)" : "T.C. KİMLİK NO";
     rows.vkn.querySelector(".dk-lbl").textContent = cat === "B" ? "VERGİ KİMLİK NO (VARSA)" : "VERGİ KİMLİK NO";
   }
@@ -156,7 +160,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const form = performer
     ? h("div", { class: "dk-pay-form" },
       box("VERGİ DURUMUN", catGroup), infoBox,
-      rows.fullName, h("div", { class: "dk-tax-grid" }, rows.tckn, rows.vkn), h("div", { class: "dk-tax-grid" }, rows.taxOffice, rows.title),
+      rows.fullName, h("div", { class: "dk-tax-grid" }, rows.tckn, rows.vkn), rows.address, h("div", { class: "dk-tax-grid" }, rows.taxOffice, rows.title),
       rows.vat, rows.doc, rows.rep, rows.resp)
     : h("div", { class: "dk-pay-form" },
       box("İŞLETME TÜRÜ", bizSel), rows.title, h("div", { class: "dk-tax-grid" }, rows.vkn, rows.tckn), rows.taxOffice,
@@ -173,6 +177,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     if (performer) {
       if (["A", "B", "C"].includes(pr.category)) { cat = pr.category; catGroup.dk.set(cat); }
       if (["arizi", "duzenli"].includes(pr.activity)) activity = pr.activity;
+      if (pr.address) perfAddr.value = pr.address;
       if (pr.category !== "A" || data?.ariziAccepted) { ariziOk = true; ariziBox.dk.set(true); }
       vatReg = pr.vatRegistered === true; vatBox.dk.set(vatReg);
       if (pr.docType) selOf(docSel).value = pr.docType;
@@ -198,6 +203,9 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
       if (cat === "A") {
         out.activity = activity;
         if (!keepMasked("tckn")) { if (digits(v("tckn")).length !== 11) return { error: "T.C. kimlik numarası 11 haneli olmalı." }; out.tckn = v("tckn"); }
+        const ad = perfAddr.querySelector("textarea") ? perfAddr.querySelector("textarea").value.trim() : (perfAddr.value || "").trim();
+        if (ad.length < 10) return { error: "Adresini eksiksiz yaz (gider pusulasında yer alır)." };
+        out.address = ad;
         out.ariziAccepted = true;
       } else if (cat === "B") {
         if (v("vkn")) { if (v("vkn").length !== 10) return { error: "Vergi kimlik numarası 10 haneli olmalı." }; out.vkn = v("vkn"); }

@@ -91,6 +91,8 @@ export function toPayment(id, x) {
       commissionInvoice: x.documents.commissionInvoice && typeof x.documents.commissionInvoice === "object" ? { ...x.documents.commissionInvoice } : null,
       service: x.documents.service && typeof x.documents.service === "object" ? { ...x.documents.service } : null,
     } : { commissionInvoice: null, service: null },
+    // Gider pusulası (VUK 234; kaydı olmayan sanatçı — mekan adına, functions/giderPusulasi.js)
+    giderPusulasi: x?.giderPusulasi && typeof x.giderPusulasi.no === "string" ? { no: x.giderPusulasi.no, status: s(x.giderPusulasi.status) } : null,
     payoutParts: Array.isArray(x?.payoutParts) ? x.payoutParts.filter((v) => v && typeof v === "object").map((v) => ({
       uid: s(v.uid), name: s(v.name), percent: num(v.percent), amountKurus: num(v.amountKurus), status: s(v.status) })) : [],
   };
