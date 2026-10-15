@@ -71,7 +71,8 @@ export const payApi = {
   setGroupPayoutShares: call("setGroupPayoutShares", 30000),
   submitPaymentDocument: call("submitPaymentDocument", 30000),
   resendPusulaInfo: call("getGiderPusulasi", 30000),   // admin: gider pusulası bilgilerini mekana yeniden gönder
-  adminEInvoice: call("adminEInvoice", 120000),   // komisyon e-faturası (Trendyol E-Faturam — functions/efatura.js)
+  adminEInvoice: call("adminEInvoice", 120000),
+  lookupTaxpayer: call("lookupTaxpayer", 15000),   // VKN / TCKN → GİB e-Fatura kaydındaki unvan (functions/efatura.js)   // komisyon e-faturası (Trendyol E-Faturam — functions/efatura.js)
 };
 
 // ── Oranlar: publicConfig/payments (herkes okur; yoksa pay-util varsayılanları). Oturum başına bir kez, 10 dk önbellek. ──
@@ -380,7 +381,7 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
       kids.push(textP(p?.status === "transferred" ? "Etkinlik tamamlandı, ödeme alıcıya aktarıldı."
         : p?.status === "refunded" || (!p && refunded) ? "Ödemenin tamamı iade edildi."
         : U.disputeOpen(p) ? "Şikayetin inceleniyor. Karar verilene kadar ödeme emanette bekler."
-        : "Para emanette. Etkinlikten 24 saat sonra, sorun bildirilmezse alıcıya aktarılır."));
+        : "Para emanette. Etkinlik bitişinden 16 gün sonra, sorun bildirilmezse alıcıya aktarılır (şikayet süresi: bitişten 24 saat sonra kapanır)."));
       if (p && U.isResalePayment(p) && p.status !== "refunded") kids.push(note("Sahne bedeli + KDV tutarında ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv) GigBridge'den gelir (etkinlik sonrası). Stopaj kesmez, gider pusulası düzenlemezsiniz."));
       // ödeyenin vergi profili eksikse (mekan / organizatör) finansal inceleme gerekebilir
       if (p && (p.financeReasons || []).some((r) => r === "payer_tax_missing" || r === "payer_tax_unverified")) {
@@ -482,7 +483,7 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
       h("div", { class: "dk-pay-head" }, ic(paid ? "shieldCheck" : "clock", 16, paid ? "#7CE0B0" : "#FFB347", "1.9"), h("span", { class: "dk-pay-title" }, paid ? "Ödeme güvencede" : "Ödeme"), payBadge(null, null, label)),
       textP(p?.status === "transferred" ? "Ödemen hesabına aktarıldı."
         : p?.status === "finance_review" ? "Ödeme güvencede. Vergi durumu netleşene kadar finansal incelemede bekler; inceleme bitince hesabına aktarılır."
-        : paid ? "Ödeme güvencede (emanette), etkinlikten sonra hesabına aktarılır."
+        : paid ? "Ödeme güvencede (emanette), etkinlik bitişinden 16 gün sonra hesabına aktarılır."
         : kind === "venue_rental" ? "Organizatör ödemeyi yaptığında burada göreceksin. Para etkinlik sonrasına kadar emanette tutulur."
         : "Ödeyen taraf ödemeyi yaptığında burada göreceksin. Para etkinlik sonrasına kadar emanette tutulur."),
       breakdown(p),
@@ -561,7 +562,7 @@ export function paymentActions(p, side, { onOpenDispute } = {}) {
     }
   }
   // Gider pusulası bilgileri (kaydı olmayan sanatçı) mekana e-postayla gider — belgeyi mekan düzenler (functions/giderPusulasi.js)
-  // Yol A: A'da pusula yok (PayTR dekontu yerine geçer, VUK 234); B/C sanatçıya "GigBridge'e makbuz / fatura kes" bilgisi gider — mekana pusula notu yok
+  // Yol A: A'da pusula yok (PayTR dekontu ödeme kaydıdır); B/C sanatçıya "GigBridge'e makbuz / fatura kes" bilgisi gider — mekana pusula notu yok
   if (side === "payer" && p.giderPusulasi?.status === "info_sent" && !U.isResalePayment(p)) {
     items.push(note("Gider pusulası için gereken bilgiler e-postanıza gönderildi. Pusulayı müşaviriniz düzenler, sanatçıya imzalatırsınız.", "#8A8E97"));
   }
@@ -1090,10 +1091,10 @@ export function paymentDocBlock(p) {
     kids.push(h("span", { class: "dk-pay-body" }, `${U.docTypeLabel(svc.docType)} · No ${svc.docNo || "—"} · ${isoToTR(svc.docDate) || "—"}`));
     if (st === "rejected" && svc.note) kids.push(note(`Red gerekçesi: ${svc.note}`, "#FF5A6E", "alertCircle"));
   } else if (U.isResalePayment(p)) {
-    // Yol A: alıcı GigBridge — A: belge yok (PayTR dekontu gider pusulası yerine geçer) · B: e-SMM · C: e-Fatura (hizmet bedeli + KDV)
+    // Yol A: alıcı GigBridge — A: belge yok (PayTR dekontu ödeme kaydıdır) · B: e-SMM · C: e-Fatura (hizmet bedeli + KDV)
     const total = U.fmtKurus((p.purchaseKurus || 0) + (p.purchaseVatKurus || 0));
     kids.push(textP(p.sellerCategory === "A"
-      ? "Vergi kaydın olmadığı için belge yüklemen gerekmez: stopajı GigBridge keser ve yatırır; ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır, PayTR dekontu gider pusulası yerine geçer (VUK md. 234)."
+      ? "Vergi kaydın olmadığı için belge yüklemen gerekmez. Ödemen etkinlikten 16 gün sonra PayTR üzerinden hesabına geçer; stopajı GigBridge keser ve yatırır. Ayrıca imzalaman gereken bir belge yok."
       : `GigBridge'e ${p.sellerCategory === "B" ? "e-SMM" : "e-Fatura"} kes (hizmet bedeli ${U.fmtKurus(p.purchaseKurus)} + KDV ${U.fmtKurus(p.purchaseVatKurus)} = ${total}) ve buraya yükle${needed ? "; aktarım için gerekli." : "."}`));
   } else {
     kids.push(textP(needed
@@ -1204,7 +1205,7 @@ export function payoutAccountCard({ openForm = false } = {}) {
   const head = h("div", { class: "dk-pay-acct-head" },
     h("span", { class: "dk-pay-kick" }, "ÖDEME ALMA"),
     h("h2", { id: "dk-pay-acct-h", class: "dk-pay-acct-t" }, "Ödeme Bilgileri"),
-    h("p", { class: "dk-pay-text" }, "Etkinlik ücretleri PayTR güvencesiyle emanette tutulur; etkinlikten sonra bu hesaba aktarılır. Hesap sahibinin adı IBAN'daki adla aynı olmalı (şirket hesabında ticari ünvan)."));
+    h("p", { class: "dk-pay-text" }, "Etkinlik ücretleri PayTR güvencesiyle emanette tutulur; etkinlik bitişinden 16 gün sonra bu hesaba aktarılır. Hesap sahibinin adı IBAN'daki adla aynı olmalı (şirket hesabında ticari ünvan)."));
   const footText = () => (U.isResale("artist_booking") && session.profile?.userType === "artist"
     ? "IBAN'ın yalnız ödeme aktarımı için PayTR'a iletilir; kimseyle paylaşılmaz. GigBridge sahneni satın alır: aktarılan tutardan GigBridge payı ve varsa stopaj (GigBridge yatırır) düşülür."
     : "IBAN'ın yalnız ödeme aktarımı için PayTR'a iletilir; kimseyle paylaşılmaz. Aktarılan tutardan GigBridge komisyonu (+ KDV) ve varsa mevzuata göre vergi kesintisi düşülür.");

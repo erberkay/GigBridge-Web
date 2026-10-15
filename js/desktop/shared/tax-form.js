@@ -62,7 +62,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const leadEl = h("p", { class: "dk-pay-text" });
   const leadText = () => (isResale()
     ? (performer
-      ? "GigBridge sahneni senden satın alıp mekana satar. Vergi kaydın yoksa stopajı GigBridge keser ve yatırır; ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır, PayTR dekontu gider pusulası yerine geçer (VUK md. 234). Şahıs şirketin ya da şirketin varsa GigBridge'e makbuz / fatura (+ KDV) kesersin. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
+      ? "GigBridge sahneni senden satın alıp mekana satar. Vergi kaydın yoksa ödemen etkinlikten 16 gün sonra PayTR üzerinden hesabına geçer; stopajı GigBridge keser ve yatırır, ayrıca imzalaman gereken bir belge yok. Şahıs şirketin ya da şirketin varsa GigBridge'e makbuz / fatura (+ KDV) kesersin. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
       : "Sanatçı kiralamada sahneyi GigBridge'den satın alırsın: GigBridge sana sahne bedeli + %20 KDV tutarında tek fatura (ajans ve organizasyon hizmeti, e-Fatura / e-Arşiv) keser (bu bilgilerle). Stopaj kesmez, gider pusulası düzenlemezsin. Bilgiler eksikse sanatçı ödemesi başlatılamaz.")
     : performer
       ? "Ödemelerinde doğru vergi kesintisinin (stopaj) uygulanması ve belgelerin düzenlenmesi için gerekli. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
@@ -132,6 +132,26 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   inp("accountantPhone", { maxlength: 20, inputmode: "tel", placeholder: "Telefon (opsiyonel)" });
   inp("accountantEmail", { maxlength: 100, inputmode: "email", placeholder: "E-posta (opsiyonel)" });
   ["tckn", "vkn", "repTckn"].forEach((k) => F[k].addEventListener("input", () => { F[k].value = digits(F[k].value).slice(0, k === "vkn" ? 10 : 11); }));
+  // GİB e-Fatura kaydı (Trendyol üzerinden): VKN / TCKN girilince unvan boşsa kendiliğinden dolar; bulunamazsa ipucu
+  const gibHint = h("span", { class: "dk-pay-fine", hidden: true });
+  let gibTimer = null, gibSeq = 0;
+  const gibLookup = (id) => {
+    clearTimeout(gibTimer);
+    gibHint.hidden = true;
+    if (!(id.length === 10 || id.length === 11)) return;
+    const seq = (gibSeq += 1);
+    gibTimer = setTimeout(async () => {
+      let r = null;
+      try { r = await payApi.lookupTaxpayer({ taxId: id }); } catch (_) { r = null; }
+      if (seq !== gibSeq || !r || !r.available) return;
+      if (r.found && r.title && !F.title.value.trim()) F.title.value = r.title;
+      const differs = r.found && r.title && F.title.value.trim() && F.title.value.trim() !== r.title;
+      gibHint.textContent = r.found ? `GİB kaydı: ${r.title || "—"}${r.efatura ? " · e-Fatura mükellefi" : ""}${differs ? " (yazdığın unvan farklı, kontrol et)" : ""}` : "GİB e-Fatura kaydı bulunamadı; unvanı kendin yaz.";
+      gibHint.hidden = false;
+    }, 600);
+  };
+  F.vkn.addEventListener("input", () => gibLookup(digits(F.vkn.value)));
+  F.tckn.addEventListener("input", () => { if (!performer && !F.vkn.value) gibLookup(digits(F.tckn.value)); });
 
   // koşullu bloklar
   const rows = {
@@ -190,10 +210,10 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const form = performer
     ? h("div", { class: "dk-pay-form" },
       box("VERGİ DURUMUN", catGroup), catNote, infoBox,
-      rows.fullName, h("div", { class: "dk-tax-grid" }, rows.tckn, rows.vkn), rows.address, h("div", { class: "dk-tax-grid" }, rows.taxOffice, rows.title),
+      rows.fullName, h("div", { class: "dk-tax-grid" }, rows.tckn, rows.vkn), gibHint, rows.address, h("div", { class: "dk-tax-grid" }, rows.taxOffice, rows.title),
       rows.vat, rows.doc, rows.rep, rows.resp)
     : h("div", { class: "dk-pay-form" },
-      box("İŞLETME TÜRÜ", bizSel), rows.title, h("div", { class: "dk-tax-grid" }, rows.vkn, rows.tckn), rows.taxOffice,
+      box("İŞLETME TÜRÜ", bizSel), rows.title, h("div", { class: "dk-tax-grid" }, rows.vkn, rows.tckn), gibHint, rows.taxOffice,
       rows.billing, bireyselHint,
       (regimeBox.append(box("VERGİLENDİRME USULÜ", stopajGroup)), regimeBox), stopajInfo,
       ...accEls);

@@ -374,8 +374,8 @@ export function adminFinansView(ctx) {
         row.documents?.service?.storagePath ? dkButton("Hizmet belgesini aç", { variant: "outline", size: 36, icon: "fileText", onClick: () => openDoc(row.merchantOid) }) : null,
         row.kind === "artist_booking" && isSaleRow(row) ? dkButton(row.giderPusulasi?.status === "info_sent" ? "Belge bilgilerini yeniden gönder" : "Belge bilgilerini gönder", { variant: "outline", size: 36, icon: "mail",
           onClick: async () => {
-            // Yol A: A → pusula yok (PayTR dekontu yerine geçer, VUK 234; sunucu atlar) · B/C → sanatçıya "GigBridge'e e-SMM / e-Fatura kes"
-            if (!(await dkConfirm({ title: "Belge bilgileri (Yol A)", body: "Şahıs şirketi / şirkette sanatçıya GigBridge'e kesmesi gereken e-SMM / e-Fatura bilgileri gönderilir. Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır, PayTR dekontu pusula yerine geçer (VUK md. 234).", confirmLabel: "Gönder" }))) return;
+            // Yol A: A → pusula yok (PayTR dekontu ödeme kaydıdır; sunucu atlar) · B/C → sanatçıya "GigBridge'e e-SMM / e-Fatura kes"
+            if (!(await dkConfirm({ title: "Belge bilgileri (Yol A)", body: "Şahıs şirketi / şirkette sanatçıya GigBridge'e kesmesi gereken e-SMM / e-Fatura bilgileri gönderilir. Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme etkinlikten 16 gün sonra PayTR üzerinden yapılır, PayTR dekontu ödeme kaydıdır.", confirmLabel: "Gönder" }))) return;
             try { await payApi.resendPusulaInfo({ merchantOid: row.merchantOid }); toast("Belge bilgileri gönderildi"); }
             catch (e) { toast(errText(e), { type: "err" }); } } })
         : row.kind === "artist_booking" ? dkButton(row.giderPusulasi?.status === "info_sent" ? "Pusula bilgilerini yeniden gönder" : "Pusula bilgilerini mekana gönder", { variant: "outline", size: 36, icon: "mail",

@@ -316,7 +316,7 @@ export function adminOdemelerView(ctx) {
     coBox.replaceChildren(
       coErr ? dkInlineMessage("err", coErr) : company ? null : dkInlineMessage("info", "GigBridge vergi bilgileri girilmedi. Yol A'da satış faturası (ajans ve organizasyon hizmeti) bu bilgilerle düzenlenir."),
       line("UNVAN", coIn.title), line("VKN / TCKN", coIn.taxId), line("VERGİ DAİRESİ", coIn.taxOffice), line("ADRES", coIn.address), line("MUHASEBE E-POSTASI", coIn.accountingEmail),
-      h("span", { class: "dk-admin-etk-e" }, "Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır, PayTR dekontu pusula yerine geçer (VUK md. 234)."),
+      h("span", { class: "dk-admin-etk-e" }, "Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme etkinlikten 16 gün sonra PayTR üzerinden yapılır, PayTR dekontu ödeme kaydıdır."),
       h("div", { class: "dk-admin-etk-tools" }, coSave));
   }
   async function loadCo() {
@@ -329,7 +329,7 @@ export function adminOdemelerView(ctx) {
     h("div", { class: "dk-admin-etk-ch" }, h("span", { class: "dk-admin-panel-deb" }, "GIGBRIDGE VERGİ BİLGİLERİ")), coBox);
   const noteCard = h("section", { class: "dk-admin-panel-card dk-admin-etk-card", "aria-label": "Aktarım notu" },
     h("div", { class: "dk-admin-etk-form" }, h("div", { class: `${P}-note` }, svgIcon("info", { size: 14, color: "#8A8E97" }),
-      h("span", {}, "Aktarımlar her gün 08:00'de yapılır (PayTR: ödeme günü aktarım yok, 10:00 sonrası istekler ertesi gün işlenir). Belirsiz sonuçlu aktarımları PayTR mağaza panelinden kontrol etmeden yeniden serbest bırakma."))));
+      h("span", {}, "Alıcıya aktarım etkinlik bitişinden 16 gün sonra yapılır (şikayet süresi bitişten 24 saat sonra kapanır; iade kararları ve elle serbest bırakma 16 günü beklemez). Aktarımlar her gün 08:00'de yapılır (PayTR: ödeme günü aktarım yok, 10:00 sonrası istekler ertesi gün işlenir). Belirsiz sonuçlu aktarımları PayTR mağaza panelinden kontrol etmeden yeniden serbest bırakma."))));
 
   root.append(hero, h("div", { class: cx("dk-admin-panel-grid", "dk-admin-etk-g2") }, h("div", { class: "dk-admin-etk-col" }, listCard, calc.el, summary.el), h("div", { class: "dk-admin-etk-col" }, cfgCard, coCard, noteCard)));
 

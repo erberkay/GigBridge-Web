@@ -18,7 +18,7 @@
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
 import { organizerEvents, organizerRequests, orgMembers, orgInvites } from "../../data.js";
-import { payRowControl } from "../shared/payments.js";
+import { payRowControl, taxBanner } from "../shared/payments.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { cx, dkButton, dkKpi, dkPageHero, dkStatusBadge, dkEmpty, dkSkeleton, dkToast } from "../shared/ui.js";
 import { rgba, trUpper, toMs, timeAgo } from "../shared/helpers.js";
@@ -71,6 +71,15 @@ export function orgPanelView(ctx) {
   hero.querySelector("h1").style.fontSize = ""; // boyut CSS'te (52 → ≤1023'te 40)
   hero.querySelector(".dk-hero-l").append(h("div", { class: `${P}-meta` }, rolePill, metaTxt));
   root.append(hero);
+
+  // Vergi Bilgileri eksikse bant (ödeme yapabilmek için gerekli) → Profil › Vergi Bilgileri. Yalnız sahip (personel ödemez);
+  // profil varsa / demoda gizli kalır (taxProfileNeedsAction). Kaydedince gb:tax-profile → kendiliğinden gizlenir.
+  if (isOwner) {
+    const tb = taxBanner({ href: "#/organizer/profil?bolum=vergi", text: "Ödeme yapabilmek için Vergi Bilgilerini doldur." });
+    tb.node.style.marginTop = "20px";
+    root.append(tb.node);
+    unsubs.push(() => tb.destroy());
+  }
 
   // ═════════ KPI ═════════
   const kpi = {

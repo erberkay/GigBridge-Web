@@ -82,16 +82,16 @@ export function rateSummary() {
       li("İş modeli: Yol A — GigBridge alır, satar", `Sanatçı kiralamada GigBridge sahne performansını sanatçıdan SATIN ALIR ve mekana SATAR. Teklif ücreti (10.000 TL) GigBridge'in satış fiyatıdır (KDV hariç); mekan ${tl(sA.chargeKurus)} (+ ${pct(sA.saleVatRate)} KDV) öder, stopaj kesmez, gider pusulası düzenlemez. Etkinlik sonrası GigBridge mekana tek satış faturası keser: ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv).`),
       li(`GigBridge payı (marj): ${pct(sA.marginRate)}`, `Sanatçı komisyon oranı marj olarak kullanılır: ${tl(sA.marginKurus)}. GigBridge'in alış bedeli (sanatçının hizmet bedeli) ${tl(sA.purchaseKurus)}. GigBridge'in geliri marjdır.`),
       li(`Satış KDV'si: ${pct(sA.saleVatRate)} (yasal)`, `Mekana kesilen faturada ${tl(sA.saleVatKurus)} KDV. Şahıs şirketi / şirket sanatçıdan alışta ${tl(sB.purchaseVatKurus)} alış KDV'si indirilir; devlete net KDV ödenir.`),
-      li(`Stopaj: ${pct(sA.resaleStopajRate)} · GigBridge keser`, `Vergi kaydı olmayan ve şahıs şirketi sanatçıda hizmet bedelinden ${tl(sA.stopajKurus)} stopajı GigBridge keser, muhtasarla yatırır (GVK 94/2-b). Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır, PayTR dekontu pusula yerine geçer (VUK md. 234). Ltd / AŞ sanatçıda stopaj yok. Vergi kuralları tablosu sanatçı kiralamada kullanılmaz.`),
+      li(`Stopaj: ${pct(sA.resaleStopajRate)} · GigBridge keser`, `Vergi kaydı olmayan ve şahıs şirketi sanatçıda hizmet bedelinden ${tl(sA.stopajKurus)} stopajı GigBridge keser, muhtasarla yatırır (GVK 94/2-b). Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme etkinlikten 16 gün sonra PayTR üzerinden yapılır, PayTR dekontu ödeme kaydıdır. Ltd / AŞ sanatçıda stopaj yok. Vergi kuralları tablosu sanatçı kiralamada kullanılmaz.`),
       li(`PayTR masrafı: ${pct(cfg.paytrFeeRate ?? 0)} · ${feeOnPayee ? "sanatçının payından" : "GigBridge karşılar"}`, !(cfg.paytrFeeRate > 0)
         ? "Oran girilmedi (%0): PayTR masrafı hesaba katılmıyor."
         : `PayTR tahsilattan (${tl(sA.chargeKurus)}) ${tl(sA.paytrFeeKurus)} keser; ${feeOnPayee ? "sanatçının payından düşülür" : "GigBridge'in marjından ödenir"}.`),
       li(`Mekan kiralama: aracı · ${pct(v.cr)} komisyon`, v.cr ? `Mekan kiralamada (organizatör mekanı kiralar) model değişmez: ${tl(v.c)} + ${tl(v.vat)} KDV; ${v.borne === "payer" ? "organizatör üstüne öder" : "mekanın payından düşer"}.` : "Mekan kiralamada GigBridge komisyon almaz."),
       li(`Test modu: ${cfg.testMode ? "Açık" : "Kapalı"}`, cfg.testMode ? "Kartlardan para ÇEKİLMEZ (deneme)." : "Kartlardan GERÇEK para çekilir."),
-      li(`Otomatik aktarım: ${cfg.autoPayout ? "Açık" : "Kapalı"}`, cfg.autoPayout ? "Etkinlik bitişinden 24 saat sonra, şikayet ve vergi kontrolü geçerse para her sabah 08:00'de sanatçının IBAN'ına kendiliğinden gider." : "Para kendiliğinden gitmez; \"Serbest bırakılacak\" listesinde senin onayını bekler."),
+      li(`Otomatik aktarım: ${cfg.autoPayout ? "Açık" : "Kapalı"}`, cfg.autoPayout ? "Etkinlik bitişinden 16 gün sonra (şikayet süresi bitişten 24 saat sonra kapanır), şikayet ve vergi kontrolü geçerse para o sabah 08:00'deki aktarımla sanatçının IBAN'ına kendiliğinden gider." : "Para kendiliğinden gitmez; \"Serbest bırakılacak\" listesinde senin onayını bekler."),
     ];
     const SC = [
-      { s: sA, artist: "Vergi kaydı yok (A)", doc: "Belge yok: PayTR dekontu gider pusulası yerine geçer", law: "GVK 94/2-b · VUK 234" },
+      { s: sA, artist: "Vergi kaydı yok (A)", doc: "Belge yok: PayTR dekontu ödeme kaydıdır", law: "GVK 94/2-b" },
       { s: sB, artist: "Şahıs şirketi (B)", doc: "e-SMM (sanatçı → GigBridge)", law: "GVK 94/2-b" },
       { s: sC, artist: "Ltd / AŞ (C)", doc: "e-Fatura (şirket → GigBridge)", law: "KVK — stopaj yok" },
     ];
@@ -138,7 +138,7 @@ export function rateSummary() {
           ? `PayTR tahsilattan ${tl(fee)} keser; GigBridge'in ${tl(a.take)} payından ödenir, sanatçıya etkisi yok.`
           : `PayTR tahsilattan ${tl(fee)} keser; sanatçının payından düşülür. Sanatçı fiyatı "cebime girecek" diye girerse bu masraf fiyata eklenir, sanatçının istediği tutar değişmez.`),
       li(`Test modu: ${cfg.testMode ? "Açık" : "Kapalı"}`, cfg.testMode ? "Kartlardan para ÇEKİLMEZ (deneme)." : "Kartlardan GERÇEK para çekilir."),
-      li(`Otomatik aktarım: ${cfg.autoPayout ? "Açık" : "Kapalı"}`, cfg.autoPayout ? "Etkinlik bitişinden 24 saat sonra, şikayet ve vergi kontrolü geçerse para her sabah 08:00'de sanatçının IBAN'ına kendiliğinden gider." : "Para kendiliğinden gitmez; \"Serbest bırakılacak\" listesinde senin onayını bekler."),
+      li(`Otomatik aktarım: ${cfg.autoPayout ? "Açık" : "Kapalı"}`, cfg.autoPayout ? "Etkinlik bitişinden 16 gün sonra (şikayet süresi bitişten 24 saat sonra kapanır), şikayet ve vergi kontrolü geçerse para o sabah 08:00'deki aktarımla sanatçının IBAN'ına kendiliğinden gider." : "Para kendiliğinden gitmez; \"Serbest bırakılacak\" listesinde senin onayını bekler."),
     ];
 
     const approved = (rules || []).filter((r) => r.status === "approved");

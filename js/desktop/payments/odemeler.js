@@ -49,8 +49,8 @@ export function odemelerView(ctx) {
   const hero = dkPageHero({
     eyebrow: "EMANETLİ ÖDEME · PAYTR", title, cls: `${C}-hero`, color: ROLE_COLORS[role],
     lead: isPayer
-      ? "Kabul edilen tekliflerin ödemesini buradan yaparsın. Para etkinlikten 24 saat sonrasına kadar emanette tutulur. Etkinlikten önce iptal talep edebilir, sonra kanıtlı şikayet açabilirsin."
-      : "Etkinlik ücretlerin emanette tutulur, etkinlikten sonra banka hesabına aktarılır. Komisyon, KDV ve vergi kesintisi her satırda ayrıntılı.",
+      ? "Kabul edilen tekliflerin ödemesini buradan yaparsın. Para etkinlik bitişinden 16 gün sonrasına kadar emanette bekler; sorun bildirilmezse (şikayet süresi: bitişten 24 saat sonra kapanır) 16. günde alıcının hesabına aktarılır. Etkinlikten önce iptal talep edebilir, sonra kanıtlı şikayet açabilirsin."
+      : "Etkinlik ücretlerin emanette tutulur, etkinlik bitişinden 16 gün sonra banka hesabına aktarılır. Komisyon, KDV ve vergi kesintisi her satırda ayrıntılı.",
     actions: isPayer ? refresh : null,
   });
   const kDue = isPayer ? dkKpi({ label: "ÖDEME BEKLEYENLER", value: "—", sub: "Kabul edilmiş, ödenmemiş", icon: "clock", color: "#FFB347" }) : null;
@@ -109,7 +109,7 @@ export function odemelerView(ctx) {
     h("span", { class: `${C}-h` }, "NASIL ÇALIŞIR"),
     h("ol", { class: `${C}-steps` },
       h("li", {}, "Teklif ya da mekan isteği kabul edilince ödeyen PayTR ile öder."),
-      h("li", {}, "Para etkinlik bitişinden 24 saat sonrasına kadar emanette bekler."),
+      h("li", {}, "Para etkinlik bitişinden 16 gün sonrasına kadar emanette bekler; sorun bildirilmezse (şikayet süresi: bitişten 24 saat sonra kapanır) 16. günde alıcının hesabına aktarılır."),
       stepPay, stepResale,
       h("li", {}, "Vergi durumu belirsiz ödemeler finansal incelemeden sonra aktarılır.")),
     legalLinks()));

@@ -26,7 +26,7 @@
 import { h, openImageCropper } from "../../ui.js";
 import { session } from "../../store.js";
 import { db, collection, query, where, getDocs, doc, getDoc } from "../../firebase.js";
-import { payRowControl, openServiceTermsModal, needsTerms, toServiceTerms, termsSummary } from "../shared/payments.js";
+import { payRowControl, openServiceTermsModal, needsTerms, toServiceTerms, termsSummary, taxBanner } from "../shared/payments.js";
 import {
   venueEvents, venueOrgRequests, acceptOrgRequest, setRequestStatus, venueResidencies, cancelResidencyDoc,
   listRealArtists, listGroups, venueAcceptedInvitations, getVenueReviews, findExistingInvitation, createInvitation,
@@ -264,7 +264,11 @@ export function venuePanelView(ctx) {
   const bottom = h("section", { "aria-label": "Davetler ve öneriler", class: c("grid3") },
     invCard, h("div", { class: c("stack") }, reqCard, resCard), sugCard);
 
-  root.append(hero, kpis, quick, evSection, bottom);
+  // Vergi Bilgileri eksikse bant (ödeme yapabilmek için gerekli) → Profil › Vergi Bilgileri; profil varsa / demoda gizli kalır.
+  const taxB = taxBanner({ href: "#/venue/profil?bolum=vergi", text: "Ödeme yapabilmek için Vergi Bilgilerini doldur." });
+  unsubs.push(() => taxB.destroy());
+
+  root.append(hero, taxB.node, kpis, quick, evSection, bottom);
   drawTableSkeleton();
 
   // ══════════════════════════════════════════════════════════════════════
