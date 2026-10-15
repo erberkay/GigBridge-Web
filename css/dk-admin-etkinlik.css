@@ -74,3 +74,10 @@
   .dk-admin-etk-cfgopen .dk-btn { flex: 1 1 auto; }
 }
 @media (max-width: 768px) { .dk-admin-etk-tools > .dk-admin-etk-sum:empty { display: none; } }
+
+/* ---------- Kullanıcılar › destek DM'si (okunmamış yanıt rozeti) ---------- */
+.dk-admin-etk-nrow { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.dk-admin-etk-nrow > .dk-admin-panel-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-admin-etk-sdm { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; height: 18px; padding: 0 6px; border-radius: 9px;
+  background: rgba(167,139,250,0.16); border: 1px solid rgba(167,139,250,0.5); color: #A78BFA;
+  font-family: var(--dk-font-mono); font-size: 10.5px; font-weight: 700; }

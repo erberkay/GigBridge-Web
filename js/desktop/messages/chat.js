@@ -36,7 +36,7 @@ import {
   userById, isFollowing, followArtist, unfollowArtist, eventsByArtist, getVenueReviews, artistFollowerCount,
 } from "../../data.js";
 import { db, collection, doc, query, where, onSnapshot, getDocs, getDoc, updateDoc, deleteDoc, arrayUnion } from "../../firebase.js";
-import { svgRaw } from "../shared/icons.js";
+import { svgRaw, svgIcon } from "../shared/icons.js";
 import { cx, uid as mkId, dkToast, dkConfirm, dkPopover, dkSkeleton } from "../shared/ui.js";
 import { subscribeLive, invalidateAccountCounts } from "../shared/live.js";
 import {
@@ -46,6 +46,7 @@ import {
 import { genreColor, genreGrad } from "../shared/genres.js";
 import { evTitle, evImage, evHref } from "../shared/cards.js";
 import { agencyHref } from "../../agency-data.js";
+import { isSupportUid } from "../../support-account.js";
 
 // ══════════ requestChat — bekleyen sohbet hedefi ══════════
 // Diğer sayfalar legacy `messages.requestChat({ otherId, otherName })` çağırıp mesajlar rotasına gider. Legacy modülün `pending`'i dışa
@@ -102,10 +103,11 @@ const GRAD = {
   organizer: "linear-gradient(135deg, #FF4FA3, #FF8A2A)",
   agency: "linear-gradient(135deg, #FBBF24, #D97706)",
   group: "linear-gradient(135deg, #A78BFA, #6D28D9)",
+  support: "linear-gradient(135deg, #A78BFA, #4C1D95)",   // "GigBridge Destek" (js/support-account.js) — kalkan rozeti
   unknown: "linear-gradient(135deg, #2C303A, #1C2029)",
 };
-const TYPEC = { artist: "#FF4FA3", venue: "#FF8A2A", customer: "#4ED8FF", organizer: "#FF4FA3", agency: "#FBBF24", group: "#A78BFA" };
-const TYPE_LABEL = { artist: "Sanatçı", venue: "Mekan", customer: "Dinleyici", organizer: "Organizatör", agency: "Ajans" };
+const TYPEC = { artist: "#FF4FA3", venue: "#FF8A2A", customer: "#4ED8FF", organizer: "#FF4FA3", agency: "#FBBF24", group: "#A78BFA", support: "#A78BFA" };
+const TYPE_LABEL = { artist: "Sanatçı", venue: "Mekan", customer: "Dinleyici", organizer: "Organizatör", agency: "Ajans", support: "Resmi destek hesabı" };
 const OFFER_TAG = { pending: ["TEKLİF BEKLİYOR", "#FF4FA3"], accepted: ["KABUL EDİLDİ", "#7CE0B0"], rejected: ["REDDEDİLDİ", "#FF5A6E"] };
 const OFFER_ST = { pending: ["BEKLİYOR", "#FF4FA3"], accepted: ["KABUL EDİLDİ", "#7CE0B0"], rejected: ["REDDEDİLDİ", "#FF5A6E"] };
 const DONE = {
@@ -368,10 +370,12 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
   const typeOf = (cv) => {
     if (!cv) return "unknown";
     if (cv.isGroup) return "group";
+    if (isSupportUid(cv.otherId)) return "support";   // profil beklemeden marka görünümü
     const pr = prof(cv.otherId);
     return pr?.userType || (pr === null ? "customer" : "unknown");
   };
-  const photoOf = (cv) => (cv?.isGroup ? null : cv?.otherPhoto || prof(cv?.otherId)?.photoURL || null);
+  // destek hesabı DAİMA kalkan rozetiyle çizilir (logo fotoğrafı yok sayılır)
+  const photoOf = (cv) => (cv?.isGroup || isSupportUid(cv?.otherId) ? null : cv?.otherPhoto || prof(cv?.otherId)?.photoURL || null);
   const hrefOf = (cv) => {
     const t = typeOf(cv);
     if (t === "artist") return "#/sanatci/" + encodeURIComponent(cv.otherId);
@@ -392,7 +396,8 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
       img.addEventListener("error", () => img.replaceWith(avatar(size, { name, type, cls })), { once: true });
       return img;
     }
-    return h("span", { class: cx(c("av"), c("avi"), cls), style: { ...st, background: GRAD[type] || GRAD.unknown }, "aria-hidden": "true" }, initial(name));
+    return h("span", { class: cx(c("av"), c("avi"), cls), style: { ...st, background: GRAD[type] || GRAD.unknown }, "aria-hidden": "true" },
+      type === "support" ? svgIcon("shieldCheck", { size: Math.round(size * 0.5), color: "#fff" }) : initial(name));
   }
 
   // ════════════ SOL BÖLME ════════════
@@ -948,7 +953,7 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     const seq = ++paneSeq;
     const block = h("div", { class: cx(c("pblock"), fade && "dk-fade") });
     // kapak: mekan → bannerUrl / photoURL / galeri · sanatçı/diğer → photoURL
-    const coverSrc = cv.isGroup ? null
+    const coverSrc = cv.isGroup || type === "support" ? null
       : (type === "venue" ? (pr?.bannerUrl || pr?.photoURL || (Array.isArray(pr?.gallery) ? pr.gallery[0] : null)) : pr?.photoURL) || cv.otherPhoto || null;
     const genre = type === "artist" ? firstGenre(pr) : "";
     let tag = "", tagC = "#8A8E97";
@@ -958,7 +963,8 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     else if (type === "organizer") { tag = "ORGANİZATÖR"; tagC = TYPEC.organizer; }
     else if (type === "agency") { tag = "AJANS"; tagC = TYPEC.agency; }
     else if (type === "customer") { tag = "DİNLEYİCİ"; tagC = TYPEC.customer; }
-    const ph = () => h("span", { class: c("cph") }, initial(cv.otherName));
+    else if (type === "support") { tag = "RESMİ DESTEK"; tagC = TYPEC.support; }
+    const ph = () => h("span", { class: c("cph") }, type === "support" ? svgIcon("shieldCheck", { size: 56, color: TYPEC.support }) : initial(cv.otherName));
     const img = coverSrc ? h("img", { src: coverSrc, alt: cv.otherName, class: c("cimg"), decoding: "async" }) : null;
     if (img) img.addEventListener("error", () => img.replaceWith(ph()), { once: true });
     block.append(h("div", { class: c("cover") }, img || ph(), h("span", { class: c("scrim") }),
@@ -967,6 +973,7 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
     block.append(h("div", { class: c("pinfo") },
       h("span", { class: c("pname") }, cv.otherName),
       pr?.city ? h("span", { class: c("pline") }, ico("pin", 14, "2", { color: "#4ED8FF" }), pr.city) : null,
+      type === "support" ? h("span", { class: c("pline") }, "GigBridge ekibinin resmi hesabı. Bu sohbete yazdıkların destek ekibine iletilir.") : null,
       metaLine));
     const fillMeta = (u) => metaOf(type, u).then((txt) => {
       if (!alive || seq !== paneSeq) return;
