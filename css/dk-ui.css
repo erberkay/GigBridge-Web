@@ -569,7 +569,7 @@
   .dk-mdl-account, .dk-mdl-panel, .dk-mdl-confirm { padding: 20px; }
   .dk-mdl-t { font-size: 19px; }
   .dk-mdl-head { height: 60px; padding: 0 16px; }
-  .dk-mdl-fbody { padding: 16px; max-height: calc(100vh - 200px); }
+  .dk-mdl-fbody { padding: 16px; max-height: calc(100vh - 200px); max-height: calc(100dvh - 200px); }   /* dvh: mobil araç çubuğu altına taşmasın */
   .dk-mdl-foot { padding: 12px 16px; flex-wrap: wrap; }
   .dk-mdl-acts { flex-wrap: wrap; }
   .dk-mdl-acts > .dk-btn { flex: 1 1 auto; }

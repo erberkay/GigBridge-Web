@@ -29,7 +29,7 @@
 //   ≤1023: arama 40×40 ikon düğmesine katlanır; tıklayınca ya da "/" ile üst barda genişler (ESC / boşken odak kaybı kapatır).
 //   node = .dk kökü (class "dk dk-panel dk-ps", data-role, data-area="panel"); content = görünüm içeriği (max 1280, sola hizalı)
 //   destroy = bildirim/okunmamış dinleyicileri, belge klavye/tık dinleyicileri, açık popover → kapat.
-// ≤1023: kenar çubuğu ekran dışı çekmece + üst barda hamburger. ≤768 (yalnız yönetici; app.js adminDesk): telefon düzeni
+// ≤1023: kenar çubuğu ekran dışı çekmece + üst barda hamburger (açıkken sayfa kaydırma kilidi; çekmece kendi içinde kayar, 100dvh). ≤768 (yalnız yönetici; app.js adminDesk): telefon düzeni
 //   (dk-panel-shell.css ≤768 bloğu — üst bar 64, dolgu 16, avatar gizli).
 import { h } from "../../ui.js";
 import { session, logout } from "../../store.js";
@@ -370,16 +370,31 @@ export function panelShell(opts = {}) {
     h("a", { href: "#dk-main", class: "dk-skip", onclick: (e) => { e.preventDefault(); content.focus(); } }, "İçeriğe geç"),
     aside, scrim, main);
 
-  // ── çekmece (769–1023) ──
+  // ── çekmece (≤1023; ≤768 yalnız yönetici) ──
+  // Açıkken <html class="dk-ps-navlock"> → arka sayfa kaymaz, dokunmatik kaydırma çekmecenin kendi listesinde kalır (dk-panel-shell.css).
   const setDrawer = (open) => {
+    open = !!open && narrowMq.matches;
     node.classList.toggle("is-nav-open", open);
+    document.documentElement.classList.toggle("dk-ps-navlock", open);
     burger.setAttribute("aria-expanded", open ? "true" : "false");
     burger.setAttribute("aria-label", open ? "Menüyü kapat" : "Menüyü aç");
-    if (open) requestAnimationFrame(() => aside.querySelector("a,button")?.focus({ preventScroll: true }));
+    if (open) requestAnimationFrame(() => {
+      aside.querySelector("a,button")?.focus({ preventScroll: true });
+      // etkin öğe görünür olsun (alt sekmelerde liste aşağıdan açılır)
+      const on = aside.querySelector(".dk-ps-item.is-on");
+      if (on && on.offsetTop + on.offsetHeight > aside.scrollTop + aside.clientHeight) aside.scrollTop = on.offsetTop - 16;
+    });
   };
+  // ≥1024'e geçişte (döndürme / pencere) açık çekmece ve kaydırma kilidi kalmasın
+  const onNarrow = (e) => { if (!e.matches && node.classList.contains("is-nav-open")) setDrawer(false); };
+  if (typeof narrowMq.addEventListener === "function") {
+    narrowMq.addEventListener("change", onNarrow);
+    unsubs.push(() => narrowMq.removeEventListener("change", onNarrow));
+  }
+  unsubs.push(() => { if (node.classList.contains("is-nav-open")) document.documentElement.classList.remove("dk-ps-navlock"); });
   burger.addEventListener("click", () => setDrawer(!node.classList.contains("is-nav-open")));
   scrim.addEventListener("click", () => setDrawer(false));
-  aside.addEventListener("click", (e) => { if (e.target.closest("a")) setDrawer(false); });
+  aside.addEventListener("click", (e) => { if (e.target.closest("a, .dk-ps-item")) setDrawer(false); });
   const onEsc = (e) => { if (e.key === "Escape" && node.classList.contains("is-nav-open")) { setDrawer(false); burger.focus(); } };
   document.addEventListener("keydown", onEsc);
   unsubs.push(() => document.removeEventListener("keydown", onEsc));

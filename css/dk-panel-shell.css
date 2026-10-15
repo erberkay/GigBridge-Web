@@ -143,7 +143,14 @@
 }
 @media (max-width: 1023px) {
   .dk-ps { grid-template-columns: minmax(0, 1fr); }
-  .dk-ps-aside { position: fixed; top: 0; left: 0; bottom: 0; width: 256px; z-index: 80; transform: translateX(-100%); visibility: hidden; transition: transform 280ms var(--dk-ease), visibility 0s linear 280ms; }
+  /* Yükseklik: taban kuraldaki 100vh mobil tarayıcıda (iOS Safari / Chrome) "büyük" görünüm alanıdır → çekmece alttaki araç
+     çubuğunun ALTINA uzanıyor, içerik çoğu telefonda 100vh'ye sığdığı için kaydırma kabı bile olmuyordu (menü kaymıyor, alt
+     öğeler/Çıkış erişilemiyordu). 100dvh = görünen alan; desteklemeyen tarayıcıda 100vh. Kaydırma zinciri sayfaya geçmesin. */
+  .dk-ps-aside { position: fixed; top: 0; left: 0; bottom: 0; width: 256px; height: 100vh; height: 100dvh; z-index: 80; transform: translateX(-100%); visibility: hidden; transition: transform 280ms var(--dk-ease), visibility 0s linear 280ms;
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+  /* çekmece açıkken arka sayfa kaymasın (panel-shell.js setDrawer → <html class="dk-ps-navlock">) */
+  html.dk-ps-navlock, html.dk-ps-navlock body { overflow: hidden; }
+  .dk-ps-scrim { touch-action: none; overscroll-behavior: contain; }
   .dk-ps.is-nav-open .dk-ps-aside { transform: none; visibility: visible; transition: transform 280ms var(--dk-ease); box-shadow: 24px 0 48px rgba(0,0,0,0.45); }
   .dk-ps-scrim { display: block; position: fixed; inset: 0; z-index: 79; background: rgba(6,7,10,0.62); opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
   .dk-ps.is-nav-open .dk-ps-scrim { opacity: 1; pointer-events: auto; }
@@ -175,7 +182,7 @@
   .dk-ps-aside { width: min(288px, 86vw); padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(20px, env(safe-area-inset-bottom)); }
   .dk-ps-sec { margin-top: 24px; }
   .dk-ps-notifpop { width: auto !important; left: 8px !important; right: 8px !important; }
-  .dk-ps-nlist { max-height: min(420px, calc(100vh - 180px)); }
+  .dk-ps-nlist { max-height: min(420px, calc(100vh - 180px)); max-height: min(420px, calc(100dvh - 180px)); }
   .dk-ps-nclose { width: 40px; height: 40px; margin-right: -8px; }
 }
 
