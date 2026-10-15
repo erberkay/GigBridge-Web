@@ -69,7 +69,7 @@ export function priceCalculator() {
 
   const modeLbl = mode.querySelector("select").options[0];
   const RESALE_NOTE = {
-    A: "Vergi kaydı olmayan sanatçı: alış KDV'si yok; %20 stopajı GigBridge keser, muhtasarla yatırır ve gider pusulasını GigBridge düzenler.",
+    A: "Vergi kaydı olmayan sanatçı: alış KDV'si yok; %20 stopajı GigBridge keser, muhtasarla yatırır; ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır, PayTR dekontu gider pusulası yerine geçer (VUK md. 234), ayrıca belge düzenlenmez.",
     B: "Şahıs şirketi: sanatçı GigBridge'e hizmet bedeli + %20 KDV e-SMM keser (KDV'yi kendisi beyan eder); %20 stopajı GigBridge keser ve yatırır.",
     C: "Ltd / AŞ: şirket GigBridge'e hizmet bedeli + %20 KDV e-Fatura keser; stopaj yok.",
   };

@@ -82,13 +82,13 @@ export function resaleSplit(saleKurus, sellerCategory, R = RATES) {
   };
 }
 /** Yol A belge adı (sanatçının GigBridge'e kestiği / GigBridge'in düzenlediği) */
-export const RESALE_DOC = { A: "gider pusulası (GigBridge düzenler)", B: "e-SMM (sen GigBridge'e kesersin)", C: "e-Fatura (şirketin GigBridge'e keser)" };
+export const RESALE_DOC = { A: "belge yok (PayTR dekontu gider pusulası yerine geçer)", B: "e-SMM (sen GigBridge'e kesersin)", C: "e-Fatura (şirketin GigBridge'e keser)" };
 /** Yol A kategori notu (sanatçı tahmini / döküm altında; kısa) */
 export function resaleCategoryNote(cat = SELLER_CAT, R = RATES) {
   const sp = `%${Math.round((R.resaleStopajRate ?? 0.2) * 1000) / 10}`;
   const kdv = `%${Math.round((R.commissionVatRate ?? 0.2) * 1000) / 10}`;
   const c = catOf(cat);
-  if (c === "A") return `GigBridge sahneni satın alır. Vergi kaydın olmadığı için ${sp} stopajı GigBridge keser ve vergi dairesine yatırır; gider pusulasını GigBridge düzenler, senin bir şey yapman gerekmez.`;
+  if (c === "A") return `GigBridge sahneni satın alır. Vergi kaydın olmadığı için ${sp} stopajı GigBridge keser ve vergi dairesine yatırır. Ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır; PayTR dekontu gider pusulası yerine geçer (VUK md. 234), ayrıca belge düzenlenmez — senin bir şey yapman gerekmez.`;
   if (c === "B") return `GigBridge sahneni satın alır. GigBridge'e hizmet bedelin + ${kdv} KDV tutarında e-SMM kesersin; ${sp} stopajı GigBridge keser ve yatırır. KDV'yi beyannamenle devlete ödersin.`;
   if (c === "C") return `GigBridge sahneni satın alır. Şirketin GigBridge'e hizmet bedeli + ${kdv} KDV tutarında e-Fatura keser; stopaj kesilmez. KDV'yi şirketin beyan eder.`;
   return `GigBridge sahneni satın alır. Tahmin vergi kaydı olmayan sanatçıya göre (${sp} stopajı GigBridge keser). Şahıs şirketin ya da şirketin varsa Vergi Bilgileri'ni doldur: KDV eklenir, tahmin netleşir.`;
@@ -156,7 +156,7 @@ export function toPayment(id, x) {
       service: x.documents.service && typeof x.documents.service === "object" ? { ...x.documents.service } : null,
     } : { commissionInvoice: null, service: null },
     // Gider pusulası bilgileri e-postası (VUK 234; kaydı olmayan sanatçı — belgeyi mekan düzenler, functions/giderPusulasi.js)
-    // Yol A: target 'company' (A — pusulayı GigBridge düzenler) | 'seller' (B/C — sanatçı GigBridge'e belge keser)
+    // Yol A: target 'company' (A — pusula yok, PayTR dekontu yerine geçer; sunucu e-posta atmaz) | 'seller' (B/C — sanatçı GigBridge'e belge keser)
     giderPusulasi: x?.giderPusulasi && typeof x.giderPusulasi.status === "string" ? { status: s(x.giderPusulasi.status), target: s(x.giderPusulasi.target) } : null,
     // Yol A (model 'resale'): GigBridge alır, satar — satış (mekana) + alış (sanatçıdan) ayrı
     model: x?.model === "resale" ? "resale" : "agent",

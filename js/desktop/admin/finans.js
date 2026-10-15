@@ -260,6 +260,39 @@ export function adminFinansView(ctx) {
       kv("NEDENLER", (row.financeReasons || []).map(financeReasonText).join(" · ") || "—"),
       kv("BELGELER", docState(row)),
       (row.payoutParts || []).length ? kv("HAK EDİŞ PAYLARI", row.payoutParts.map((x) => `${x.name || x.uid} %${x.percent} ${fmtKurus(x.amountKurus)}`).join(" · ")) : null);
+    // Yol A · fatura kesildikten sonra iade → documents.invoiceCorrection (functions/efatura.js correctForPayment):
+    // pending → düzeltme sırada · return_requested → e-Fatura mükellefi mekandan iade faturası beklenir · done → tamam
+    const corr = row.documents?.invoiceCorrection || null;
+    const corrText = (c) => c.status === "pending" ? "İade sonrası fatura düzeltmesi bekliyor"
+      : c.status === "return_requested" ? `Mekandan iade faturası bekleniyor · ${fmtKurus(c.returnNetKurus)} + KDV${c.returnVatKurus ? ` ${fmtKurus(c.returnVatKurus)}` : ""}`
+      : c.status === "done" ? `Düzeltme tamam${c.returnDocNo ? ` · iade faturası No ${c.returnDocNo}` : c.method === "earchive_cancel" ? " · e-Arşiv iptal edildi" : ""}`
+      : String(c.status || "—");
+    const onReturnReceived = () => {
+      const no = dkInput({ size: 40, maxlength: 40, placeholder: "İade faturası no", attrs: { "aria-label": "İade faturası no", spellcheck: "false" } });
+      const ferr = h("span", { class: "dk-pay-err", role: "alert" });
+      dkModal({ title: "İade faturası geldi", size: 480, variant: "form",
+        sub: `${row.title || row.merchantOid} · ${fmtKurus(corr.returnNetKurus)} + KDV${corr.returnVatKurus ? ` ${fmtKurus(corr.returnVatKurus)}` : ""}`,
+        body: h("div", { class: "dk-pay-form" }, h("label", { class: "dk-pay-fld" }, h("span", { class: "dk-lbl" }, "İADE FATURASI NO"), no), ferr),
+        actions: [
+          { label: "Vazgeç", variant: "outline" },
+          { label: "Kaydet", variant: "violet", busyLabel: "Kaydediliyor…", onClick: async () => {
+            ferr.textContent = "";
+            const docNo = no.value.trim();
+            if (docNo.length < 3) { ferr.textContent = "İade faturasının numarasını gir."; return false; }
+            try {
+              await payApi.adminEInvoice({ action: "returnReceived", merchantOid: row.merchantOid, docNo });
+              row.documents = { ...(row.documents || {}), invoiceCorrection: { ...corr, status: "done", returnDocNo: docNo } };
+              toast("İade faturası kaydedildi");
+              if (dbody.isConnected) drawDecide(dbody, row);
+              return true;
+            } catch (e) { ferr.textContent = errText(e); return false; }
+          } },
+        ] });
+    };
+    const corrSec = corr ? sec("FATURA DÜZELTMESİ (İADE)",
+      kv("DURUM", corrText(corr)),
+      corr.error ? kv("HATA", String(corr.error)) : null,
+      corr.status === "return_requested" ? h("div", { class: "dk-pay-btns" }, dkButton("İade faturası geldi", { variant: "outline", size: 36, icon: "check", onClick: onReturnReceived })) : null) : null;
     // Vergi anlık görüntüsü (ödeme anındaki taraf vergi durumları) + önceki karar
     const ts = row.taxSnapshot || null, td = row.taxDecision || null;
     const tsTxt = (v) => (v == null || v === "" ? "—" : TAX_ST_TEXT[v] || String(v));
@@ -335,14 +368,14 @@ export function adminFinansView(ctx) {
       } catch (e) { err.textContent = errText(e); }
       finally { busy = false; if (submit.isConnected) submit.dk.setBusy(false); }
     } });
-    dbody.replaceChildren(...[info, snap, prev].filter(Boolean),
+    dbody.replaceChildren(...[info, corrSec, snap, prev].filter(Boolean),
       sec("KARAR", modeGroup, rulesBox, manualWrap, note, err, h("div", { class: "dk-pay-btns" }, submit), result,
         row.payerRefundDueKurus > 0 ? dkButton(`Vergi iadesi · ${fmtKurus(row.payerRefundDueKurus)}`, { variant: "outline", size: 36, icon: "refresh", onClick: () => onTaxRefund(row) }) : null,
         row.documents?.service?.storagePath ? dkButton("Hizmet belgesini aç", { variant: "outline", size: 36, icon: "fileText", onClick: () => openDoc(row.merchantOid) }) : null,
         row.kind === "artist_booking" && isSaleRow(row) ? dkButton(row.giderPusulasi?.status === "info_sent" ? "Belge bilgilerini yeniden gönder" : "Belge bilgilerini gönder", { variant: "outline", size: 36, icon: "mail",
           onClick: async () => {
-            // Yol A: A → pusula bilgileri GigBridge muhasebesine (pusulayı GigBridge düzenler) · B/C → sanatçıya "GigBridge'e e-SMM / e-Fatura kes"
-            if (!(await dkConfirm({ title: "Belge bilgileri (Yol A)", body: "Vergi kaydı olmayan sanatçıda gider pusulası bilgileri GigBridge muhasebe e-postasına gider (pusulayı GigBridge düzenler); şahıs şirketi / şirkette sanatçıya GigBridge'e kesmesi gereken e-SMM / e-Fatura bilgileri gönderilir.", confirmLabel: "Gönder" }))) return;
+            // Yol A: A → pusula yok (PayTR dekontu yerine geçer, VUK 234; sunucu atlar) · B/C → sanatçıya "GigBridge'e e-SMM / e-Fatura kes"
+            if (!(await dkConfirm({ title: "Belge bilgileri (Yol A)", body: "Şahıs şirketi / şirkette sanatçıya GigBridge'e kesmesi gereken e-SMM / e-Fatura bilgileri gönderilir. Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır, PayTR dekontu pusula yerine geçer (VUK md. 234).", confirmLabel: "Gönder" }))) return;
             try { await payApi.resendPusulaInfo({ merchantOid: row.merchantOid }); toast("Belge bilgileri gönderildi"); }
             catch (e) { toast(errText(e), { type: "err" }); } } })
         : row.kind === "artist_booking" ? dkButton(row.giderPusulasi?.status === "info_sent" ? "Pusula bilgilerini yeniden gönder" : "Pusula bilgilerini mekana gönder", { variant: "outline", size: 36, icon: "mail",

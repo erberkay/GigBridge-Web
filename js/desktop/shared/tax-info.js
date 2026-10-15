@@ -2,7 +2,9 @@
 // Uygulama eşi: src/data/taxInfo.ts — metinler birlikte güncellenir. Arızi beyan sürümü sunucuda: functions/finance.js
 // ARIZI_NOTICE_VERSION (metin değişirse sürüm de artırılır → kullanıcı yeniden onaylar).
 // MODEL "Yol A" (2026-10-16): sanatçı kiralamada GigBridge sahne hizmetini sanatçıdan SATIN ALIR, mekana SATAR.
-//   Mekan: teklif bedeli + %20 KDV öder, GigBridge'den e-Fatura/e-Arşiv alır; stopaj kesmez, gider pusulası düzenlemez.
+//   Mekan: teklif bedeli + %20 KDV öder, GigBridge'den ajans ve organizasyon hizmeti faturası (e-Fatura/e-Arşiv) alır; stopaj kesmez,
+//   gider pusulası düzenlemez. A sanatçıda gider pusulası YOK: ödeme PayTR'den hizmetten sonra 7 gün içinde, PayTR dekontu pusula
+//   yerine geçer (VUK md. 234, 7338 s. Kanun değişikliği).
 //   Sanatçıya ödenen bedel = teklif bedeli − GigBridge payı (varsayılan %10). Stopajı (GVK 94/2-b) GigBridge keser, muhtasarla yatırır.
 //   PayTR masrafı (%1,99, vergiler dahil; mekanın ödediği toplam üzerinden) sanatçı ödemesinden düşülür.
 //   Mekan kiralama (organizatör → mekan) eski aracılık modelinde kalır.
@@ -18,7 +20,7 @@ export const TAX_INFO = {
       "Sanatçı kiralamada sahne hizmetini GigBridge senden satın alır ve mekana satar. Sana ödenen bedel, teklif bedelinden GigBridge payı (%10) düşülerek bulunur.",
       "Vergi kaydın yoksa aldığın ücret kanunda \"arızi serbest meslek kazancı\" sayılır (Gelir Vergisi Kanunu md. 82). Vergi dairesine kayıt olmadan çalışabilirsin.",
       "Ücretinden %20 gelir vergisi stopajını GigBridge keser ve senin adına vergi dairesine yatırır (GVK md. 94/2-b). Mekan senden stopaj kesmez.",
-      "Vergi kaydın olmadığı için ücretine KDV eklenmez. Fatura ya da makbuz kesmezsin; belgeyi (gider pusulası, VUK md. 234) GigBridge düzenler. Ödeme lisanslı ödeme kuruluşu PayTR üzerinden yapılır.",
+      "Vergi kaydın olmadığı için ücretine KDV eklenmez. Fatura ya da makbuz kesmezsin, imzalaman gereken bir belge de yoktur. Ödeme lisanslı ödeme kuruluşu PayTR üzerinden, hizmetten sonra 7 gün içinde yapılır; PayTR'nin ödeme dekontu gider pusulası yerine geçer (VUK md. 234), ayrıca belge düzenlenmez.",
       "2026 yılında bütün arızi kazançlarının toplamı 350.000 TL'ye kadar yıllık beyannameye girmez (GVK md. 82, 332 No.lu Tebliğ). Bu sınır GigBridge dışındaki işlerini de kapsar.",
       "Yıl içinde 350.000 TL'yi aşarsan yıllık gelir vergisi beyannamesi vermen gerekir. Sahneyi sürekli ve düzenli iş olarak yapıyorsan artık \"arızi\" sayılmazsın: vergi dairesine kayıt olup şahıs şirketi (serbest meslek mükellefiyeti) açman gerekir. Kendi vergi kaydın ve beyanların senin sorumluluğundadır; GigBridge bunlardan sorumlu değildir.",
       "GigBridge işverenin değildir: bağımsız çalışırsın, teklifleri serbestçe seçer ya da reddedersin, fiyatını kendin belirlersin, başka yerlerde de çalışabilirsin. Aranızda iş ilişkisi ve SGK sigortalılığı doğmaz.",
@@ -50,7 +52,8 @@ export const TAX_INFO = {
 /** Vergi kaydı olmayan sanatçının kabul ettiği beyan (sunucu ariziAccepted ister). */
 export const ARIZI_DECLARATION =
   "Vergi kaydım olmadığını beyan ederim. Yukarıdaki bilgileri okudum. GigBridge'in sahne hizmetimi satın aldığını, ödememden %20 gelir vergisi "
-  + "stopajını keserek benim adıma vergi dairesine yatıracağını ve gider pusulasını düzenleyeceğini biliyorum. "
+  + "stopajını keserek benim adıma vergi dairesine yatıracağını, ödememin PayTR üzerinden hizmetten sonra 7 gün içinde yapılacağını ve "
+  + "PayTR ödeme dekontunun gider pusulası yerine geçtiğini (VUK md. 234), ayrıca belge düzenlenmeyeceğini biliyorum. "
   + "Bir takvim yılında arızi kazançlarımın toplamı 350.000 TL'yi aşarsa yıllık beyanname vermek, sahne işini sürekli ve düzenli yapıyorsam "
   + "vergi dairesine kayıt olup şahıs şirketi açmak benim sorumluluğumdadır; GigBridge kendi vergi kaydım ve beyanlarımdan sorumlu değildir. "
   + "Bu yükümlülükleri yerine getirmememden ya da beyanımın yanlış olmasından doğacak vergi, ceza ve faizlerden GigBridge sorumlu değildir. "

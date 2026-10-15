@@ -352,7 +352,7 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
           row("Sahne bedeli (KDV hariç)", U.fmtKurus(est.saleKurus)),
           row(`KDV (%${Math.round(est.saleVatRate * 1000) / 10})`, `+${U.fmtKurus(est.saleVatKurus)}`),
           row("Ödenecek tutar", U.fmtKurus(charge), { strong: true }),
-          h("span", { class: "dk-pay-fine" }, `${U.resalePayerNote(est)} Etkinlikten sonra sahne bedeli + KDV tutarında tek fatura (gider belgeniz) e-postanıza gelir. Stopaj kesmezsiniz, gider pusulası düzenlemezsiniz.`)));
+          h("span", { class: "dk-pay-fine" }, `${U.resalePayerNote(est)} Etkinlikten sonra sahne bedeli + KDV tutarında tek fatura (ajans ve organizasyon hizmeti, e-Fatura / e-Arşiv — gider belgeniz) e-postanıza gelir. Stopaj kesmezsiniz, gider pusulası düzenlemezsiniz.`)));
         if (!isDemoUser() && !payerTaxB) { payerTaxB = taxBanner({ href: payerTaxHref(), text: "Ödemeden önce Vergi Bilgileri'ni doldur · faturan bu bilgilerle kesilir" }); unsubs.push(() => payerTaxB.destroy()); }
         if (payerTaxB) kids.push(payerTaxB.node);
       } else kids.push(h("div", { class: "dk-pay-break" },
@@ -381,7 +381,7 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
         : p?.status === "refunded" || (!p && refunded) ? "Ödemenin tamamı iade edildi."
         : U.disputeOpen(p) ? "Şikayetin inceleniyor. Karar verilene kadar ödeme emanette bekler."
         : "Para emanette. Etkinlikten 24 saat sonra, sorun bildirilmezse alıcıya aktarılır."));
-      if (p && U.isResalePayment(p) && p.status !== "refunded") kids.push(note("Sahne bedeli + KDV tutarında fatura GigBridge'den gelir (etkinlik sonrası). Stopaj kesmez, gider pusulası düzenlemezsiniz."));
+      if (p && U.isResalePayment(p) && p.status !== "refunded") kids.push(note("Sahne bedeli + KDV tutarında ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv) GigBridge'den gelir (etkinlik sonrası). Stopaj kesmez, gider pusulası düzenlemezsiniz."));
       // ödeyenin vergi profili eksikse (mekan / organizatör) finansal inceleme gerekebilir
       if (p && (p.financeReasons || []).some((r) => r === "payer_tax_missing" || r === "payer_tax_unverified")) {
         if (!payerTaxB) { payerTaxB = taxBanner(); unsubs.push(() => payerTaxB.destroy()); }
@@ -561,7 +561,7 @@ export function paymentActions(p, side, { onOpenDispute } = {}) {
     }
   }
   // Gider pusulası bilgileri (kaydı olmayan sanatçı) mekana e-postayla gider — belgeyi mekan düzenler (functions/giderPusulasi.js)
-  // Yol A: pusulayı GigBridge düzenler (A); B/C sanatçıya "GigBridge'e makbuz / fatura kes" bilgisi gider — mekana pusula notu yok
+  // Yol A: A'da pusula yok (PayTR dekontu yerine geçer, VUK 234); B/C sanatçıya "GigBridge'e makbuz / fatura kes" bilgisi gider — mekana pusula notu yok
   if (side === "payer" && p.giderPusulasi?.status === "info_sent" && !U.isResalePayment(p)) {
     items.push(note("Gider pusulası için gereken bilgiler e-postanıza gönderildi. Pusulayı müşaviriniz düzenler, sanatçıya imzalatırsınız.", "#8A8E97"));
   }
@@ -1090,10 +1090,10 @@ export function paymentDocBlock(p) {
     kids.push(h("span", { class: "dk-pay-body" }, `${U.docTypeLabel(svc.docType)} · No ${svc.docNo || "—"} · ${isoToTR(svc.docDate) || "—"}`));
     if (st === "rejected" && svc.note) kids.push(note(`Red gerekçesi: ${svc.note}`, "#FF5A6E", "alertCircle"));
   } else if (U.isResalePayment(p)) {
-    // Yol A: alıcı GigBridge — A: pusulayı GigBridge düzenler · B: e-SMM · C: e-Fatura (hizmet bedeli + KDV)
+    // Yol A: alıcı GigBridge — A: belge yok (PayTR dekontu gider pusulası yerine geçer) · B: e-SMM · C: e-Fatura (hizmet bedeli + KDV)
     const total = U.fmtKurus((p.purchaseKurus || 0) + (p.purchaseVatKurus || 0));
     kids.push(textP(p.sellerCategory === "A"
-      ? "Vergi kaydın olmadığı için gider pusulasını GigBridge düzenler; belge yüklemen gerekmez."
+      ? "Vergi kaydın olmadığı için belge yüklemen gerekmez: stopajı GigBridge keser ve yatırır; ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır, PayTR dekontu gider pusulası yerine geçer (VUK md. 234)."
       : `GigBridge'e ${p.sellerCategory === "B" ? "e-SMM" : "e-Fatura"} kes (hizmet bedeli ${U.fmtKurus(p.purchaseKurus)} + KDV ${U.fmtKurus(p.purchaseVatKurus)} = ${total}) ve buraya yükle${needed ? "; aktarım için gerekli." : "."}`));
   } else {
     kids.push(textP(needed

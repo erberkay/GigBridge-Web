@@ -281,7 +281,7 @@ export function adminOdemelerView(ctx) {
   }
   const cfgCard = h("section", { class: "dk-admin-panel-card dk-admin-etk-card", "aria-label": "Ödeme ayarları" },
     h("div", { class: "dk-admin-etk-ch" }, h("span", { class: "dk-admin-panel-deb" }, "ÖDEME AYARLARI")), cfgBox);
-  // ══════════ GigBridge vergi bilgileri (Yol A: mekana satış faturası, gider pusulası, sanatçının GigBridge'e kestiği belge) ══════════
+  // ══════════ GigBridge vergi bilgileri (Yol A: mekana satış faturası — ajans ve organizasyon hizmeti, sanatçının GigBridge'e kestiği belge) ══════════
   const coBox = h("div", { class: "dk-admin-etk-form" });
   let company = null, coErr = null, savingCo = false;
   const coIn = {
@@ -305,7 +305,7 @@ export function adminOdemelerView(ctx) {
     if (c.taxOffice.length < 2) { toast("Vergi dairesini gir", { type: "err" }); return; }
     if (c.address.length < 10) { toast("Adresi eksiksiz gir", { type: "err" }); return; }
     if (!/^\S+@\S+\.\S+$/.test(c.accountingEmail)) { toast("Muhasebe e-postası geçersiz", { type: "err" }); return; }
-    if (!(await dkConfirm({ title: "GigBridge vergi bilgileri", body: `${c.title} · ${c.taxId.length === 10 ? "VKN" : "TCKN"} ${c.taxId} · ${c.taxOffice} V.D. Yol A'da mekana kesilen satış faturası, gider pusulası ve sanatçının GigBridge'e keseceği belge bu bilgilerle düzenlenir.`, confirmLabel: "Kaydet" }))) return;
+    if (!(await dkConfirm({ title: "GigBridge vergi bilgileri", body: `${c.title} · ${c.taxId.length === 10 ? "VKN" : "TCKN"} ${c.taxId} · ${c.taxOffice} V.D. Yol A'da mekana kesilen satış faturası (ajans ve organizasyon hizmeti) ve sanatçının GigBridge'e keseceği belge bu bilgilerle düzenlenir.`, confirmLabel: "Kaydet" }))) return;
     savingCo = true; coSave.dk.setBusy(true);
     try { company = (await payApi.admin({ action: "setCompany", company: c })).company; coFill(company); toast("GigBridge vergi bilgileri kaydedildi"); drawCo(); }
     catch (e) { toast(errText(e), { type: "err" }); }
@@ -314,9 +314,9 @@ export function adminOdemelerView(ctx) {
   function drawCo() {
     const line = (label, ctl) => h("label", { class: "dk-pay-fld" }, h("span", { class: "dk-lbl" }, label), ctl);
     coBox.replaceChildren(
-      coErr ? dkInlineMessage("err", coErr) : company ? null : dkInlineMessage("info", "GigBridge vergi bilgileri girilmedi. Yol A'da satış faturası ve gider pusulası bu bilgilerle düzenlenir."),
+      coErr ? dkInlineMessage("err", coErr) : company ? null : dkInlineMessage("info", "GigBridge vergi bilgileri girilmedi. Yol A'da satış faturası (ajans ve organizasyon hizmeti) bu bilgilerle düzenlenir."),
       line("UNVAN", coIn.title), line("VKN / TCKN", coIn.taxId), line("VERGİ DAİRESİ", coIn.taxOffice), line("ADRES", coIn.address), line("MUHASEBE E-POSTASI", coIn.accountingEmail),
-      h("span", { class: "dk-admin-etk-e" }, "Vergi kaydı olmayan sanatçının gider pusulası bilgileri muhasebe e-postasına gider."),
+      h("span", { class: "dk-admin-etk-e" }, "Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır, PayTR dekontu pusula yerine geçer (VUK md. 234)."),
       h("div", { class: "dk-admin-etk-tools" }, coSave));
   }
   async function loadCo() {

@@ -100,7 +100,7 @@ export function odemelerView(ctx) {
       ? `Sorun bildirilmezse IBAN'ına aktarılır: GigBridge sahneni satın alır; ${commissionText()} ve varsa stopaj (GigBridge yatırır) düşülür.`
       : `Sorun bildirilmezse alıcının IBAN'ına aktarılır (${commissionText(resale ? "venue_rental" : "artist_booking")} ve varsa mevzuata göre vergi kesintisi düşülür).`;
     stepResale.hidden = !(resale && isPayer);
-    stepResale.textContent = "Sanatçı kiralamada sahneyi GigBridge'den satın alırsınız: sahne bedeli + %20 KDV ödersiniz, faturanız GigBridge'den gelir. Stopaj kesmez, gider pusulası düzenlemezsiniz.";
+    stepResale.textContent = "Sanatçı kiralamada sahneyi GigBridge'den satın alırsınız: sahne bedeli + %20 KDV ödersiniz, ajans ve organizasyon hizmeti faturanız (e-Fatura / e-Arşiv) GigBridge'den gelir. Stopaj kesmez, gider pusulası düzenlemezsiniz.";
   };
   paintSteps();
   window.addEventListener("gb:pay-rates", paintSteps);

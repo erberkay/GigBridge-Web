@@ -29,6 +29,9 @@ const BIZ_TYPES = [
   { value: "sahis", label: "Şahıs işletmesi" }, { value: "limited", label: "Limited şirket" }, { value: "anonim", label: "Anonim şirket" },
   { value: "kooperatif", label: "Kooperatif" }, { value: "dernek", label: "Dernek / vakıf" }, { value: "kamu", label: "Kamu kurumu" }, { value: "diger", label: "Diğer" },
 ];
+// Yalnız organizatör: vergi kaydı olmayan kişi → ad soyad (title) + TCKN + adres; fatura TCKN'ye e-Arşiv (sunucu cleanBusiness 'bireysel';
+// vergi dairesi / usul / müşavir yok, stopajResponsible 'hayir'). App eşi: TaxProfileScreen BIREYSEL_TYPE.
+const BIREYSEL = { value: "bireysel", label: "Bireysel (vergi kaydım yok)" };
 // Stopaj sorumluluğu KANUNDAN (GVK md. 94; sunucu finance.js cleanBusiness): şirket / kooperatif / dernek / kamu → sorumlu;
 // şahıs işletmesinde vergilendirme usulü sorulur (gerçek usul → sorumlu, basit usul → değil).
 const TAX_REGIME = [
@@ -59,8 +62,8 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const leadEl = h("p", { class: "dk-pay-text" });
   const leadText = () => (isResale()
     ? (performer
-      ? "GigBridge sahneni senden satın alıp mekana satar. Vergi kaydın yoksa stopajı GigBridge keser ve gider pusulasını düzenler; şahıs şirketin ya da şirketin varsa GigBridge'e makbuz / fatura (+ KDV) kesersin. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
-      : "Sanatçı kiralamada sahneyi GigBridge'den satın alırsın: GigBridge sana sahne bedeli + %20 KDV tutarında tek fatura keser (bu bilgilerle). Stopaj kesmez, gider pusulası düzenlemezsin. Bilgiler eksikse sanatçı ödemesi başlatılamaz.")
+      ? "GigBridge sahneni senden satın alıp mekana satar. Vergi kaydın yoksa stopajı GigBridge keser ve yatırır; ödeme PayTR'den hizmetten sonra 7 gün içinde yapılır, PayTR dekontu gider pusulası yerine geçer (VUK md. 234). Şahıs şirketin ya da şirketin varsa GigBridge'e makbuz / fatura (+ KDV) kesersin. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
+      : "Sanatçı kiralamada sahneyi GigBridge'den satın alırsın: GigBridge sana sahne bedeli + %20 KDV tutarında tek fatura (ajans ve organizasyon hizmeti, e-Fatura / e-Arşiv) keser (bu bilgilerle). Stopaj kesmez, gider pusulası düzenlemezsin. Bilgiler eksikse sanatçı ödemesi başlatılamaz.")
     : performer
       ? "Ödemelerinde doğru vergi kesintisinin (stopaj) uygulanması ve belgelerin düzenlenmesi için gerekli. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
       : "Sanatçı ve mekan ödemelerinde stopaj sorumluluğunun ve faturanın doğru belirlenmesi için gerekli. Bilgiler eksikse ödemeler finansal incelemede bekleyebilir.");
@@ -110,12 +113,12 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const respSel = performer ? dkSelect({ size: 44, options: DOC_RESP, value: "company", attrs: { "aria-label": "Belgeyi kim düzenler" } }) : null;
   // business
   let taxRegime = "gercek";
-  const bizSel = !performer ? dkSelect({ size: 44, options: BIZ_TYPES, value: "limited", attrs: { "aria-label": "İşletme türü" }, onChange: () => paintBiz() }) : null;
+  const bizSel = !performer ? dkSelect({ size: 44, options: role === "organizer" ? [...BIZ_TYPES, BIREYSEL] : BIZ_TYPES, value: "limited", attrs: { "aria-label": "İşletme türü" }, onChange: () => paintBiz() }) : null;
   const stopajGroup = !performer ? dkRadioGroup({ items: TAX_REGIME, value: taxRegime, label: "Vergilendirme usulü", onChange: (v) => { taxRegime = v; } }) : null;
   const regimeBox = !performer ? h("div") : null;
   const stopajInfo = !performer ? h("p", { class: "dk-pay-fine" }) : null;
   const addr = !performer ? dkTextarea({ rows: 3, maxlength: 300, placeholder: "Fatura adresi (mahalle, cadde, no, ilçe / il)" }) : null;
-  // A (kaydı olmayan sanatçı): adres gider pusulasında "işi yapanın adresi" olarak yer alır (VUK 234)
+  // A (kaydı olmayan sanatçı): adres faturada / ödeme kayıtlarında yer alır
   const perfAddr = performer ? dkTextarea({ rows: 2, maxlength: 300, placeholder: "Mahalle, sokak, no, ilçe / il" }) : null;
 
   inp("fullName", { maxlength: 80, placeholder: "Kimlikteki ad soyad", autocomplete: "name" });
@@ -141,8 +144,12 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     doc: performer ? box("DÜZENLEYECEĞİN BELGE", docSel) : null,
     rep: h("div", { class: "dk-tax-grid" }, fld("TEMSİLCİ AD SOYAD", F.repName), fld("TEMSİLCİ T.C. KİMLİK NO", F.repTckn)),
     resp: performer ? box("BELGEYİ KİM DÜZENLER", respSel) : null,
-    address: performer ? box("ADRES", perfAddr, "Gider pusulasında yer alır.") : null,
+    address: performer ? box("ADRES", perfAddr, "Faturada / ödeme kayıtlarında yer alır.") : null,
+    billing: !performer ? fld("FATURA ADRESİ", addr) : null,
   };
+  // business: müşavir bloğu + bireysel ipucu (bireyselde müşavir / vergi dairesi / usul gizli)
+  const accEls = !performer ? [h("span", { class: "dk-pay-sub" }, "MALİ MÜŞAVİR (OPSİYONEL)"), F.accountantName, h("div", { class: "dk-tax-grid" }, F.accountantPhone, F.accountantEmail)] : [];
+  const bireyselHint = !performer ? h("p", { class: "dk-pay-fine", hidden: true }, "Vergi kaydın yoksa faturan TC kimlik numarana e-Arşiv olarak kesilir.") : null;
   function paintCat() {
     if (!performer) return;
     const show = (el, on) => { if (el) el.hidden = !on; };
@@ -160,13 +167,20 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   }
   function paintBiz() {
     if (performer) return;
-    const sahis = selOf(bizSel).value === "sahis";
-    rows.tckn.hidden = !sahis;
+    const bt = selOf(bizSel).value;
+    const sahis = bt === "sahis", bireysel = bt === "bireysel";
+    rows.tckn.hidden = !(sahis || bireysel);
     regimeBox.hidden = !sahis;
+    rows.vkn.hidden = bireysel; rows.taxOffice.hidden = bireysel; stopajInfo.hidden = bireysel; bireyselHint.hidden = !bireysel;
+    accEls.forEach((el) => { el.hidden = bireysel; });
+    rows.title.querySelector(".dk-lbl").textContent = bireysel ? "AD SOYAD" : "UNVAN / İŞLETME ADI";
+    F.title.placeholder = bireysel ? "Kimlikteki ad soyad" : "Ticari unvan ya da işletme adı";
+    rows.tckn.querySelector(".dk-lbl").textContent = "T.C. KİMLİK NO";
+    rows.billing.querySelector(".dk-lbl").textContent = bireysel ? "ADRES" : "FATURA ADRESİ";
     stopajInfo.textContent = isResale()
       ? (sahis
-        ? "Sanatçı kiralamada stopaj kesmezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne bedeli + %20 KDV tutarında fatura keser (gider belgeniz budur). Gider pusulası düzenlemezsiniz."
-        : "Sanatçı kiralamada stopaj kesmezsiniz, gider pusulası düzenlemezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne bedeli + %20 KDV tutarında e-Fatura / e-Arşiv fatura keser.")
+        ? "Sanatçı kiralamada stopaj kesmezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne bedeli + %20 KDV tutarında ajans ve organizasyon hizmeti faturası keser (gider belgeniz budur). Gider pusulası düzenlemezsiniz."
+        : "Sanatçı kiralamada stopaj kesmezsiniz, gider pusulası düzenlemezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne bedeli + %20 KDV tutarında ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv) keser.")
       : sahis
       ? "Stopaj (GVK md. 94): gerçek usulde sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; basit usulde stopaj kesmezsiniz, sanatçı için gider pusulası düzenlersiniz."
       : "Stopaj (GVK md. 94): şirket, kooperatif, dernek ve kamu kurumları kanunen stopaj sorumlusudur. Vergi kaydı olmayan ya da serbest meslek mükellefi sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; şirketi olan sanatçıdan stopaj kesilmez.";
@@ -180,10 +194,9 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
       rows.vat, rows.doc, rows.rep, rows.resp)
     : h("div", { class: "dk-pay-form" },
       box("İŞLETME TÜRÜ", bizSel), rows.title, h("div", { class: "dk-tax-grid" }, rows.vkn, rows.tckn), rows.taxOffice,
-      fld("FATURA ADRESİ", addr),
+      rows.billing, bireyselHint,
       (regimeBox.append(box("VERGİLENDİRME USULÜ", stopajGroup)), regimeBox), stopajInfo,
-      h("span", { class: "dk-pay-sub" }, "MALİ MÜŞAVİR (OPSİYONEL)"),
-      F.accountantName, h("div", { class: "dk-tax-grid" }, F.accountantPhone, F.accountantEmail));
+      ...accEls);
   paintCat(); paintBiz(); paintInfo();
 
   const setVal = (k, v) => { const el = F[k]; if (!el) return; if (masked(v)) { el.value = ""; el.placeholder = `${v} · değiştirmek için yeniden gir`; el.dataset.masked = "1"; } else { el.value = v ?? ""; delete el.dataset.masked; } };
@@ -200,7 +213,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
       if (pr.docResponsible) selOf(respSel).value = pr.docResponsible;
       paintCat(); paintInfo();
     } else {
-      if (pr.businessType) selOf(bizSel).value = pr.businessType;
+      if (pr.businessType && (pr.businessType !== "bireysel" || role === "organizer")) selOf(bizSel).value = pr.businessType;
       if (pr.billingAddress) addr.input.value = pr.billingAddress;
       const reg = pr.taxRegime || ({ evet: "gercek", hayir: "basit" })[pr.stopajResponsible];
       if (["gercek", "basit", "bilmiyorum"].includes(reg)) { taxRegime = reg; stopajGroup.dk.set(taxRegime); }
@@ -220,7 +233,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
         out.activity = activity;
         if (!keepMasked("tckn")) { if (digits(v("tckn")).length !== 11) return { error: "T.C. kimlik numarası 11 haneli olmalı." }; out.tckn = v("tckn"); }
         const ad = perfAddr.querySelector("textarea") ? perfAddr.querySelector("textarea").value.trim() : (perfAddr.value || "").trim();
-        if (ad.length < 10) return { error: "Adresini eksiksiz yaz (gider pusulasında yer alır)." };
+        if (ad.length < 10) return { error: "Adresini eksiksiz yaz (faturada / ödeme kayıtlarında yer alır)." };
         out.address = ad;
         out.ariziAccepted = true;
       } else if (cat === "B") {
@@ -243,6 +256,14 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
       return { data: out };
     }
     const businessType = selOf(bizSel).value;
+    if (businessType === "bireysel") {
+      const out = { businessType, title: v("title"), billingAddress: addr.input.value.trim(), kvkkAccepted: kvkk };
+      if (out.title.length < 3) return { error: "Adını soyadını kimlikteki gibi yaz." };
+      if (!keepMasked("tckn")) { if (digits(v("tckn")).length !== 11) return { error: "T.C. kimlik numarası 11 haneli olmalı." }; out.tckn = v("tckn"); }
+      if (out.billingAddress.length < 10) return { error: "Adresini eksiksiz yaz (faturada yer alır)." };
+      if (!kvkk) return { error: "Devam etmek için KVKK onayını işaretle." };
+      return { data: out };
+    }
     const out = { businessType, title: v("title"), taxOffice: v("taxOffice"), billingAddress: addr.input.value.trim(), ...(businessType === "sahis" ? { taxRegime } : {}), kvkkAccepted: kvkk };
     if (out.title.length < 2) return { error: "Unvanı ya da işletme adını gir." };
     if (businessType === "sahis") {
