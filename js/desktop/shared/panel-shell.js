@@ -139,7 +139,14 @@ const narrowMq = typeof window !== "undefined" && window.matchMedia ? window.mat
 const NOTIF_KIND = (n) => {
   const t = String(n.type || "");
   // ödeme bildirimleri (uygulama notifCatalog ödeme grubu) → cüzdan; şikayet → bayrak
+  if (t === "tax_profile_update" || t === "payment_document_update") return { icon: "fileText", color: n.outcome === "rejected" ? "#FF5A6E" : "#7CE0B0" };
+  if (t === "payout_on_hold") return { icon: "clock", color: "#FFB347" };
   if (PAYMENT_NOTIF_TYPES.includes(t)) return /^dispute_/.test(t) ? { icon: "flag", color: "#FFB347" } : { icon: "wallet", color: "#7CE0B0" };
+  // moderasyon kararları (functions/safety.js adminModerate)
+  if (t === "content_removed") return { icon: "alertCircle", color: "#FF5A6E" };
+  if (t === "content_restored") return { icon: "refresh", color: "#7CE0B0" };
+  if (t === "account_restored") return { icon: "shieldCheck", color: "#7CE0B0" };
+  if (t === "report_resolved") return { icon: "checkCircle", color: "#7CE0B0" };
   if (/edit|permission|izin/i.test(t)) return { icon: "key", color: "#FF4FA3" };
   if (/accept|approved|onay/i.test(t)) return { icon: "check", color: "#7CE0B0" };
   if (/reject|red|cancel/i.test(t)) return { icon: "trash", color: "#FF5A6E" };

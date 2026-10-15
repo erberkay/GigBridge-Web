@@ -632,7 +632,11 @@ export function paymentErrorText(e) {
 export const PAY_ROLES = ["artist", "venue", "organizer"];
 export const paymentsHref = (role, q = "") => (PAY_ROLES.includes(role) ? `#/${role}/odemeler${q ? "?" + q : ""}` : null);
 export const PAYMENT_NOTIF_TYPES = ["booking_paid", "payment_received", "payout_transferred", "payout_iban_needed", "payment_refunded",
-  "dispute_opened", "dispute_resolved", "cancellation_requested", "cancellation_update", "booking_cancelled"];
+  "dispute_opened", "dispute_resolved", "cancellation_requested", "cancellation_update", "booking_cancelled",
+  // admin ödeme / finans işlemleri (functions/payments.js + finance.js, 2026-10-15)
+  "payout_refunded", "payout_on_hold", "payout_amount_updated", "payment_document_update", "tax_profile_update"];
+/** Rolün Vergi Bilgileri sayfası (sanatçı: profil sekmesi · mekan / organizatör: profil bölümü) */
+const taxHrefFor = (role) => (role === "artist" ? "#/artist/profil?tab=vergi" : role === "venue" ? "#/venue/profil?bolum=vergi" : role === "organizer" ? "#/organizer/profil?bolum=vergi" : null);
 /** Ödeme bildirimi → web rotası (uygulama notificationRoutes.ts 278-296 karşılığı) | null (ödeme bildirimi değil) */
 export function paymentNotifHref(n, role) {
   const t = String(n?.type || "");
@@ -640,6 +644,8 @@ export function paymentNotifHref(n, role) {
   if (t === "invitation_update" && role === "organizer" && (n.outcome === "accepted" || n.status === "accepted")) return paymentsHref(role);
   if (!PAYMENT_NOTIF_TYPES.includes(t)) return null;
   if (t === "payout_iban_needed") return role === "organizer" ? paymentsHref(role) : paymentsHref(role, "bolum=iban");
+  // vergi profili kararı + "vergi bilgisi eksik" incelemesi → Vergi Bilgileri; belge eksik → Ödemeler (uygulama notificationRoutes ile aynı)
+  if (t === "tax_profile_update" || (t === "payout_on_hold" && n.variant !== "doc")) return taxHrefFor(role);
   if ((t === "dispute_opened" || t === "dispute_resolved") && isOid(n.paymentId)) return paymentsHref(role, "sikayet=" + n.paymentId);
   return paymentsHref(role);
 }

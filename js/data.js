@@ -217,11 +217,22 @@ export async function clearNameChangeFlag(uid) {
   try { await updateDoc(doc(db, "users", uid), { nameChangeStatus: null, nameChangeRequested: null, nameChangeReason: null }); } catch (_) {}
 }
 // Admin: adı onayla → users.displayName güncelle (KURAL: admin displayName+displayNameChangedAt yazabilmeli) + isteği çöz.
+// Mekanın nameChange* bayrakları da temizlenir (uygulama src/services/admin.ts ile aynı) — panel "inceleniyor"da kalmasın.
 export async function approveNameChange(req) {
-  await updateDoc(doc(db, "users", req.targetUserId), { displayName: req.requestedName, displayNameChangedAt: serverTimestamp() });
+  const uid = req.targetUserId || req.reporterId;
+  if (uid && req.requestedName) {
+    await updateDoc(doc(db, "users", uid), {
+      displayName: req.requestedName, displayNameChangedAt: serverTimestamp(),
+      nameChangeStatus: null, nameChangeRequested: null, nameChangeReason: null,
+    });
+  }
   await updateDoc(doc(db, "reports", req.id), { status: "resolved", decision: "approved", resolvedAt: serverTimestamp() });
 }
 export async function rejectNameChange(req) {
+  const uid = req.targetUserId || req.reporterId;
+  if (uid) {
+    try { await updateDoc(doc(db, "users", uid), { nameChangeStatus: null, nameChangeRequested: null, nameChangeReason: null }); } catch (_) {}
+  }
   await updateDoc(doc(db, "reports", req.id), { status: "resolved", decision: "rejected", resolvedAt: serverTimestamp() });
 }
 

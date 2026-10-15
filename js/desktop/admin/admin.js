@@ -25,7 +25,7 @@ import {
   resolveReport, approveNameChange, rejectNameChange,
   userById,
 } from "../../data.js";
-import { db, doc, updateDoc, collection, getDocs } from "../../firebase.js";
+import { db, doc, updateDoc, collection, getDocs, functions, httpsCallable } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import { cx, dkKpi, dkUnderlineTabs, dkChip, dkStatusBadge, dkPageHero, dkToast, dkDrawer, dkSkeleton, dkButton, portalRoot } from "../shared/ui.js";
@@ -57,6 +57,19 @@ const EYE = { venue: "MEKAN BAŞVURUSU", org: "ORGANİZATÖR BAŞVURUSU", agency
 const KIND_TAG = { venue: ["MEKAN", V], org: ["ORGANİZATÖR", O], agency: ["AJANS", A] };
 const SUBS = [["all", "Tümü", "#A3A7AF", null], ["venue", "Mekan", V, "mekan"], ["org", "Organizatör", O, "organizator"], ["agency", "Ajans", A, "ajans"]];
 const isApplicant = (k) => k === "venue" || k === "org" || k === "agency";   // users başvurusu (approveUser / rejectUser)
+// Kendi karar akışı olan sorun bildirimleri: düz "Çözüldü" YOK (karar tarafları bildirir — gig_complaint / dispute_resolved).
+//   gig_no_show     → Onayla / Reddet = Cloud Function adminResolveGigComplaint (uygulama AdminPanelScreen onGigDecide ile aynı)
+//   payment_dispute → kararı Ödemeler › Şikayetler çekmecesinde (kanıt + iade/aktarım) → bağlantı
+const repType = (it) => (it.kind === "report" ? String(it.raw?.type || "") : "");
+const gigCheckinOf = (it) => (repType(it) === "gig_no_show" && typeof it.raw?.gigCheckinId === "string" ? it.raw.gigCheckinId : "");
+const payDisputeOf = (it) => {
+  if (repType(it) !== "payment_dispute") return "";
+  const oid = it.raw?.paymentId || it.raw?.targetId;
+  return typeof oid === "string" && /^[A-Za-z0-9]{1,64}$/.test(oid) ? oid : "";
+};
+const hasOwnFlow = (it) => repType(it) === "gig_no_show" || repType(it) === "payment_dispute";
+const payDisputeHref = (oid) => `#/admin/odemeler?grup=sikayetler&sec=${encodeURIComponent(oid)}`;
+const adminResolveGigComplaintFn = httpsCallable(functions, "adminResolveGigComplaint", { timeout: 30000 });
 const REPORT_COLOR = { customer: C, artist: O, venue: V, organizer: O, agency: A };
 const SEEN_KEY = "gb.admin.seen";
 // yeniden çizimde odak yedeği: data-f son eki → yerine geçen denetimler (satır: ok/no/undo/pick · detay/çekmece: dok/dno/dundo)
@@ -201,6 +214,9 @@ const undoWrite = {
 };
 function writeDecision(it, ok) {
   if (isApplicant(it.kind)) return ok ? approveUser(it.id) : rejectUser(it.id);
+  // Sahne şikayeti: karar sunucuda (gigCheckins + rapor çözümü + iki tarafa bildirim); upheld → ödeme yapılmaz
+  const cid = gigCheckinOf(it);
+  if (cid) return adminResolveGigComplaintFn({ checkinId: cid, decision: ok ? "upheld" : "rejected" });
   if (it.kind === "name") return ok ? approveNameChange(it.raw) : rejectNameChange(it.raw);
   return resolveReport(it.id);
 }
@@ -209,7 +225,8 @@ function writeUndo(it) {
   if (it.kind === "report") return undoWrite.report(it);
   return Promise.reject(new Error("no-undo"));
 }
-const canUndo = (it) => it.status !== "pending" && it.kind !== "name";
+// Sahne / ödeme şikayeti kararı rapor yeniden açılarak geri alınmaz (ödeme etkisi sunucuda) → geri al yok
+const canUndo = (it) => it.status !== "pending" && it.kind !== "name" && !hasOwnFlow(it);
 
 // ══════════ Keşfet önizleme — legacy js/pages/admin.js openKesfetPreview (26–84) BİREBİR ══════════
 // Legacy fonksiyon dışa aktarılmıyor ve legacy dosya bu grubun değil → aynen kopyalandı (spec: "Keep openKesfetPreview() as-is").
@@ -481,10 +498,11 @@ export function adminView(ctx) {
     try {
       await writeDecision(it, ok);
       it.status = ok ? OKS[it.kind] : "rejected"; it.decidedAt = Date.now();
-      lastToast = toast(ok ? OKT[it.kind] : "Reddedildi");
+      lastToast = toast(gigCheckinOf(it) ? (ok ? "Şikayet onaylandı · ödeme yapılmaz" : "Şikayet reddedildi · ödeme yapılır") : ok ? OKT[it.kind] : "Reddedildi");
     } catch (e) {
       console.error(e);
-      toast("İşlem başarısız", { type: "err" });
+      // Callable (sahne şikayeti) Türkçe ileti döndürür
+      toast(gigCheckinOf(it) && typeof e?.message === "string" && e.message && !/^internal$/i.test(e.message) ? e.message : "İşlem başarısız", { type: "err" });
     } finally {
       it.busy = null;
       notify();
@@ -549,9 +567,16 @@ export function adminView(ctx) {
         h("span", { class: "dk-admin-panel-s" }, kindTag(it, true), unreadTag(it), h("span", { class: "dk-admin-panel-stx" }, it.sub))));
     pick.addEventListener("click", () => select(it));
     const acts = h("div", { role: "cell", class: "dk-admin-panel-c4" });
-    if (it.status === "pending") {
-      acts.append(actBtn("ok", OKL[it.kind], it, () => decide(it, true)));
-      if (it.kind !== "report") acts.append(actBtn("no", "Reddet", it, () => decide(it, false)));
+    if (it.status === "pending" && payDisputeOf(it)) {
+      const a = h("a", { class: cx("dk-admin-panel-act", "is-ok", "dk-press"), href: payDisputeHref(payDisputeOf(it)), dataset: { f: `${k}|ok` },
+        "aria-label": `Ödeme şikayetini aç: ${it.title}`, style: { textDecoration: "none" } }, h("span", {}, "Ödemeye git"));
+      a.addEventListener("click", (e) => e.stopPropagation());
+      acts.append(a);
+    } else if (it.status === "pending" && hasOwnFlow(it) && !gigCheckinOf(it)) {
+      // kayıt eksik (eski sürüm) — karar burada verilemez
+    } else if (it.status === "pending") {
+      acts.append(actBtn("ok", OKL[it.kind] === "Çözüldü" && gigCheckinOf(it) ? "Onayla" : OKL[it.kind], it, () => decide(it, true)));
+      if (it.kind !== "report" || gigCheckinOf(it)) acts.append(actBtn("no", "Reddet", it, () => decide(it, false)));
     } else if (canUndo(it)) acts.append(undoBtn(it));
     const row = h("div", { role: "row", class: cx("dk-admin-panel-row", "dk-row", isSel && "is-sel"), dataset: { key: k } },
       h("span", { class: "dk-admin-panel-selbar", "aria-hidden": "true" }),
@@ -595,14 +620,26 @@ export function adminView(ctx) {
     if (it.msgLabel && it.msg) out.push(h("div", { class: "dk-admin-panel-msg" }, h("span", {}, it.msgLabel), h("p", {}, it.msg)));
     const acts = h("div", { class: "dk-admin-panel-dact" });
     const k = keyOf(it);
-    if (it.status === "pending") {
+    if (payDisputeOf(it)) {
+      // Ödeme şikayeti: karar Ödemeler › Şikayetler çekmecesinde (kanıt, yanıt, iade / aktarım)
+      acts.append(h("a", { class: "dk-admin-panel-dmsg dk-press", href: payDisputeHref(payDisputeOf(it)), dataset: { f: `${k}|dok` } },
+        svgIcon("wallet", { size: 16, sw: "2" }), it.status === "pending" ? "Ödeme şikayetinde karar ver" : "Ödeme şikayetini aç"));
+      if (it.status !== "pending") {
+        acts.append(h("div", { class: "dk-admin-panel-done", style: { background: rgba(st, 0.1), borderColor: rgba(st, 0.4) } },
+          h("span", {}, "Karar verildi: " + statusLabel(it))));
+      }
+    } else if (it.status === "pending" && hasOwnFlow(it) && !gigCheckinOf(it)) {
+      acts.append(h("div", { class: "dk-admin-panel-done", style: { background: rgba("#FFB347", 0.1), borderColor: rgba("#FFB347", 0.4) } },
+        h("span", {}, "Sahne kaydı bulunamadı · kararı uygulamadaki Admin Paneli'nden ver")));
+    } else if (it.status === "pending") {
+      const gig = !!gigCheckinOf(it);
       const okB = h("button", { type: "button", class: "dk-admin-panel-dok dk-press", dataset: { f: `${k}|dok` }, ...busyAttrs(it, "ok") },
-        svgRaw(CHECK_SVG, { size: 16, sw: "2.4" }), h("span", {}, OKL[it.kind]));
+        svgRaw(CHECK_SVG, { size: 16, sw: "2.4" }), h("span", {}, gig ? "Şikayeti onayla · ödeme yapılmaz" : OKL[it.kind]));
       okB.addEventListener("click", () => decide(it, true));
       acts.append(okB);
-      if (it.kind !== "report") {
+      if (it.kind !== "report" || gig) {
         const noB = h("button", { type: "button", class: "dk-admin-panel-dno dk-press", dataset: { f: `${k}|dno` }, ...busyAttrs(it, "no") },
-          svgRaw(X_SVG, { size: 16, sw: "2.4" }), h("span", {}, "Reddet"));
+          svgRaw(X_SVG, { size: 16, sw: "2.4" }), h("span", {}, gig ? "Şikayeti reddet · ödeme yapılır" : "Reddet"));
         noB.addEventListener("click", () => decide(it, false));
         acts.append(noB);
       }
