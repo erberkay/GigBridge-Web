@@ -3,16 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>GigBridge — Canlı Müzik Etkinlikleri, Sanatçılar ve Mekanlar</title>
-  <meta name="description" content="Yakınındaki canlı müzik etkinliklerini keşfet; sanatçı ve DJ'leri, mekanları ve organizatörleri buluştur. Uygulamayı indir, mekan/organizatör üyeliğiyle web panelini kullan." />
+  <title>GigBridge | Canlı Müzik, Sanatçı ve Mekan Uygulaması</title>
+  <meta name="description" content="GigBridge, Türkiye'nin canlı müzik uygulaması: yakınındaki konser, DJ ve canlı müzik etkinliklerini keşfet; sanatçı, mekan ve organizatörleri tek yerde buluştur. App Store'da ücretsiz." />
   <link rel="canonical" href="https://gigbridges.com/" />
-  <meta name="robots" content="index,follow" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <meta name="application-name" content="GigBridge" />
+  <meta name="apple-mobile-web-app-title" content="GigBridge" />
+  <!-- iOS Safari: App Store akıllı bandı -->
+  <meta name="apple-itunes-app" content="app-id=6787107727" />
   <link rel="manifest" href="/site.webmanifest" />
   <!-- Open Graph (WhatsApp/Instagram/Facebook link önizlemesi) -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="GigBridge" />
   <meta property="og:locale" content="tr_TR" />
-  <meta property="og:title" content="GigBridge — Canlı Müzik Etkinlikleri, Sanatçılar ve Mekanlar" />
+  <meta property="og:title" content="GigBridge | Canlı Müzik, Sanatçı ve Mekan Uygulaması" />
   <meta property="og:description" content="Yakınındaki canlı müzik etkinliklerini keşfet; sanatçı, DJ ve mekanları bul. İstanbul, İzmir, Ankara, Antalya, Bodrum ve daha fazlası." />
   <meta property="og:url" content="https://gigbridges.com/" />
   <meta property="og:image" content="https://gigbridges.com/assets/og-cover.png" />
@@ -21,7 +25,7 @@
   <meta property="og:image:alt" content="GigBridge — canlı müzik etkinlikleri, sanatçılar ve mekanlar" />
   <!-- Twitter/X kartı -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="GigBridge — Canlı Müzik Etkinlikleri, Sanatçılar ve Mekanlar" />
+  <meta name="twitter:title" content="GigBridge | Canlı Müzik, Sanatçı ve Mekan Uygulaması" />
   <meta name="twitter:description" content="Yakınındaki canlı müzik etkinliklerini keşfet; sanatçı, DJ ve mekanları bul." />
   <meta name="twitter:image" content="https://gigbridges.com/assets/og-cover.png" />
   <!-- Uygulama logosu — tarayıcı sekmesi (favicon) + Apple dokunma ikonu -->
@@ -69,25 +73,38 @@
         "@type": "Organization",
         "@id": "https://gigbridges.com/#org",
         "name": "GigBridge",
+        "alternateName": ["Gig Bridge", "GigBridges", "gigbridges.com", "GigBridge Türkiye", "GigBridge Canlı Müzik"],
         "url": "https://gigbridges.com/",
-        "logo": "https://gigbridges.com/icon.png",
-        "description": "Canlı müzik ekosistemi: sanatçı ve DJ'leri, mekanları, organizatörleri ve dinleyicileri buluşturur.",
-        "sameAs": []
+        "logo": { "@type": "ImageObject", "url": "https://gigbridges.com/icon.png", "width": 1024, "height": 1024 },
+        "image": "https://gigbridges.com/assets/og-cover.png",
+        "description": "GigBridge, Türkiye'de canlı müzik ekosistemini buluşturan uygulamadır: dinleyiciler etkinlik keşfeder, sanatçı ve DJ'ler sahne bulur, mekanlar ve organizatörler sanatçı kiralar.",
+        "email": "gigbridge.tr@gmail.com",
+        "address": { "@type": "PostalAddress", "addressLocality": "Kuşadası", "addressRegion": "Aydın", "addressCountry": "TR" },
+        "areaServed": { "@type": "Country", "name": "Türkiye" },
+        "contactPoint": { "@type": "ContactPoint", "contactType": "customer support", "email": "gigbridge.tr@gmail.com", "availableLanguage": ["Turkish", "English"], "url": "https://gigbridges.com/iletisim.html" },
+        "sameAs": ["https://apps.apple.com/tr/app/gigbridge/id6787107727"]
       },
       {
         "@type": "WebSite",
         "@id": "https://gigbridges.com/#website",
         "url": "https://gigbridges.com/",
         "name": "GigBridge",
+        "alternateName": ["Gig Bridge", "GigBridges"],
         "inLanguage": "tr-TR",
         "publisher": { "@id": "https://gigbridges.com/#org" }
       },
       {
         "@type": "MobileApplication",
+        "@id": "https://gigbridges.com/#app",
         "name": "GigBridge",
-        "operatingSystem": "iOS, Android",
+        "url": "https://gigbridges.com/indir/",
+        "operatingSystem": "iOS",
         "applicationCategory": "MusicApplication",
         "inLanguage": "tr-TR",
+        "installUrl": "https://apps.apple.com/tr/app/gigbridge/id6787107727",
+        "downloadUrl": "https://apps.apple.com/tr/app/gigbridge/id6787107727",
+        "sameAs": ["https://apps.apple.com/tr/app/gigbridge/id6787107727"],
+        "image": "https://gigbridges.com/icon.png",
         "publisher": { "@id": "https://gigbridges.com/#org" },
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "TRY" }
       }
@@ -97,7 +114,20 @@
 </head>
 <body>
   <div id="app">
-    <div class="boot"><div class="spinner"></div></div>
+    <!-- Arama motorları için ilk HTML'deki marka içeriği; uygulama açılınca (js/ui.js) yerini görünüme bırakır -->
+    <div class="boot" style="flex-direction:column;gap:14px;text-align:center;padding:72px 20px">
+      <img src="/assets/logo-icon.svg" alt="GigBridge logosu" width="56" height="56" />
+      <h1 style="margin:0;font-size:22px;font-weight:700;color:#F2F1EE">GigBridge</h1>
+      <p style="margin:0;max-width:520px;color:#8A8E97;font-size:14px;line-height:1.6">Türkiye'nin canlı müzik uygulaması: yakınındaki konser, DJ ve canlı müzik etkinliklerini keşfet; sanatçı, mekan ve organizatörleri buluştur.</p>
+      <div class="spinner"></div>
+      <nav aria-label="GigBridge sayfaları" style="display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:13px">
+        <a href="/indir/" style="color:#8A8E97">GigBridge uygulamasını indir</a>
+        <a href="/canli-muzik/istanbul/" style="color:#8A8E97">İstanbul canlı müzik</a>
+        <a href="/canli-muzik/izmir/" style="color:#8A8E97">İzmir canlı müzik</a>
+        <a href="/rehber/canli-muzik/" style="color:#8A8E97">Canlı müzik rehberi</a>
+        <a href="/hakkimizda.html" style="color:#8A8E97">GigBridge hakkında</a>
+      </nav>
+    </div>
   </div>
   <noscript>
     <div style="max-width:720px;margin:0 auto;padding:32px 20px;color:#e8e8ef;font-family:system-ui,sans-serif;line-height:1.6">
