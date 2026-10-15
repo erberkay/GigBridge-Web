@@ -33,6 +33,32 @@ export function setPayRates(r) {
   return RATES;
 }
 export const getPayRates = () => RATES;
+
+// ── Metin belirteçleri: oranlar + örnek tutarlar CANLI ayardan (uygulama src/utils/rateText.ts ile birebir) ──
+//  {AR} sanatçı kiralama GigBridge payı · {VR} mekan kiralama komisyonu · {PR} PayTR masrafı
+//  Örnek (10.000 TL'lik teklif, Yol A): {EX_M} pay · {EX_P} sanatçı bedeli · {EX_ST} stopaj · {EX_PV} bedelin KDV'si · {EX_FEE} PayTR ·
+//  {EX_A} / {EX_B} / {EX_C} kategoriye göre sanatçıya ödenen. Statik sayfalarda <span data-rt="AR">…</span> (js/legal-rates.js).
+const pctTR = (r) => `%${String(Math.round(r * 10000) / 100).replace(".", ",")}`;
+const tlTR = (kurus) => {
+  const k = Math.round(kurus);
+  const lira = String(Math.floor(k / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return k % 100 ? `${lira},${String(k % 100).padStart(2, "0")}` : lira;
+};
+export function rateTokens(R = RATES) {
+  const F = 1000000;
+  const charge = Math.round(F * (1 + R.commissionVatRate));
+  const M = Math.round(F * R.artistCommissionRate);
+  const P = F - M;
+  const ST = Math.round(P * R.resaleStopajRate);
+  const PV = Math.round(P * 0.2);
+  const FEE = R.paytrFeeBorneBy === "platform" ? 0 : Math.round(charge * R.paytrFeeRate);
+  return {
+    AR: pctTR(R.artistCommissionRate), VR: pctTR(R.venueCommissionRate), PR: pctTR(R.paytrFeeRate),
+    EX_M: tlTR(M), EX_P: tlTR(P), EX_ST: tlTR(ST), EX_PV: tlTR(PV), EX_FEE: tlTR(FEE),
+    EX_A: tlTR(P - ST - FEE), EX_B: tlTR(P + PV - ST - FEE), EX_C: tlTR(P + PV - FEE),
+  };
+}
+export const fillRates = (text, R = RATES) => { const t = rateTokens(R); return String(text).replace(/\{(AR|VR|PR|EX_[A-Z]+)\}/g, (m, k) => t[k] ?? m); };
 /** Yol A geçerli mi (sunucu finance.js isResale: bookingModel 'resale' VE sanatçı kiralama) */
 export const isResale = (kind = "artist_booking", R = RATES) => R?.bookingModel === "resale" && kind === "artist_booking";
 /** Ödeme kaydı Yol A mı (kayıttaki model — güncel ayardan bağımsız) */
