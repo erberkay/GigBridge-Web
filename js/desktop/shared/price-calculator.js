@@ -72,8 +72,8 @@ export function priceCalculator() {
   const modeLbl = mode.querySelector("select").options[0];
   const RESALE_NOTE = {
     A: "Vergi kaydı olmayan sanatçı: alış KDV'si yok; %20 stopajı GigBridge keser, muhtasarla yatırır; ödeme etkinlikten 16 gün sonra PayTR üzerinden yapılır, sanatçının imzalaması gereken bir belge yoktur.",
-    B: "Serbest meslek mükellefi: sanatçı GigBridge'e hizmet bedeli + %20 KDV e-SMM keser (KDV'yi kendisi beyan eder); %20 stopajı GigBridge keser ve yatırır.",
-    C: "Şirket (fatura kesen şahıs şirketi, Ltd, AŞ): GigBridge'e hizmet bedeli + %20 KDV e-Fatura / e-Arşiv keser; stopaj yok.",
+    B: "Serbest meslek mükellefi: sanatçı GigBridge'e kendi bedeli + %20 KDV ile e-SMM keser (KDV'yi kendisi beyan eder); %20 stopajı GigBridge keser ve yatırır.",
+    C: "Şirket (fatura kesen şahıs şirketi, Ltd, AŞ): GigBridge'e kendi bedeli + %20 KDV ile e-Fatura / e-Arşiv keser; stopaj yok.",
   };
   // Vurgulu sonuç kutusu (ödeyen / sanatçı): başlık + büyük tutar + kalem satırları
   const box = (title, total, color, lines) => h("div", { style: { border: `1px solid ${color}55`, background: `${color}0F`, borderRadius: "10px", padding: "12px 14px", display: "grid", gap: "2px" } },
@@ -87,26 +87,44 @@ export function priceCalculator() {
     const s = resaleSplit(g, a, cfg, who);
     const feeOnPayee = s.paytrFeeBorneBy !== "platform";
     const whoTxt = who === "organizer" ? "ORGANİZATÖRÜN" : "MEKANIN";
+    // PayTR: sanatçı kendi ücreti + KDV'si üzerinden öder; hizmet bedelinin masrafını GigBridge karşılar
+    const feeTotal = s.paytrFeeTotalKurus || s.paytrFeeKurus;
+    const feeGb = feeTotal - (feeOnPayee ? s.paytrFeeKurus : 0);
+    const netGb = s.marginKurus + s.buyerFeeKurus - feeGb;
+    const vatGb = s.saleVatKurus - s.purchaseVatKurus;
+    const whoName = who === "organizer" ? "Organizatör" : "Mekan";
+    const sub = (t) => h("div", { style: { fontSize: "11.5px", color: "#8A8E97", padding: "2px 0 0" } }, t);
     out.replaceChildren(...[
-      box(`${whoTxt} ÖDEYECEĞİ`, s.chargeKurus, "#FFB347", [
-        row("Sahne ücreti (teklif, KDV hariç)", tl(s.grossKurus)),
-        row(`Hizmet bedeli ${pct(s.buyerFeeRate)}`, `+${tl(s.buyerFeeKurus)}`),
-        row(`KDV ${pct(s.saleVatRate)} · (sahne ücreti + hizmet bedeli) ${tl(s.saleKurus)} üzerinden`, `+${tl(s.saleVatKurus)}`),
-        row(`${who === "organizer" ? "Organizatör" : "Mekan"} stopaj kesmez · tek fatura GigBridge'den`, "—"),
+      box(`1 · ${whoTxt} ÖDEYECEĞİ`, s.chargeKurus, "#FFB347", [
+        row("Sahne ücreti (teklif)", tl(s.grossKurus)),
+        row(`GigBridge hizmet bedeli ${pct(s.buyerFeeRate)} · ${whoName.toLocaleLowerCase("tr-TR")}dan`, `+${tl(s.buyerFeeKurus)}`),
+        row(`KDV ${pct(s.saleVatRate)}`, `+${tl(s.saleVatKurus)}`),
+        sub(`Tek fatura GigBridge'den gelir; ${whoName.toLocaleLowerCase("tr-TR")} stopaj kesmez, gider pusulası düzenlemez.`),
       ]),
       h("div", { style: { height: "10px" } }),
-      box("SANATÇIYA AKTARILACAK", s.payeeKurus, "#7CE0B0", [
-        row("Sahne ücreti (teklif, KDV hariç)", tl(s.grossKurus)),
-        row(`GigBridge payı (marj ${pct(s.marginRate)})`, `−${tl(s.marginKurus)}`),
-        row("Hizmet bedeli · GigBridge'in alış bedeli", tl(s.purchaseKurus)),
-        s.purchaseVatKurus ? row(`Alış KDV'si ${pct(s.purchaseVatRate)} · ${a === "B" ? "e-SMM" : "e-Fatura"}`, `+${tl(s.purchaseVatKurus)}`) : null,
-        s.stopajKurus ? row(`Stopaj ${pct(s.resaleStopajRate)} · GigBridge keser, muhtasarla yatırır`, `−${tl(s.stopajKurus)}`) : row("Stopaj", "Yok (şirkete ödeme)"),
-        s.paytrFeeKurus ? row(`PayTR masrafı (${pct(s.paytrFeeRate)} · sahne ücreti + KDV üzerinden)${feeOnPayee ? "" : " · GigBridge karşılar"}`, feeOnPayee ? `−${tl(s.paytrFeeKurus)}` : tl(s.paytrFeeKurus)) : null,
+      box("2 · SANATÇIYA AKTARILACAK", s.payeeKurus, "#7CE0B0", [
+        row("Sahne ücreti (teklif)", tl(s.grossKurus)),
+        row(`GigBridge payı ${pct(s.marginRate)} · sanatçıdan`, `−${tl(s.marginKurus)}`),
+        row("Sanatçının bedeli (KDV hariç)", tl(s.purchaseKurus), { strong: true }),
+        s.purchaseVatKurus ? row(`+ KDV ${pct(s.purchaseVatRate)} · sanatçının ${a === "B" ? "e-SMM'sinde" : "faturasında"}`, `+${tl(s.purchaseVatKurus)}`) : null,
+        s.stopajKurus ? row(`Stopaj ${pct(s.resaleStopajRate)} · devlete (GigBridge yatırır)`, `−${tl(s.stopajKurus)}`) : row("Stopaj", "Yok (şirket)"),
+        s.paytrFeeKurus && feeOnPayee ? row(`PayTR masrafı ${pct(s.paytrFeeRate)}`, `−${tl(s.paytrFeeKurus)}`) : null,
+      ]),
+      h("div", { style: { height: "10px" } }),
+      box("3 · GIGBRIDGE'İN KAZANCI", netGb, "#A78BFA", [
+        row(`Sanatçıdan pay ${pct(s.marginRate)}`, `+${tl(s.marginKurus)}`),
+        row(`${whoName}dan hizmet bedeli ${pct(s.buyerFeeRate)}`, `+${tl(s.buyerFeeKurus)}`),
+        feeGb ? row("PayTR masrafı (GigBridge'in payına düşen)", `−${tl(feeGb)}`) : null,
+        sub("Vergi öncesi net kazanç; yıllık gelir vergisi bu tutar üzerinden hesaplanır."),
+      ]),
+      h("div", { style: { height: "10px" } }),
+      box("4 · DEVLETE GİDEN", vatGb + s.stopajKurus, "#8A8E97", [
+        row(s.purchaseVatKurus ? `KDV farkı · mekana kesilen ${tl(s.saleVatKurus)} − sanatçıdan alınan ${tl(s.purchaseVatKurus)}` : `KDV · mekana kesilen faturanın KDV'si (sanatçıdan indirilecek KDV yok)`, tl(vatGb)),
+        s.stopajKurus ? row("Sanatçının stopajı · GigBridge muhtasarla yatırır", tl(s.stopajKurus)) : null,
+        sub("Bu tutarlar GigBridge'in geliri değildir; tahsil edilip vergi dairesine aktarılır."),
       ]),
       h("div", { style: { height: "8px" } }),
-      row("GigBridge geliri (marj + hizmet bedeli)", tl(s.marginKurus + s.buyerFeeKurus - (feeOnPayee ? 0 : s.paytrFeeKurus)), { strong: true, color: "#A78BFA" }),
-      s.paytrFeeTotalKurus > s.paytrFeeKurus ? row("Hizmet bedelinin PayTR masrafı · GigBridge karşılar", `−${tl(s.paytrFeeTotalKurus - s.paytrFeeKurus)}`) : null,
-      row(`Devlete · net KDV (satış − alış)${s.stopajKurus ? " + stopaj" : ""}`, tl(s.saleVatKurus - s.purchaseVatKurus + s.stopajKurus)),
+      sub(`Kontrol: ${tl(s.chargeKurus)} = sanatçı ${tl(s.payeeKurus)} + PayTR ${tl(feeTotal)} + devlet ${tl(vatGb + s.stopajKurus)} + GigBridge ${tl(netGb)}`),
       note(RESALE_NOTE[a] || RESALE_NOTE.A),
     ].filter(Boolean));
   }
