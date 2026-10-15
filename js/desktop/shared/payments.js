@@ -71,6 +71,7 @@ export const payApi = {
   setGroupPayoutShares: call("setGroupPayoutShares", 30000),
   submitPaymentDocument: call("submitPaymentDocument", 30000),
   getGiderPusulasi: call("getGiderPusulasi", 30000),
+  adminEInvoice: call("adminEInvoice", 120000),   // komisyon e-faturası (Trendyol E-Faturam — functions/efatura.js)
 };
 
 // ── Oranlar: publicConfig/payments (herkes okur; yoksa pay-util varsayılanları). Oturum başına bir kez, 10 dk önbellek. ──

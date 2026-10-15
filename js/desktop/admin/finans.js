@@ -344,6 +344,17 @@ export function adminFinansView(ctx) {
         row.payerRefundDueKurus > 0 ? dkButton(`Vergi iadesi · ${fmtKurus(row.payerRefundDueKurus)}`, { variant: "outline", size: 36, icon: "refresh", onClick: () => onTaxRefund(row) }) : null,
         row.documents?.service?.storagePath ? dkButton("Hizmet belgesini aç", { variant: "outline", size: 36, icon: "fileText", onClick: () => openDoc(row.merchantOid) }) : null,
         row.giderPusulasi?.no ? dkButton(`Gider pusulası · ${row.giderPusulasi.no}`, { variant: "outline", size: 36, icon: "fileText", onClick: () => openPusula(row.merchantOid) }) : null,
+        // Komisyon e-faturası (Trendyol): aktarılmış ödemede kes; kesilmişse PDF
+        row.status === "transferred" && row.documents?.commissionInvoice?.status !== "issued"
+          ? dkButton("Komisyon e-faturası kes", { variant: "outline", size: 36, icon: "fileText", onClick: async () => {
+            if (!(await dkConfirm({ title: "Komisyon e-faturası", body: "Komisyon + KDV için Trendyol E-Faturam'da fatura kesilir (alıcı e-Fatura mükellefiyse e-Fatura, değilse e-Arşiv). Bir kontör harcanır.", confirmLabel: "Kes" }))) return;
+            try { const r = await payApi.adminEInvoice({ action: "issue", merchantOid: row.merchantOid }); toast(r.ok ? `Fatura kesildi${r.docNo ? ` · ${r.docNo}` : ""}` : `Kesilmedi: ${r.skipped}${r.problem?.title ? ` · ${r.problem.title}` : ""}`, { type: r.ok ? "ok" : "err" }); loadSection(); }
+            catch (e) { toast(errText(e), { type: "err" }); } } }) : null,
+        row.documents?.commissionInvoice?.provider === "trendyol" && row.documents.commissionInvoice.status === "issued"
+          ? dkButton(`E-fatura PDF${row.documents.commissionInvoice.docNo ? ` · ${row.documents.commissionInvoice.docNo}` : ""}`, { variant: "outline", size: 36, icon: "fileText", onClick: async () => {
+            const w = window.open("", "_blank");
+            try { const r = await payApi.adminEInvoice({ action: "pdf", merchantOid: row.merchantOid }); if (w) { try { w.opener = null; } catch (_) {} w.location.href = r.url; } }
+            catch (e) { try { w?.close(); } catch (_) {} toast(errText(e), { type: "err" }); } } }) : null,
         row.kind === "artist_booking" ? dkButton(row.giderPusulasi?.no ? "Pusulayı yeniden düzenle + e-postala" : "Gider pusulası düzenle + e-postala", { variant: "outline", size: 36, icon: "refresh",
           onClick: async () => { if (await dkConfirm({ title: "Gider pusulası", body: "Mekanın ve sanatçının güncel vergi bilgileriyle pusula (aynı numarayla) yeniden hazırlanır ve iki tarafa e-postalanır.", confirmLabel: "Düzenle" })) openPusula(row.merchantOid, { regenerate: true, mail: true }); } }) : null));
   }
