@@ -59,7 +59,7 @@ export function priceCalculator() {
   const amount = dkInput({ size: 40, value: "15000", inputmode: "numeric", maxlength: 9, attrs: { "aria-label": "Tutar (TL)" } });
   amount.style.width = "140px";
   const mode = dkSelect({ size: 40, value: "gross", options: [{ value: "gross", label: "Mekanın teklif ettiği ücret" }, { value: "net", label: "Sanatçının cebine girecek" }], attrs: { "aria-label": "Tutar türü" } });
-  const artist = dkSelect({ size: 40, value: "A", options: [{ value: "A", label: "Sanatçı: vergi kaydı yok" }, { value: "B", label: "Sanatçı: şahıs şirketi / serbest meslek" }, { value: "C", label: "Sanatçı: Ltd / AŞ şirketi" }], attrs: { "aria-label": "Sanatçı vergi durumu" } });
+  const artist = dkSelect({ size: 40, value: "A", options: [{ value: "A", label: "Sanatçı: vergi kaydı yok" }, { value: "B", label: "Sanatçı: serbest meslek mükellefi" }, { value: "C", label: "Sanatçı: şirket (ticari şahıs şirketi, Ltd, AŞ)" }], attrs: { "aria-label": "Sanatçı vergi durumu" } });
   const venue = dkSelect({ size: 40, value: "sorumlu", options: [{ value: "sorumlu", label: "Mekan: şirket / gerçek usul" }, { value: "basit", label: "Mekan: basit usul esnaf" }], attrs: { "aria-label": "Mekan türü" } });
   const payer = dkSelect({ size: 40, value: "venue", options: [{ value: "venue", label: "Sanatçıyı tutan: Mekan" }, { value: "organizer", label: "Sanatçıyı tutan: Organizatör" }], attrs: { "aria-label": "Sanatçıyı tutan" } });
   const out = h("div", { style: { display: "grid", gap: "2px", marginTop: "12px" } });
@@ -72,8 +72,8 @@ export function priceCalculator() {
   const modeLbl = mode.querySelector("select").options[0];
   const RESALE_NOTE = {
     A: "Vergi kaydı olmayan sanatçı: alış KDV'si yok; %20 stopajı GigBridge keser, muhtasarla yatırır; ödeme etkinlikten 16 gün sonra PayTR üzerinden yapılır, sanatçının imzalaması gereken bir belge yoktur.",
-    B: "Şahıs şirketi: sanatçı GigBridge'e hizmet bedeli + %20 KDV e-SMM keser (KDV'yi kendisi beyan eder); %20 stopajı GigBridge keser ve yatırır.",
-    C: "Ltd / AŞ: şirket GigBridge'e hizmet bedeli + %20 KDV e-Fatura keser; stopaj yok.",
+    B: "Serbest meslek mükellefi: sanatçı GigBridge'e hizmet bedeli + %20 KDV e-SMM keser (KDV'yi kendisi beyan eder); %20 stopajı GigBridge keser ve yatırır.",
+    C: "Şirket (fatura kesen şahıs şirketi, Ltd, AŞ): GigBridge'e hizmet bedeli + %20 KDV e-Fatura / e-Arşiv keser; stopaj yok.",
   };
   // Vurgulu sonuç kutusu (ödeyen / sanatçı): başlık + büyük tutar + kalem satırları
   const box = (title, total, color, lines) => h("div", { style: { border: `1px solid ${color}55`, background: `${color}0F`, borderRadius: "10px", padding: "12px 14px", display: "grid", gap: "2px" } },
@@ -135,7 +135,7 @@ export function priceCalculator() {
       row("SANATÇIYA AKTARILACAK", tl(s.payee), { strong: true, big: true, color: "#7CE0B0" }),
       row(s.feeOnPayee ? "GigBridge'de kalan (komisyon + KDV; PayTR sanatçıdan)" : "GigBridge'de kalan (komisyon + KDV − PayTR)", tl(s.take - (s.feeOnPayee ? 0 : s.fee))),
       note(a === "B" || a === "C"
-        ? "Şahıs şirketi ya da şirketi olan sanatçı makbuz / faturasına her durumda %20 KDV ekler; bu KDV şu an ödemeye dahil edilmiyor."
+        ? "Serbest meslek mükellefi ya da şirketi olan sanatçı makbuz / faturasına her durumda %20 KDV ekler; bu KDV şu an ödemeye dahil edilmiyor."
         : "Vergi kaydı olmayan sanatçının ücretine KDV eklenmez; mekan gider pusulası düzenler."),
     ].filter(Boolean));
   }

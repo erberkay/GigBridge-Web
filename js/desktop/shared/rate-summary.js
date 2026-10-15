@@ -15,7 +15,7 @@ const G = 1000000; // 10.000 TL (kuruş)
 const tl = (k) => `${(Math.round(k) / 100).toLocaleString("tr-TR", { maximumFractionDigits: 0 })} TL`;
 const pct = (v) => `%${Math.round((Number(v) || 0) * 10000) / 100}`;
 const WH = { serbest_meslek_stopaj: "Serbest meslek stopajı", eticaret_tevkifat: "E-ticaret tevkifatı", no_withholding: "Kesinti yok" };
-const CAT = { A_arizi: "mükellef değil (ara sıra)", A_duzenli: "mükellef değil (düzenli)", B: "serbest meslek mükellefi", C: "şirket / ajans", isletme: "işletme (mekan kiralama)" };
+const CAT = { A_arizi: "mükellef değil (ara sıra)", A_duzenli: "mükellef değil (düzenli)", B: "serbest meslek mükellefi", C: "şirket (ticari şahıs, Ltd, AŞ) / ajans", isletme: "işletme (mekan kiralama)" };
 
 function commission(cfg, kind) {
   const cr = kind === "venue_rental" ? cfg.venueCommissionRate : cfg.artistCommissionRate;
@@ -53,18 +53,18 @@ function matchRules(rules, sc) {
   return { ok: true, rules: w, text: w.length ? `Onaylı: ${w.map((r) => `${WH[r.type]} ${pct(r.rate)}`).join(" + ")}` : "Onaylı: kesinti yok" };
 }
 
-// Kanuni senaryolar (GVK md. 94/2-b; basit usul mekan stopaj sorumlusu değil — GVK 94 son fıkra, Ltd/AŞ'ye ödeme stopaja tabi değil)
+// Kanuni senaryolar (GVK md. 94/2-b; basit usul mekan stopaj sorumlusu değil — GVK 94 son fıkra, şirkete (ticari şahıs şirketi, Ltd/AŞ) ödeme stopaja tabi değil)
 const SCENARIOS = [
   { cat: "A_arizi", artist: "Vergi kaydı yok", payer: "evet", payerTxt: "Şirket / gerçek usul",
     w: [{ type: "serbest_meslek_stopaj", rate: 0.2, base: "gross", responsible: "payer" }], who: "Mekan keser, muhtasarla öder", doc: "Gider pusulası (mekan)", law: "GVK 94/2-b" },
   { cat: "A_arizi", artist: "Vergi kaydı yok", payer: "hayir", payerTxt: "Basit usul esnaf",
     w: [], who: "—", doc: "Gider pusulası (mekan)", law: "GVK 94" },
-  { cat: "B", artist: "Şahıs şirketi (serbest meslek)", payer: "evet", payerTxt: "Şirket / gerçek usul",
+  { cat: "B", artist: "Serbest meslek mükellefi", payer: "evet", payerTxt: "Şirket / gerçek usul",
     w: [{ type: "serbest_meslek_stopaj", rate: 0.2, base: "gross", responsible: "payer" }], who: "Mekan keser, muhtasarla öder", doc: "e-SMM (sanatçı)", law: "GVK 94/2-b" },
-  { cat: "B", artist: "Şahıs şirketi (serbest meslek)", payer: "hayir", payerTxt: "Basit usul esnaf",
+  { cat: "B", artist: "Serbest meslek mükellefi", payer: "hayir", payerTxt: "Basit usul esnaf",
     w: [], who: "—", doc: "e-SMM (sanatçı)", law: "GVK 94" },
-  { cat: "C", artist: "Ltd / AŞ şirketi", payer: "evet", payerTxt: "Fark etmez",
-    w: [], who: "—", doc: "e-Fatura (şirket)", law: "KVK — stopaj yok" },
+  { cat: "C", artist: "Şirket (ticari şahıs, Ltd, AŞ)", payer: "evet", payerTxt: "Fark etmez",
+    w: [], who: "—", doc: "e-Fatura / e-Arşiv (şirket)", law: "Ticari kazanç — stopaj yok" },
 ];
 
 export function rateSummary() {
@@ -84,8 +84,8 @@ export function rateSummary() {
       li("İş modeli: Yol A — GigBridge alır, satar", `Sanatçı kiralamada GigBridge sahne performansını sanatçıdan SATIN ALIR ve sanatçıyı tutana (mekan ya da organizatör) SATAR. Teklif ücreti 10.000 TL (KDV hariç); tutan taraf bunun üstüne hizmet bedeli ve toplam üzerinden ${pct(sA.saleVatRate)} KDV öder: mekan ${tl(G)} + ${tl(sA.buyerFeeKurus)} + ${tl(sA.saleVatKurus)} KDV = ${tl(sA.chargeKurus)}. Stopaj kesmez, gider pusulası düzenlemez. Etkinlik sonrası GigBridge tek satış faturası keser: ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv).`),
       li(`Hizmet bedeli: mekan ${pct(sA.buyerFeeRate)} · organizatör ${pct(oA.buyerFeeRate)}`, `Sanatçıyı tutan taraf teklif ücretinin üstüne öder (sanatçının payından düşmez). 10.000 TL'de mekan ${tl(sA.buyerFeeKurus)} → toplam ${tl(sA.chargeKurus)}; organizatör ${tl(oA.buyerFeeKurus)} → toplam ${tl(oA.chargeKurus)} (KDV dahil). Hizmet bedelinin PayTR masrafını GigBridge karşılar.`),
       li(`GigBridge payı (marj): ${pct(sA.marginRate)}`, `Sanatçı komisyon oranı marj olarak sanatçının teklif ücretinden düşülür: ${tl(sA.marginKurus)}. GigBridge'in alış bedeli (sanatçının hizmet bedeli) ${tl(sA.purchaseKurus)}. GigBridge'in geliri marj + hizmet bedelidir: mekanda ${tl(sA.marginKurus + sA.buyerFeeKurus)}, organizatörde ${tl(oA.marginKurus + oA.buyerFeeKurus)}.`),
-      li(`Satış KDV'si: ${pct(sA.saleVatRate)} (yasal)`, `Satış faturasında (sahne ücreti + hizmet bedeli) ${tl(sA.saleKurus)} üzerinden ${tl(sA.saleVatKurus)} KDV. Şahıs şirketi / şirket sanatçıdan alışta ${tl(sB.purchaseVatKurus)} alış KDV'si indirilir; devlete net KDV ödenir.`),
-      li(`Stopaj: ${pct(sA.resaleStopajRate)} · GigBridge keser`, `Vergi kaydı olmayan ve şahıs şirketi sanatçıda hizmet bedelinden ${tl(sA.stopajKurus)} stopajı GigBridge keser, muhtasarla yatırır (GVK 94/2-b). Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme etkinlikten 16 gün sonra PayTR üzerinden yapılır, PayTR dekontu ödeme kaydıdır. Ltd / AŞ sanatçıda stopaj yok. Vergi kuralları tablosu sanatçı kiralamada kullanılmaz.`),
+      li(`Satış KDV'si: ${pct(sA.saleVatRate)} (yasal)`, `Satış faturasında (sahne ücreti + hizmet bedeli) ${tl(sA.saleKurus)} üzerinden ${tl(sA.saleVatKurus)} KDV. Serbest meslek / şirket sanatçıdan alışta ${tl(sB.purchaseVatKurus)} alış KDV'si indirilir; devlete net KDV ödenir.`),
+      li(`Stopaj: ${pct(sA.resaleStopajRate)} · GigBridge keser`, `Vergi kaydı olmayan ve serbest meslek mükellefi sanatçıda hizmet bedelinden ${tl(sA.stopajKurus)} stopajı GigBridge keser, muhtasarla yatırır (GVK 94/2-b). Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme etkinlikten 16 gün sonra PayTR üzerinden yapılır, PayTR dekontu ödeme kaydıdır. Ltd / AŞ sanatçıda stopaj yok. Vergi kuralları tablosu sanatçı kiralamada kullanılmaz.`),
       li(`PayTR masrafı: ${pct(cfg.paytrFeeRate ?? 0)} · ${feeOnPayee ? "sanatçının payından" : "GigBridge karşılar"}`, !(cfg.paytrFeeRate > 0)
         ? "Oran girilmedi (%0): PayTR masrafı hesaba katılmıyor."
         : `Sanatçının payına düşen masraf yalnız sahne ücreti + KDV (${tl(G + Math.round(G * sA.saleVatRate))}) üzerinden: ${tl(sA.paytrFeeKurus)}; ${feeOnPayee ? "sanatçının payından düşülür" : "GigBridge'in marjından ödenir"}. Hizmet bedelinin masrafını (${tl(sA.paytrFeeTotalKurus - sA.paytrFeeKurus)}) GigBridge karşılar.`),
@@ -95,8 +95,8 @@ export function rateSummary() {
     ];
     const SC = [
       { s: sA, artist: "Vergi kaydı yok (A)", doc: "Belge yok: PayTR dekontu ödeme kaydıdır", law: "GVK 94/2-b" },
-      { s: sB, artist: "Şahıs şirketi (B)", doc: "e-SMM (sanatçı → GigBridge)", law: "GVK 94/2-b" },
-      { s: sC, artist: "Ltd / AŞ (C)", doc: "e-Fatura (şirket → GigBridge)", law: "KVK — stopaj yok" },
+      { s: sB, artist: "Serbest meslek (B)", doc: "e-SMM (sanatçı → GigBridge)", law: "GVK 94/2-b" },
+      { s: sC, artist: "Şirket: ticari şahıs şirketi, Ltd, AŞ (C)", doc: "e-Fatura / e-Arşiv (şirket → GigBridge)", law: "Ticari kazanç — stopaj yok" },
     ];
     const rows = SC.map(({ s, artist, doc, law }) => h("tr", { style: { cursor: "default" } },
       h("td", {}, artist), h("td", { class: "is-num" }, tl(s.chargeKurus)), h("td", { class: "is-num" }, tl(s.marginKurus)),
@@ -159,7 +159,7 @@ export function rateSummary() {
     const ruleList = approved.length
       ? approved.map((r) => li(`Eğer ${cond(r)}`, `${WH[r.type]}${r.type === "no_withholding" ? "" : ` ${pct(r.rate)} (matrah: ${r.base === "gross_excl_vat" ? "KDV hariç brüt" : "brüt"}) → ${resp(r)}`}. Onay: ${r.approvedByName || "—"} · ${r.approvalRef || "—"} · v${r.version || 1}`))
       : [statutory
-        ? li("Kanuni kurallar (GVK md. 94)", "Vergi kaydı olmayan ya da şahıs şirketi olan sanatçıya, şirket ya da gerçek usul mekan ödeme yaparsa %20 stopajı MEKAN keser: mekan PayTR'den o kadar az öder, stopajı muhtasarla kendisi yatırır. Basit usul mekan ve Ltd / AŞ sanatçıda kesinti yok. Vergi bilgisi eksik ya da mekanın durumu belirsizse ödeme aktarılmadan önce Finansal İncelemeye düşer.")
+        ? li("Kanuni kurallar (GVK md. 94)", "Vergi kaydı olmayan ya da serbest meslek mükellefi sanatçıya, şirket ya da gerçek usul mekan ödeme yaparsa %20 stopajı MEKAN keser: mekan PayTR'den o kadar az öder, stopajı muhtasarla kendisi yatırır. Basit usul mekan ve şirketi (ticari şahıs şirketi, Ltd, AŞ) olan sanatçıda kesinti yok. Vergi bilgisi eksik ya da mekanın durumu belirsizse ödeme aktarılmadan önce Finansal İncelemeye düşer.")
         : dkInlineMessage("err", "Kanuni kurallar kapalı ve kayıtlı kural yok: vergi durumu belirlenemeyen ödemeler Finansal İncelemeye düşer.")];
 
     const rows = SCENARIOS.map((s) => {

@@ -16,8 +16,8 @@ export const TAX_STATUS = {
 };
 const PERF_CATS = [
   { value: "A", label: "A · Vergi mükellefi değilim — düzenli veya düzensiz sahne alıyorum, vergi kaydım yok" },
-  { value: "B", label: "B · Vergi mükellefiyim (serbest meslek / şahıs şirketi)" },
-  { value: "C", label: "C · Şirket, ajans ya da temsilci üzerinden çalışıyorum" },
+  { value: "B", label: "B · Serbest meslek mükellefiyim (e-Serbest Meslek Makbuzu keserim)" },
+  { value: "C", label: "C · Şirketim var (ticari şahıs şirketi, Ltd, AŞ — e-Fatura keserim) ya da ajans / temsilci üzerinden çalışıyorum" },
 ];
 const PERF_DOCS = [{ value: "e_smm", label: "e-Serbest Meslek Makbuzu" }, { value: "e_fatura", label: "e-Fatura" }, { value: "e_arsiv", label: "e-Arşiv Fatura" }];
 const DOC_RESP = [
@@ -62,7 +62,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const leadEl = h("p", { class: "dk-pay-text" });
   const leadText = () => (isResale()
     ? (performer
-      ? "GigBridge sahneni senden satın alıp mekana satar. Vergi kaydın yoksa ödemen etkinlikten 16 gün sonra PayTR üzerinden hesabına geçer; stopajı GigBridge keser ve yatırır, ayrıca imzalaman gereken bir belge yok. Şahıs şirketin ya da şirketin varsa GigBridge'e makbuz / fatura (+ KDV) kesersin. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
+      ? "GigBridge sahneni senden satın alıp mekana satar. Vergi kaydın yoksa ödemen etkinlikten 16 gün sonra PayTR üzerinden hesabına geçer; stopajı GigBridge keser ve yatırır, ayrıca imzalaman gereken bir belge yok. Serbest meslek mükellefiysen ya da şirketin (fatura kesen şahıs şirketi, Ltd, AŞ) varsa GigBridge'e makbuz / fatura (+ KDV) kesersin. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
       : "Sanatçı kiralamada sahneyi GigBridge'den satın alırsın: GigBridge sana sahne ücreti + hizmet bedeli + %20 KDV tutarında tek fatura (ajans ve organizasyon hizmeti, e-Fatura / e-Arşiv) keser (bu bilgilerle). Stopaj kesmez, gider pusulası düzenlemezsin. Bilgiler eksikse sanatçı ödemesi başlatılamaz.")
     : performer
       ? "Ödemelerinde doğru vergi kesintisinin (stopaj) uygulanması ve belgelerin düzenlenmesi için gerekli. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
@@ -151,7 +151,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     }, 600);
   };
   F.vkn.addEventListener("input", () => gibLookup(digits(F.vkn.value)));
-  F.tckn.addEventListener("input", () => { if (!performer && !F.vkn.value) gibLookup(digits(F.tckn.value)); });
+  F.tckn.addEventListener("input", () => { if ((!performer || cat === "C") && !F.vkn.value) gibLookup(digits(F.tckn.value)); });
 
   // koşullu bloklar
   const rows = {
@@ -173,7 +173,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   function paintCat() {
     if (!performer) return;
     const show = (el, on) => { if (el) el.hidden = !on; };
-    show(rows.tckn, cat === "A" || cat === "B");
+    show(rows.tckn, cat === "A" || cat === "B" || cat === "C");
     show(rows.vkn, cat === "B" || cat === "C");
     show(rows.taxOffice, cat === "B" || cat === "C");
     show(rows.title, cat === "B" || cat === "C");
@@ -182,8 +182,10 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     show(rows.rep, cat === "C");
     show(rows.resp, cat === "C");
     show(rows.address, cat === "A");
-    rows.tckn.querySelector(".dk-lbl").textContent = cat === "B" ? "T.C. KİMLİK NO (VKN YOKSA)" : "T.C. KİMLİK NO";
-    rows.vkn.querySelector(".dk-lbl").textContent = cat === "B" ? "VERGİ KİMLİK NO (VARSA)" : "VERGİ KİMLİK NO";
+    // C: fatura kesen şahıs şirketi de girer → unvan ad soyad olabilir, VKN yoksa TCKN (temsilci TCKN'si boşsa sunucu aynı TCKN'yi kullanır)
+    rows.tckn.querySelector(".dk-lbl").textContent = cat === "B" || cat === "C" ? "T.C. KİMLİK NO (VKN YOKSA)" : "T.C. KİMLİK NO";
+    rows.vkn.querySelector(".dk-lbl").textContent = cat === "B" ? "VERGİ KİMLİK NO (VARSA)" : cat === "C" ? "VERGİ KİMLİK NO (ŞAHIS ŞİRKETİNDE YOKSA BOŞ)" : "VERGİ KİMLİK NO";
+    F.title.placeholder = cat === "C" ? "Ticari unvan (şahıs şirketinde ad soyad)" : "Şirket / ticari unvan";
   }
   function paintBiz() {
     if (performer) return;
@@ -203,7 +205,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
         : "Sanatçı kiralamada stopaj kesmezsiniz, gider pusulası düzenlemezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne ücreti + hizmet bedeli + %20 KDV tutarında ajans ve organizasyon hizmeti faturası (e-Fatura / e-Arşiv) keser.")
       : sahis
       ? "Stopaj (GVK md. 94): gerçek usulde sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; basit usulde stopaj kesmezsiniz, sanatçı için gider pusulası düzenlersiniz."
-      : "Stopaj (GVK md. 94): şirket, kooperatif, dernek ve kamu kurumları kanunen stopaj sorumlusudur. Vergi kaydı olmayan ya da serbest meslek mükellefi sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; şirketi olan sanatçıdan stopaj kesilmez.";
+      : "Stopaj (GVK md. 94): şirket, kooperatif, dernek ve kamu kurumları kanunen stopaj sorumlusudur. Vergi kaydı olmayan ya da serbest meslek mükellefi sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; şirketi (fatura kesen şahıs şirketi, Ltd, AŞ) olan sanatçıdan stopaj kesilmez.";
     rows.vkn.querySelector(".dk-lbl").textContent = sahis ? "VERGİ KİMLİK NO (VARSA)" : "VERGİ KİMLİK NO";
   }
 
@@ -264,11 +266,15 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
         out.taxOffice = v("taxOffice"); if (v("title")) out.title = v("title");
         out.vatRegistered = vatReg; out.docType = selOf(docSel).value;
       } else {
-        if (v("title").length < 2) return { error: "Şirket unvanını gir." };
-        if (!keepMasked("vkn")) { if (v("vkn").length !== 10) return { error: "Şirketin vergi kimlik numarası 10 haneli olmalı." }; out.vkn = v("vkn"); }
+        if (v("title").length < 2) return { error: "Unvanı gir (şahıs şirketinde ad soyadın)." };
+        if (v("vkn")) { if (v("vkn").length !== 10) return { error: "Vergi kimlik numarası 10 haneli olmalı." }; out.vkn = v("vkn"); }
+        else if (v("tckn")) { if (v("tckn").length !== 11) return { error: "T.C. kimlik numarası 11 haneli olmalı." }; out.tckn = v("tckn"); }
+        if (!out.vkn && !out.tckn && !keepMasked("vkn") && !keepMasked("tckn")) return { error: "Şirketin vergi kimlik numarasını ya da (şahıs şirketinde) T.C. kimlik numaranı gir." };
         if (v("taxOffice").length < 2) return { error: "Vergi dairesini gir." };
         if (v("repName").length < 3) return { error: "Temsilcinin adını gir." };
-        if (!keepMasked("repTckn")) { if (v("repTckn").length !== 11) return { error: "Temsilcinin T.C. kimlik numarası 11 haneli olmalı." }; out.repTckn = v("repTckn"); }
+        // Temsilci TCKN: VKN'li kayıtta zorunlu; TCKN'li şahıs şirketinde boşsa sunucu aynı TCKN'yi kullanır
+        if (v("repTckn")) { if (v("repTckn").length !== 11) return { error: "Temsilcinin T.C. kimlik numarası 11 haneli olmalı." }; out.repTckn = v("repTckn"); }
+        else if (!out.tckn && !keepMasked("tckn") && !keepMasked("repTckn")) return { error: "Temsilcinin T.C. kimlik numarası 11 haneli olmalı." };
         out.title = v("title"); out.taxOffice = v("taxOffice"); out.repName = v("repName"); out.docResponsible = selOf(respSel).value;
       }
       if (!ariziOk) return { error: "Vergilendirme bilgisini ve ödeme sistemini kabul et." };

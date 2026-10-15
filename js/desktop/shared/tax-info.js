@@ -22,28 +22,30 @@ export const TAX_INFO = {
       "Ücretinden %20 gelir vergisi stopajını GigBridge keser ve senin adına vergi dairesine yatırır (GVK md. 94/2-b). Mekan senden stopaj kesmez.",
       "Vergi kaydın olmadığı için ücretine KDV eklenmez. Fatura ya da makbuz kesmezsin. Ödemen etkinlikten 16 gün sonra PayTR üzerinden hesabına geçer; stopajı GigBridge keser ve yatırır. Ayrıca imzalaman gereken bir belge yok.",
       "2026 yılında bütün arızi kazançlarının toplamı 350.000 TL'ye kadar yıllık beyannameye girmez (GVK md. 82, 332 No.lu Tebliğ). Bu sınır GigBridge dışındaki işlerini de kapsar.",
-      "Yıl içinde 350.000 TL'yi aşarsan yıllık gelir vergisi beyannamesi vermen gerekir. Sahneyi sürekli ve düzenli iş olarak yapıyorsan artık \"arızi\" sayılmazsın: vergi dairesine kayıt olup şahıs şirketi (serbest meslek mükellefiyeti) açman gerekir. Kendi vergi kaydın ve beyanların senin sorumluluğundadır; GigBridge bunlardan sorumlu değildir.",
+      "Yıl içinde 350.000 TL'yi aşarsan yıllık gelir vergisi beyannamesi vermen gerekir. Sahneyi sürekli ve düzenli iş olarak yapıyorsan artık \"arızi\" sayılmazsın: vergi dairesine kayıt olman (serbest meslek ya da şahıs şirketi) gerekir. Kendi vergi kaydın ve beyanların senin sorumluluğundadır; GigBridge bunlardan sorumlu değildir.",
       "GigBridge işverenin değildir: bağımsız çalışırsın, teklifleri serbestçe seçer ya da reddedersin, fiyatını kendin belirlersin, başka yerlerde de çalışabilirsin. Aranızda iş ilişkisi ve SGK sigortalılığı doğmaz.",
     ],
     example: "Teklif ücreti 10.000 TL (mekan üstüne hizmet bedeli + KDV öder). Senin bedelin 9.000 TL (GigBridge payı %10) · %20 stopaj 1.800 TL (GigBridge yatırır) · PayTR masrafı %1,99 = 238,80 TL → sana 6.961,20 TL ödenir.",
   },
   B: {
-    title: "Şahıs şirketin varsa (serbest meslek mükellefi)",
+    title: "Serbest meslek mükellefiysen (e-Serbest Meslek Makbuzu kesiyorsan)",
     points: [
       "Sanatçı kiralamada sahne hizmetini GigBridge senden satın alır ve mekana satar. Sana ödenen bedel, teklif bedelinden GigBridge payı (%10) düşülerek bulunur.",
       "Her iş için GigBridge adına e-Serbest Meslek Makbuzu (e-SMM) düzenlersin (VUK md. 236). Serbest meslek mükellefi her durumda KDV mükellefidir: makbuza %20 KDV eklenir; KDV'yi sen beyan edip ödersin.",
       "GigBridge ücretinden (KDV hariç tutardan) %20 stopaj keser ve vergi dairesine yatırır (GVK md. 94/2-b). Kesilen bu tutar yıllık beyannamende ödeyeceğin vergiden düşülür. Mekan senden stopaj kesmez.",
       "Her yıl gelir vergisi beyannamesi verirsin; vergi kazancına göre artan oranlıdır (%15–%40, GVK md. 103). Giderlerini düşebilirsin.",
       "Bağ-Kur (SGK 4/b) primini kendin ödersin. 350.000 TL sınırı ve \"arızi\" kuralı sana uygulanmaz. GigBridge işverenin değildir; bağımsız çalışırsın.",
+      "Şahıs şirketin var ve e-Fatura / e-Arşiv fatura kesiyorsan (ticari kazanç) bu bölüm değil C geçerlidir: stopaj kesilmez.",
     ],
     example: "Teklif ücreti 10.000 TL (mekan üstüne hizmet bedeli + KDV öder). GigBridge'e 9.000 TL + 1.800 TL KDV'li e-SMM düzenlersin · GigBridge 1.800 TL stopaj keser · PayTR masrafı 238,80 TL → sana 8.761,20 TL ödenir (1.800 TL'si KDV, devlete ödersin).",
   },
   C: {
-    title: "Limited / anonim şirketin ya da ajansın varsa",
+    title: "Şirketin varsa (fatura kesen şahıs şirketi, Ltd ya da AŞ)",
     points: [
       "Sanatçı kiralamada sahne hizmetini GigBridge şirketinden satın alır ve mekana satar. Şirketine ödenen bedel, teklif bedelinden GigBridge payı (%10) düşülerek bulunur.",
       "Şirketin GigBridge adına e-Fatura ya da e-Arşiv fatura keser (%20 KDV). KDV'yi şirketin beyan edip öder.",
-      "Şirkete yapılan ödemeden stopaj kesilmez; şirket kazancı üzerinden kurumlar vergisi öder.",
+      "Fatura kesen (ticari kazanç beyan eden) şahıs şirketi de bu gruptadır: unvan olarak adını soyadını, VKN'n yoksa T.C. kimlik numaranı yazabilirsin. Ajans ya da temsilci üzerinden çalışıyorsan da bu bölüm geçerlidir.",
+      "Şirkete yapılan ödemeden stopaj kesilmez (serbest meslek stopajı ticari kazanca uygulanmaz). Ltd / AŞ kurumlar vergisi, şahıs şirketi yıllık gelir vergisi beyannamesiyle kazancı üzerinden vergi öder.",
     ],
     example: "Teklif ücreti 10.000 TL (mekan üstüne hizmet bedeli + KDV öder). Şirketin GigBridge'e 9.000 TL + 1.800 TL KDV'li fatura keser · stopaj yok · PayTR masrafı 238,80 TL → şirketine 10.561,20 TL ödenir (1.800 TL'si KDV).",
   },
@@ -55,7 +57,7 @@ export const ARIZI_DECLARATION =
   + "stopajını keserek benim adıma vergi dairesine yatıracağını, ödememin etkinlikten 16 gün sonra PayTR üzerinden "
   + "hesabıma geçeceğini ve ayrıca imzalamam gereken bir belge olmadığını biliyorum. "
   + "Bir takvim yılında arızi kazançlarımın toplamı 350.000 TL'yi aşarsa yıllık beyanname vermek, sahne işini sürekli ve düzenli yapıyorsam "
-  + "vergi dairesine kayıt olup şahıs şirketi açmak benim sorumluluğumdadır; GigBridge kendi vergi kaydım ve beyanlarımdan sorumlu değildir. "
+  + "vergi dairesine kayıt olmak (serbest meslek ya da şahıs şirketi) benim sorumluluğumdadır; GigBridge kendi vergi kaydım ve beyanlarımdan sorumlu değildir. "
   + "Bu yükümlülükleri yerine getirmememden ya da beyanımın yanlış olmasından doğacak vergi, ceza ve faizlerden GigBridge sorumlu değildir. "
   + "GigBridge'in işverenim olmadığını; teklifleri serbestçe kabul ya da reddedebildiğimi, fiyatımı kendim belirlediğimi, başka yerlerde de "
   + "çalışabildiğimi ve aramızda iş ilişkisi ya da SGK sigortalılığı doğmadığını kabul ederim. "

@@ -590,7 +590,7 @@ export function paymentActions(p, side, { onOpenDispute } = {}) {
     items.push(note("Gider pusulası için gereken bilgiler e-postanıza gönderildi. Pusulayı müşaviriniz düzenler, sanatçıya imzalatırsınız.", "#8A8E97"));
   }
   if (side === "payee" && U.isResalePayment(p) && p.giderPusulasi?.status === "info_sent" && p.giderPusulasi.target === "seller") {
-    items.push(note(`GigBridge'e ${p.sellerCategory === "B" ? "e-SMM (serbest meslek makbuzu)" : "e-Fatura"} kesmen için gereken bilgiler e-postana gönderildi. Belgeyi kesip aşağıdan yükle.`, "#8A8E97"));
+    items.push(note(`GigBridge'e ${p.sellerCategory === "B" ? "e-SMM (serbest meslek makbuzu)" : "e-Fatura / e-Arşiv"} kesmen için gereken bilgiler e-postana gönderildi. Belgeyi kesip aşağıdan yükle.`, "#8A8E97"));
   }
   if (!items.length && !btns.length) return null;
   return h("div", { class: "dk-pay-acts" }, ...items, btns.length ? h("div", { class: "dk-pay-btns" }, ...btns) : null);

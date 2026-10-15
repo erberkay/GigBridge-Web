@@ -138,8 +138,8 @@ export function resaleCategoryNote(cat = SELLER_CAT, R = RATES) {
   const c = catOf(cat);
   if (c === "A") return `GigBridge sahneni satın alır. Vergi kaydın olmadığı için ${sp} stopajı GigBridge keser ve vergi dairesine yatırır. Ödemen etkinlikten 16 gün sonra PayTR üzerinden hesabına geçer. Ayrıca imzalaman gereken bir belge yok — senin bir şey yapman gerekmez.`;
   if (c === "B") return `GigBridge sahneni satın alır. GigBridge'e hizmet bedelin + ${kdv} KDV tutarında e-SMM kesersin; ${sp} stopajı GigBridge keser ve yatırır. KDV'yi beyannamenle devlete ödersin.`;
-  if (c === "C") return `GigBridge sahneni satın alır. Şirketin GigBridge'e hizmet bedeli + ${kdv} KDV tutarında e-Fatura keser; stopaj kesilmez. KDV'yi şirketin beyan eder.`;
-  return `GigBridge sahneni satın alır. Tahmin vergi kaydı olmayan sanatçıya göre (${sp} stopajı GigBridge keser). Şahıs şirketin ya da şirketin varsa Vergi Bilgileri'ni doldur: KDV eklenir, tahmin netleşir.`;
+  if (c === "C") return `GigBridge sahneni satın alır. Şirketin GigBridge'e hizmet bedeli + ${kdv} KDV tutarında e-Fatura / e-Arşiv fatura keser; stopaj kesilmez. KDV'yi şirketin beyan eder.`;
+  return `GigBridge sahneni satın alır. Tahmin vergi kaydı olmayan sanatçıya göre (${sp} stopajı GigBridge keser). Serbest meslek mükellefiysen ya da şirketin (fatura kesen şahıs şirketi, Ltd, AŞ) varsa Vergi Bilgileri'ni doldur: KDV eklenir, tahmin netleşir.`;
 }
 
 const ms = (v) => (v && typeof v.toMillis === "function" ? v.toMillis() : typeof v === "number" ? v : null);

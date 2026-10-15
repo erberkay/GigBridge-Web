@@ -49,7 +49,7 @@ const RESP_TEXT = { payer: "Ödeyen keser", platform: "GigBridge keser" };
 const BASE_TEXT = { gross: "Brüt", gross_excl_vat: "KDV hariç brüt" };
 const W_TYPES = [{ value: "serbest_meslek_stopaj", label: WITHHOLDING_LABEL.serbest_meslek_stopaj }, { value: "eticaret_tevkifat", label: WITHHOLDING_LABEL.eticaret_tevkifat }];
 const RULE_TYPES = [...W_TYPES, { value: "no_withholding", label: "Kesinti yok (bu senaryoda)" }];
-const CATS = [["A_arizi", "A · arızi"], ["A_duzenli", "A · düzenli"], ["B", "B · mükellef"], ["C", "C · şirket/temsilci"], ["isletme", "İşletme (mekan kiralama)"]];
+const CATS = [["A_arizi", "A · arızi"], ["A_duzenli", "A · düzenli"], ["B", "B · serbest meslek"], ["C", "C · şirket/temsilci"], ["isletme", "İşletme (mekan kiralama)"]];
 const catText = (k) => CATS.find((x) => x[0] === k)?.[1] || k;
 const TAX_ST_TEXT = { submitted: "incelemede", verified: "doğrulandı", rejected: "reddedildi", missing: "yok", none: "yok" };
 const RULE_STATUS = { draft: { text: "TASLAK", tone: "warn" }, approved: { text: "ONAYLI", tone: "ok" }, retired: { text: "EMEKLİ", tone: "muted" } };
@@ -375,7 +375,7 @@ export function adminFinansView(ctx) {
         row.kind === "artist_booking" && isSaleRow(row) ? dkButton(row.giderPusulasi?.status === "info_sent" ? "Belge bilgilerini yeniden gönder" : "Belge bilgilerini gönder", { variant: "outline", size: 36, icon: "mail",
           onClick: async () => {
             // Yol A: A → pusula yok (PayTR dekontu ödeme kaydıdır; sunucu atlar) · B/C → sanatçıya "GigBridge'e e-SMM / e-Fatura kes"
-            if (!(await dkConfirm({ title: "Belge bilgileri (Yol A)", body: "Şahıs şirketi / şirkette sanatçıya GigBridge'e kesmesi gereken e-SMM / e-Fatura bilgileri gönderilir. Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme etkinlikten 16 gün sonra PayTR üzerinden yapılır, PayTR dekontu ödeme kaydıdır.", confirmLabel: "Gönder" }))) return;
+            if (!(await dkConfirm({ title: "Belge bilgileri (Yol A)", body: "Serbest meslek mükellefi / şirket sanatçıya GigBridge'e kesmesi gereken e-SMM / e-Fatura bilgileri gönderilir. Vergi kaydı olmayan sanatçıda gider pusulası düzenlenmez: ödeme etkinlikten 16 gün sonra PayTR üzerinden yapılır, PayTR dekontu ödeme kaydıdır.", confirmLabel: "Gönder" }))) return;
             try { await payApi.resendPusulaInfo({ merchantOid: row.merchantOid }); toast("Belge bilgileri gönderildi"); }
             catch (e) { toast(errText(e), { type: "err" }); } } })
         : row.kind === "artist_booking" ? dkButton(row.giderPusulasi?.status === "info_sent" ? "Pusula bilgilerini yeniden gönder" : "Pusula bilgilerini mekana gönder", { variant: "outline", size: 36, icon: "mail",
