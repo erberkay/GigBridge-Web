@@ -1,6 +1,6 @@
 // WebAdminOdemeler — Yönetici: ÖDEMELER (emanet / serbest bırakılacak / IBAN bekleyen / iade-şikayet / aktarılan / iade edilen)
 // + ŞİKAYETLER (kanıtlı ödeme şikayetleri) + Ödeme Ayarları (komisyon, komisyon KDV'si, komisyonu karşılayan, tahmini stopaj,
-// PayTR masrafı, test modu, otomatik aktarım). ≥769 px. Finans v2 inceleme / vergi kuralları / dışa aktarım: admin/finans.js.
+// PayTR masrafı, test modu, otomatik aktarım, iş modeli: Aracı / Yol A) + GigBridge vergi bilgileri (getCompany / setCompany). ≥769 px. Finans v2 inceleme / vergi kuralları / dışa aktarım: admin/finans.js.
 // Registry: adminOdeme (#/admin/odemeler). Uygulama karşılığı: components/payments/AdminPaymentsTab.tsx + AdminDisputeModal.tsx.
 // Sunucu: functions/payments.js adminPayments { action: list | listDisputes | get | refund | release | resolveDispute |
 //   approveCheckinPhotos | getConfig | setConfig } (yalnız admin; her işlem adminAudit'e yazılır) + paymentCases getPaymentDispute.
@@ -93,7 +93,8 @@ export function adminOdemelerView(ctx) {
   function payRow(r) {
     const refundable = REFUNDABLE.includes(r.status);
     const releasable = RELEASABLE.includes(r.status);
-    const remaining = r.grossKurus - (r.refundedKurus || 0);
+    // iade ödeyenden çekilen tutar üzerinden (sunucu chargeOf; Yol A: sahne bedeli + KDV)
+    const remaining = (r.chargeKurus || r.grossKurus) - (r.refundedKurus || 0);
     const isBusy = busy === r.merchantOid;
     const btns = [];
     const B = (label, variant, icon, fn, disabled) => { const b = dkButton(label, { variant, size: 36, icon, onClick: fn, disabled: isBusy || disabled }); btns.push(b); return b; };
@@ -115,7 +116,9 @@ export function adminOdemelerView(ctx) {
     return h("article", { class: cx(`${P}-row`, isBusy && "is-busy") },
       h("div", { class: `${P}-top` }, h("span", { class: `${P}-t` }, r.title || r.merchantOid), payBadge(r.status, "payee")),
       meta(`${r.payerName || r.payerUid} → ${r.payeeName || r.payeeUid}${r.testMode ? " · TEST" : ""}`),
-      meta(r.fv === 2 || r.commissionVatKurus != null
+      meta(r.model === "resale"
+        ? `Yol A · satış ${fmtKurus(r.grossKurus)} + KDV → tahsil ${fmtKurus(r.chargeKurus)} · GigBridge payı ${fmtKurus(r.commissionKurus)} · stopaj (GigBridge) ${fmtKurus(r.stopajKurus)} · sanatçıya ${fmtKurus(r.payoutKurus ?? r.payeeKurus)}`
+        : r.fv === 2 || r.commissionVatKurus != null
         ? `Brüt ${fmtKurus(r.grossKurus)} · komisyon ${fmtKurus(r.commissionKurus)} (%${Math.round((r.commissionRate || 0) * 1000) / 10}) + KDV ${fmtKurus(r.commissionVatKurus || 0)}${r.commissionBorneBy === "payer" ? " (ödeyen)" : ""} · vergi kesintisi ${fmtKurus(r.stopajKurus)} · alıcıya ${fmtKurus(r.payoutKurus ?? r.payeeKurus)}`
         : `Brüt ${fmtKurus(r.grossKurus)} · komisyon ${fmtKurus(r.commissionKurus)} (%${Math.round((r.commissionRate || 0) * 100)}) · stopaj ${fmtKurus(r.stopajKurus)} · alıcıya ${fmtKurus(r.payoutKurus ?? r.payeeKurus)}`),
       r.status === "finance_review" || r.financeStatus === "review"
@@ -139,7 +142,7 @@ export function adminOdemelerView(ctx) {
     catch (e) { console.error(e); toast(errText(e), { type: "err" }); busy = null; drawList(); }
   }
   async function onRefund(r, amountKurus) {
-    const amt = amountKurus ?? (r.grossKurus - (r.refundedKurus || 0));
+    const amt = amountKurus ?? ((r.chargeKurus || r.grossKurus) - (r.refundedKurus || 0));
     if (!(amt > 0)) return;
     if (!(await dkConfirm({ title: "İade et", body: `${fmtKurus(amt)} ödeyene (${r.payerName}) iade edilecek. Bu işlem geri alınamaz.`, confirmLabel: "İade et", danger: true }))) return;
     run(r, () => payApi.admin({ action: "refund", merchantOid: r.merchantOid, ...(amountKurus != null ? { amountKurus } : {}), reason: "admin" }), "İade yapıldı");
@@ -213,13 +216,29 @@ export function adminOdemelerView(ctx) {
       saveCfg({ testMode: on });
     } });
     const auto = dkSwitch({ checked: !!cfg.autoPayout, disabled: savingCfg, variant: "cyan", label: "Otomatik aktarım", onChange: (on) => saveCfg({ autoPayout: on }) });
+    // İş modeli (yalnız sanatçı kiralama; mekan kiralama her iki modelde de aracı): Aracı → komisyon · Yol A → GigBridge alır, satar
+    const curModel = cfg.bookingModel === "resale" ? "resale" : "agent";
+    const modelSel = dkSelect({ size: 40, value: curModel, options: [{ value: "agent", label: "Aracı (komisyon)" }, { value: "resale", label: "Yol A — GigBridge alır, satar" }],
+      attrs: { "aria-label": "İş modeli", ...(savingCfg ? { disabled: "disabled" } : {}) } });
+    modelSel.style.width = "260px";
+    const modelOf = () => modelSel.querySelector("select").value;
+    modelSel.querySelector("select").addEventListener("change", async () => {
+      const m = modelOf();
+      if (m === curModel) return;
+      live();   // önizleme: hesaplayıcı + özet seçilen modelle
+      const ok = await dkConfirm(m === "resale"
+        ? { title: "Yol A'ya geç", body: "Yeni sanatçı ödemelerinde GigBridge sahneyi sanatçıdan ALIR, mekana SATAR: mekan sahne bedeli + %20 KDV öder ve GigBridge'den tek fatura alır; stopajı (vergi kaydı yok / şahıs şirketi) GigBridge keser. Ödeme öncesi mekanın vergi bilgisi zorunlu olur. GigBridge vergi bilgilerinin dolu olduğundan emin ol. Mevcut ödemeler değişmez.", confirmLabel: "Yol A'ya geç", danger: true }
+        : { title: "Aracı modele dön", body: "Yeni sanatçı ödemelerinde GigBridge yeniden aracıdır: komisyon + KDV sanatçının payından düşer, stopajı mekan keser. Mevcut ödemeler değişmez.", confirmLabel: "Aracı modele dön", danger: true });
+      if (!ok) { modelSel.querySelector("select").value = curModel; live(); return; }
+      saveCfg({ bookingModel: m });
+    });
     // Kaydetmeden önce de: alanlar değiştikçe özet taslak değerlerle yeniden hesaplanır
     const draft = () => {
       const n = (el, def) => { const x = num(el); return x >= 0 && x <= 50 ? x / 100 : def; };
       return { ...cfg, artistCommissionRate: n(a, cfg.artistCommissionRate), venueCommissionRate: n(v, cfg.venueCommissionRate),
         commissionVatRate: n(vat, cfg.commissionVatRate), commissionVatIncluded: vatIncl, estimateStopajRate: n(est, cfg.estimateStopajRate),
         paytrFeeRate: n(fee, cfg.paytrFeeRate), artistCommissionBorneBy: aBorne.querySelector("select").value, venueCommissionBorneBy: vBorne.querySelector("select").value,
-        paytrFeeBorneBy: feeBorne.querySelector("select").value };
+        paytrFeeBorneBy: feeBorne.querySelector("select").value, bookingModel: modelOf() };
     };
     const live = () => { summary.update(draft(), taxRules); calc.update(draft()); };
     [a, v, est, fee].forEach((el) => el.addEventListener("input", live));
@@ -229,7 +248,10 @@ export function adminOdemelerView(ctx) {
     calc.update(cfg);
     const line = (label, subTxt, ctl) => h("div", { class: "dk-admin-etk-row" }, h("span", { class: "dk-admin-etk-who" }, h("span", { class: "dk-admin-etk-n" }, label), subTxt ? h("span", { class: "dk-admin-etk-e" }, subTxt) : null), ctl);
     cfgBox.replaceChildren(
-      line("Sanatçı komisyonu (%)", null, a),
+      line("İş modeli · sanatçı kiralama", curModel === "resale"
+        ? "Yol A: GigBridge sahneyi alır, mekana satar (mekan F + KDV öder; stopajı GigBridge keser). Komisyon oranı = GigBridge payı (marj)."
+        : "Aracı: GigBridge komisyon alır; stopajı mekan keser. Mekan kiralama her iki modelde de aracı.", modelSel),
+      line(curModel === "resale" ? "Sanatçı komisyonu · GigBridge payı (%)" : "Sanatçı komisyonu (%)", null, a),
       line("Mekan komisyonu (%)", null, v),
       line("Komisyon KDV oranı (%)", "Yasal oran (KDV Kanunu) · değiştirilemez", vat),
       line("Komisyon KDV dahil", "Açıkken KDV komisyon tutarının içinden ayrılır; kapalıyken üstüne eklenir", vatSw),
@@ -259,11 +281,57 @@ export function adminOdemelerView(ctx) {
   }
   const cfgCard = h("section", { class: "dk-admin-panel-card dk-admin-etk-card", "aria-label": "Ödeme ayarları" },
     h("div", { class: "dk-admin-etk-ch" }, h("span", { class: "dk-admin-panel-deb" }, "ÖDEME AYARLARI")), cfgBox);
+  // ══════════ GigBridge vergi bilgileri (Yol A: mekana satış faturası, gider pusulası, sanatçının GigBridge'e kestiği belge) ══════════
+  const coBox = h("div", { class: "dk-admin-etk-form" });
+  let company = null, coErr = null, savingCo = false;
+  const coIn = {
+    title: dkInput({ size: 40, maxlength: 160, placeholder: "Ticari unvan", attrs: { "aria-label": "Unvan" } }),
+    taxId: dkInput({ size: 40, maxlength: 11, inputmode: "numeric", placeholder: "10 haneli VKN ya da 11 haneli TCKN", attrs: { "aria-label": "VKN / TCKN" } }),
+    taxOffice: dkInput({ size: 40, maxlength: 60, placeholder: "örn. Beşiktaş", attrs: { "aria-label": "Vergi dairesi" } }),
+    address: dkTextarea({ rows: 3, maxlength: 300, placeholder: "Mahalle, cadde, no, ilçe / il" }),
+    accountingEmail: dkInput({ size: 40, maxlength: 120, inputmode: "email", placeholder: "muhasebe@…", attrs: { "aria-label": "Muhasebe e-postası" } }),
+  };
+  coIn.taxId.addEventListener("input", () => { coIn.taxId.value = coIn.taxId.value.replace(/\D/g, "").slice(0, 11); });
+  const coFill = (c) => {
+    coIn.title.value = c?.title || ""; coIn.taxId.value = c?.vkn || c?.tckn || ""; coIn.taxOffice.value = c?.taxOffice || "";
+    coIn.address.input.value = c?.address || ""; coIn.accountingEmail.value = c?.accountingEmail || "";
+  };
+  const coSave = dkButton("Vergi bilgilerini kaydet", { variant: "violet", size: 40, icon: "check", busyLabel: "Kaydediliyor…", onClick: async () => {
+    if (savingCo) return;
+    const c = { title: coIn.title.value.trim(), taxId: coIn.taxId.value.trim(), taxOffice: coIn.taxOffice.value.trim(),
+      address: coIn.address.input.value.trim(), accountingEmail: coIn.accountingEmail.value.trim() };
+    if (c.title.length < 2) { toast("Unvanı gir", { type: "err" }); return; }
+    if (!/^(\d{10}|\d{11})$/.test(c.taxId)) { toast("VKN 10, TCKN 11 haneli olmalı", { type: "err" }); return; }
+    if (c.taxOffice.length < 2) { toast("Vergi dairesini gir", { type: "err" }); return; }
+    if (c.address.length < 10) { toast("Adresi eksiksiz gir", { type: "err" }); return; }
+    if (!/^\S+@\S+\.\S+$/.test(c.accountingEmail)) { toast("Muhasebe e-postası geçersiz", { type: "err" }); return; }
+    if (!(await dkConfirm({ title: "GigBridge vergi bilgileri", body: `${c.title} · ${c.taxId.length === 10 ? "VKN" : "TCKN"} ${c.taxId} · ${c.taxOffice} V.D. Yol A'da mekana kesilen satış faturası, gider pusulası ve sanatçının GigBridge'e keseceği belge bu bilgilerle düzenlenir.`, confirmLabel: "Kaydet" }))) return;
+    savingCo = true; coSave.dk.setBusy(true);
+    try { company = (await payApi.admin({ action: "setCompany", company: c })).company; coFill(company); toast("GigBridge vergi bilgileri kaydedildi"); drawCo(); }
+    catch (e) { toast(errText(e), { type: "err" }); }
+    finally { savingCo = false; if (coSave.isConnected) coSave.dk.setBusy(false); }
+  } });
+  function drawCo() {
+    const line = (label, ctl) => h("label", { class: "dk-pay-fld" }, h("span", { class: "dk-lbl" }, label), ctl);
+    coBox.replaceChildren(
+      coErr ? dkInlineMessage("err", coErr) : company ? null : dkInlineMessage("info", "GigBridge vergi bilgileri girilmedi. Yol A'da satış faturası ve gider pusulası bu bilgilerle düzenlenir."),
+      line("UNVAN", coIn.title), line("VKN / TCKN", coIn.taxId), line("VERGİ DAİRESİ", coIn.taxOffice), line("ADRES", coIn.address), line("MUHASEBE E-POSTASI", coIn.accountingEmail),
+      h("span", { class: "dk-admin-etk-e" }, "Vergi kaydı olmayan sanatçının gider pusulası bilgileri muhasebe e-postasına gider."),
+      h("div", { class: "dk-admin-etk-tools" }, coSave));
+  }
+  async function loadCo() {
+    coBox.replaceChildren(dkSkeleton({ w: 240, h: 14 }), dkSkeleton({ w: 200, h: 14 }));
+    try { company = (await payApi.admin({ action: "getCompany" })).company || null; coErr = null; coFill(company); }
+    catch (e) { console.error(e); coErr = errText(e); }
+    if (alive) drawCo();
+  }
+  const coCard = h("section", { class: "dk-admin-panel-card dk-admin-etk-card", "aria-label": "GigBridge vergi bilgileri" },
+    h("div", { class: "dk-admin-etk-ch" }, h("span", { class: "dk-admin-panel-deb" }, "GIGBRIDGE VERGİ BİLGİLERİ")), coBox);
   const noteCard = h("section", { class: "dk-admin-panel-card dk-admin-etk-card", "aria-label": "Aktarım notu" },
     h("div", { class: "dk-admin-etk-form" }, h("div", { class: `${P}-note` }, svgIcon("info", { size: 14, color: "#8A8E97" }),
       h("span", {}, "Aktarımlar her gün 08:00'de yapılır (PayTR: ödeme günü aktarım yok, 10:00 sonrası istekler ertesi gün işlenir). Belirsiz sonuçlu aktarımları PayTR mağaza panelinden kontrol etmeden yeniden serbest bırakma."))));
 
-  root.append(hero, h("div", { class: cx("dk-admin-panel-grid", "dk-admin-etk-g2") }, h("div", { class: "dk-admin-etk-col" }, listCard, calc.el, summary.el), h("div", { class: "dk-admin-etk-col" }, cfgCard, noteCard)));
+  root.append(hero, h("div", { class: cx("dk-admin-panel-grid", "dk-admin-etk-g2") }, h("div", { class: "dk-admin-etk-col" }, listCard, calc.el, summary.el), h("div", { class: "dk-admin-etk-col" }, cfgCard, coCard, noteCard)));
 
   // ══════════ şikayet çekmecesi (AdminDisputeModal) ══════════
   let drawer = null, drawerOid = null;
@@ -289,7 +357,7 @@ export function adminOdemelerView(ctx) {
     }
     function decide(decision) {
       const pay = d.payment;
-      const remaining = pay.grossKurus - (pay.refundedKurus || 0);
+      const remaining = (pay.chargeKurus || pay.grossKurus) - (pay.refundedKurus || 0);
       const partialK = parseTLToKurus(partialIn.value);
       const text = decision === "refund_full" ? `${fmtKurus(remaining)} ödeyene (${pay.payerName}) iade edilecek.`
         : decision === "refund_partial" ? `${fmtKurus(partialK)} ödeyene iade edilecek; kalan ${fmtKurus(remaining - partialK)} üzerinden komisyon ve stopaj yeniden hesaplanıp ${pay.payeeName} hesabına aktarılacak.`
@@ -347,7 +415,7 @@ export function adminOdemelerView(ctx) {
         kids.push(section("KARAR", h("span", { class: "dk-pay-body is-strong" }, decisionText(disp.resolution.decision, disp.resolution.amountKurus)),
           disp.resolution.note ? h("p", { class: "dk-pay-body dk-pay-pre" }, disp.resolution.note) : null, h("span", { class: "dk-pay-tl" }, fmtDTShort(disp.resolution.at))));
       } else if (disp && pay) {
-        const remaining = pay.grossKurus - (pay.refundedKurus || 0);
+        const remaining = (pay.chargeKurus || pay.grossKurus) - (pay.refundedKurus || 0);
         const verified = !!att?.verified;
         const hint = h("span", { class: "dk-pay-muted" });
         const full = dkButton(`Tam iade · ${fmtKurus(remaining)}`, { variant: "danger-outline", size: 36, onClick: () => decide("refund_full") });
@@ -373,7 +441,7 @@ export function adminOdemelerView(ctx) {
 
   // ══════════ başlangıç ══════════
   drawChips(); drawList();
-  if (uid) { load(); loadCfg(); if (_group !== "sikayetler") loadDisputeCount(); }
+  if (uid) { load(); loadCfg(); loadCo(); if (_group !== "sikayetler") loadDisputeCount(); }
   const sec0 = q0?.get?.("sec");
   if (sec0 && isOid(sec0)) openDispute(sec0);
 

@@ -24,7 +24,7 @@ import { rgba, trUpper, initials } from "../shared/helpers.js";
 import { genreColor } from "../shared/genres.js";
 import { routeReady } from "../registry.js";
 import { escrowNote } from "../shared/payments.js";
-import { previewSplit, fmtKurus, fmtApproxKurus, commissionText, ESTIMATE_NOTE } from "../shared/pay-util.js";
+import { previewSplit, fmtKurus, fmtApproxKurus, commissionText, estimateNote, isResale, getPayRates, getSellerCategory } from "../shared/pay-util.js";
 import {
   STATUS, DOW_UP, DOW_LONG, isoToTR, toISOKey, toISODate, expandOccurrences, offerFromDoc, offerWhen, offerSortKey, meOf,
   rememberDecision, cachedOffer, cacheOffers,
@@ -120,6 +120,10 @@ export function artistTeklifView(ctx) {
     escrowSlot.hidden = false;
   }
   unsubs.push(() => escrow?.destroy());
+  // oranlar / iş modeli / vergi kategorisi (Yol A tahmini) gelince "Sana kalacak" satırı yeniden hesaplansın
+  const onRates = () => { if (st.offer) drawResp(); };
+  window.addEventListener("gb:pay-rates", onRates);
+  unsubs.push(() => window.removeEventListener("gb:pay-rates", onRates));
   const right = h("aside", { class: cls("right"), "aria-label": "Teklif yanıtı" }, resp, escrowSlot, others);
   const grid = h("div", { class: cls("grid") }, left, right);
   root.append(back, grid, bar);
@@ -284,7 +288,7 @@ export function artistTeklifView(ctx) {
     const o = st.offer; const k = statusOf(); const sc = S();
     // aynı durum yeniden çizilmez (anlık görüntü güncellemesi odağı/onay kutusunu sıfırlamasın)
     // ask/busy yalnız bekleyen durumda anlamlı (karar anlık görüntüsü yanıt bitmeden gelirse sonuç kutusu iki kez açılmasın)
-    const key = [k, k === "pending" ? st.ask : "", k === "pending" ? st.busy : "", o.fee, o.venue, offerWhen(o)].join("|");
+    const key = [k, k === "pending" ? st.ask : "", k === "pending" ? st.busy : "", o.fee, o.venue, offerWhen(o), getPayRates().bookingModel, getSellerCategory()].join("|");
     if (key === respKey) return;
     respKey = key;
     const feeNum = /\d/.test(o.fee || "");
@@ -294,11 +298,18 @@ export function artistTeklifView(ctx) {
         h("span", { class: cls("sbadge"), style: { color: sc.c, borderColor: rgba(sc.c, 0.4), background: rgba(sc.c, 0.08) } }, sc.label)),
       h("span", { class: cls("line") }, `${offerWhen(o)} · ${o.venue}`),
       // Kabulden önce: sanatçının hesabına kalacak TAHMİNİ tutar (Finans v2: komisyon + KDV + tahmini stopaj — pay-util previewSplit)
+      // Yol A: GigBridge sahneyi alır → teklif ücreti − GigBridge payı = hizmet bedelin (+ KDV B/C) − stopaj (GigBridge) − PayTR
       ...(k !== "accepted" && feeNum ? (() => {
         const n = Number(String(o.fee).replace(/[^\d]/g, ""));
-        return n > 0 ? [h("span", { class: cls("line"), style: { color: "#C9CBD0" }, title: `GigBridge ${commissionText()} ve tahmini vergi kesintisi düşülmüş tutar. ${ESTIMATE_NOTE}` },
-          `Sana kalacak ≈ ${fmtApproxKurus(previewSplit(n, "artist_booking").payeeKurus)} (tahmini)`),
-        h("span", { class: cls("line"), style: { fontSize: "11.5px", color: "#8A8E97" } }, ESTIMATE_NOTE)] : [];
+        if (!(n > 0)) return [];
+        const sp = previewSplit(n, "artist_booking");
+        const resale = isResale("artist_booking");
+        const cut = (label, kurus, sign = "−") => (kurus > 0 ? ` ${sign} ${label} ${fmtKurus(kurus)}` : "");
+        return [h("span", { class: cls("line"), style: { color: "#C9CBD0" }, title: resale ? `GigBridge sahneni satın alır: ${commissionText()} ve varsa stopaj düşülmüş tutar. ${estimateNote()}` : `GigBridge ${commissionText()} ve tahmini vergi kesintisi düşülmüş tutar. ${estimateNote()}` },
+          `Sana kalacak ≈ ${fmtApproxKurus(sp.payeeKurus)} (tahmini)`),
+        resale ? h("span", { class: cls("line"), style: { fontSize: "11.5px", color: "#A3A7AF" } },
+          `${fmtKurus(sp.saleKurus)}${cut("GigBridge payı", sp.marginKurus)} = hizmet bedelin ${fmtKurus(sp.purchaseKurus)}${cut("KDV", sp.purchaseVatKurus, "+")}${cut("stopaj (GigBridge yatırır)", sp.stopajKurus)}${cut("PayTR", sp.paytrFeeKurus)} = sana ≈ ${fmtApproxKurus(sp.payeeKurus)}`) : null,
+        h("span", { class: cls("line"), style: { fontSize: "11.5px", color: "#8A8E97" } }, estimateNote())].filter(Boolean);
       })() : []));
     const pending = k === "pending";
     bar.hidden = !(pending && !st.ask);

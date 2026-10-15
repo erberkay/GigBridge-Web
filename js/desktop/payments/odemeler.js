@@ -21,7 +21,7 @@ import { writeQuery, ROLE_COLORS } from "../shared/helpers.js";
 import {
   listenMyPayments, loadDueItems, loadVenueRentals, paymentCard, escrowNote, paymentActions, payBadge, openDisputeDrawer,
   payoutAccountCard, legalLinks, fmtKurus, earnedSummary, paidSummary, payerHistoryLabel, isOid, isDemoUser, fmtDay,
-  payeeBreakdownText, payerWithholdingText, paymentDocBlock, taxBanner, isPaidStatus, commissionText,
+  payeeBreakdownText, payerWithholdingText, payerInvoiceText, paymentDocBlock, taxBanner, isPaidStatus, commissionText, isResale, isResalePayment,
 } from "../shared/payments.js";
 
 const C = "dk-odeme";
@@ -91,12 +91,26 @@ export function odemelerView(ctx) {
   let acct = null;
   if (isPayee) { acct = payoutAccountCard({ openForm: ctx.query?.get?.("bolum") === "iban" }); aside.append(acct.node); unsubs.push(() => acct.destroy()); }
   else if (!demo) { const tb = taxBanner(); aside.append(tb.node); unsubs.push(() => tb.destroy()); }   // organizatör: vergi bilgisi bandı
+  // 3. adım iş modeline göre (Yol A: GigBridge sahneyi alır, satar) — oranlar gelince güncellenir
+  const stepPay = h("li", {});
+  const stepResale = h("li", { hidden: true });
+  const paintSteps = () => {
+    const resale = isResale("artist_booking");
+    stepPay.textContent = resale && role === "artist"
+      ? `Sorun bildirilmezse IBAN'ına aktarılır: GigBridge sahneni satın alır; ${commissionText()} ve varsa stopaj (GigBridge yatırır) düşülür.`
+      : `Sorun bildirilmezse alıcının IBAN'ına aktarılır (${commissionText(resale ? "venue_rental" : "artist_booking")} ve varsa mevzuata göre vergi kesintisi düşülür).`;
+    stepResale.hidden = !(resale && isPayer);
+    stepResale.textContent = "Sanatçı kiralamada sahneyi GigBridge'den satın alırsınız: sahne bedeli + %20 KDV ödersiniz, faturanız GigBridge'den gelir. Stopaj kesmez, gider pusulası düzenlemezsiniz.";
+  };
+  paintSteps();
+  window.addEventListener("gb:pay-rates", paintSteps);
+  unsubs.push(() => window.removeEventListener("gb:pay-rates", paintSteps));
   aside.append(h("section", { class: `${C}-info` },
     h("span", { class: `${C}-h` }, "NASIL ÇALIŞIR"),
     h("ol", { class: `${C}-steps` },
       h("li", {}, "Teklif ya da mekan isteği kabul edilince ödeyen PayTR ile öder."),
       h("li", {}, "Para etkinlik bitişinden 24 saat sonrasına kadar emanette bekler."),
-      h("li", {}, `Sorun bildirilmezse alıcının IBAN'ına aktarılır (${commissionText()} ve varsa mevzuata göre vergi kesintisi düşülür).`),
+      stepPay, stepResale,
       h("li", {}, "Vergi durumu belirsiz ödemeler finansal incelemeden sonra aktarılır.")),
     legalLinks()));
 
@@ -165,7 +179,9 @@ export function odemelerView(ctx) {
     // giden ödeme: alıcı · etkinlik tarihi · ödeme tarihi (+ iade tutarı); gelen (alıcı) satırı eskisi gibi
     const sub = side === "payee" ? [other, when ? fmtDay(when) : ""]
       : [other, p.eventStartMs ? "Etkinlik " + fmtDay(p.eventStartMs) : "", p.paidAt ? "Ödeme " + fmtDay(p.paidAt) : when ? fmtDay(when) : ""];
-    const refunded = side === "payer" ? (p.status === "refunded" ? p.grossKurus : Math.min(p.grossKurus, p.refundedKurus || 0)) : 0;
+    // Yol A: ödeyenden çekilen = sahne bedeli + KDV (iade de bu tutar üzerinden)
+    const paidK = isResalePayment(p) ? p.chargeKurus : p.grossKurus;
+    const refunded = side === "payer" ? (p.status === "refunded" ? paidK : Math.min(paidK, p.refundedKurus || 0)) : 0;
     return h("article", { class: `${C}-hrow` },
       h("span", { class: cx(`${C}-htile`, side === "payee" && "is-in") }, svgIcon("wallet", { size: 17, sw: "1.9" })),
       h("div", { class: `${C}-hbody` },
@@ -174,8 +190,9 @@ export function odemelerView(ctx) {
         h("span", { class: `${C}-hf` }, side === "payer" ? payBadge(p.status, side, payerHistoryLabel(p)) : payBadge(p.status, side), p.testMode ? h("span", { class: `${C}-test` }, "TEST") : null),
         side === "payee" ? h("span", { class: `${C}-hb` }, payeeBreakdownText(p)) : null,
         side === "payer" && payerWithholdingText(p) ? h("span", { class: `${C}-hb`, style: { color: "#FFB347" } }, payerWithholdingText(p)) : null,
+        side === "payer" && payerInvoiceText(p) ? h("span", { class: `${C}-hb` }, payerInvoiceText(p)) : null,
         side === "payer" && p.payerRefundDueKurus > 0 ? h("span", { class: `${C}-hb`, style: { color: "#7CE0B0" } }, `Vergi farkı iadesi ${fmtKurus(p.payerRefundDueKurus)}`) : null,
-        refunded > 0 ? h("span", { class: `${C}-hb` }, refunded >= p.grossKurus ? `${fmtKurus(refunded)} iade edildi` : `İade ${fmtKurus(refunded)} · ödenen net ${fmtKurus(p.grossKurus - refunded)}`) : null,
+        refunded > 0 ? h("span", { class: `${C}-hb` }, refunded >= paidK ? `${fmtKurus(refunded)} iade edildi` : `İade ${fmtKurus(refunded)} · ödenen net ${fmtKurus(paidK - refunded)}`) : null,
         acts,
         // Finans v2: alıcı hizmet belgesi (yalnız ödenmiş, iade edilmemiş fv:2 kayıtlar)
         side === "payee" && p.fv === 2 && isPaidStatus(p.status) && p.status !== "refunded" && !demo ? paymentDocBlock(p) : null),

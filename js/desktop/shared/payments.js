@@ -77,13 +77,28 @@ export const payApi = {
 // ── Oranlar: publicConfig/payments (herkes okur; yoksa pay-util varsayılanları). Oturum başına bir kez, 10 dk önbellek. ──
 let _rates = { at: 0, p: null };
 export function loadPayRates(force = false) {
-  if (!force && _rates.p && Date.now() - _rates.at < 600e3) return _rates.p;
+  if (!force && _rates.p && Date.now() - _rates.at < 600e3) { _rates.p.then(() => syncSellerCategory()).catch(() => {}); return _rates.p; }
   const p = getDoc(doc(db, "publicConfig", "payments"))
-    .then((d) => { const r = U.setPayRates(d.exists() ? d.data() : null); try { window.dispatchEvent(new CustomEvent("gb:pay-rates")); } catch (_) {} return r; })
+    .then((d) => { const r = U.setPayRates(d.exists() ? d.data() : null); try { window.dispatchEvent(new CustomEvent("gb:pay-rates")); } catch (_) {} syncSellerCategory(); return r; })
     .catch(() => U.getPayRates());
   _rates = { at: Date.now(), p };
   return p;
 }
+// Yol A: sanatçının tahmini kesintisi vergi kategorisine (A/B/C) bağlı → oturumdaki sanatçının profilinden (pay-util SELLER_CAT).
+// Değişince gb:pay-rates yayınlanır (tahmin gösteren ekranlar zaten bunu dinler).
+let _catUid = null;
+function syncSellerCategory(force = false) {
+  const uid = myUid();
+  if (uid !== _catUid && U.setSellerCategory(null)) { try { window.dispatchEvent(new CustomEvent("gb:pay-rates")); } catch (_) {} }
+  if (!uid || isDemoUser() || session.profile?.userType !== "artist" || U.getPayRates().bookingModel !== "resale") return;
+  if (!force && _catUid === uid) return;
+  _catUid = uid;
+  taxProfileCached(force).then((r) => {
+    if (myUid() !== uid) return;
+    if (U.setSellerCategory(r?.exists ? r.profile?.category : null)) { try { window.dispatchEvent(new CustomEvent("gb:pay-rates")); } catch (_) {} }
+  }).catch(() => { if (_catUid === uid) _catUid = null; });
+}
+try { window.addEventListener("gb:tax-profile", () => syncSellerCategory(true)); } catch (_) {}
 loadPayRates();
 
 // ── Vergi profili durumu (banner'lar için kısa önbellek; kaydedince gb:tax-profile olayı) ──
@@ -110,6 +125,19 @@ export async function taxRequiredPrompt() {
     confirmLabel: "Vergi Bilgilerini doldur", cancelLabel: "Destek'ten bilgi al",
   });
   location.hash = ok ? "#/artist/profil?tab=vergi" : "#/artist/profil?tab=vergi&destek=vergi";
+}
+/** Yol A: createPayment 'payer-tax-required' (mekanın vergi profili yok → fatura kesilemez) mi */
+export const isPayerTaxRequired = (e) => e?.details?.code === "payer-tax-required" || /Vergi Bilgileri'ni doldur; faturan/.test(String(e?.message || ""));
+/** Ödeyenin (mekan / organizatör) Vergi Bilgileri sayfası */
+export const payerTaxHref = () => (session.profile?.userType === "organizer" ? "#/organizer/profil?bolum=vergi" : "#/venue/profil?bolum=vergi");
+/** Ödemeden önce vergi bilgisi gerekli (Yol A): Vergi Bilgileri'ni aç ya da vazgeç */
+export async function payerTaxRequiredPrompt(e) {
+  const ok = await dkConfirm({
+    title: "Vergi bilgileri gerekli",
+    body: (typeof e?.message === "string" && e.message) || "Ödemeden önce Profil › Vergi Bilgileri'ni doldur; faturan bu bilgilerle kesilir.",
+    confirmLabel: "Vergi Bilgilerini doldur", cancelLabel: "Vazgeç",
+  });
+  if (ok) location.hash = payerTaxHref();
 }
 /** "Vergi bilgilerini tamamla" bandı (rol profilindeki Vergi Bilgileri'ne bağlantı). Gerekmiyorsa gizli kalır. */
 export function taxBanner({ href = null, text = null } = {}) {
@@ -237,6 +265,10 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
     try { unPay = listenPayment(oid, (p) => { st.p = p; draw(); }, () => { /* çalışan: başkasının başlattığı ödemeyi okuyamaz → paymentStatus yedeği */ }); } catch (_) { unPay = null; }
   };
   if (!(Number(amountTL) > 0)) return { node, destroy() {} };
+  // oranlar / iş modeli (publicConfig) gelince ödeme öncesi döküm yeniden çizilsin (Yol A: + KDV)
+  const onRates = () => { if (!st.busy) draw(); };
+  window.addEventListener("gb:pay-rates", onRates);
+  unsubs.push(() => window.removeEventListener("gb:pay-rates", onRates));
   if (paymentId) subPay(paymentId);
   if (refId && !isDemoUser()) {
     try {
@@ -263,7 +295,8 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
       subPay(r.merchantOid);
       openPaytrCheckout({ iframeUrl: r.iframeUrl, merchantOid: r.merchantOid, amountKurus: r.amountKurus, title, testMode: r.testMode === true, onPaid: () => onPaid?.(r.merchantOid) });
     } catch (e) {
-      alertModal("Ödeme başlatılamadı", U.paymentErrorText(e));
+      if (isPayerTaxRequired(e)) payerTaxRequiredPrompt(e);   // Yol A: fatura için mekanın vergi bilgisi gerekli
+      else alertModal("Ödeme başlatılamadı", U.paymentErrorText(e));
     } finally {
       st.busy = false;
       if (payBtn?.isConnected) { payBtn.dk.setBusy(false); payBtn.disabled = !termsReady(); }
@@ -309,10 +342,20 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
       }
       // varsayılan: ödeyen yalnız brütü öder (komisyon + KDV alıcının payından düşer). Admin "komisyonu ödeyen karşılar"
       // seçtiyse komisyon + KDV brütün üstüne eklenir (tahmin; kesin tutarı createPayment döndürür).
+      // Yol A (sanatçı kiralama): GigBridge sahneyi satar → mekan sahne bedeli + %20 KDV öder; stopaj kesmez, faturası GigBridge'den.
+      const resale = U.isResale(kind);
       const est = U.previewSplit(amountKurus / 100, kind, { includeTaxes: false });
-      const payerBears = est.commissionBorneBy === "payer";
-      const charge = amountKurus + (payerBears ? est.platformTakeKurus : 0);
-      kids.push(h("div", { class: "dk-pay-break" },
+      const payerBears = !resale && est.commissionBorneBy === "payer";
+      const charge = resale ? est.chargeKurus : amountKurus + (payerBears ? est.platformTakeKurus : 0);
+      if (resale) {
+        kids.push(h("div", { class: "dk-pay-break" },
+          row("Sahne bedeli (KDV hariç)", U.fmtKurus(est.saleKurus)),
+          row(`KDV (%${Math.round(est.saleVatRate * 1000) / 10})`, `+${U.fmtKurus(est.saleVatKurus)}`),
+          row("Ödenecek tutar", U.fmtKurus(charge), { strong: true }),
+          h("span", { class: "dk-pay-fine" }, `${U.resalePayerNote(est)} Etkinlikten sonra sahne bedeli + KDV tutarında tek fatura (gider belgeniz) e-postanıza gelir. Stopaj kesmezsiniz, gider pusulası düzenlemezsiniz.`)));
+        if (!isDemoUser() && !payerTaxB) { payerTaxB = taxBanner({ href: payerTaxHref(), text: "Ödemeden önce Vergi Bilgileri'ni doldur · faturan bu bilgilerle kesilir" }); unsubs.push(() => payerTaxB.destroy()); }
+        if (payerTaxB) kids.push(payerTaxB.node);
+      } else kids.push(h("div", { class: "dk-pay-break" },
         row(isRental ? "Mekan ücreti" : "Sahne ücreti", U.fmtKurus(amountKurus)),
         payerBears ? row(`GigBridge ${U.commissionText(kind)}`, `+${U.fmtKurus(est.platformTakeKurus)}`) : null,
         row(payerBears ? "Ödenecek tutar (tahmini)" : "Ödenecek tutar", U.fmtKurus(charge), { strong: true }),
@@ -330,6 +373,7 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
     } else {
       payBtn = null;
       kids.push(h("div", { class: "dk-pay-break" },
+        p && U.isResalePayment(p) ? row("Sahne bedeli + KDV", `${U.fmtKurus(p.saleKurus)} + ${U.fmtKurus(p.saleVatKurus)}`) : null,
         row("Ödenen", U.fmtKurus(p?.fv === 2 ? p.chargeKurus : amountKurus), { strong: true }),
         p?.refundedKurus ? row("İade edilen", U.fmtKurus(p.refundedKurus)) : null,
         p?.payerRefundDueKurus > 0 ? row("Sana iade edilecek vergi farkı", U.fmtKurus(p.payerRefundDueKurus), { color: "#7CE0B0" }) : null));
@@ -337,6 +381,7 @@ export function paymentCard({ kind, refId, amountTL, paymentStatus = null, payme
         : p?.status === "refunded" || (!p && refunded) ? "Ödemenin tamamı iade edildi."
         : U.disputeOpen(p) ? "Şikayetin inceleniyor. Karar verilene kadar ödeme emanette bekler."
         : "Para emanette. Etkinlikten 24 saat sonra, sorun bildirilmezse alıcıya aktarılır."));
+      if (p && U.isResalePayment(p) && p.status !== "refunded") kids.push(note("Sahne bedeli + KDV tutarında fatura GigBridge'den gelir (etkinlik sonrası). Stopaj kesmez, gider pusulası düzenlemezsiniz."));
       // ödeyenin vergi profili eksikse (mekan / organizatör) finansal inceleme gerekebilir
       if (p && (p.financeReasons || []).some((r) => r === "payer_tax_missing" || r === "payer_tax_unverified")) {
         if (!payerTaxB) { payerTaxB = taxBanner(); unsubs.push(() => payerTaxB.destroy()); }
@@ -394,7 +439,21 @@ export function escrowNote({ kind, refId = null, amountTL, paymentStatus = null,
 
   // Döküm: ödeme kaydı yoksa TAHMİN (Finans v2 formülü), fv:2 kaydında komisyon + KDV + her kesinti, eski kayıtta eski satırlar.
   function breakdown(p) {
-    const fmtL = (l) => (l.sign < 0 ? `−${U.fmtKurus(l.kurus)}` : U.fmtKurus(l.kurus));
+    const fmtL = (l) => (l.sign < 0 ? `−${U.fmtKurus(l.kurus)}` : l.sign > 0 ? `+${U.fmtKurus(l.kurus)}` : U.fmtKurus(l.kurus));
+    if (p && U.isResalePayment(p)) {
+      // Yol A: GigBridge sahneni satın aldı (sahne bedeli → GigBridge payı → hizmet bedelin → KDV → stopaj → PayTR → size kalan)
+      return h("div", { class: "dk-pay-break" }, ...U.payeeBreakdown(p).map((l) => (l.strong
+        ? row("Size kalan", U.fmtKurus(l.kurus), { strong: true, color: "#7CE0B0" })
+        : row(l.label, fmtL(l)))),
+      h("span", { class: "dk-pay-fine" }, U.resaleCategoryNote(p.sellerCategory || U.getSellerCategory())));
+    }
+    if (!p && U.isResale(kind)) {
+      const est = U.previewSplit(amountTL, kind);
+      return h("div", { class: "dk-pay-break" }, ...U.resaleBreakdown(est, { finalLabel: "Sana kalacak (tahmini)" }).map((l) => (l.strong
+        ? row(l.label, `≈ ${U.fmtApproxKurus(l.kurus)}`, { strong: true, color: "#7CE0B0" })
+        : row(l.label, fmtL(l)))),
+      h("span", { class: "dk-pay-fine" }, U.estimateNote(kind)));
+    }
     if (p) {
       const lines = U.payeeBreakdown(p);
       return h("div", { class: "dk-pay-break" }, ...lines.map((l) => (l.strong
@@ -502,8 +561,12 @@ export function paymentActions(p, side, { onOpenDispute } = {}) {
     }
   }
   // Gider pusulası bilgileri (kaydı olmayan sanatçı) mekana e-postayla gider — belgeyi mekan düzenler (functions/giderPusulasi.js)
-  if (side === "payer" && p.giderPusulasi?.status === "info_sent") {
+  // Yol A: pusulayı GigBridge düzenler (A); B/C sanatçıya "GigBridge'e makbuz / fatura kes" bilgisi gider — mekana pusula notu yok
+  if (side === "payer" && p.giderPusulasi?.status === "info_sent" && !U.isResalePayment(p)) {
     items.push(note("Gider pusulası için gereken bilgiler e-postanıza gönderildi. Pusulayı müşaviriniz düzenler, sanatçıya imzalatırsınız.", "#8A8E97"));
+  }
+  if (side === "payee" && U.isResalePayment(p) && p.giderPusulasi?.status === "info_sent" && p.giderPusulasi.target === "seller") {
+    items.push(note(`GigBridge'e ${p.sellerCategory === "B" ? "e-SMM (serbest meslek makbuzu)" : "e-Fatura"} kesmen için gereken bilgiler e-postana gönderildi. Belgeyi kesip aşağıdan yükle.`, "#8A8E97"));
   }
   if (!items.length && !btns.length) return null;
   return h("div", { class: "dk-pay-acts" }, ...items, btns.length ? h("div", { class: "dk-pay-btns" }, ...btns) : null);
@@ -637,7 +700,8 @@ export function payRowControl({ kind, refId, amountTL, paymentStatus = null, pay
       onclick: (e) => { e.stopPropagation(); openPayModal(item); } }, payBadge(null, null, lbl));
   };
   if (paymentStatus === "paid" || paymentStatus === "refunded") return badgeBtn(paymentStatus);
-  const amt = U.fmtKurus(Math.round(Number(amountTL) * 100));
+  // Yol A: mekan sahne bedeli + KDV öder (düğmede tahsil edilecek tutar)
+  const amt = U.fmtKurus(U.isResale(kind) ? U.resaleSplit(Math.round(Number(amountTL) * 100), null).chargeKurus : Math.round(Number(amountTL) * 100));
   const b = dkButton(`Öde · ${amt}`, { variant: "success", size: 36, icon: "lock", cls: "dk-pay-rowbtn", ariaLabel: `${title} ödemesini yap (${amt})` });
   b.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -1025,12 +1089,18 @@ export function paymentDocBlock(p) {
   if (svc) {
     kids.push(h("span", { class: "dk-pay-body" }, `${U.docTypeLabel(svc.docType)} · No ${svc.docNo || "—"} · ${isoToTR(svc.docDate) || "—"}`));
     if (st === "rejected" && svc.note) kids.push(note(`Red gerekçesi: ${svc.note}`, "#FF5A6E", "alertCircle"));
+  } else if (U.isResalePayment(p)) {
+    // Yol A: alıcı GigBridge — A: pusulayı GigBridge düzenler · B: e-SMM · C: e-Fatura (hizmet bedeli + KDV)
+    const total = U.fmtKurus((p.purchaseKurus || 0) + (p.purchaseVatKurus || 0));
+    kids.push(textP(p.sellerCategory === "A"
+      ? "Vergi kaydın olmadığı için gider pusulasını GigBridge düzenler; belge yüklemen gerekmez."
+      : `GigBridge'e ${p.sellerCategory === "B" ? "e-SMM" : "e-Fatura"} kes (hizmet bedeli ${U.fmtKurus(p.purchaseKurus)} + KDV ${U.fmtKurus(p.purchaseVatKurus)} = ${total}) ve buraya yükle${needed ? "; aktarım için gerekli." : "."}`));
   } else {
     kids.push(textP(needed
       ? "Aktarım için bu ödemeye ait faturanı / serbest meslek makbuzunu yüklemen gerekiyor."
       : "Bu ödeme için düzenlediğin fatura ya da makbuzu yükleyebilirsin (mali kayıt için)."));
   }
-  if (!svc || st === "rejected") {
+  if ((!svc || st === "rejected") && !(U.isResalePayment(p) && p.sellerCategory === "A" && !svc)) {
     kids.push(dkButton(svc ? "Yeni belge yükle" : "Belge yükle", { variant: needed || st === "rejected" ? "role" : "outline", size: 36, icon: "upload", onClick: () => openPaymentDocModal(p) }));
   }
   return h("div", { class: cx("dk-pay-tbox", "dk-pay-doc") }, ...kids);
@@ -1135,7 +1205,12 @@ export function payoutAccountCard({ openForm = false } = {}) {
     h("span", { class: "dk-pay-kick" }, "ÖDEME ALMA"),
     h("h2", { id: "dk-pay-acct-h", class: "dk-pay-acct-t" }, "Ödeme Bilgileri"),
     h("p", { class: "dk-pay-text" }, "Etkinlik ücretleri PayTR güvencesiyle emanette tutulur; etkinlikten sonra bu hesaba aktarılır. Hesap sahibinin adı IBAN'daki adla aynı olmalı (şirket hesabında ticari ünvan)."));
-  const foot = h("p", { class: "dk-pay-fine" }, "IBAN'ın yalnız ödeme aktarımı için PayTR'a iletilir; kimseyle paylaşılmaz. Aktarılan tutardan GigBridge komisyonu (+ KDV) ve varsa mevzuata göre vergi kesintisi düşülür.");
+  const footText = () => (U.isResale("artist_booking") && session.profile?.userType === "artist"
+    ? "IBAN'ın yalnız ödeme aktarımı için PayTR'a iletilir; kimseyle paylaşılmaz. GigBridge sahneni satın alır: aktarılan tutardan GigBridge payı ve varsa stopaj (GigBridge yatırır) düşülür."
+    : "IBAN'ın yalnız ödeme aktarımı için PayTR'a iletilir; kimseyle paylaşılmaz. Aktarılan tutardan GigBridge komisyonu (+ KDV) ve varsa mevzuata göre vergi kesintisi düşülür.");
+  const foot = h("p", { class: "dk-pay-fine" }, footText());
+  const onFootRates = () => { foot.textContent = footText(); };
+  window.addEventListener("gb:pay-rates", onFootRates);
   const taxB = taxBanner();
   const bodyBox = h("div", { class: "dk-pay-acct-body" });
   function draw() {
@@ -1168,7 +1243,7 @@ export function payoutAccountCard({ openForm = false } = {}) {
   return {
     node,
     focus() { try { node.scrollIntoView({ block: "start", behavior: "smooth" }); node.focus({ preventScroll: true }); } catch (_) {} if (acct && !acct.exists) requestAnimationFrame(() => nameIn.focus()); },
-    destroy() { alive = false; taxB.destroy(); },
+    destroy() { alive = false; taxB.destroy(); window.removeEventListener("gb:pay-rates", onFootRates); },
   };
 }
 

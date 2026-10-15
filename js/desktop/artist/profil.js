@@ -38,7 +38,7 @@ import {
   sendPasswordResetMail, sendPasswordResetEmail,
 } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
-import { grossForNet, netFromGross, previewSplit, fmtKurus, fmtApproxKurus, commissionText, ESTIMATE_NOTE, getPayRates } from "../shared/pay-util.js";
+import { grossForNet, netFromGross, previewSplit, fmtKurus, fmtApproxKurus, commissionText, estimateNote, getPayRates, isResale, getSellerCategory } from "../shared/pay-util.js";
 import { loadPayRates } from "../shared/payments.js";
 import { taxProfileCard } from "../shared/tax-form.js";
 import { groupSharesButton } from "../shared/payout-shares.js";
@@ -582,11 +582,19 @@ export function artistProfilView(ctx) {
   const maxIn = input("priceMax", { ph: "Örn. 25.000", type: "number", mono: true, get: () => netOfGross(D.priceMax), set: (v) => { D.priceMax = grossOfNet(v); } });
   const taxBox = h("input", { type: "checkbox", checked: taxIncl, style: { width: "18px", height: "18px", accentColor: "#FF4FA3", flex: "none" } });
   const taxSub = h("span", { style: { display: "block", fontSize: "12px", color: "#8A8E97", marginTop: "2px" } });
-  const stopajPct = () => `%${Math.round(getPayRates().estimateStopajRate * 1000) / 10}`;
+  const stopajPct = () => `%${Math.round((isResale() ? getPayRates().resaleStopajRate : getPayRates().estimateStopajRate) * 1000) / 10}`;
+  const noteEl = h("p", { class: k("callout"), style: { fontSize: "12px", color: "#8A8E97" } }, estimateNote());
   const paintTax = () => {
-    taxSub.textContent = taxIncl
-      ? `${commissionText()} ve tahmini vergi kesintisi (${stopajPct()} stopaj) fiyata eklenir; yazdığın tutar yaklaşık olarak cebine girer.`
-      : `Yalnız ${commissionText()} fiyata eklenir; vergi kesintisi (stopaj) yazdığın tutardan düşer.`;
+    // Yol A: GigBridge sahneyi alır → fiyat = GigBridge'in mekana satış fiyatı (KDV hariç); stopajı GigBridge keser (A/B), C'de yok
+    const noStopaj = isResale() && getSellerCategory() === "C";
+    taxSub.textContent = isResale()
+      ? (taxIncl && !noStopaj
+        ? `${commissionText()} ve stopaj (${stopajPct()}, GigBridge keser ve yatırır) fiyata eklenir; yazdığın tutar yaklaşık olarak cebine girer. Mekan bu fiyata ayrıca KDV öder.`
+        : `Yalnız ${commissionText()} fiyata eklenir${noStopaj ? "" : "; stopaj (GigBridge yatırır) yazdığın tutardan düşer"}. Mekan bu fiyata ayrıca KDV öder.`)
+      : taxIncl
+        ? `${commissionText()} ve tahmini vergi kesintisi (${stopajPct()} stopaj) fiyata eklenir; yazdığın tutar yaklaşık olarak cebine girer.`
+        : `Yalnız ${commissionText()} fiyata eklenir; vergi kesintisi (stopaj) yazdığın tutardan düşer.`;
+    noteEl.textContent = estimateNote();
   };
   paintTax();
   taxBox.addEventListener("change", () => {
@@ -604,7 +612,7 @@ export function artistProfilView(ctx) {
     taxRow,
     priceAlert,
     priceNet,
-    h("p", { class: k("callout"), style: { fontSize: "12px", color: "#8A8E97" } }, ESTIMATE_NOTE),
+    noteEl,
     h("p", { class: k("callout") }, "Sanatçılar en az ₺3.500 ücretle sahne alabilir. Fiyat tipi profilinde “Başlangıç ₺…” veya “Sabit ₺…” rozeti olarak gösterilir."),
     field("KAPORA NOTU (OPSİYONEL)", input("deposit", { ph: "örn. %30 kapora rezervasyonu kesinleştirir", maxlength: 160 }), { hintEl: hint("En çok 160 karakter.") }),
     field("İPTAL POLİTİKASI", select("cancel", CANCELLATION_OPTS, { fs14: true }), { max: 360 }));
@@ -861,8 +869,9 @@ export function artistProfilView(ctx) {
     // Sana kalacak ≈ (tahmini): brütten Finans v2 formülüyle (✓ ise tahmini stopaj düşülü)
     const net = (v) => { const n = Number(String(v || "").replace(/[^\d]/g, "")); return n > 0 ? fmtApproxKurus(previewSplit(n, "artist_booking", { includeTaxes: true }).payeeKurus) : null; };
     const na = net(D.priceMin), nb = net(D.priceMax);
+    const resale = isResale();
     const summary = (a || b)
-      ? `Mekanın göreceği fiyat: ${[a && `minimum ${a}`, b && `maksimum ${b}`].filter(Boolean).join(" · ")} (${commissionText()}${taxIncl ? " ve tahmini stopaj" : ""} eklenmiş). Sana kalacak ≈ ${[na, nb].filter(Boolean).join(" – ")} (tahmini).`
+      ? `Mekanın göreceği fiyat: ${[a && `minimum ${a}`, b && `maksimum ${b}`].filter(Boolean).join(" · ")} (${commissionText()}${taxIncl ? (resale ? " ve stopaj" : " ve tahmini stopaj") : ""} eklenmiş${resale ? "; mekan üstüne KDV öder" : ""}). Sana kalacak ≈ ${[na, nb].filter(Boolean).join(" – ")} (tahmini).`
       : "";
     // Kesinti dökümü (minimum fiyat; yoksa maksimum): brüt − komisyon − KDV − tahmini stopaj − PayTR = sana kalan
     const gN = Number(String(D.priceMin || D.priceMax || "").replace(/[^\d]/g, ""));
@@ -870,7 +879,10 @@ export function artistProfilView(ctx) {
     if (gN > 0) {
       const sp = previewSplit(gN, "artist_booking", { includeTaxes: true });
       const cut = (label, kurus) => (kurus > 0 ? ` − ${label} ${fmtKurus(kurus)}` : "");
-      lines.push(`Kesintiler (${fmtKurus(sp.grossKurus)} üzerinden):${sp.commissionBorneBy === "payee" ? cut("komisyon", sp.commissionKurus) + cut("KDV", sp.commissionVatKurus) : ""}`
+      // Yol A: sahne bedeli − GigBridge payı = hizmet bedelin (+ KDV B/C) − stopaj (GigBridge yatırır) − PayTR = sana kalan
+      if (resale) lines.push(`Döküm (${fmtKurus(sp.saleKurus)} üzerinden):${cut("GigBridge payı", sp.marginKurus)} = hizmet bedelin ${fmtKurus(sp.purchaseKurus)}`
+        + `${sp.purchaseVatKurus > 0 ? ` + KDV ${fmtKurus(sp.purchaseVatKurus)}` : ""}${cut("stopaj (GigBridge yatırır)", sp.stopajKurus)}${cut("PayTR masrafı", sp.paytrFeeKurus || 0)} = sana ${fmtApproxKurus(sp.payeeKurus)}`);
+      else lines.push(`Kesintiler (${fmtKurus(sp.grossKurus)} üzerinden):${sp.commissionBorneBy === "payee" ? cut("komisyon", sp.commissionKurus) + cut("KDV", sp.commissionVatKurus) : ""}`
         + `${cut("tahmini stopaj", sp.stopajKurus)}${cut("PayTR masrafı", sp.paytrFeeKurus || 0)} = sana ${fmtApproxKurus(sp.payeeKurus)}`);
     }
     priceNet.replaceChildren(...(summary ? [h("span", { style: { display: "block" } }, summary)] : []),

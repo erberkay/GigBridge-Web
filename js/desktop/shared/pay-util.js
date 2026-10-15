@@ -8,6 +8,8 @@ export const DEFAULT_RATES = Object.freeze({
   artistCommissionRate: 0.1, venueCommissionRate: 0.1, commissionVatRate: 0.2, commissionVatIncluded: false,
   artistCommissionBorneBy: "payee", venueCommissionBorneBy: "payee", estimateStopajRate: 0.2,
   paytrFeeRate: 0, paytrFeeBorneBy: "payee",
+  // Yol A (bookingModel 'resale'): GigBridge sahneyi sanatçıdan ALIR, mekana SATAR (yalnız sanatçı kiralama; mekan kiralama aracı modelde)
+  bookingModel: "agent", resaleStopajRate: 0.2,
 });
 let RATES = { ...DEFAULT_RATES };
 const rate01 = (v, max, d) => (typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= max ? v : d);
@@ -25,10 +27,72 @@ export function setPayRates(r) {
     estimateStopajRate: rate01(x.estimateStopajRate, 0.5, DEFAULT_RATES.estimateStopajRate),
     paytrFeeRate: rate01(x.paytrFeeRate, 0.1, DEFAULT_RATES.paytrFeeRate),
     paytrFeeBorneBy: x.paytrFeeBorneBy === "platform" ? "platform" : "payee",
+    bookingModel: x.bookingModel === "resale" ? "resale" : "agent",
+    resaleStopajRate: rate01(x.resaleStopajRate, 0.5, DEFAULT_RATES.resaleStopajRate),
   };
   return RATES;
 }
 export const getPayRates = () => RATES;
+/** Yol A geçerli mi (sunucu finance.js isResale: bookingModel 'resale' VE sanatçı kiralama) */
+export const isResale = (kind = "artist_booking", R = RATES) => R?.bookingModel === "resale" && kind === "artist_booking";
+/** Ödeme kaydı Yol A mı (kayıttaki model — güncel ayardan bağımsız) */
+export const isResalePayment = (p) => p?.model === "resale";
+
+// Oturumdaki sanatçının vergi kategorisi (A/B/C; Yol A tahmininde kesinti buna göre) — payments.js vergi profilinden doldurur.
+let SELLER_CAT = null;
+const catOf = (c) => (String(c || "").startsWith("A") ? "A" : c === "B" || c === "C" ? c : null);
+/** → true: değişti (ekranlar yeniden çizilsin) */
+export function setSellerCategory(c) { const n = catOf(c); if (n === SELLER_CAT) return false; SELLER_CAT = n; return true; }
+export const getSellerCategory = () => SELLER_CAT;
+
+/**
+ * YOL A bölüşümü (kuruş tamsayı) — sunucu functions/finance.js computeResaleSplit ile BİREBİR:
+ *   satış F (teklif ücreti, KDV hariç) · satış KDV'si = F × KDV · mekandan tahsil = F + KDV (mekan stopaj KESMEZ)
+ *   marj = F × sanatçı komisyon oranı · alış P = F − marj
+ *   A (kayıt yok) → %20 stopaj (GigBridge keser), alış KDV'si yok · B (e-SMM) → P + KDV, %20 stopaj · C (e-Fatura) → P + KDV, stopaj yok
+ *   bilinmeyen kategori (null) → kesinti yok (ödeme finans incelemesine düşer)
+ *   PayTR = tahsil × oran (alıcıdan) · sanatçıya = P + alış KDV'si − stopaj − PayTR
+ * R: oranlar (varsayılan güncel publicConfig; admin hesaplayıcısı düzenlenen ayarı verir).
+ */
+export function resaleSplit(saleKurus, sellerCategory, R = RATES) {
+  const F = Math.max(0, Math.round(Number(saleKurus) || 0));
+  const c01 = (v, max, d) => (typeof v === "number" && Number.isFinite(v) ? Math.min(max, Math.max(0, v)) : d);
+  const mr = c01(R.artistCommissionRate, 0.9, 0);
+  const sv = c01(R.commissionVatRate, 1, 0.2);
+  const pv = sv;
+  const sr = c01(R.resaleStopajRate, 0.5, 0.2);
+  const cat = catOf(sellerCategory);
+  const saleVatKurus = Math.round(F * sv);
+  const chargeKurus = F + saleVatKurus;
+  const marginKurus = Math.round(F * mr);
+  const P = F - marginKurus;
+  const purchaseVatKurus = cat === "B" || cat === "C" ? Math.round(P * pv) : 0;
+  const stopajKurus = cat === "A" || cat === "B" ? Math.round(P * sr) : 0;
+  const fr = c01(R.paytrFeeRate, 0.1, 0);
+  const feeBorne = R.paytrFeeBorneBy === "platform" ? "platform" : "payee";
+  const paytrFeeKurus = Math.round(chargeKurus * fr);
+  const payeeKurus = Math.max(0, P + purchaseVatKurus - stopajKurus - (feeBorne === "payee" ? paytrFeeKurus : 0));
+  return {
+    model: "resale", sellerCategory: cat, grossKurus: F, saleKurus: F, saleVatRate: sv, saleVatKurus, chargeKurus,
+    marginRate: mr, marginKurus, purchaseKurus: P, purchaseVatRate: pv, purchaseVatKurus, resaleStopajRate: sr, stopajKurus,
+    // aracı modelle ortak alanlar (ekranlar): komisyon = marj, KDV = net KDV (satış − alış)
+    commissionRate: mr, commissionKurus: marginKurus, commissionVatRate: sv, commissionVatKurus: saleVatKurus - purchaseVatKurus,
+    platformTakeKurus: chargeKurus - P - purchaseVatKurus, commissionBorneBy: "payee", estimateStopajRate: sr,
+    paytrFeeRate: fr, paytrFeeKurus, paytrFeeBorneBy: feeBorne, payeeKurus,
+  };
+}
+/** Yol A belge adı (sanatçının GigBridge'e kestiği / GigBridge'in düzenlediği) */
+export const RESALE_DOC = { A: "gider pusulası (GigBridge düzenler)", B: "e-SMM (sen GigBridge'e kesersin)", C: "e-Fatura (şirketin GigBridge'e keser)" };
+/** Yol A kategori notu (sanatçı tahmini / döküm altında; kısa) */
+export function resaleCategoryNote(cat = SELLER_CAT, R = RATES) {
+  const sp = `%${Math.round((R.resaleStopajRate ?? 0.2) * 1000) / 10}`;
+  const kdv = `%${Math.round((R.commissionVatRate ?? 0.2) * 1000) / 10}`;
+  const c = catOf(cat);
+  if (c === "A") return `GigBridge sahneni satın alır. Vergi kaydın olmadığı için ${sp} stopajı GigBridge keser ve vergi dairesine yatırır; gider pusulasını GigBridge düzenler, senin bir şey yapman gerekmez.`;
+  if (c === "B") return `GigBridge sahneni satın alır. GigBridge'e hizmet bedelin + ${kdv} KDV tutarında e-SMM kesersin; ${sp} stopajı GigBridge keser ve yatırır. KDV'yi beyannamenle devlete ödersin.`;
+  if (c === "C") return `GigBridge sahneni satın alır. Şirketin GigBridge'e hizmet bedeli + ${kdv} KDV tutarında e-Fatura keser; stopaj kesilmez. KDV'yi şirketin beyan eder.`;
+  return `GigBridge sahneni satın alır. Tahmin vergi kaydı olmayan sanatçıya göre (${sp} stopajı GigBridge keser). Şahıs şirketin ya da şirketin varsa Vergi Bilgileri'ni doldur: KDV eklenir, tahmin netleşir.`;
+}
 
 const ms = (v) => (v && typeof v.toMillis === "function" ? v.toMillis() : typeof v === "number" ? v : null);
 const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
@@ -92,7 +156,19 @@ export function toPayment(id, x) {
       service: x.documents.service && typeof x.documents.service === "object" ? { ...x.documents.service } : null,
     } : { commissionInvoice: null, service: null },
     // Gider pusulası bilgileri e-postası (VUK 234; kaydı olmayan sanatçı — belgeyi mekan düzenler, functions/giderPusulasi.js)
-    giderPusulasi: x?.giderPusulasi && typeof x.giderPusulasi.status === "string" ? { status: s(x.giderPusulasi.status) } : null,
+    // Yol A: target 'company' (A — pusulayı GigBridge düzenler) | 'seller' (B/C — sanatçı GigBridge'e belge keser)
+    giderPusulasi: x?.giderPusulasi && typeof x.giderPusulasi.status === "string" ? { status: s(x.giderPusulasi.status), target: s(x.giderPusulasi.target) } : null,
+    // Yol A (model 'resale'): GigBridge alır, satar — satış (mekana) + alış (sanatçıdan) ayrı
+    model: x?.model === "resale" ? "resale" : "agent",
+    saleKurus: num(x?.saleKurus) || num(x?.grossKurus),
+    saleVatRate: num(x?.saleVatRate),
+    saleVatKurus: num(x?.saleVatKurus),
+    purchaseKurus: num(x?.purchaseKurus),
+    purchaseVatKurus: num(x?.purchaseVatKurus),
+    sellerCategory: ["A", "B", "C"].includes(x?.sellerCategory) ? x.sellerCategory : null,
+    marginRate: num(x?.marginRate),
+    marginKurus: num(x?.marginKurus),
+    resaleStopajRate: num(x?.resaleStopajRate),
     payoutParts: Array.isArray(x?.payoutParts) ? x.payoutParts.filter((v) => v && typeof v === "object").map((v) => ({
       uid: s(v.uid), name: s(v.name), percent: num(v.percent), amountKurus: num(v.amountKurus), status: s(v.status) })) : [],
   };
@@ -112,9 +188,15 @@ export const fmtApproxKurus = (k) => fmtKurus(Math.round((Number(k) || 0) / 100)
  *   komisyon (KDV hariç) + komisyon KDV'si (KDV dahil ayarında içinden ayrılır) + includeTaxes ise tahmini stopaj (brüt × oran).
  *   Komisyonu alıcı karşılıyorsa (varsayılan) alıcının payından düşer. Kesin kesinti sunucuda onaylı kurala göre hesaplanır.
  */
-export function previewSplit(grossTL, kind, { includeTaxes = true } = {}) {
+export function previewSplit(grossTL, kind, { includeTaxes = true, sellerCategory } = {}) {
   const g = Math.max(0, Math.round((Number(grossTL) || 0) * 100));
   const R = RATES;
+  // Yol A: teklif ücreti = GigBridge'in satış fiyatı (KDV hariç). Kategori bilinmiyorsa tahmin A'ya göre (sunucu estimatePayee ile aynı).
+  // includeTaxes false → stopaj tahmine katılmaz (aracı modeldeki anlamıyla aynı: "vergi kesintisi yazdığın tutardan düşer").
+  if (isResale(kind, R)) {
+    const sp = resaleSplit(g, sellerCategory !== undefined ? sellerCategory || "A" : SELLER_CAT || "A", R);
+    return includeTaxes ? sp : { ...sp, payeeKurus: sp.payeeKurus + sp.stopajKurus, stopajKurus: 0 };
+  }
   const cr = kind === "venue_rental" ? R.venueCommissionRate : R.artistCommissionRate;
   const v = R.commissionVatRate;
   let commission, vat;
@@ -134,11 +216,15 @@ export function previewSplit(grossTL, kind, { includeTaxes = true } = {}) {
   };
 }
 /** "%10 komisyon + KDV" — oran metni (güncel publicConfig'e göre). */
-export const commissionText = (kind = "artist_booking") =>
-  `%${Math.round((kind === "venue_rental" ? RATES.venueCommissionRate : RATES.artistCommissionRate) * 1000) / 10} komisyon + KDV`
-  + (RATES.paytrFeeRate > 0 && RATES.paytrFeeBorneBy !== "platform" ? ` + %${Math.round(RATES.paytrFeeRate * 10000) / 100} PayTR masrafı` : "");
-/** Tahmin altındaki kısa not (uygulamayla aynı metin). */
+export const commissionText = (kind = "artist_booking") => (isResale(kind)
+  ? `%${Math.round(RATES.artistCommissionRate * 1000) / 10} GigBridge payı`
+    + (RATES.paytrFeeRate > 0 && RATES.paytrFeeBorneBy !== "platform" ? ` + %${Math.round(RATES.paytrFeeRate * 10000) / 100} PayTR masrafı` : "")
+  : `%${Math.round((kind === "venue_rental" ? RATES.venueCommissionRate : RATES.artistCommissionRate) * 1000) / 10} komisyon + KDV`
+  + (RATES.paytrFeeRate > 0 && RATES.paytrFeeBorneBy !== "platform" ? ` + %${Math.round(RATES.paytrFeeRate * 10000) / 100} PayTR masrafı` : ""));
+/** Tahmin altındaki kısa not (uygulamayla aynı metin) — ARACI model. Model duyarlı metin için estimateNote(). */
 export const ESTIMATE_NOTE = "Stopaj (GVK md. 94): mekan şirket ya da gerçek usul işletmeyse ücretin %20'sini mekan keser; basit usul mekanda ve şirketi olan sanatçıda kesilmez.";
+/** Model duyarlı tahmin notu: aracı → ESTIMATE_NOTE; Yol A → sanatçının kategorisine göre kısa not */
+export const estimateNote = (kind = "artist_booking", cat = SELLER_CAT) => (isResale(kind) ? resaleCategoryNote(cat) : ESTIMATE_NOTE);
 
 // ── Finans v2 ödeme kaydı yardımcıları ──
 export const WITHHOLDING_LABEL = { serbest_meslek_stopaj: "Serbest meslek stopajı", eticaret_tevkifat: "E-ticaret vergi tevkifatı", no_withholding: "Kesinti yok" };
@@ -169,6 +255,7 @@ export const FINANCE_REASON_LABEL = {
   no_approved_rule: "Onaylı vergi kuralı yok", rules_conflict: "Kurallar çakışıyor", rules_changed: "Kurallar değişti",
   group_single_iban: "Grup tek IBAN'a (pay dağılımı yok)", group_member_tax: "Grup üyesinin vergi bilgisi eksik",
   group_member_iban: "Grup üyesinin IBAN'ı eksik", document_missing: "Hizmet belgesi eksik", payer_refund_due: "Ödeyene vergi iadesi gerekli",
+  group_resale_manual: "Grup ödemesi (Yol A): kesinti elle belirlenir",
 };
 export const financeReasonText = (r) => FINANCE_REASON_LABEL[r] ?? r;
 /**
@@ -177,6 +264,7 @@ export const financeReasonText = (r) => FINANCE_REASON_LABEL[r] ?? r;
  */
 export function payeeBreakdown(p) {
   if (!p) return [];
+  if (isResalePayment(p)) return resaleBreakdown(p);
   const gross = p.grossKurus || 0;
   if (p.fv !== 2) {
     return [
@@ -195,8 +283,36 @@ export function payeeBreakdown(p) {
   out.push({ label: "Size kalan", kurus: p.payeeKurus || 0, sign: 0, strong: true });
   return out;
 }
+/**
+ * Yol A dökümü (ödeme kaydı ya da resaleSplit tahmini): sahne bedeli F → GigBridge payı −marj → hizmet bedelin P → (B/C) + KDV →
+ * stopaj (GigBridge yatırır) → PayTR → size kalan. sign: -1 düşülür, 1 eklenir, 0 bilgi.
+ */
+export function resaleBreakdown(p, { finalLabel = "Size kalan" } = {}) {
+  const pc = (r) => `%${Math.round((r || 0) * 1000) / 10}`;
+  const cat = p.sellerCategory || null;
+  const F = p.saleKurus || p.grossKurus || 0;
+  const P = p.purchaseKurus || Math.max(0, F - (p.marginKurus || 0));
+  const out = [
+    { label: "Sahne bedeli (mekana satış, KDV hariç)", kurus: F, sign: 0 },
+    { label: `GigBridge payı (${pc(p.marginRate || p.commissionRate)})`, kurus: p.marginKurus || p.commissionKurus || 0, sign: -1 },
+    { label: "Hizmet bedelin (GigBridge'in alış bedeli)", kurus: P, sign: 0 },
+  ];
+  if ((p.purchaseVatKurus || 0) > 0) out.push({ label: `KDV (${pc(p.purchaseVatRate || p.saleVatRate || 0.2)}) · ${cat === "B" ? "e-SMM'ne eklenir" : "faturana eklenir"}`, kurus: p.purchaseVatKurus, sign: 1 });
+  const wh = (p.withholdings || []).filter((w) => (w.amountKurus || 0) > 0);
+  if (wh.length) wh.forEach((w) => out.push({ label: `${withholdingLine(w)} · GigBridge yatırır`, kurus: w.amountKurus, sign: -1 }));
+  else if ((p.stopajKurus || 0) > 0) out.push({ label: `Stopaj (${pc(p.resaleStopajRate || 0.2)}) · GigBridge yatırır`, kurus: p.stopajKurus, sign: -1 });
+  if ((p.paytrFeeKurus || 0) > 0 && p.paytrFeeBorneBy !== "platform") out.push({ label: "PayTR ödeme masrafı", kurus: p.paytrFeeKurus, sign: -1 });
+  out.push({ label: finalLabel, kurus: p.payeeKurus || 0, sign: 0, strong: true });
+  return out;
+}
 /** Tek satırlık özet (geçmiş listesi): "Ücret ₺X · komisyon ₺Y · KDV ₺Z · vergi kesintisi ₺W" (eski kayıt: "… · stopaj ₺W") */
 export function payeeBreakdownText(p) {
+  if (isResalePayment(p)) {
+    const parts = [`Sahne bedeli ${fmtKurus(p.saleKurus || p.grossKurus)}`, `GigBridge payı ${fmtKurus(p.marginKurus || p.commissionKurus)}`, `hizmet bedelin ${fmtKurus(p.purchaseKurus)}`];
+    if (p.purchaseVatKurus > 0) parts.push(`+ KDV ${fmtKurus(p.purchaseVatKurus)}`);
+    if (p.stopajKurus > 0) parts.push(`stopaj ${fmtKurus(p.stopajKurus)} (GigBridge yatırır)`);
+    return parts.join(" · ");
+  }
   if (p?.fv !== 2) return `Ücret ${fmtKurus(p.grossKurus)} · komisyon ${fmtKurus(p.commissionKurus)} · stopaj ${fmtKurus(p.stopajKurus)}`;
   const parts = [`Ücret ${fmtKurus(p.grossKurus)}`];
   if (p.commissionBorneBy !== "payer") parts.push(`komisyon ${fmtKurus(p.commissionKurus)}`, `KDV ${fmtKurus(p.commissionVatKurus)}`);
@@ -206,10 +322,22 @@ export function payeeBreakdownText(p) {
 
 /** Ödeyen (mekan) satırı: ödemeden kendi kestiği stopaj → vergi dairesine kendisi yatırır + gider pusulası (GVK 94, VUK 234) */
 export function payerWithholdingText(p) {
+  if (isResalePayment(p)) return "";   // Yol A: mekan stopaj kesmez, gider pusulası düzenlemez (GigBridge'den fatura alır)
   const w = num(p?.payerWithheldKurus);
   if (p?.fv !== 2 || !(w > 0)) return "";
   return `Ücret ${fmtKurus(p.grossKurus)} · stopaj ${fmtKurus(w)} sizde kaldı: muhtasar beyannameyle vergi dairesine siz yatırırsınız`
     + ` · sanatçı vergi kaydı yoksa 7 gün içinde gider pusulası düzenleyin`;
+}
+
+/** Ödeyen (mekan) satırı · Yol A: "Sahne bedeli ₺F + KDV ₺V = ₺C · faturanız GigBridge'den gelir" (aracı modelde boş) */
+export function payerInvoiceText(p) {
+  if (!isResalePayment(p)) return "";
+  return `Sahne bedeli ${fmtKurus(p.saleKurus || p.grossKurus)} + KDV ${fmtKurus(p.saleVatKurus)} = ${fmtKurus(p.chargeKurus)} · faturanız GigBridge'den gelir`;
+}
+/** Yol A ödeyen açıklaması (ödeme kartı / pencere): "Sahne bedeli 10.000 + KDV 2.000 = 12.000 TL. Faturanız GigBridge'den gelir." */
+export function resalePayerNote(sp) {
+  const t = (k) => (Math.round(k) / 100).toLocaleString("tr-TR", { minimumFractionDigits: k % 100 ? 2 : 0, maximumFractionDigits: 2 });
+  return `Sahne bedeli ${t(sp.saleKurus || sp.grossKurus)} + KDV ${t(sp.saleVatKurus)} = ${t(sp.chargeKurus)} TL. Faturanız GigBridge'den gelir.`;
 }
 
 // Ton renkleri (uygulama PaymentCards TONE): warn #FFB347 · ok #7CE0B0 · info #4ED8FF · bad #FF5A6E · muted vapor
@@ -492,6 +620,14 @@ export function grossForNet(netTL, includeTaxes = true) {
   const target = Math.round(net * 100);
   const got = (x) => previewSplit(x, "artist_booking", { includeTaxes }).payeeKurus;
   const R = RATES;
+  if (isResale("artist_booking", R)) {
+    // Yol A: oran kategoriye göre değişir → 100.000 TL'lik örnekten yaklaşık oran, sonra aynı düzeltme döngüsü
+    const r = got(100000) / 10000000 || 0.5;
+    let g = Math.max(1, Math.ceil(net / Math.max(0.05, r)));
+    for (let i = 0; i < 1000 && got(g) < target; i++) g += 1;
+    for (let i = 0; i < 1000 && g > 1 && got(g - 1) >= target; i++) g -= 1;
+    return g;
+  }
   const vatF = R.commissionVatIncluded ? 1 : 1 + R.commissionVatRate;
   const takeF = R.artistCommissionBorneBy === "payee" ? R.artistCommissionRate * vatF : 0;
   const feeF = R.paytrFeeBorneBy !== "platform" ? (R.paytrFeeRate || 0) * (1 + (R.artistCommissionBorneBy === "payer" ? R.artistCommissionRate * vatF : 0)) : 0;

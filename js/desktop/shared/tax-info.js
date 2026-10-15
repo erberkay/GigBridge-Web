@@ -1,50 +1,61 @@
 // VERGİ DURUMU AÇIKLAMALARI — Vergi Bilgileri formunda seçilen kategoriye göre gösterilir (sade dil, kanun dayanaklı).
 // Uygulama eşi: src/data/taxInfo.ts — metinler birlikte güncellenir. Arızi beyan sürümü sunucuda: functions/finance.js
 // ARIZI_NOTICE_VERSION (metin değişirse sürüm de artırılır → kullanıcı yeniden onaylar).
-// Dayanak: GVK md. 65, 82, 86, 94/1-2-b, 103 · VUK md. 8, 11, 234, 236 · 332 No.lu GVGT (2026 arızi istisna 350.000 TL).
-// Not: bilgi amaçlıdır; kesin durum mali müşavir onayına bağlıdır (raporda "Muhtemel" işaretli noktalar).
+// MODEL "Yol A" (2026-10-16): sanatçı kiralamada GigBridge sahne hizmetini sanatçıdan SATIN ALIR, mekana SATAR.
+//   Mekan: teklif bedeli + %20 KDV öder, GigBridge'den e-Fatura/e-Arşiv alır; stopaj kesmez, gider pusulası düzenlemez.
+//   Sanatçıya ödenen bedel = teklif bedeli − GigBridge payı (varsayılan %10). Stopajı (GVK 94/2-b) GigBridge keser, muhtasarla yatırır.
+//   PayTR masrafı (%1,99, vergiler dahil; mekanın ödediği toplam üzerinden) sanatçı ödemesinden düşülür.
+//   Mekan kiralama (organizatör → mekan) eski aracılık modelinde kalır.
+// Dayanak: GVK md. 65, 82, 86, 94/1-2-b, 103 · VUK md. 8, 11, 229, 234, 236 · KDVK md. 1 · 332 No.lu GVGT (2026 arızi istisna 350.000 TL).
+// Not: bilgi amaçlıdır; vergi danışmanlığı yerine geçmez.
 
 export const ARIZI_LIMIT_TL = 350000;
 
 export const TAX_INFO = {
   A: {
-    title: "Vergi kaydın yoksa (ara sıra sahne alan sanatçı)",
+    title: "Vergi kaydın yoksa (düzenli ya da ara sıra sahne alan sanatçı)",
     points: [
-      "Ara sıra sahne alıp ücret alıyorsan bu gelir kanunda \"arızi serbest meslek kazancı\" sayılır (Gelir Vergisi Kanunu md. 82). Vergi dairesine kayıt olmadan çalışabilirsin.",
-      "Ücretinden %20 gelir vergisi stopajı kesilir (GVK md. 94). Mekan şirket ya da gerçek usul işletmeyse stopajı mekan keser ve senin adına vergi dairesine yatırır.",
-      "Vergi kaydın olmadığı için ücrete KDV eklenmez. Fatura ya da makbuz kesmezsin; mekan senin adına gider pusulası düzenler, sen imzalarsın (VUK md. 234).",
+      "Sanatçı kiralamada sahne hizmetini GigBridge senden satın alır ve mekana satar. Sana ödenen bedel, teklif bedelinden GigBridge payı (%10) düşülerek bulunur.",
+      "Vergi kaydın yoksa aldığın ücret kanunda \"arızi serbest meslek kazancı\" sayılır (Gelir Vergisi Kanunu md. 82). Vergi dairesine kayıt olmadan çalışabilirsin.",
+      "Ücretinden %20 gelir vergisi stopajını GigBridge keser ve senin adına vergi dairesine yatırır (GVK md. 94/2-b). Mekan senden stopaj kesmez.",
+      "Vergi kaydın olmadığı için ücretine KDV eklenmez. Fatura ya da makbuz kesmezsin; belgeyi (gider pusulası, VUK md. 234) GigBridge düzenler. Ödeme lisanslı ödeme kuruluşu PayTR üzerinden yapılır.",
       "2026 yılında bütün arızi kazançlarının toplamı 350.000 TL'ye kadar yıllık beyannameye girmez (GVK md. 82, 332 No.lu Tebliğ). Bu sınır GigBridge dışındaki işlerini de kapsar.",
-      "Yıl içinde 350.000 TL'yi aşarsan yıllık gelir vergisi beyannamesi vermen gerekir. Sahneyi sürekli ve düzenli iş olarak yapıyorsan artık \"arızi\" sayılmazsın: vergi dairesine kayıt olup şahıs şirketi (serbest meslek mükellefiyeti) açman gerekir.",
-      "Bir mekanda sabit günlerde, mekanın talimatıyla düzenli çalışıyorsan (resident DJ gibi) bu ilişki ücretli çalışma sayılabilir; mekanın seni sigortalı göstermesi gerekebilir.",
+      "Yıl içinde 350.000 TL'yi aşarsan yıllık gelir vergisi beyannamesi vermen gerekir. Sahneyi sürekli ve düzenli iş olarak yapıyorsan artık \"arızi\" sayılmazsın: vergi dairesine kayıt olup şahıs şirketi (serbest meslek mükellefiyeti) açman gerekir. Kendi vergi kaydın ve beyanların senin sorumluluğundadır; GigBridge bunlardan sorumlu değildir.",
+      "GigBridge işverenin değildir: bağımsız çalışırsın, teklifleri serbestçe seçer ya da reddedersin, fiyatını kendin belirlersin, başka yerlerde de çalışabilirsin. Aranızda iş ilişkisi ve SGK sigortalılığı doğmaz.",
     ],
-    example: "10.000 TL'lik işte: %20 stopaj 2.000 TL (mekan yatırır) · GigBridge komisyonu %10 + KDV 1.200 TL → sana yaklaşık 6.800 TL kalır.",
+    example: "Mekan 10.000 TL + 2.000 TL KDV öder. Senin bedelin 9.000 TL (GigBridge payı %10) · %20 stopaj 1.800 TL (GigBridge yatırır) · PayTR masrafı %1,99 = 238,80 TL → sana 6.961,20 TL ödenir.",
   },
   B: {
     title: "Şahıs şirketin varsa (serbest meslek mükellefi)",
     points: [
-      "Her iş için e-Serbest Meslek Makbuzu (e-SMM) düzenlersin (VUK md. 236). Serbest meslek mükellefi her durumda KDV mükellefidir: makbuza %20 KDV eklenir; KDV'yi sen beyan edip ödersin.",
-      "Mekan şirket ya da gerçek usul işletmeyse ücretinden %20 stopaj keser (GVK md. 94). Kesilen bu tutar yıllık beyannamende ödeyeceğin vergiden düşülür.",
+      "Sanatçı kiralamada sahne hizmetini GigBridge senden satın alır ve mekana satar. Sana ödenen bedel, teklif bedelinden GigBridge payı (%10) düşülerek bulunur.",
+      "Her iş için GigBridge adına e-Serbest Meslek Makbuzu (e-SMM) düzenlersin (VUK md. 236). Serbest meslek mükellefi her durumda KDV mükellefidir: makbuza %20 KDV eklenir; KDV'yi sen beyan edip ödersin.",
+      "GigBridge ücretinden (KDV hariç tutardan) %20 stopaj keser ve vergi dairesine yatırır (GVK md. 94/2-b). Kesilen bu tutar yıllık beyannamende ödeyeceğin vergiden düşülür. Mekan senden stopaj kesmez.",
       "Her yıl gelir vergisi beyannamesi verirsin; vergi kazancına göre artan oranlıdır (%15–%40, GVK md. 103). Giderlerini düşebilirsin.",
-      "Bağ-Kur (SGK 4/b) primi ödersin. 350.000 TL sınırı ve \"arızi\" kuralı sana uygulanmaz.",
+      "Bağ-Kur (SGK 4/b) primini kendin ödersin. 350.000 TL sınırı ve \"arızi\" kuralı sana uygulanmaz. GigBridge işverenin değildir; bağımsız çalışırsın.",
     ],
-    example: "10.000 TL + 2.000 TL KDV'li makbuzda: mekan 2.000 TL stopaj keser, sana 10.000 TL ödenir (2.000 TL'si KDV, devlete ödersin) · GigBridge komisyonu %10 + KDV 1.200 TL.",
+    example: "Mekan 10.000 TL + 2.000 TL KDV öder. GigBridge'e 9.000 TL + 1.800 TL KDV'li e-SMM düzenlersin · GigBridge 1.800 TL stopaj keser · PayTR masrafı 238,80 TL → sana 8.761,20 TL ödenir (1.800 TL'si KDV, devlete ödersin).",
   },
   C: {
     title: "Limited / anonim şirketin ya da ajansın varsa",
     points: [
-      "Şirketin mekana e-Fatura ya da e-Arşiv fatura keser (%20 KDV).",
-      "Şirkete yapılan ödemeden %20 serbest meslek stopajı kesilmez; şirket kazancı üzerinden kurumlar vergisi öder.",
-      "Platform üzerinden yapılan ödemelerde %1 e-ticaret vergi kesintisi uygulanabilir (GVK md. 94/19); uygulanırsa ödeme dökümünde gösterilir.",
+      "Sanatçı kiralamada sahne hizmetini GigBridge şirketinden satın alır ve mekana satar. Şirketine ödenen bedel, teklif bedelinden GigBridge payı (%10) düşülerek bulunur.",
+      "Şirketin GigBridge adına e-Fatura ya da e-Arşiv fatura keser (%20 KDV). KDV'yi şirketin beyan edip öder.",
+      "Şirkete yapılan ödemeden stopaj kesilmez; şirket kazancı üzerinden kurumlar vergisi öder.",
     ],
-    example: "10.000 TL + 2.000 TL KDV'li faturada: stopaj yok · GigBridge komisyonu %10 + KDV 1.200 TL.",
+    example: "Mekan 10.000 TL + 2.000 TL KDV öder. Şirketin GigBridge'e 9.000 TL + 1.800 TL KDV'li fatura keser · stopaj yok · PayTR masrafı 238,80 TL → şirketine 10.561,20 TL ödenir (1.800 TL'si KDV).",
   },
 };
 
 /** Vergi kaydı olmayan sanatçının kabul ettiği beyan (sunucu ariziAccepted ister). */
 export const ARIZI_DECLARATION =
-  "Vergi kaydım olmadığını beyan ederim. Yukarıdaki bilgileri okudum. Bir takvim yılında arızi kazançlarımın toplamı 350.000 TL'yi aşarsa "
-  + "yıllık beyanname vermek, sahne işini düzenli yapmaya başlarsam vergi dairesine kayıt olup şahıs şirketi açmak benim sorumluluğumdadır. "
+  "Vergi kaydım olmadığını beyan ederim. Yukarıdaki bilgileri okudum. GigBridge'in sahne hizmetimi satın aldığını, ödememden %20 gelir vergisi "
+  + "stopajını keserek benim adıma vergi dairesine yatıracağını ve gider pusulasını düzenleyeceğini biliyorum. "
+  + "Bir takvim yılında arızi kazançlarımın toplamı 350.000 TL'yi aşarsa yıllık beyanname vermek, sahne işini sürekli ve düzenli yapıyorsam "
+  + "vergi dairesine kayıt olup şahıs şirketi açmak benim sorumluluğumdadır; GigBridge kendi vergi kaydım ve beyanlarımdan sorumlu değildir. "
   + "Bu yükümlülükleri yerine getirmememden ya da beyanımın yanlış olmasından doğacak vergi, ceza ve faizlerden GigBridge sorumlu değildir. "
-  + "GigBridge'in ve mekanın kanundan doğan vergi kesintisi ve bildirim yükümlülükleri bu beyandan etkilenmez.";
+  + "GigBridge'in işverenim olmadığını; teklifleri serbestçe kabul ya da reddedebildiğimi, fiyatımı kendim belirlediğimi, başka yerlerde de "
+  + "çalışabildiğimi ve aramızda iş ilişkisi ya da SGK sigortalılığı doğmadığını kabul ederim. "
+  + "GigBridge'in kanundan doğan vergi kesintisi ve bildirim yükümlülükleri bu beyandan etkilenmez.";
 
-export const TAX_INFO_NOTE = "Bilgi amaçlıdır; kendi durumun için mali müşavirine danış.";
+export const TAX_INFO_NOTE = "Bilgi amaçlıdır, vergi danışmanlığı yerine geçmez; kendi durumun için mali müşavirine danış.";

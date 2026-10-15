@@ -6,7 +6,7 @@
 import { h } from "../../ui.js";
 import { cx, dkButton, dkInput, dkTextarea, dkSelect, dkCheckbox, dkRadioGroup, dkStatusBadge, dkSkeleton, dkInlineMessage, dkConfirm } from "./ui.js";
 import { LEGAL } from "./assets.js";
-import { payApi, alertModal, paymentErrorText, isDemoUser, invalidateTaxProfile, fmtDT, TONE_COLOR } from "./payments.js";
+import { payApi, alertModal, paymentErrorText, isDemoUser, invalidateTaxProfile, fmtDT, TONE_COLOR, loadPayRates, isResale, resaleCategoryNote } from "./payments.js";
 
 export const TAX_STATUS = {
   none: { text: "EKSİK", tone: "warn" },
@@ -55,12 +55,20 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   let alive = true, data = null, err = false, saving = false;
   const badgeBox = h("span", { class: "dk-tax-badge" });
   // embedded: profil sekmesinin içinde (bölüm başlığı zaten "Vergi Bilgileri") → yalnız rozet + açıklama
+  // Açıklama iş modeline göre (publicConfig/payments bookingModel — loadPayRates): Yol A'da GigBridge sahneyi alır, satar
+  const leadEl = h("p", { class: "dk-pay-text" });
+  const leadText = () => (isResale()
+    ? (performer
+      ? "GigBridge sahneni senden satın alıp mekana satar. Vergi kaydın yoksa stopajı GigBridge keser ve gider pusulasını düzenler; şahıs şirketin ya da şirketin varsa GigBridge'e makbuz / fatura (+ KDV) kesersin. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
+      : "Sanatçı kiralamada sahneyi GigBridge'den satın alırsın: GigBridge sana sahne bedeli + %20 KDV tutarında tek fatura keser (bu bilgilerle). Stopaj kesmez, gider pusulası düzenlemezsin. Bilgiler eksikse sanatçı ödemesi başlatılamaz.")
+    : performer
+      ? "Ödemelerinde doğru vergi kesintisinin (stopaj) uygulanması ve belgelerin düzenlenmesi için gerekli. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
+      : "Sanatçı ve mekan ödemelerinde stopaj sorumluluğunun ve faturanın doğru belirlenmesi için gerekli. Bilgiler eksikse ödemeler finansal incelemede bekleyebilir.");
+  leadEl.textContent = leadText();
   const head = h("div", { class: "dk-pay-acct-head" },
     h("div", { class: "dk-tax-top" }, h("span", { class: "dk-pay-kick" }, "FİNANS · VERGİ"), badgeBox),
     embedded ? null : h("h2", { id: "dk-tax-h", class: "dk-pay-acct-t" }, "Vergi Bilgileri"),
-    h("p", { class: "dk-pay-text" }, performer
-      ? "Ödemelerinde doğru vergi kesintisinin (stopaj) uygulanması ve belgelerin düzenlenmesi için gerekli. Bilgiler eksikse ödemen finansal incelemede bekleyebilir."
-      : "Sanatçı ve mekan ödemelerinde stopaj sorumluluğunun ve faturanın doğru belirlenmesi için gerekli. Bilgiler eksikse ödemeler finansal incelemede bekleyebilir."));
+    leadEl);
   const body = h("div", { class: "dk-pay-acct-body" });
   node.append(head, body);
 
@@ -85,8 +93,12 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
   const ariziBox = performer ? dkCheckbox({ label: "Vergilendirme bilgisini ve ödeme sistemini kabul ediyorum.", checked: false, cls: "dk-pay-agree", onChange: (v) => { ariziOk = v; } }) : null;
   const infoLink = performer ? h("a", { href: "/vergilendirme.html#a", target: "_blank", rel: "noopener", class: "dk-link dk-tax-kvkk", style: { color: "#5AA9FF", textDecoration: "underline", fontWeight: "600" } }, "Vergilendirme bilgisi") : null;
   const infoBox = performer ? h("div", { class: "dk-tax-kv" }, ariziBox, infoLink) : null;
+  // Yol A: seçili kategoride ne olacağı (stopajı kim keser, hangi belge) — aracı modelde gizli
+  const catNote = performer ? h("p", { class: "dk-pay-fine", hidden: true }) : null;
   function paintInfo() {
     if (!performer) return;
+    catNote.hidden = !isResale();
+    if (isResale()) catNote.textContent = resaleCategoryNote(cat);
     infoLink.href = `/vergilendirme.html#${cat.toLowerCase()}`;
     const lbl = kvkkBox.querySelector(".dk-tg-l");
     if (lbl) lbl.textContent = cat === "A" ? KVKK_LBL_A : KVKK_LBL;
@@ -151,7 +163,11 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     const sahis = selOf(bizSel).value === "sahis";
     rows.tckn.hidden = !sahis;
     regimeBox.hidden = !sahis;
-    stopajInfo.textContent = sahis
+    stopajInfo.textContent = isResale()
+      ? (sahis
+        ? "Sanatçı kiralamada stopaj kesmezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne bedeli + %20 KDV tutarında fatura keser (gider belgeniz budur). Gider pusulası düzenlemezsiniz."
+        : "Sanatçı kiralamada stopaj kesmezsiniz, gider pusulası düzenlemezsiniz: sahneyi GigBridge'den satın alırsınız, GigBridge size sahne bedeli + %20 KDV tutarında e-Fatura / e-Arşiv fatura keser.")
+      : sahis
       ? "Stopaj (GVK md. 94): gerçek usulde sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; basit usulde stopaj kesmezsiniz, sanatçı için gider pusulası düzenlersiniz."
       : "Stopaj (GVK md. 94): şirket, kooperatif, dernek ve kamu kurumları kanunen stopaj sorumlusudur. Vergi kaydı olmayan ya da serbest meslek mükellefi sanatçıya yaptığınız ödemeden %20 stopaj kesip muhtasarla yatırırsınız; şirketi olan sanatçıdan stopaj kesilmez.";
     rows.vkn.querySelector(".dk-lbl").textContent = sahis ? "VERGİ KİMLİK NO (VARSA)" : "VERGİ KİMLİK NO";
@@ -159,7 +175,7 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
 
   const form = performer
     ? h("div", { class: "dk-pay-form" },
-      box("VERGİ DURUMUN", catGroup), infoBox,
+      box("VERGİ DURUMUN", catGroup), catNote, infoBox,
       rows.fullName, h("div", { class: "dk-tax-grid" }, rows.tckn, rows.vkn), rows.address, h("div", { class: "dk-tax-grid" }, rows.taxOffice, rows.title),
       rows.vat, rows.doc, rows.rep, rows.resp)
     : h("div", { class: "dk-pay-form" },
@@ -292,9 +308,13 @@ export function taxProfileCard({ role = "artist", embedded = false } = {}) {
     draw();
   }
   load();
+  // oranlar / iş modeli gelince açıklamalar güncellensin
+  const onRates = () => { if (!alive) return; leadEl.textContent = leadText(); paintBiz(); paintInfo(); };
+  loadPayRates().then(onRates).catch(() => {});
+  window.addEventListener("gb:pay-rates", onRates);
   return {
     node,
     focus() { try { node.scrollIntoView({ block: "start", behavior: "smooth" }); node.focus({ preventScroll: true }); } catch (_) {} },
-    destroy() { alive = false; },
+    destroy() { alive = false; window.removeEventListener("gb:pay-rates", onRates); },
   };
 }

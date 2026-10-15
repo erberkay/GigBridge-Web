@@ -69,10 +69,15 @@ function splitW(r) {
     stBase: sum(st, "baseKurus"), stK, etK,
   };
 }
+// Yol A satırı (GigBridge alır, satar): kayıttaki model, kesilen faturanın türü ('sale') ya da GigBridge'in kestiği Yol A stopajı
+const isSaleRow = (r) => r?.model === "resale" || r?.documents?.commissionInvoice?.invoiceKind === "sale"
+  || (Array.isArray(r?.withholdings) && r.withholdings.some((w) => w?.ruleId === "kanun_resale_stopaj"));
+/** GigBridge'in kestiği fatura: Yol A → mekana satış faturası (F + KDV) · aracı → komisyon faturası */
+const invLabel = (r) => (isSaleRow(r) ? "Satış faturası (mekana)" : "Komisyon faturası");
 const docState = (r) => {
   const d = r.documents || {};
   const s = d.service ? `Hizmet: ${docTypeLabel(d.service.docType)} ${DOC_STATUS_LABEL[d.service.status] || d.service.status || ""}`.trim() : "Hizmet: yok";
-  const c = d.commissionInvoice ? `Komisyon faturası: ${DOC_STATUS_LABEL[d.commissionInvoice.status] || d.commissionInvoice.status || ""} ${d.commissionInvoice.docNo || ""}`.trim() : "Komisyon faturası: yok";
+  const c = d.commissionInvoice ? `${invLabel(r)}: ${DOC_STATUS_LABEL[d.commissionInvoice.status] || d.commissionInvoice.status || ""} ${d.commissionInvoice.docNo || ""}`.trim() : `${invLabel(r)}: yok`;
   return `${s} · ${c}`;
 };
 const finState = (r) => [FINANCE_STATUS_LABEL[r.financeStatus] || r.financeStatus || "—", ...(r.financeReasons || []).map(financeReasonText)].join(" · ");
@@ -80,7 +85,7 @@ const finState = (r) => [FINANCE_STATUS_LABEL[r.financeStatus] || r.financeStatu
 // Sütunlar: dışa aktarım (csv/xls) ve ekrandaki tablo AYNI tanımdan. x(r) → dışa aktarım değeri; v(r) → ekran metni (yoksa x).
 const COLS = [
   { h: "Ödeme No", x: (r) => r.merchantOid, mono: true },
-  { h: "Tür", x: (r) => kindText(r.kind) },
+  { h: "Tür", x: (r) => `${kindText(r.kind)}${isSaleRow(r) ? " · Yol A" : ""}` },
   { h: "Durum", x: (r) => statusLabel(r.status, "payee").text },
   { h: "Başlık", x: (r) => r.title || "" },
   { h: "Ödeyen", x: (r) => r.payerName || "" },
@@ -174,6 +179,8 @@ export function adminFinansView(ctx) {
   }
   function moneyLine(r) {
     const w = splitW(r);
+    // Yol A: satış (KDV hariç) → tahsil (+ KDV) · GigBridge payı (marj) · net KDV · stopajı GigBridge keser
+    if (isSaleRow(r)) return `Yol A · satış ${fmtKurus(r.grossKurus)} · tahsil ${fmtKurus(r.chargeKurus ?? r.grossKurus)} (+ KDV) · GigBridge payı ${fmtKurus(r.commissionKurus)} · net KDV ${fmtKurus(r.commissionVatKurus)} · stopaj (GigBridge) ${fmtKurus(w.stK)} · sanatçıya ${fmtKurus(r.payeeKurus)}`;
     return `Brüt ${fmtKurus(r.grossKurus)} · tahsil ${fmtKurus(r.chargeKurus ?? r.grossKurus)} · komisyon ${fmtKurus(r.commissionKurus)} + KDV ${fmtKurus(r.commissionVatKurus)} (${borneText(r.commissionBorneBy).toLocaleLowerCase("tr-TR")}) · stopaj ${fmtKurus(w.stK)} · e-ticaret ${fmtKurus(w.etK)} · alıcıya ${fmtKurus(r.payeeKurus)}`;
   }
   function reviewRow(r) {
@@ -332,7 +339,13 @@ export function adminFinansView(ctx) {
       sec("KARAR", modeGroup, rulesBox, manualWrap, note, err, h("div", { class: "dk-pay-btns" }, submit), result,
         row.payerRefundDueKurus > 0 ? dkButton(`Vergi iadesi · ${fmtKurus(row.payerRefundDueKurus)}`, { variant: "outline", size: 36, icon: "refresh", onClick: () => onTaxRefund(row) }) : null,
         row.documents?.service?.storagePath ? dkButton("Hizmet belgesini aç", { variant: "outline", size: 36, icon: "fileText", onClick: () => openDoc(row.merchantOid) }) : null,
-        row.kind === "artist_booking" ? dkButton(row.giderPusulasi?.status === "info_sent" ? "Pusula bilgilerini yeniden gönder" : "Pusula bilgilerini mekana gönder", { variant: "outline", size: 36, icon: "mail",
+        row.kind === "artist_booking" && isSaleRow(row) ? dkButton(row.giderPusulasi?.status === "info_sent" ? "Belge bilgilerini yeniden gönder" : "Belge bilgilerini gönder", { variant: "outline", size: 36, icon: "mail",
+          onClick: async () => {
+            // Yol A: A → pusula bilgileri GigBridge muhasebesine (pusulayı GigBridge düzenler) · B/C → sanatçıya "GigBridge'e e-SMM / e-Fatura kes"
+            if (!(await dkConfirm({ title: "Belge bilgileri (Yol A)", body: "Vergi kaydı olmayan sanatçıda gider pusulası bilgileri GigBridge muhasebe e-postasına gider (pusulayı GigBridge düzenler); şahıs şirketi / şirkette sanatçıya GigBridge'e kesmesi gereken e-SMM / e-Fatura bilgileri gönderilir.", confirmLabel: "Gönder" }))) return;
+            try { await payApi.resendPusulaInfo({ merchantOid: row.merchantOid }); toast("Belge bilgileri gönderildi"); }
+            catch (e) { toast(errText(e), { type: "err" }); } } })
+        : row.kind === "artist_booking" ? dkButton(row.giderPusulasi?.status === "info_sent" ? "Pusula bilgilerini yeniden gönder" : "Pusula bilgilerini mekana gönder", { variant: "outline", size: 36, icon: "mail",
           onClick: async () => {
             if (!(await dkConfirm({ title: "Gider pusulası bilgileri", body: "Mekanın ve sanatçının güncel vergi bilgileriyle pusula için gereken bilgiler mekana (ve müşavirine) e-postalanır. Belgeyi mekan düzenler.", confirmLabel: "Gönder" }))) return;
             try { await payApi.resendPusulaInfo({ merchantOid: row.merchantOid }); toast("Bilgiler mekana gönderildi"); }
@@ -578,7 +591,7 @@ export function adminFinansView(ctx) {
   // ══════════ 5 · BELGELER ══════════
   let docFilter = "service";
   async function secDocs(guard) {
-    const filt = h("div", { class: "dk-admin-etk-chips" }, ...[["service", "Hizmet belgeleri"], ["invoice", "Komisyon faturası bekleyen"]].map(([k, l]) =>
+    const filt = h("div", { class: "dk-admin-etk-chips" }, ...[["service", "Hizmet belgeleri"], ["invoice", "Komisyon / satış faturası bekleyen"]].map(([k, l]) =>
       dkChip({ label: l, pressed: docFilter === k, size: 32, onClick: () => { if (docFilter === k) return; docFilter = k; loadSection(); } })));
     const r = await payApi.admin({ action: "financeList", limit: 500 });
     if (!guard()) return;
@@ -587,7 +600,7 @@ export function adminFinansView(ctx) {
     const rows = docFilter === "service"
       ? all.filter((x) => x.documents?.service).sort((a, b) => (a.documents.service.status === "submitted" ? -1 : 0) - (b.documents.service.status === "submitted" ? -1 : 0))
       : all.filter((x) => !PAID_OUT.includes(x.status) && x.documents?.commissionInvoice?.status !== "issued");
-    body.replaceChildren(filt, ...(rows.length ? rows.map(docRow) : [empty(docFilter === "service" ? "Yüklenmiş hizmet belgesi yok" : "Komisyon faturası bekleyen ödeme yok")]));
+    body.replaceChildren(filt, ...(rows.length ? rows.map(docRow) : [empty(docFilter === "service" ? "Yüklenmiş hizmet belgesi yok" : "Komisyon / satış faturası bekleyen ödeme yok")]));
   }
   function docRow(r) {
     const sv = r.documents?.service, ci = r.documents?.commissionInvoice;
@@ -595,14 +608,16 @@ export function adminFinansView(ctx) {
     if (sv?.storagePath) btns.push(dkButton("Belgeyi aç", { variant: "outline", size: 36, icon: "externalLink", onClick: () => openDoc(r.merchantOid) }));
     if (sv && sv.status !== "verified") btns.push(dkButton("Onayla", { variant: "success", size: 36, icon: "check", onClick: () => setDoc(r, "service", "verified") }));
     if (sv && sv.status !== "rejected") btns.push(dkButton("Reddet", { variant: "danger-outline", size: 36, icon: "x", onClick: () => setDoc(r, "service", "rejected") }));
-    btns.push(dkButton(ci?.status === "issued" ? "Komisyon faturasını düzenle" : "Komisyon faturası gir", { variant: "outline", size: 36, icon: "fileText", onClick: () => openInvoice(r) }));
+    btns.push(dkButton(ci?.status === "issued" ? (isSaleRow(r) ? "Satış faturasını düzenle" : "Komisyon faturasını düzenle") : (isSaleRow(r) ? "Satış faturası gir" : "Komisyon faturası gir"), { variant: "outline", size: 36, icon: "fileText", onClick: () => openInvoice(r) }));
     if (ci?.status === "issued") btns.push(dkButton("Faturayı iptal et", { variant: "ghost", size: 36, onClick: () => setDoc(r, "commissionInvoice", "cancelled") }));
     return h("article", { class: `${P}-row` },
       h("div", { class: `${P}-top` }, h("span", { class: `${P}-t` }, r.title || r.merchantOid),
         sv ? badge(DOC_STATUS_LABEL[sv.status] || sv.status, DOC_STATUS_TONE[sv.status] || "muted") : null),
-      meta(`${r.payerName || "—"} → ${r.payeeName || "—"} · brüt ${fmtKurus(r.grossKurus)} · komisyon ${fmtKurus(r.commissionKurus)} + KDV ${fmtKurus(r.commissionVatKurus)}`),
+      meta(isSaleRow(r)
+        ? `${r.payerName || "—"} → ${r.payeeName || "—"} · Yol A · satış ${fmtKurus(r.grossKurus)} + KDV = ${fmtKurus(r.chargeKurus ?? r.grossKurus)} · GigBridge payı ${fmtKurus(r.commissionKurus)}`
+        : `${r.payerName || "—"} → ${r.payeeName || "—"} · brüt ${fmtKurus(r.grossKurus)} · komisyon ${fmtKurus(r.commissionKurus)} + KDV ${fmtKurus(r.commissionVatKurus)}`),
       sv ? meta(`Hizmet belgesi: ${docTypeLabel(sv.docType)} · No ${sv.docNo || "—"} · ${sv.docDate || "—"}${sv.note ? ` · Not: ${sv.note}` : ""}`) : meta("Hizmet belgesi yüklenmedi"),
-      meta(ci ? `Komisyon faturası: ${docTypeLabel(ci.docType)} · No ${ci.docNo || "—"} · ${ci.docDate || "—"} · ${DOC_STATUS_LABEL[ci.status] || ci.status}` : "Komisyon faturası girilmedi", ci?.status === "issued" ? null : "#FFB347"),
+      meta(ci ? `${invLabel(r)}: ${docTypeLabel(ci.docType)} · No ${ci.docNo || "—"} · ${ci.docDate || "—"} · ${DOC_STATUS_LABEL[ci.status] || ci.status}` : `${invLabel(r)} girilmedi`, ci?.status === "issued" ? null : "#FFB347"),
       h("span", { class: `${P}-oid` }, r.merchantOid),
       h("div", { class: `${P}-acts` }, ...btns));
   }
@@ -613,7 +628,7 @@ export function adminFinansView(ctx) {
       const ok = await new Promise((res) => dkModal({ title: "Belgeyi reddet", body: ta, size: 480, variant: "form", onClose: () => res(false),
         actions: [{ label: "Vazgeç", variant: "outline", onClick: () => res(false) }, { label: "Reddet", variant: "danger", onClick: () => { if (ta.input.value.trim().length < 5) return false; note = ta.input.value.trim(); res(true); } }] }));
       if (!ok) return;
-    } else if (!(await dkConfirm({ title: status === "cancelled" ? "Faturayı iptal et" : "Belgeyi onayla", body: status === "cancelled" ? "Komisyon faturası iptal olarak işaretlenir." : "Hizmet belgesi doğrulandı olarak işaretlenir.", confirmLabel: "Onayla", danger: status === "cancelled" }))) return;
+    } else if (!(await dkConfirm({ title: status === "cancelled" ? "Faturayı iptal et" : "Belgeyi onayla", body: status === "cancelled" ? `${invLabel(r)} iptal olarak işaretlenir.` : "Hizmet belgesi doğrulandı olarak işaretlenir.", confirmLabel: "Onayla", danger: status === "cancelled" }))) return;
     try { await payApi.admin({ action: "setDocumentStatus", merchantOid: r.merchantOid, which, status, ...(note ? { note } : {}) }); toast("Belge durumu güncellendi"); loadSection(); }
     catch (e) { toast(errText(e), { type: "err" }); }
   }
@@ -623,7 +638,9 @@ export function adminFinansView(ctx) {
     const no = dkInput({ size: 40, maxlength: 40, value: ci.docNo || "", placeholder: "Fatura no" });
     const date = dkInput({ size: 40, type: "date", value: ci.docDate || isoDay(new Date()) });
     const err = h("span", { class: "dk-pay-err", role: "alert" });
-    dkModal({ title: "Komisyon faturası", size: 480, variant: "form", sub: `${r.title || r.merchantOid} · komisyon ${fmtKurus(r.commissionKurus)} + KDV ${fmtKurus(r.commissionVatKurus)}`,
+    dkModal({ title: invLabel(r), size: 480, variant: "form", sub: isSaleRow(r)
+      ? `${r.title || r.merchantOid} · satış ${fmtKurus(r.grossKurus)} + KDV = ${fmtKurus(r.chargeKurus ?? r.grossKurus)} (mekana)`
+      : `${r.title || r.merchantOid} · komisyon ${fmtKurus(r.commissionKurus)} + KDV ${fmtKurus(r.commissionVatKurus)}`,
       body: h("div", { class: "dk-pay-form" },
         h("label", { class: "dk-pay-fld" }, h("span", { class: "dk-lbl" }, "TÜR"), type),
         h("label", { class: "dk-pay-fld" }, h("span", { class: "dk-lbl" }, "FATURA NO"), no),
@@ -636,7 +653,7 @@ export function adminFinansView(ctx) {
           if (!/^\d{4}-\d{2}-\d{2}$/.test(date.value)) { err.textContent = "Tarihi seç."; return false; }
           try {
             await payApi.admin({ action: "setDocumentStatus", merchantOid: r.merchantOid, which: "commissionInvoice", status: "issued", docType: type.querySelector("select").value, docNo: no.value.trim(), docDate: date.value });
-            toast("Komisyon faturası kaydedildi"); loadSection(); return true;
+            toast(`${invLabel(r)} kaydedildi`); loadSection(); return true;
           } catch (e) { err.textContent = errText(e); return false; }
         } },
       ] });

@@ -5,6 +5,7 @@
  */
 const ACTIONS = {
   setConfig: "Ödeme ayarları değiştirildi",
+  setCompany: "GigBridge vergi bilgileri değiştirildi",
   refund: "İade yapıldı",
   release: "Ödeme elle serbest bırakıldı",
   resolveDispute: "Şikayet karara bağlandı",
@@ -34,6 +35,9 @@ const CFG = {
   stopajBase: ["Eski stopaj matrahı", "raw"],
   autoPayout: ["Otomatik aktarım", "onoff"],
   testMode: ["Test modu", "test"],
+  bookingModel: ["İş modeli (sanatçı kiralama)", "model"],
+  paytrFeeBorneBy: ["PayTR masrafını karşılayan", "feeborne"],
+  useStatutoryRules: ["Kanuni vergi kuralları", "onoff"],
 };
 const DECISION = {
   refund_full: "Tam iade", refund_partial: "Kısmi iade", release: "Sanatçıya / mekana aktar", upheld: "Şikayet haklı (iade)",
@@ -64,6 +68,8 @@ function fmtCfg(kind, v) {
     case "onoff": return v ? "Açık" : "Kapalı";
     case "test": return v ? "Açık (test ödemesi)" : "Kapalı (GERÇEK ödeme)";
     case "borne": return v === "payer" ? "Ödeyen (üstüne eklenir)" : "Alıcı (hakedişten düşer)";
+    case "model": return v === "resale" ? "Yol A — GigBridge alır, satar" : "Aracı (komisyon)";
+    case "feeborne": return v === "platform" ? "GigBridge" : "Alıcı";
     default: return String(v);
   }
 }
