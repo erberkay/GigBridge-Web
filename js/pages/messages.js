@@ -195,7 +195,7 @@ function offerBubble(m) {
       toast(action === "accept" ? `${meta.venue || "Mekan"} teklifi kabul edildi ✓` : "Teklif reddedildi", action === "accept" ? "ok" : "err");
     } catch (e) {
       yes.disabled = no.disabled = false; actions.classList.remove("busy");
-      toast("İşlem başarısız, tekrar dene", "err");
+      toast(e?.code === "slot-conflict" ? e.message : "İşlem başarısız, tekrar dene", "err");
     }
   };
   yes.onclick = () => respond("accept");

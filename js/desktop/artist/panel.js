@@ -364,6 +364,7 @@ export function artistPanelView(ctx) {
             dkToast(acc ? `${o.venue} teklifini kabul ettin — performans takvime eklendi` : `${o.venue} teklifi reddedildi`, { type: acc ? "ok" : "err" });
           } catch (e) {
             if (e?.code === "tax-profile-required") { close(); taxRequiredPrompt(); }
+            else if (e?.code === "slot-conflict") { close(); dkToast(e.message, { type: "err" }); }
             else dkToast("İşlem gerçekleştirilemedi. (ERR-AHOME-001)", { type: "err" });
           } finally {
             st.busy.delete(o.id);

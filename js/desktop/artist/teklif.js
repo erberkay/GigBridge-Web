@@ -362,6 +362,7 @@ export function artistTeklifView(ctx) {
       dkToast(isAcc ? `${o.venue} teklifini kabul ettin — performans takvime eklendi` : `${o.venue} teklifi reddedildi`, { type: isAcc ? "ok" : "err" });
     } catch (e) {
       if (e?.code === TAX_REQUIRED_CODE) taxRequiredPrompt();
+      else if (e?.code === "slot-conflict") dkToast(e.message, { type: "err" });
       else dkToast("İşlem tamamlanamadı. İnternet bağlantını kontrol et. (ERR-OFFERDETAIL-001)", { type: "err" });
     } finally {
       st.busy = false; st.ask = null;

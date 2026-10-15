@@ -2,7 +2,7 @@
 import {
   db, collection, collectionGroup, doc, getDoc, getDocs, updateDoc, addDoc, setDoc, deleteDoc,
   query, where, orderBy, limit, onSnapshot, serverTimestamp, arrayRemove, increment, writeBatch,
-  storage, ref, uploadBytes, getDownloadURL, deleteObject, auth, deleteUser,
+  storage, ref, uploadBytes, getDownloadURL, deleteObject, auth, deleteUser, functions, httpsCallable,
 } from "./firebase.js";
 import { session } from "./store.js";
 // Sayfaların data.js üzerinden alabilmesi için yeniden dışa aktar (artist.js isim cooldown damgası).
@@ -1039,8 +1039,22 @@ export async function assertTaxProfile(uid) {
   }
 }
 
+// Saat çakışması (functions/performerSlots.js): aynı güne birden fazla sahne olur, saatleri çakışan iki sahne olmaz.
+// Sunucuya ulaşılamazsa kabul engellenmez (çakışan sahnenin ödemesi createPayment'ta yine alınmaz).
+export const SLOT_CONFLICT_CODE = "slot-conflict";
+export async function assertPerformerSlotFree(invitationId) {
+  let r = null;
+  try { r = (await httpsCallable(functions, "checkPerformerSlot", { timeout: 12000 })({ invitationId })).data; } catch (_) { return; }
+  if (r && r.ok === false) {
+    const e = new Error(r.message || "Bu saatte başka bir sahnen var.");
+    e.code = SLOT_CONFLICT_CODE;
+    throw e;
+  }
+}
+
 export async function respondToOffer(offer, action, me) {
   if (action === "accept") await assertTaxProfile(me?.uid);
+  if (action === "accept") await assertPerformerSlotFree(offer.id);
   if (action === "accept") {
     try {
       if (offer.eventId) {

@@ -855,6 +855,7 @@ export function createChat({ host, ns, variant = "listener", role = "customer", 
       } catch (e) {
         yes.disabled = no.disabled = false; actions.classList.remove("is-busy");
         if (e?.code === "tax-profile-required") import("../shared/payments.js").then((m) => m.taxRequiredPrompt());
+        else if (e?.code === "slot-conflict") dkToast(e.message, { type: "err" });
         else dkToast("İşlem başarısız, tekrar dene", { type: "err" });
       }
     };

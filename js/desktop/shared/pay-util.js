@@ -409,7 +409,7 @@ export function payerHistoryLabel(p) {
   const c = p?.cancellation?.status;
   switch (p?.status) {
     case "transferred": return { text: "ALICIYA AKTARILDI", tone: "ok" };
-    case "refunded": return c === "accepted" || c === "payee_cancelled" ? { text: "İPTAL · İADE EDİLDİ", tone: "muted" } : { text: "İADE EDİLDİ", tone: "muted" };
+    case "refunded": return c === "accepted" || c === "payee_cancelled" || c === "payer_cancelled" ? { text: "İPTAL · İADE EDİLDİ", tone: "muted" } : { text: "İADE EDİLDİ", tone: "muted" };
     case "partially_refunded": return { text: "KISMEN İADE · EMANETTE", tone: "muted" };
     default: return statusLabel(p?.status, "payer");
   }
@@ -548,7 +548,7 @@ export const ADMIN_DISPUTE_STATUS = {
   awaiting_response: "yanıt bekleniyor", under_review: "incelemede", resolved: "sonuçlandı", open: "açık", upheld: "onaylandı", rejected: "reddedildi",
 };
 export const ADMIN_CANCEL_STATUS = {
-  requested: "İptal talebi bekliyor", accepted: "İptal kabul edildi", rejected: "İptal talebi reddedildi", payee_cancelled: "Alıcı iptal etti",
+  requested: "İptal talebi bekliyor", accepted: "İptal kabul edildi", rejected: "İptal talebi reddedildi", payee_cancelled: "Alıcı iptal etti", payer_cancelled: "Ödeyen iptal etti (iade)",
 };
 export const REFUNDABLE = ["held", "disputed", "release_ready", "awaiting_iban", "transfer_failed", "refund_pending", "partially_refunded", "finance_review"];
 export const RELEASABLE = ["held", "release_ready", "awaiting_iban", "transfer_failed", "partially_refunded", "disputed", "refund_pending", "finance_review"];

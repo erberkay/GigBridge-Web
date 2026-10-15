@@ -518,6 +518,12 @@ export function paymentActions(p, side, { onOpenDispute } = {}) {
   const c = p.cancellation;
   const items = [];
   const btns = [];
+  // Sanatçı kiralama iptal süreleri (functions/paymentCases.js): mekan son 3 gün, sanatçı son 7 gün iptal edemez
+  const DAY = 86400000;
+  const isArtist = p.kind !== "venue_rental";
+  const leftMs = p.eventStartMs != null ? p.eventStartMs - Date.now() : 0;
+  const payerCanCancel = !isArtist || leftMs > 3 * DAY;
+  const payeeCanCancel = !isArtist || leftMs > 7 * DAY;
   const openDispute = () => (onOpenDispute ? onOpenDispute(p.id) : openDisputeDrawer(p.id));
   const btn = (label, variant, icon, fn) => {
     const b = dkButton(label, { variant, size: 36, icon, onClick: fn });
@@ -536,7 +542,16 @@ export function paymentActions(p, side, { onOpenDispute } = {}) {
     if (c?.status === "rejected") items.push(note("İptal talebin reddedildi. Etkinlikte sorun olursa kanıtlı şikayet açabilirsin.", "#FFB347"));
     if (c?.status === "accepted") items.push(note("İptal talebin kabul edildi; ödemenin tamamı iade edildi.", "#7CE0B0"));
     if (c?.status === "payee_cancelled") items.push(note("Rezervasyon karşı tarafça iptal edildi; ödemenin tamamı iade edildi.", "#7CE0B0"));
-    if (held && beforeStart && !c && !p.dispute) {
+    if (c?.status === "payer_cancelled") items.push(note("Sahneyi iptal ettin; ödemenin tamamı iade edildi.", "#7CE0B0"));
+    if (isArtist && held && beforeStart && !c && !p.dispute && payerCanCancel) {
+      btn("Sahneyi iptal et", "outline", "xCircle", () => ask("Sahneyi iptal et",
+        "Sahneye 3 günden fazla var: iptal edersen ödemenin tamamı iade edilir. Son 3 günde iptal yapılamaz.", "İptal et", true,
+        () => run(() => payApi.requestCancellation({ merchantOid: p.id }), "Sahne iptal edildi", "Ödemenin tamamı iade ediliyor.")));
+    }
+    if (isArtist && held && beforeStart && !c && !p.dispute && !payerCanCancel) {
+      items.push(note("Sahneye 3 günden az kaldı; iptal edilemez. Sanatçı gelmezse etkinlikte Sorun bildir ile ödemen iade edilir.", "#8A8E97"));
+    }
+    if (!isArtist && held && beforeStart && !c && !p.dispute) {
       btn("İptal talebi", "outline", "xCircle", () => ask("İptal talebi",
         "Karşı taraf etkinlikten önce kabul ederse ödemenin tamamı iade edilir. Reddederse iade yapılmaz; etkinlikte sorun olursa kanıtlı şikayet açabilirsin.",
         "Talep gönder", false, () => run(() => payApi.requestCancellation({ merchantOid: p.id }), "Talep gönderildi", "Karşı taraf yanıtladığında bildirim alacaksın.")));
@@ -550,6 +565,10 @@ export function paymentActions(p, side, { onOpenDispute } = {}) {
         () => run(() => payApi.respondCancellation({ merchantOid: p.id, accept: true }), "İptal kabul edildi", "Ödemenin tamamı ödeyene iade ediliyor.")));
       btn("Reddet", "danger-outline", "x", () => ask("İptali reddet", "İade yapılmaz; rezervasyon geçerli kalır.", "Reddet", true,
         () => run(() => payApi.respondCancellation({ merchantOid: p.id, accept: false }), "İptal reddedildi", "Rezervasyon geçerli.")));
+    } else if (c?.status === "payer_cancelled") {
+      items.push(note("Mekan sahneyi iptal etti; ödeme mekana iade edildi. Bu saat yeniden boş.", "#8A8E97"));
+    } else if (held && beforeStart && !p.dispute && c?.status !== "accepted" && !payeeCanCancel) {
+      items.push(note("Sahneye 7 günden az kaldı; bu sahneyi artık iptal edemezsin.", "#8A8E97"));
     } else if (held && beforeStart && !p.dispute && c?.status !== "accepted") {
       btn("Rezervasyonu iptal et", "outline", "xCircle", () => ask("Rezervasyonu iptal et",
         "Ödemenin tamamı ödeyene iade edilir ve bu iptal hesabının kayıtlarına işlenir. Bu işlem geri alınamaz.", "İptal et", true,
