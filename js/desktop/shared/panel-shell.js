@@ -147,6 +147,9 @@ const NOTIF_KIND = (n) => {
   if (t === "content_restored") return { icon: "refresh", color: "#7CE0B0" };
   if (t === "account_restored") return { icon: "shieldCheck", color: "#7CE0B0" };
   if (t === "report_resolved") return { icon: "checkCircle", color: "#7CE0B0" };
+  // şehir özetleri (functions/cityDigest.js; dinleyici modundaki sanatçı alabilir)
+  if (t === "city_tonight") return { icon: "moon", color: "#4ED8FF" };
+  if (t === "city_weekend") return { icon: "calendar", color: "#4ED8FF" };
   if (/edit|permission|izin/i.test(t)) return { icon: "key", color: "#FF4FA3" };
   if (/accept|approved|onay/i.test(t)) return { icon: "check", color: "#7CE0B0" };
   if (/reject|red|cancel/i.test(t)) return { icon: "trash", color: "#FF5A6E" };

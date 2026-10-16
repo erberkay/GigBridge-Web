@@ -2357,7 +2357,7 @@ function notifIcon(t) {
     invitation: "mail-outline", invitation_update: "checkmark-done-outline", event_invite: "mic-outline",
     group_invite: "people-outline", residency_offer: "repeat-outline", residency_update: "repeat-outline",
     edit_request: "key-outline", edit_approved: "checkmark-circle-outline",
-    review_prompt: "star-outline",
+    review_prompt: "star-outline", city_tonight: "moon-outline", city_weekend: "calendar-outline",
   })[t] || "notifications-outline";
 }
 

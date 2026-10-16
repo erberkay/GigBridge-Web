@@ -42,7 +42,9 @@ const STRIP_DAYS = 14;           // legacy buildDateFilters: 14 günlük takvim
 const QUICK = [["all", "Tümü"], ["week", "Bu Hafta"], ["month", "Bu Ay"]];
 const PRICES = [["all", "Tümü"], ["free", "Ücretsiz"], ["paid", "Ücretli"]];
 const SORTS = [["date", "Tarih"], ["pop", "Popülerlik"], ["price", "Fiyat"]];
-const Q_DATE = { week: "bu-hafta", month: "bu-ay" };
+// bu-aksam / hafta-sonu: şehir özeti bildiriminin bağlantısı (functions/cityDigest.js) — şeritte sekmesi yok, etkin filtre çipinde görünür
+const Q_DATE = { week: "bu-hafta", month: "bu-ay", tonight: "bu-aksam", weekend: "hafta-sonu" };
+const DF_LABEL = { week: "Bu Hafta", month: "Bu Ay", tonight: "Bu Akşam", weekend: "Hafta Sonu" };
 const Q_PRICE = { free: "ucretsiz", paid: "ucretli" };
 const Q_SORT = { pop: "populerlik", price: "fiyat" };
 
@@ -70,6 +72,19 @@ function dateMatch(ms, df, now) {
   const t0 = startOfDay(now);
   if (df === "week") return ms >= t0 && ms <= now + 7 * DAY;
   if (df === "month") return ms >= t0 && ms <= now + 30 * DAY;
+  // bu akşam: bugün 17:00 – yarın 05:00 · hafta sonu: (bugünden itibaren) Cuma 00:00 – Pazartesi 05:00 (şehir özetleriyle aynı pencere)
+  const d0 = new Date(t0);
+  if (df === "tonight") {
+    return ms >= new Date(d0.getFullYear(), d0.getMonth(), d0.getDate(), 17).getTime()
+      && ms < new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + 1, 5).getTime();
+  }
+  if (df === "weekend") {
+    const wd = d0.getDay();
+    const start = wd === 0 ? 0 : Math.max(0, 5 - wd), end = wd === 0 ? 1 : 8 - wd;
+    const from = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + start).getTime();
+    const to = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + end, 5).getTime();
+    return ms >= from && ms < to;
+  }
   return startOfDay(ms) === dayMsOf(df);
 }
 const priceMatch = (ev, price) => price === "all" || (price === "free" ? ev.free : !ev.free);
@@ -140,7 +155,7 @@ export function etkinliklerView(ctx) {
   // sehir= yoksa giriş bağlantısıdır → o anki gb_city (sonra URL'ye yazılır); çözülemeyen ad veri gelince etkinlik şehirlerinden denenir
   function parseQuery(q) {
     const t = q.get("tarih") || "";
-    const df = t === "bu-hafta" ? "week" : t === "bu-ay" ? "month"
+    const df = t === "bu-hafta" ? "week" : t === "bu-ay" ? "month" : t === "bu-aksam" ? "tonight" : t === "hafta-sonu" ? "weekend"
       : (/^\d{4}-\d{2}-\d{2}$/.test(t) && dayMsOf("d:" + t) != null) ? "d:" + t : "all";
     const tur = (q.get("tur") || "").split(",").map((x) => x.trim().toLowerCase());
     const f = q.get("fiyat"), so = q.get("sirala"), sehir = q.get("sehir");
@@ -464,7 +479,7 @@ export function etkinliklerView(ctx) {
     const act = document.activeElement;
     const focusIdx = chipBox.contains(act) ? [...chipBox.children].indexOf(act) : -1;
     const chips = [];
-    if (s.df !== "all") chips.push([s.df === "week" ? "Bu Hafta" : s.df === "month" ? "Bu Ay" : dayLong(dayMsOf(s.df)), () => setFilter({ df: "all" })]);
+    if (s.df !== "all") chips.push([DF_LABEL[s.df] || dayLong(dayMsOf(s.df)), () => setFilter({ df: "all" })]);
     s.gsel.forEach((k) => chips.push([GENRE_FAMILIES[k].label, () => setFilter({ gsel: state.gsel.filter((x) => x !== k) })]));
     if (s.price !== "all") chips.push([s.price === "free" ? "Ücretsiz" : "Ücretli", () => setFilter({ price: "all" })]);
     if (s.city !== ALL_CITIES) chips.push([s.city, () => setFilter({ city: ALL_CITIES })]);

@@ -23,7 +23,7 @@ import { accountShell } from "../shared/account-shell.js";
 import { svgIcon, svgRaw, svgPath } from "../shared/icons.js";
 import { cx, dkPageHead, dkEmpty, dkModal, dkToast, dkSkeleton } from "../shared/ui.js";
 import { subscribeLive } from "../shared/live.js";
-import { toMs, startOfDay, isToday, isYesterday, timeAgo, trUpper, initials, MONTHS_TR, queryOf, writeQuery, rgba } from "../shared/helpers.js";
+import { toMs, startOfDay, isToday, isYesterday, timeAgo, trUpper, initials, MONTHS_TR, queryOf, writeQuery, rgba, fold } from "../shared/helpers.js";
 import { genreGrad } from "../shared/genres.js";
 
 // ── Artboard SVG gövdeleri (birebir; DCLogic ICON) ──
@@ -34,12 +34,15 @@ const P = {
 };
 const ARROW = '<path d="M5 12h14M13 6l6 6-6 6"></path>';
 // Tür → görünüm. Müşteri hesabında görülen 3 tür tasarımda; diğerleri (savunma) nötr ton + legacy notifIcon eşlemesi, çip yok.
-const TONES = { magenta: "#FF4FA3", warn: "#FF8A2A", red: "#FF5A6E", neutral: "#8A8E97" };
+const TONES = { magenta: "#FF4FA3", cyan: "#4ED8FF", warn: "#FF8A2A", red: "#FF5A6E", neutral: "#8A8E97" };
 const KNOWN = {
   artist_new_gig: { tone: "magenta", path: P.bell, chip: "YENİ ETKİNLİK" },
   artist_new_event: { tone: "magenta", path: P.bell, chip: "YENİ ETKİNLİK" },
   review_prompt: { tone: "warn", path: P.star, chip: "DEĞERLENDİR" },
   event_deleted: { tone: "red", path: P.trash, chip: "İPTAL" },
+  // Şehir özetleri (functions/cityDigest.js) → Etkinlikler, şehir + tarih süzgeci
+  city_tonight: { tone: "cyan", icon: "moon", chip: "BU AKŞAM" },
+  city_weekend: { tone: "cyan", icon: "calendar", chip: "HAFTA SONU" },
 };
 // legacy notifIcon(t) (Ionicons) → masaüstü ikon kaydı karşılıkları
 const LEGACY_ICON = {
@@ -49,12 +52,30 @@ const LEGACY_ICON = {
 };
 const typeView = (t) => KNOWN[t] || { tone: "neutral", icon: LEGACY_ICON[t] || "bell", chip: null };
 
+// Şehir özeti → #/etkinlikler?sehir=<slug>&tarih=bu-aksam|hafta-sonu (etkinlikler.js citySlug ile aynı). Süzgeç yalnız özetin
+// penceresi sürerken (bu akşam → yarın 05:00'e, hafta sonu → Pazartesi 05:00'e kadar); sonra yalnız şehir.
+function cityDigestHref(n) {
+  const slug = fold(n.city || "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const m = String(n.digestDate || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  let tarih = "";
+  if (m) {
+    const weekend = n.type === "city_weekend";
+    const day0 = new Date(+m[1], +m[2] - 1, +m[3]).getTime();
+    const until = new Date(+m[1], +m[2] - 1, +m[3] + (weekend ? 3 : 1), 5).getTime();
+    const t = Date.now();
+    if (t >= day0 && t < until) tarih = weekend ? "hafta-sonu" : "bu-aksam";
+  }
+  const q = [slug ? `sehir=${slug}` : "", tarih ? `tarih=${tarih}` : ""].filter(Boolean).join("&");
+  return "#/etkinlikler" + (q ? `?${q}` : "");
+}
+
 // Bildirim ayarları — app NotificationsScreen (INITIAL_SETTINGS + gruplar) ile birebir anahtar/varsayılan.
 const APP_GROUPS = [
   { title: "ETKİNLİKLER", items: [
     ["event_reminders", "Etkinlik Hatırlatıcıları", "Katıldığınız etkinliklerden önce bildirim alın", true],
     ["new_events", "Yeni Etkinlikler", "Beğendiğiniz türlerde yeni etkinlik eklenince bildirim", true],
-    ["event_changes", "Etkinlik Değişiklikleri", "İptal veya saat değişikliği bildirimi", true]] },
+    ["event_changes", "Etkinlik Değişiklikleri", "İptal veya saat değişikliği bildirimi", true],
+    ["city_events", "Şehrimdeki Etkinlikler", "Bu akşam ve hafta sonu şehrindeki etkinliklerin özeti", true]] },
   { title: "SANATÇILAR", items: [
     ["artist_new_gig", "Yeni Performans", "Takip ettiğiniz sanatçı sahne aldığında bildirim", true],
     ["artist_updates", "Profil Güncellemeleri", "Takip ettiğiniz sanatçıların paylaşımları", false]] },
@@ -197,6 +218,7 @@ export function bildirimlerView(ctx) {
     const ev = n.eventId ? encodeURIComponent(n.eventId) : null;
     if ((t === "artist_new_gig" || t === "artist_new_event") && ev) return { href: "#/etkinlik/" + ev };
     if (t === "review_prompt" && ev) return { href: "#/etkinlik/" + ev, cta: { href: "#/katildiklarim?puanla=" + ev, label: "Değerlendir" } };
+    if (t === "city_tonight" || t === "city_weekend") return { href: cityDigestHref(n) };
     return null;
   }
   // Ekran okuyucu için ayırt edici ad: aynı başlıklı kartlar ("Etkinlik nasıldı?") etkinlik adıyla ayrışır (yoksa gövde).
