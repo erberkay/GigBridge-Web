@@ -3,6 +3,12 @@
 // h('div', {class:'x', onclick:fn, html:'<b>', dataset:{id:1}}, child, [child2], 'text')
 export function h(tag, attrs = {}, ...kids) {
   const el = document.createElement(tag);
+  // <img>: loading / fetchpriority src'DEN ÖNCE atanmalı — yoksa tarayıcı src atanınca indirmeye başlar, loading="lazy" işe yaramaz
+  // (ekran dışı görseller ilk görselle bant genişliği yarışına girer → LCP gecikir).
+  if (tag === "img" && attrs) {
+    if (attrs.loading) el.setAttribute("loading", attrs.loading);
+    if (attrs.fetchpriority) el.setAttribute("fetchpriority", attrs.fetchpriority);
+  }
   for (const [k, v] of Object.entries(attrs || {})) {
     if (v == null || v === false) continue;
     if (k === "class") el.className = v;

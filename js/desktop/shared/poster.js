@@ -129,10 +129,11 @@ export function posterCard(e, { href } = {}) {
     });
     media.append(img);
   } else fallback();
-  return h("a", { class: "gb-pst-card", href: href || null, "aria-label": [title, chip, sub].filter(Boolean).join(", ") },
+  // Erişilebilir ad görünen metinden gelir (tarih · başlık · mekan) — ayrı aria-label görünen metinle çelişiyordu (Lighthouse a11y)
+  return h("a", { class: "gb-pst-card", href: href || null },
     media,
     h("span", { class: "gb-pst-shade", "aria-hidden": "true" }),
-    h("span", { class: "gb-pst-meta", "aria-hidden": "true" },
+    h("span", { class: "gb-pst-meta" },
       chip ? h("span", { class: "gb-pst-chip" }, chip) : null,
       h("span", { class: "gb-pst-title" }, title),
       sub ? h("span", { class: "gb-pst-sub" }, sub) : null));

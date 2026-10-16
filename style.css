@@ -120,7 +120,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--r
 
 /* Bottom nav */
 .bottomnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; max-width: 760px; margin: 0 auto; background: rgba(15,15,25,0.96); backdrop-filter: blur(12px); border-top: 1px solid var(--border); }
-.bn-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 2px calc(9px + env(safe-area-inset-bottom)); color: var(--text-muted); font-size: 10.5px; font-weight: 600; }
+.bn-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 2px calc(9px + env(safe-area-inset-bottom)); color: #8A8E97; /* AA kontrast (≥4.5:1) */ font-size: 10.5px; font-weight: 600; }
 .bn-item.active { color: var(--role); }
 .bn-item ion-icon { font-size: 22px; }
 

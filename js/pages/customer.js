@@ -89,7 +89,7 @@ export function customerPage() {
   const rightBtn = guest
     ? h("button", { class: "icon-btn login-chip", onclick: () => loginModal(), title: "Giriş Yap" }, icon("log-in-outline", { size: 18 }), h("span", {}, "Giriş"))
     : h("button", { class: "icon-btn", onclick: () => go("#/bildirimler"), title: "Bildirimler" }, icon("notifications-outline", { size: 20 }));
-  const content = h("div", { class: "content" }, h("div", { class: "loading" }, spinner()));
+  const content = h("div", { class: "content", role: "main" }, h("div", { class: "loading" }, spinner()));
   const page = h("div", { class: "page has-nav", style: { "--role": C } },
     topbar(TITLES[tab] || "GigBridge", { subtitle: guest ? "Misafir" : myName(), color: C, right: rightBtn }),
     content,
@@ -282,7 +282,7 @@ function mkDist(ev) {
 }
 // Etkinlik görseli; bannerUrl yoksa tür rengiyle koyu gradyan (sahte görsel YOK)
 function mkImg(ev, cls, alt, eager) {
-  if (ev.bannerUrl) return h("img", { class: cls, src: ev.bannerUrl, alt: alt ?? "", loading: eager ? null : "lazy", decoding: "async" });
+  if (ev.bannerUrl) return h("img", { class: cls, src: ev.bannerUrl, alt: alt ?? "", loading: eager ? null : "lazy", fetchpriority: eager ? "high" : null, decoding: "async" });
   // banner yoksa dikey afiş: bulanık zemin + ortada tam afiş (Ken Burns / cover zoom YOK) — PST Keşfet modülleriyle yüklenir
   const pb = PST?.posterBackdrop(ev, { cls: cls.replace(/\s*mk-kb\b/, ""), alt: alt ?? "" });
   if (pb) return pb;
@@ -500,7 +500,7 @@ export function kesfetPage() {
   const preview = base() !== "#/kesfet"; // yönetici paneli önizlemesi (admin.js) — gezinme/yazma yok
   const url = mkReadQuery();
   mkWriteQuery(mkCatPatch()); // URL ↔ etkin sekme eşit kalsın (modül durumu korunmuş sekmeyle #/kesfet'e dönüldüyse)
-  const page = h("div", { class: "page has-nav mk", style: { "--role": C } });
+  const page = h("div", { class: "page has-nav mk", role: "main", style: { "--role": C } });
   const life = mkLife(page);
   const boot = h("div", { class: "content" });
   page.append(boot, bottomnav(NAV, "kesfet", C));

@@ -328,7 +328,7 @@ export function landingView(ctx) {
       const n = Number(e.attendeeCount) || 0;
       const sub = [e.artistName, n > 0 ? `${n} kişi katılıyor` : null].filter(Boolean).join(" · ") || evCity(e);
       const src = evImage(e);
-      const img = h("img", { class: "dk-landing-hc-img dk-kb", src, alt: "", decoding: "async" });
+      const img = h("img", { class: "dk-landing-hc-img dk-kb", src, alt: "", fetchpriority: "high", decoding: "async" });
       // Afiş kırık → bu etkinliği atla, sıradakini seç (o da yoksa genel yedek). Dekoratif görsel gerçek verinin altına girmez.
       img.addEventListener("error", () => { badBanners.add(src); if (!dead && img.isConnected) paintCollage(); }, { once: true });
       main = h("a", { href: evHref(e), class: "dk-landing-hc-main" },

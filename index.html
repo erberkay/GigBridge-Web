@@ -46,23 +46,40 @@
   <!-- Fontlar: tek birleşik istek + non-blocking (aether.css'teki @import zinciri yerine) -->
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" /></noscript>
-  <link rel="stylesheet" href="style.css?v=20260929a" />
+  <!-- Hız (PageSpeed FCP): ana CSS render'ı ENGELLEMEZ. Açılış bloğu aşağıdaki küçük kritik CSS ile hemen çizilir; uygulama
+       içeriği iki stil dosyası yüklenene dek gizli kalır (html.gb-css gelince görünür → stilsiz ekran yok). Sıra korunur:
+       link öğeleri yerinde stylesheet'e döner (style.css → aether.css). Yedek: 5 sn sonra her durumda görünür. -->
+  <style id="gb-critical">
+    html,body{height:100%;margin:0}
+    body{background:#06070A;color:#F2F1EE;font-family:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+    .boot{display:flex;align-items:center;justify-content:center;padding:60px 0}
+    html:not(.gb-css) .spinner{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,191,72,.22);border-top-color:#ffbf48;box-sizing:border-box;animation:gbspin 1s linear infinite}
+    @keyframes gbspin{to{transform:rotate(360deg)}}
+    html:not(.gb-css) #app>:not(.boot){visibility:hidden}
+  </style>
+  <script>(function(){var n=0,d=document.documentElement,ok=function(){d.classList.add("gb-css")};window.gbCss=function(){if(++n>=2)ok()};setTimeout(ok,5000)})();</script>
+  <link rel="preload" as="style" href="style.css?v=20261016b" onload="this.onload=null;this.rel='stylesheet';gbCss()" onerror="gbCss()" />
   <!-- Aether editorial dark overlay (style.css'ten SONRA) -->
-  <link rel="stylesheet" href="aether.css?v=20260707m" />
-  <!-- Kritik JS modüllerini paralel önyükle (şelaleyi kır) -->
-  <link rel="modulepreload" href="js/app.js" />
-  <link rel="modulepreload" href="js/firebase.js" />
-  <link rel="modulepreload" href="js/store.js" />
-  <link rel="modulepreload" href="js/ui.js" />
-  <link rel="modulepreload" href="js/data.js" />
-  <link rel="modulepreload" href="js/pages/auth.js" />
-  <link rel="modulepreload" href="js/pages/customer.js" />
-  <link rel="modulepreload" href="js/pages/messages.js" />
-  <!-- Masaüstü (≥769 px) görünüm anahtarı + rota kaydı (görünüm modülleri tembel yüklenir) -->
-  <link rel="modulepreload" href="js/viewport.js" />
-  <link rel="modulepreload" href="js/desktop/registry.js" />
-  <!-- App ile aynı ikon seti (Ionicons) — jsdelivr daha hızlı + iyi önbellek -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <link rel="preload" as="style" href="aether.css?v=20260707m" onload="this.onload=null;this.rel='stylesheet';gbCss()" onerror="gbCss()" />
+  <noscript><link rel="stylesheet" href="style.css?v=20261016b" /><link rel="stylesheet" href="aether.css?v=20260707m" /></noscript>
+  <!-- Kritik JS modülleri + Ionicons: İLK ÇİZİMDEN SONRA paralel önyüklenir (PageSpeed FCP: açılış ekranı JS indirmesini beklemez).
+       Sıra/paralellik aynı (modulepreload → app.js); yalnız bir kare (~16 ms) sonra başlar. Masaüstü (≥769 px) görünüm anahtarı +
+       rota kaydı da burada (görünüm modülleri tembel yüklenir). -->
+  <script>
+    (function(){
+      var M=["js/app.js", "js/firebase.js", "js/store.js", "js/ui.js", "js/data.js", "js/pages/auth.js", "js/pages/customer.js", "js/pages/messages.js", "js/viewport.js", "js/desktop/registry.js"];
+      var done=false;
+      function go(){
+        if(done)return;done=true;
+        var hd=document.head;
+        M.forEach(function(u){var l=document.createElement("link");l.rel="modulepreload";l.href=u;hd.appendChild(l);});
+        var io=document.createElement("script");io.type="module";io.src="https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/ionicons/ionicons.esm.js";hd.appendChild(io);
+        var a=document.createElement("script");a.type="module";a.src="js/app.js";document.body.appendChild(a);
+      }
+      // arka plan sekmesinde rAF çalışmaz → 250 ms yedek zamanlayıcı (hangisi önce gelirse, bir kez)
+      window.__gbBoot=function(){requestAnimationFrame(function(){setTimeout(go,0);});setTimeout(go,250);};
+    })();
+  </script>
   <script nomodule src="https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <!-- Yapısal veri: Googlebot statik HEAD'de görür (JS render beklemez) -->
   <script type="application/ld+json">
@@ -146,7 +163,7 @@
   </noscript>
   <div id="toasts"></div>
   <div id="modal-root"></div>
-  <script type="module" src="js/app.js"></script>
+  <script>__gbBoot()</script>
   <!-- Service worker: her deploy'da JS/CSS otomatik taze gelsin (cache takılması bitsin) -->
   <script>
     if ("serviceWorker" in navigator && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
