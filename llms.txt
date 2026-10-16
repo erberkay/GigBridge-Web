@@ -35,6 +35,7 @@
 - [Mekana sanatçı ve DJ bulma rehberi](https://gigbridges.com/rehber/mekana-sanatci-bulma/): tür seçimi, kaşe, sözleşme, telif
 - [Vergilendirme ve Fatura](https://gigbridges.com/vergilendirme.html): mekan, sanatçı (vergi kaydı yok / serbest meslek / şirket) ve organizatör için vergi ve belge kuralları, güncel oranlar
 - [Hakkımızda](https://gigbridges.com/hakkimizda.html)
+- [Basın kiti](https://gigbridges.com/basin.html): kısa/uzun tanıtım metni, temel bilgiler, logolar, basın iletişimi
 - [İptal ve İade](https://gigbridges.com/iptal-ve-iade.html)
 - [Mesafeli Hizmet Sözleşmesi](https://gigbridges.com/mesafeli-hizmet-sozlesmesi.html)
 - [Kullanım Koşulları](https://gigbridges.com/kullanim-kosullari.html)
