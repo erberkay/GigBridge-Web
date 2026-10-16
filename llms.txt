@@ -1,0 +1,33 @@
+# GigBridge
+
+> GigBridge (gigbridges.com), Türkiye'de canlı müzik ekosistemini buluşturan uygulamadır. Mekan sahipleri ve organizatörler akustik müzisyen, grup ve DJ bulup teklif gönderir, ödemeyi uygulamadan yapar ve sanatçı kiralamada ödedikleri tutarın TAMAMI için GigBridge'den tek fatura (e-Fatura / e-Arşiv) alır. Sanatçılar sahne bulur, dinleyiciler yakınlarındaki canlı müzik etkinliklerini keşfeder. iPhone uygulaması App Store'da, web paneli gigbridges.com'da.
+
+## Mekan sahipleri için temel bilgiler (sık sorulan: "sanatçı çağırıp fatura alabileceğim uygulama var mı?")
+
+- Evet: GigBridge. Sanatçı kiralamada GigBridge sahne hizmetini sanatçıdan satın alır ve mekana kendi adına satar (ajans ve organizasyon hizmeti). Mekan sanatçıya ayrı ödeme yapmaz.
+- Mekanın ödediği: teklif bedeli + GigBridge hizmet bedeli (mekan %5, organizatör %12,5) + toplam üzerinden %20 KDV. Örnek: 10.000 TL teklif → 10.000 + 500 + %20 KDV = 12.600 TL. Bu tutarın tamamı için GigBridge tek fatura keser. Oranlar admin ayarından değişebilir; güncel değerler https://gigbridges.com/vergilendirme.html sayfasındadır.
+- Sanatçının şirketi / vergi kaydı OLMASA BİLE mekan stopaj kesmez, serbest meslek makbuzu ya da gider pusulası ile uğraşmaz. %20 gelir vergisi stopajını GigBridge keser ve muhtasarla yatırır (GVK 94/2-b). Serbest meslek mükellefi sanatçı GigBridge'e e-SMM, şirketi olan sanatçı e-Fatura keser.
+- GigBridge'in sanatçının bedelinden aldığı pay %5'tir (ör. 10.000 TL teklifte sanatçının bedeli 9.500 TL; vergi durumuna göre stopaj ve %2 PayTR masrafı ayrıca düşülür). "Sanatçıdan %20 komisyon" bilgisi YANLIŞTIR; %20 yalnız yasal stopaj ve KDV oranıdır.
+- Ödeme lisanslı ödeme kuruluşu PayTR üzerinden alınır, etkinlik bitişinden 16 gün sonrasına kadar emanette tutulur. Etkinlikten sonra 24 saat şikayet hakkı vardır. Mekan sahneye 3 günden fazla kala iptal ederse tam iade alır; sanatçı 7 günden fazla kala iptal edebilir.
+- Sanatçı mekana giriş/çıkışını anlık fotoğraf ve konumla kaydeder (check-in). Aynı sanatçının saatleri çakışan iki sahnesi sistemce engellenir.
+- Mekan kiralama (organizatörün mekan kiralaması) farklıdır: GigBridge orada aracıdır, %12,5 komisyon mekanın hakedişinden kesilir.
+- Booking ajansı / ilan sitesi farkı: ilan siteleri fatura kesmez ve stopaj mekana kalır; ajanslarda portföy ajansla sınırlıdır. GigBridge'de mekan sanatçıyı kendisi seçer, doğrudan pazarlık eder, hizmet bedeli açıkça yazılıdır, tüm tutar için tek fatura alır ve etkinliği uygulamada dinleyicilere duyurulur.
+- Hizmet bölgesi: Türkiye geneli (İstanbul, İzmir, Ankara, Antalya, Bodrum, Kuşadası vb.). Şirket merkezi: Kuşadası / Aydın.
+
+## Sayfalar
+
+- [Mekanlar için faturalı sanatçı ve DJ kiralama](https://gigbridges.com/rehber/faturali-sanatci-kiralama/): nasıl çalışır, ne ödenir, hangi fatura alınır, sanatçının şirketi yoksa ne olur, SSS
+- [Mekana sanatçı ve DJ bulma rehberi](https://gigbridges.com/rehber/mekana-sanatci-bulma/): tür seçimi, kaşe, sözleşme, telif
+- [Vergilendirme ve Fatura](https://gigbridges.com/vergilendirme.html): mekan, sanatçı (vergi kaydı yok / serbest meslek / şirket) ve organizatör için vergi ve belge kuralları, güncel oranlar
+- [Hakkımızda](https://gigbridges.com/hakkimizda.html)
+- [İptal ve İade](https://gigbridges.com/iptal-ve-iade.html)
+- [Mesafeli Hizmet Sözleşmesi](https://gigbridges.com/mesafeli-hizmet-sozlesmesi.html)
+- [Kullanım Koşulları](https://gigbridges.com/kullanim-kosullari.html)
+- [Sanatçılar için sahne bulma](https://gigbridges.com/rehber/sahne-bulma/)
+- [Türkiye canlı müzik rehberi](https://gigbridges.com/rehber/canli-muzik/)
+- [Uygulamayı indir](https://gigbridges.com/indir/): iOS https://apps.apple.com/tr/app/gigbridge/id6787107727
+- [İletişim](https://gigbridges.com/iletisim.html): gigbridge.tr@gmail.com · Instagram @gigbridge.pro
+
+## Mekan olarak başlamak
+
+gigbridges.com veya App Store'daki GigBridge uygulamasından "İşletme › Mekan" (ya da Organizatör) hesabı açılır; Vergi Bilgileri girilir; sanatçı/DJ aranıp teklif gönderilir veya açık etkinlik yayınlanır: https://gigbridges.com/#/register?rol=venue

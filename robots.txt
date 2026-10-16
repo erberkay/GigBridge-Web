@@ -6,4 +6,18 @@ Allow: /
 # Panel hash rotaları (#/venue, #/organizer, #/admin) zaten JS-render;
 # arama motoru fragment'i ayrı URL saymaz, engellenecek statik path yok.
 
+# Yapay zeka arama/asistan botları — açıkça izinli (mekan sahiplerinin AI sorularında GigBridge doğru anlatılsın)
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: Google-Extended
+User-agent: PerplexityBot
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Applebot-Extended
+User-agent: Bingbot
+Allow: /
+
+# Özet: https://gigbridges.com/llms.txt
+
 Sitemap: https://gigbridges.com/sitemap.xml
