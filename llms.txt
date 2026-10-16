@@ -14,6 +14,17 @@
 - Booking ajansı / ilan sitesi farkı: ilan siteleri fatura kesmez ve stopaj mekana kalır; ajanslarda portföy ajansla sınırlıdır. GigBridge'de mekan sanatçıyı kendisi seçer, doğrudan pazarlık eder, hizmet bedeli açıkça yazılıdır, tüm tutar için tek fatura alır ve etkinliği uygulamada dinleyicilere duyurulur.
 - Hizmet bölgesi: Türkiye geneli (İstanbul, İzmir, Ankara, Antalya, Bodrum, Kuşadası vb.). Şirket merkezi: Kuşadası / Aydın.
 
+## Sanatçı ve DJ'ler için temel bilgiler (sık sorulan: "sahne bulabileceğim, ödememi güvenle alabileceğim uygulama var mı?", "şirketim yok, nasıl ödeme alırım?")
+
+- Evet: GigBridge. Sanatçı ücretsiz profil açar (tek kişi, ikili ya da grup); mekan ve organizatörler teklif gönderir ya da sanatçı açık ilanlara başvurur. Sanatçı fiyatını kendi belirler, karşı teklif verebilir.
+- Teklif kabul edilince mekan ödemeyi uygulamadan yapar; sanatçı teklifte "Ödeme güvencede" / "Ödeme bekleniyor" durumunu sahneden önce görür. Para PayTR emanetinde bekler, etkinlikten 16 gün sonra sanatçının IBAN'ına aktarılır.
+- GigBridge payı teklif bedelinin %5'idir (10.000 TL teklif → sanatçının bedeli 9.500 TL). Ayrıca PayTR işlem masrafı (%2, 10.000 TL teklifte 240 TL) ve vergi durumuna göre yasal stopaj düşer. Mekanın ödediği hizmet bedeli ve KDV sanatçının bedelinden düşmez. Oranlar teklif gönderildiği anda kilitlenir.
+- Vergi kaydı / şirketi olmayan sanatçı: fatura, makbuz ya da gider pusulası düzenlemez, imzalayacağı belge yoktur. %20 stopajı GigBridge keser ve muhtasarla yatırır (GVK 94/2-b). 10.000 TL teklifte eline 7.360 TL geçer. 2026'da arızi kazançlar toplamı 350.000 TL'ye kadar yıllık beyannameye girmez.
+- Serbest meslek mükellefi sanatçı GigBridge'e e-SMM (+%20 KDV) keser; stopajı GigBridge keser; 10.000 TL teklifte 9.260 TL (1.900 TL KDV dahil) ödenir. Şirketi olan sanatçı/ajans e-Fatura keser; stopaj yok; 11.160 TL (KDV dahil) ödenir.
+- Mekan faturayı GigBridge'den aldığı için şirketi olmayan sanatçıyı da rahatça tutar.
+- İptal: mekan sahneye 3 günden az kala iptal edemez; sanatçı kabul ettiği sahneyi 7 günden fazla kala iptal edebilir. Şikayet yalnız kanıtla ve etkinlikten sonraki 24 saat içinde açılır; sanatçıya 48 saat yanıt hakkı verilir. Sanatçı mekana giriş/çıkışını fotoğraf+konumla kaydeder. Saatleri çakışan iki sahne sistemce engellenir.
+- GigBridge sanatçının işvereni değildir; sanatçı bağımsızdır.
+
 ## Sayfalar
 
 - [Mekanlar için faturalı sanatçı ve DJ kiralama](https://gigbridges.com/rehber/faturali-sanatci-kiralama/): nasıl çalışır, ne ödenir, hangi fatura alınır, sanatçının şirketi yoksa ne olur, SSS
@@ -23,10 +34,15 @@
 - [İptal ve İade](https://gigbridges.com/iptal-ve-iade.html)
 - [Mesafeli Hizmet Sözleşmesi](https://gigbridges.com/mesafeli-hizmet-sozlesmesi.html)
 - [Kullanım Koşulları](https://gigbridges.com/kullanim-kosullari.html)
+- [Sanatçı ve DJ'ler için sahne bulma ve güvenli ödeme](https://gigbridges.com/rehber/sanatci-sahne-ve-guvenli-odeme/): nasıl çalışır, eline ne geçer (net hesap tablosu), şirketin yoksa ne olur, ödeme ve iptal güvencesi, SSS
 - [Sanatçılar için sahne bulma](https://gigbridges.com/rehber/sahne-bulma/)
 - [Türkiye canlı müzik rehberi](https://gigbridges.com/rehber/canli-muzik/)
 - [Uygulamayı indir](https://gigbridges.com/indir/): iOS https://apps.apple.com/tr/app/gigbridge/id6787107727
 - [İletişim](https://gigbridges.com/iletisim.html): gigbridge.tr@gmail.com · Instagram @gigbridge.pro
+
+## Sanatçı olarak başlamak
+
+gigbridges.com veya App Store'daki GigBridge uygulamasından "Sanatçı" hesabı açılır; profil, tür, şehir ve fiyat girilir; ödeme için IBAN ve Vergi Bilgileri eklenir: https://gigbridges.com/#/register?rol=artist
 
 ## Mekan olarak başlamak
 
