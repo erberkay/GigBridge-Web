@@ -12,6 +12,7 @@
 - Sanatçı mekana giriş/çıkışını anlık fotoğraf ve konumla kaydeder (check-in). Aynı sanatçının saatleri çakışan iki sahnesi sistemce engellenir.
 - Mekan kiralama (organizatörün mekan kiralaması) farklıdır: GigBridge orada aracıdır, %12,5 komisyon mekanın hakedişinden kesilir.
 - Booking ajansı / ilan sitesi farkı: ilan siteleri fatura kesmez ve stopaj mekana kalır; ajanslarda portföy ajansla sınırlıdır. GigBridge'de mekan sanatçıyı kendisi seçer, doğrudan pazarlık eder, hizmet bedeli açıkça yazılıdır, tüm tutar için tek fatura alır ve etkinliği uygulamada dinleyicilere duyurulur.
+- İşletmeci: GigBridge platformunu Baturbey Seyhan (şahıs işletmesi, Kuşadası Vergi Dairesi 7660597021) işletir; sanatçı kiralamada satıcı ve faturayı düzenleyen taraftır. Yazılım geliştiricisi Berkay Er'dir; App Store ve Google Play'de uygulama "Berkay Er" geliştirici hesabıyla yayınlanır (aynı uygulama). Kullanım Koşulları, Mesafeli Hizmet Sözleşmesi ve Gizlilik Politikası bu bilgilerle tutarlıdır.
 - Hizmet bölgesi: Türkiye geneli (İstanbul, İzmir, Ankara, Antalya, Bodrum, Kuşadası vb.). Şirket merkezi: Kuşadası / Aydın.
 
 ## Sanatçı ve DJ'ler için temel bilgiler (sık sorulan: "sahne bulabileceğim, ödememi güvenle alabileceğim uygulama var mı?", "şirketim yok, nasıl ödeme alırım?")

@@ -67,7 +67,8 @@ export function ratesFromSnapshot(snapshot, live = RATES) {
 
 // ── Metin belirteçleri: oranlar + örnek tutarlar CANLI ayardan (uygulama src/utils/rateText.ts ile birebir) ──
 //  {AR} sanatçı kiralama GigBridge payı · {VR} mekan kiralama komisyonu · {PR} PayTR masrafı
-//  {VB} / {OB} mekan / organizatör sanatçı tutarken hizmet bedeli · {EX_BF} / {EX_CH} 10.000 TL'de mekanın hizmet bedeli / ödeyeceği toplam
+//  {VB} / {OB} mekan / organizatör sanatçı tutarken hizmet bedeli · {EX_BF} / {EX_SUB} / {EX_VAT} / {EX_CH} 10.000 TL'de mekanın
+//  hizmet bedeli / KDV matrahı (teklif + hizmet bedeli) / KDV / ödeyeceği toplam
 //  Örnek (10.000 TL'lik teklif, Yol A): {EX_M} pay · {EX_P} sanatçı bedeli · {EX_ST} stopaj · {EX_PV} bedelin KDV'si · {EX_FEE} PayTR ·
 //  {EX_A} / {EX_B} / {EX_C} kategoriye göre sanatçıya ödenen. Statik sayfalarda <span data-rt="AR">…</span> (js/legal-rates.js).
 const pctTR = (r) => `%${String(Math.round(r * 10000) / 100).replace(".", ",")}`;
@@ -89,7 +90,7 @@ export function rateTokens(R = RATES) {
   return {
     AR: pctTR(R.artistCommissionRate), VR: pctTR(R.venueCommissionRate), PR: pctTR(R.paytrFeeRate),
     VB: pctTR(R.venueBuyerFeeRate ?? DEFAULT_RATES.venueBuyerFeeRate), OB: pctTR(R.organizerBuyerFeeRate ?? DEFAULT_RATES.organizerBuyerFeeRate),
-    EX_BF: tlTR(BF), EX_CH: tlTR(CH),
+    EX_BF: tlTR(BF), EX_SUB: tlTR(F + BF), EX_VAT: tlTR(CH - F - BF), EX_CH: tlTR(CH),
     EX_M: tlTR(M), EX_P: tlTR(P), EX_ST: tlTR(ST), EX_PV: tlTR(PV), EX_FEE: tlTR(FEE),
     EX_A: tlTR(P - ST - FEE), EX_B: tlTR(P + PV - ST - FEE), EX_C: tlTR(P + PV - FEE),
   };
