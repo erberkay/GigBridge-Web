@@ -472,6 +472,10 @@ export async function discoverEvents() {
 }
 export async function eventById(id) { const s = await getDoc(doc(db, "events", id)); return s.exists() ? { id, ...s.data() } : null; }
 export async function userById(id) { const s = await getDoc(doc(db, "users", id)); return s.exists() ? { id, ...s.data() } : null; }
+// E-posta profil kaydında değil (12 Kas 2026; sunucu users/{uid}/private/contact'a taşır). Yalnız sahibi ve yönetici okur.
+export async function userContactEmail(id) {
+  try { const s = await getDoc(doc(db, "users", id, "private", "contact")); return s.exists() ? String(s.data().email || "") : ""; } catch (_) { return ""; }
+}
 
 // Popüler sanatçılar (gerçek/tamamlanmış kayıtlar)
 export async function listRealArtists() {

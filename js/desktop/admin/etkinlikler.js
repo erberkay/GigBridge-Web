@@ -4,7 +4,7 @@
 // Yalnız okuma — bu sayfa hiçbir kayda yazmaz. Seçili etkinlik adreste ?sec= ile tutulur (paylaşılabilir / yenilemede korunur).
 import { h } from "../../ui.js";
 import { session } from "../../store.js";
-import { userById, eventStartMs } from "../../data.js";
+import { userById, userContactEmail, eventStartMs } from "../../data.js";
 import { db, collection, getDocs } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon } from "../shared/icons.js";
@@ -67,7 +67,7 @@ async function loadAttendees(evId) {
   await Promise.all(list.map(async (a) => {
     const uid = a.userId || a.id;
     if (!_cache.users.has(uid)) {
-      try { _cache.users.set(uid, await userById(uid)); } catch (_) { _cache.users.set(uid, null); }
+      try { const u = await userById(uid); if (u && !u.email) u.email = await userContactEmail(uid); _cache.users.set(uid, u); } catch (_) { _cache.users.set(uid, null); }
     }
   }));
   return list.map((a) => {

@@ -23,7 +23,7 @@ import { session } from "../../store.js";
 import {
   listPendingByRole, approveUser, rejectUser,
   resolveReport, approveNameChange, rejectNameChange,
-  userById,
+  userById, userContactEmail,
 } from "../../data.js";
 import { db, doc, updateDoc, collection, getDocs, functions, httpsCallable } from "../../firebase.js";
 import { panelShell } from "../shared/panel-shell.js";
@@ -596,7 +596,7 @@ export function adminView(ctx) {
     if (!_cache.emails.has(it.emailUid)) {
       const id = it.emailUid;
       _cache.emails.set(id, undefined);             // getiriliyor
-      userById(id).then((u) => { _cache.emails.set(id, u?.email || null); }, () => { _cache.emails.set(id, null); })
+      userById(id).then(async (u) => { _cache.emails.set(id, u?.email || (await userContactEmail(id)) || null); }, () => { _cache.emails.set(id, null); })
         .finally(notify);                           // görünüm bu arada yeniden kurulmuş olabilir → mount'lu olanı çiz
       return null;
     }

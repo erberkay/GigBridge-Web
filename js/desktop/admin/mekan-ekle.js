@@ -21,6 +21,7 @@ import { h, openImageCropper, loadLeaflet } from "../../ui.js";
 import { session } from "../../store.js";
 import { db, collection, getDocs, getDoc, doc, query, where, functions, httpsCallable, sendPasswordResetMail } from "../../firebase.js";
 import { MANAGE_READY, MANAGE_TOKEN, MANAGE_FAIL } from "../../yonetim.js";
+import { userContactEmail } from "../../data.js";
 import { panelShell } from "../shared/panel-shell.js";
 import { svgIcon, svgRaw } from "../shared/icons.js";
 import { dkPageHero, dkButton, dkInput, dkTextarea, dkField, dkPasswordInput, dkChip, dkSegmented, dkAvatar, dkToast, dkConfirm, dkSkeleton } from "../shared/ui.js";
@@ -468,6 +469,7 @@ export function adminMekanEkleView(ctx) {
       if (!alive || editId !== uid) return;
       if (!snap.exists() || snap.data().userType !== "venue") { dkToast("Mekan bulunamadı", { type: "err" }); writeQuery({ duzenle: null }); resetCreate(); return; }
       editDoc = { id: uid, ...snap.data() };
+      if (!editDoc.email) editDoc.email = await userContactEmail(uid);   // e-posta korumalı kayıtta (12 Kas 2026)
     } catch (e) { console.error(e); if (alive) { dkToast("Mekan yüklenemedi", { type: "err" }); resetCreate(); } return; }
     revokeLocal(); photo = null; cover = null; photoRemoved = false; coverRemoved = false;
     fillForm(editDoc);
@@ -677,7 +679,7 @@ export function adminMekanEkleView(ctx) {
     try {
       const snap = await getDocs(query(collection(db, "users"), where("userType", "==", "venue")));
       if (!alive) return;
-      _cache.list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      _cache.list = await Promise.all(snap.docs.map(async (d) => { const v = { id: d.id, ...d.data() }; if (!v.email) v.email = await userContactEmail(d.id); return v; }));
       _cache.at = Date.now();
     } catch (e) {
       console.error(e);
