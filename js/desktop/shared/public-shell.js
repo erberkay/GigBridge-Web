@@ -164,7 +164,9 @@ export function publicFooter({ seo = true } = {}) {
           ...(seo ? [["Uygulamayı indir", DOWNLOAD_PAGE.replace(/^\//, "")]] : [])]),
         col("YASAL", "Yasal", [["Gizlilik Politikası", LEGAL.privacy], ["Kullanım Koşulları", LEGAL.terms], ["Mesafeli Hizmet Sözleşmesi", LEGAL.distanceContract],
           ["İptal ve İade", LEGAL.refund], ["Teslimat ve İfa", LEGAL.delivery], ["Hesap Silme", LEGAL.deleteAccount], ["Hakkımızda", LEGAL.about], ["İletişim", LEGAL.contact]])),
-      h("div", { class: "dk-ft-bottom" }, h("span", {}, `© ${year} GigBridge`), h("span", {}, PAYMENT_NOTE), h("span", {}, "gigbridges.com"))));
+      h("div", { class: "dk-ft-bottom" }, h("span", {}, `© ${year} GigBridge`), h("span", {}, PAYMENT_NOTE),
+        // Kardeş proje (12 Kas 2026, SEO): Kuşadası şehir rehberi
+        h("a", { href: "https://citybridge.app/", class: "dk-link", rel: "noopener" }, "CityBridge · Kuşadası şehir rehberi"), h("span", {}, "gigbridges.com"))));
 }
 
 // AccountFooter (kompakt; WebProfil 319–327): h64, "© yıl GigBridge" + Yasal nav (Gizlilik · Kullanım koşulları · KVKK) + gigbridges.com
