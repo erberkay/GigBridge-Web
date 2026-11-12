@@ -14,7 +14,13 @@ function saveBlob(blob, name) {
 
 /** CSV — alanlar tırnaklı, içteki tırnak ikilenir; ; ayraç + BOM (Excel tr-TR doğrudan açar). */
 export function downloadCsv(name, headers, rows) {
-  const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  // Güvenlik (12 Kas 2026): =, +, -, @, sekme, CR ile başlayan hücre hesap tablosunda formül olarak çalışır (kullanıcı adları
+  // buradan geçer) → başına ' eklenir. Sayılar olduğu gibi kalır.
+  const q = (v) => {
+    let s = String(v ?? "");
+    if (typeof v !== "number" && /^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
   const lines = [headers.map(q).join(";"), ...rows.map((r) => r.map(q).join(";"))];
   saveBlob(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), /\.csv$/i.test(name) ? name : `${name}.csv`);
 }
